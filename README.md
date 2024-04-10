@@ -38,38 +38,38 @@ git clone https://github.com/ItzCrazyKns/Perplexica.git
 - `OPENAI_API_KEY`
 - `SIMILARITY_MEASURE` (Its filled by default, you can leave it if you do not know about it.)
 
-4.Install Yarn:
-To install Yarn on WSL2 Debian, you can follow these steps:
+4. Install Yarn :
+To install Yarn on Debian, you can follow these steps:
 
-i. Open your WSL2 Debian terminal.
+  i. Open your WSL2 Debian terminal.
 
-ii. Update your packages by running:[5]
+  ii. Update your packages by running:
    ```
    sudo apt update
    ```
 
-iii. Install cURL if it's not already installed:[5]
+  iii. Install cURL if it's not already installed:
    ```
    sudo apt install curl
    ```
 
-iv. Configure the Yarn repository by running the following commands:[4]
+  iv. Configure the Yarn repository by running the following commands:
    ```
    curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
    echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
    ```
 
-v. Update your packages again to include the Yarn repository:
+  v. Update your packages again to include the Yarn repository:
    ```
    sudo apt update
    ```
 
-vi. Install Yarn:[4][5]
+  vi. Install Yarn:
    ```
    sudo apt install yarn
    ```
 
-vii. Confirm the installation by checking the Yarn version:
+  vii. Confirm the installation by checking the Yarn version:
    ```
    yarn --version
    ```
@@ -84,7 +84,7 @@ viii. Make sure you have Yarn installed on your local machine. If you don't have
 
 ix. Navigate to the directory where your package.json file is located. This is typically the root directory of your project.
 
-x. Run the following command to install the project dependencies and generate the yarn.lock file:[11]
+x. Run the following command to install the project dependencies and generate the yarn.lock file:
 
    ```
    yarn install
