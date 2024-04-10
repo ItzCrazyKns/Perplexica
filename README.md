@@ -26,7 +26,8 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 ### Getting Started with Docker (Recommended)
 
 1. Make sure Docker is installed and running on your system.
-2. Clone the Perplexica repository:
+2. Install Yarn in order to create a yarn,lock file in the root directory
+3. Clone the Perplexica repository:
 
 ```bash
 git clone https://github.com/ItzCrazyKns/Perplexica.git
@@ -37,7 +38,67 @@ git clone https://github.com/ItzCrazyKns/Perplexica.git
 - `OPENAI_API_KEY`
 - `SIMILARITY_MEASURE` (Its filled by default, you can leave it if you do not know about it.)
 
-4. Navigate to the directory containing `docker-compose.yaml` and execute:
+4.Install Yarn:
+To install Yarn on WSL2 Debian, you can follow these steps:
+
+i. Open your WSL2 Debian terminal.
+
+ii. Update your packages by running:[5]
+   ```
+   sudo apt update
+   ```
+
+iii. Install cURL if it's not already installed:[5]
+   ```
+   sudo apt install curl
+   ```
+
+iv. Configure the Yarn repository by running the following commands:[4]
+   ```
+   curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+   echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+   ```
+
+v. Update your packages again to include the Yarn repository:
+   ```
+   sudo apt update
+   ```
+
+vi. Install Yarn:[4][5]
+   ```
+   sudo apt install yarn
+   ```
+
+vii. Confirm the installation by checking the Yarn version:
+   ```
+   yarn --version
+   ```
+
+If Yarn is successfully installed, the command will return the installed version number.
+
+viii. Make sure you have Yarn installed on your local machine. If you don't have it installed, you can install it by running the following command:[4]
+
+   ```
+   npm install -g yarn
+   ```
+
+ix. Navigate to the directory where your package.json file is located. This is typically the root directory of your project.
+
+x. Run the following command to install the project dependencies and generate the yarn.lock file:[11]
+
+   ```
+   yarn install
+   ```
+
+   This command will read the dependencies from your package.json file, install them, and generate the yarn.lock file in the same directory.
+
+xi. After the yarn.lock file is generated, make sure it is located in the same directory as your Dockerfile.
+
+xii. Now, you can build your Docker image again using the `docker compose up` command, and it should be able to find and copy the yarn.lock file.
+
+By generating the yarn.lock file before building the Docker image, you ensure that the exact same versions of the dependencies are installed inside the Docker container, providing a consistent and reproducible environment.
+
+5. Navigate to the directory containing `docker-compose.yaml` and execute:
 
 ```bash
 docker compose up
