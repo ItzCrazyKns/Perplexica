@@ -13,6 +13,7 @@ import { searchSearxng } from '../core/searxng';
 const llm = new Ollama({
   temperature: 0,
   model: process.env.MODEL_NAME,
+  baseUrl: process.env.OLLAMA_URL,
 });
 
 const imageSearchChainPrompt = `
