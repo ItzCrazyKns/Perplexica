@@ -4,13 +4,14 @@ import {
   MessagesPlaceholder,
 } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
-import { ChatOpenAI } from '@langchain/openai';
+import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import type { StreamEvent } from '@langchain/core/tracers/log_stream';
 import eventEmitter from 'events';
 
-const chatLLM = new ChatOpenAI({
-  modelName: process.env.MODEL_NAME,
+const chatLLM = new ChatOllama({
+  baseUrl: process.env.OLLAMA_URL,
+  model: process.env.MODEL_NAME,
   temperature: 0.7,
 });
 

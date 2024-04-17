@@ -9,7 +9,9 @@ import {
   RunnableMap,
   RunnableLambda,
 } from '@langchain/core/runnables';
-import { ChatOpenAI, OpenAI, OpenAIEmbeddings } from '@langchain/openai';
+import { ChatOllama } from '@langchain/community/chat_models/ollama';
+import { Ollama } from '@langchain/community/llms/ollama';
+import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { Document } from '@langchain/core/documents';
 import { searchSearxng } from '../core/searxng';
@@ -18,18 +20,21 @@ import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
 import computeSimilarity from '../utils/computeSimilarity';
 
-const chatLLM = new ChatOpenAI({
-  modelName: process.env.MODEL_NAME,
+const chatLLM = new ChatOllama({
+  baseUrl: process.env.OLLAMA_URL,
+  model: process.env.MODEL_NAME,
   temperature: 0.7,
 });
 
-const llm = new OpenAI({
+const llm = new Ollama({
   temperature: 0,
-  modelName: process.env.MODEL_NAME,
+  model: process.env.MODEL_NAME,
+  baseUrl: process.env.OLLAMA_URL,
 });
 
-const embeddings = new OpenAIEmbeddings({
-  modelName: 'text-embedding-3-large',
+const embeddings = new OllamaEmbeddings({
+  model: process.env.MODEL_NAME,
+  baseUrl: process.env.OLLAMA_URL,
 });
 
 const basicAcademicSearchRetrieverPrompt = `

@@ -4,15 +4,15 @@ import {
   RunnableLambda,
 } from '@langchain/core/runnables';
 import { PromptTemplate } from '@langchain/core/prompts';
-import { OpenAI } from '@langchain/openai';
+import { Ollama } from '@langchain/community/llms/ollama';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { searchSearxng } from '../core/searxng';
 
-const llm = new OpenAI({
+const llm = new Ollama({
   temperature: 0,
-  modelName: process.env.MODEL_NAME,
+  model: process.env.MODEL_NAME,
 });
 
 const imageSearchChainPrompt = `
