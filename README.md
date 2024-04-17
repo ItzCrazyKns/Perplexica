@@ -51,14 +51,15 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 2. Clone the Perplexica repository:
 
    ```bash
-   git clone https://github.com/ItzCrazyKns/Perplexica.git
+   git clone -b feat/ollama-support https://github.com/ItzCrazyKns/Perplexica.git
    ```
 
 3. After cloning, navigate to the directory containing the project files.
 
 4. Rename the `.env.example` file to `.env`. For Docker setups, you need only fill in the following fields:
 
-   - `OPENAI_API_KEY`
+   - `OLLAMA_URL` (It should be the URL where Ollama is running; it is also filled by default but you need to replace it if your Ollama URL is different.)
+   - `MODEL_NAME` (This is filled by default; you can change it if you want to use a different model.)
    - `SIMILARITY_MEASURE` (This is filled by default; you can leave it as is if you are unsure about it.)
 
 5. Ensure you are in the directory containing the `docker-compose.yaml` file and execute:
