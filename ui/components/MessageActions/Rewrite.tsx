@@ -1,4 +1,4 @@
-import { ArrowLeftRight } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 
 const Rewrite = ({
   rewrite,
@@ -12,7 +12,7 @@ const Rewrite = ({
       onClick={() => rewrite(messageId)}
       className="p-2 text-white/70 rounded-xl hover:bg-[#1c1c1c] transition duration-200 hover:text-white"
     >
-      <ArrowLeftRight size={18} />
+      <RefreshCw size={18} />
     </button>
   );
 };
