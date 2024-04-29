@@ -13,6 +13,7 @@ const router = express.Router();
 router.get('/', async (_, res) => {
   try {
     const config = {};
+    console.log('Retrieving configuration');
 
     const providers = await getAvailableProviders();
 
@@ -55,6 +56,7 @@ router.post('/', async (req, res) => {
         OLLAMA: config.ollamaApiUrl,
       },
     };
+    console.log('Updated config:', updatedConfig);
 
     updateConfig(updatedConfig);
 
