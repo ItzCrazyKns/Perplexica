@@ -1,10 +1,11 @@
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
-import { getOllamaApiEndpoint, getOpenaiApiKey } from '../config';
+import { getOllamaApiEndpoint, getOpenaiApiBaseUrl, getOpenaiApiKey } from '../config';
 
 export const getAvailableProviders = async () => {
   const openAIApiKey = getOpenaiApiKey();
+  const openAIBaseUrl = getOpenaiApiBaseUrl();
   const ollamaEndpoint = getOllamaApiEndpoint();
 
   const models = {};
@@ -16,15 +17,20 @@ export const getAvailableProviders = async () => {
           openAIApiKey,
           modelName: 'gpt-3.5-turbo',
           temperature: 0.7,
+
         }),
         'gpt-4': new ChatOpenAI({
           openAIApiKey,
           modelName: 'gpt-4',
           temperature: 0.7,
+          configuration: {
+            baseURL: openAIBaseUrl,
+          },
         }),
         embeddings: new OpenAIEmbeddings({
           openAIApiKey,
           modelName: 'text-embedding-3-large',
+          
         }),
       };
     } catch (err) {

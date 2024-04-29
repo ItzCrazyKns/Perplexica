@@ -6,6 +6,7 @@ CHAT_MODEL = "gpt-3.5-turbo" # Name of the model to use
 
 [API_KEYS]
 OPENAI = "" # OpenAI API key - sk-1234567890abcdef1234567890abcdef
+OPENAI_BASE_URL = "" # Custom Open AI Base URL , may be use cloudflare AI Gateway 
 
 [API_ENDPOINTS]
 SEARXNG = "http://localhost:32768" # SearxNG API URL
