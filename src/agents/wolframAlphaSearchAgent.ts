@@ -11,7 +11,7 @@ import {
 } from '@langchain/core/runnables';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { Document } from '@langchain/core/documents';
-import { searchSearxng } from '../lib/searxng';
+import { search } from '../lib/search';
 import type { StreamEvent } from '@langchain/core/tracers/log_stream';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { Embeddings } from '@langchain/core/embeddings';
@@ -110,7 +110,7 @@ const createBasicWolframAlphaSearchRetrieverChain = (llm: BaseChatModel) => {
         return { query: '', docs: [] };
       }
 
-      const res = await searchSearxng(input, {
+      const res = await search(input, {
         language: 'en',
         engines: ['wolframalpha'],
       });
