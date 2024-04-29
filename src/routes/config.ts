@@ -11,48 +11,58 @@ import {
 const router = express.Router();
 
 router.get('/', async (_, res) => {
-  const config = {};
+  try {
+    const config = {};
 
-  const providers = await getAvailableProviders();
+    const providers = await getAvailableProviders();
 
-  for (const provider in providers) {
-    delete providers[provider]['embeddings'];
+    for (const provider in providers) {
+      delete providers[provider]['embeddings'];
+    }
+
+    config['providers'] = {};
+
+    for (const provider in providers) {
+      config['providers'][provider] = Object.keys(providers[provider]);
+    }
+
+    config['selectedProvider'] = getChatModelProvider();
+    config['selectedChatModel'] = getChatModel();
+
+    config['openeaiApiKey'] = getOpenaiApiKey();
+    config['ollamaApiUrl'] = getOllamaApiEndpoint();
+
+    res.status(200).json(config);
+  } catch (error) {
+    console.error('Failed to retrieve configuration:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
-
-  config['providers'] = {};
-
-  for (const provider in providers) {
-    config['providers'][provider] = Object.keys(providers[provider]);
-  }
-
-  config['selectedProvider'] = getChatModelProvider();
-  config['selectedChatModel'] = getChatModel();
-
-  config['openeaiApiKey'] = getOpenaiApiKey();
-  config['ollamaApiUrl'] = getOllamaApiEndpoint();
-
-  res.status(200).json(config);
 });
 
 router.post('/', async (req, res) => {
-  const config = req.body;
+  try {
+    const config = req.body;
 
-  const updatedConfig = {
-    GENERAL: {
-      CHAT_MODEL_PROVIDER: config.selectedProvider,
-      CHAT_MODEL: config.selectedChatModel,
-    },
-    API_KEYS: {
-      OPENAI: config.openeaiApiKey,
-    },
-    API_ENDPOINTS: {
-      OLLAMA: config.ollamaApiUrl,
-    },
-  };
+    const updatedConfig = {
+      GENERAL: {
+        CHAT_MODEL_PROVIDER: config.selectedProvider,
+        CHAT_MODEL: config.selectedChatModel,
+      },
+      API_KEYS: {
+        OPENAI: config.openeaiApiKey,
+      },
+      API_ENDPOINTS: {
+        OLLAMA: config.ollamaApiUrl,
+      },
+    };
 
-  updateConfig(updatedConfig);
+    updateConfig(updatedConfig);
 
-  res.status(200).json({ message: 'Config updated' });
+    res.status(200).json({ message: 'Config updated' });
+  } catch (error) {
+    console.error('Failed to update configuration:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 });
 
 export default router;

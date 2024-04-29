@@ -11,6 +11,8 @@ router.post('/', async (req, res) => {
   try {
     let { query, chat_history } = req.body;
 
+    console.log('Received request with query:', query);
+
     chat_history = chat_history.map((msg: any) => {
       if (msg.role === 'user') {
         return new HumanMessage(msg.content);
@@ -19,9 +21,13 @@ router.post('/', async (req, res) => {
       }
     });
 
+    console.log('Processed chat history:', chat_history);
+
     const models = await getAvailableProviders();
     const provider = getChatModelProvider();
     const chatModel = getChatModel();
+
+    console.log(`Using provider: ${provider} and model: ${chatModel}`);
 
     let llm: BaseChatModel | undefined;
 
@@ -30,16 +36,22 @@ router.post('/', async (req, res) => {
     }
 
     if (!llm) {
+      console.error('Invalid LLM model selected');
       res.status(500).json({ message: 'Invalid LLM model selected' });
       return;
     }
 
-    const images = await handleImageSearch({ query, chat_history }, llm);
-
-    res.status(200).json({ images });
+    try {
+      const images = await handleImageSearch({ query, chat_history }, llm);
+      res.status(200).json({ images });
+      console.log('Image search successful:', images);
+    } catch (error) {
+      console.error('Error during image search:', error);
+      res.status(500).json({ message: 'Error during image search' });
+    }
   } catch (err) {
+    console.error('An error occurred in the main request handler:', err);
     res.status(500).json({ message: 'An error has occurred.' });
-    console.log(err.message);
   }
 });
 

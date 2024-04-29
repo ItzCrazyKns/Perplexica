@@ -66,30 +66,44 @@ export const handleMessage = async (
   llm: BaseChatModel,
   embeddings: Embeddings,
 ) => {
+  let parsedMessage: Message;
   try {
-    const parsedMessage = JSON.parse(message) as Message;
-    const id = Math.random().toString(36).substring(7);
+    parsedMessage = JSON.parse(message) as Message;
+    console.log('Message parsed successfully:', parsedMessage);
+  } catch (error) {
+    console.error('Error parsing message:', message, error);
+    return ws.send(
+      JSON.stringify({ type: 'error', data: 'Invalid message format' }),
+    );
+  }
 
-    if (!parsedMessage.content)
-      return ws.send(
-        JSON.stringify({ type: 'error', data: 'Invalid message format' }),
-      );
+  const id = Math.random().toString(36).substring(7);
+  console.log('Generated message ID:', id);
 
-    const history: BaseMessage[] = parsedMessage.history.map((msg) => {
-      if (msg[0] === 'human') {
-        return new HumanMessage({
-          content: msg[1],
-        });
-      } else {
-        return new AIMessage({
-          content: msg[1],
-        });
-      }
-    });
+  if (!parsedMessage.content) {
+    console.log('Message content is empty');
+    return ws.send(
+      JSON.stringify({ type: 'error', data: 'Invalid message format' }),
+    );
+  }
 
-    if (parsedMessage.type === 'message') {
-      const handler = searchHandlers[parsedMessage.focusMode];
-      if (handler) {
+  const history: BaseMessage[] = parsedMessage.history.map((msg) => {
+    if (msg[0] === 'human') {
+      return new HumanMessage({
+        content: msg[1],
+      });
+    } else {
+      return new AIMessage({
+        content: msg[1],
+      });
+    }
+  });
+
+  if (parsedMessage.type === 'message') {
+    const handler = searchHandlers[parsedMessage.focusMode];
+    if (handler) {
+      console.log('Handling message with focus mode:', parsedMessage.focusMode);
+      try {
         const emitter = handler(
           parsedMessage.content,
           history,
@@ -97,12 +111,17 @@ export const handleMessage = async (
           embeddings,
         );
         handleEmitterEvents(emitter, ws, id);
-      } else {
-        ws.send(JSON.stringify({ type: 'error', data: 'Invalid focus mode' }));
+      } catch (error) {
+        console.error(
+          'Error handling message with handler:',
+          parsedMessage.focusMode,
+          error,
+        );
+        ws.send(JSON.stringify({ type: 'error', data: 'Handler failure' }));
       }
+    } else {
+      console.log('Invalid focus mode:', parsedMessage.focusMode);
+      ws.send(JSON.stringify({ type: 'error', data: 'Invalid focus mode' }));
     }
-  } catch (error) {
-    console.error('Failed to handle message', error);
-    ws.send(JSON.stringify({ type: 'error', data: 'Invalid message format' }));
   }
 };
