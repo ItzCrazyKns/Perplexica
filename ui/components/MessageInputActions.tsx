@@ -109,7 +109,7 @@ export const Focus = ({
         leaveTo="opacity-0 translate-y-1"
       >
         <Popover.Panel className="absolute z-10 w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 bg-[#0A0A0A] border rounded-lg border-[#1c1c1c] w-full p-2 max-h-[200px] md:max-h-none overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 bg-wash-dark border rounded-lg border-[#1c1c1c] w-full p-2 max-h-[200px] md:max-h-none overflow-y-auto">
             {focusModes.map((mode, i) => (
               <Popover.Button
                 onClick={() => setFocusMode(mode.key)}
@@ -117,8 +117,8 @@ export const Focus = ({
                 className={cn(
                   'p-2 rounded-lg flex flex-col items-start justify-start text-start space-y-2 duration-200 cursor-pointer transition',
                   focusMode === mode.key
-                    ? 'bg-[#111111]'
-                    : 'hover:bg-[#111111]',
+                    ? 'bg-gray-40/20'
+                    : 'hover:bg-gray-40/20',
                 )}
               >
                 <div
@@ -152,7 +152,7 @@ export const CopilotToggle = ({
       <Switch
         checked={copilotEnabled}
         onChange={setCopilotEnabled}
-        className="bg-[#111111] border border-[#1C1C1C] relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full"
+        className="bg-gray-40/20 border border-[#1C1C1C] relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full"
       >
         <span className="sr-only">Copilot</span>
         <span

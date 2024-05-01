@@ -20,7 +20,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
       {sources.slice(0, 3).map((source, i) => (
         <a
-          className="bg-[#111111] hover:bg-[#1c1c1c] transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
+          className="bg-gray-40/20 hover:bg-[#1c1c1c] transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
           key={i}
           href={source.metadata.url}
           target="_blank"
@@ -51,7 +51,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
       {sources.length > 3 && (
         <button
           onClick={openModal}
-          className="bg-[#111111] hover:bg-[#1c1c1c] transition duration-200 rounded-lg px-4 py-2 flex flex-col justify-between space-y-2"
+          className="bg-gray-40/20 hover:bg-[#1c1c1c] transition duration-200 rounded-lg px-4 py-2 flex flex-col justify-between space-y-2"
         >
           <div className="flex flex-row items-center space-x-1">
             {sources.slice(3, 6).map((source, i) => (
@@ -83,14 +83,14 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
                 leaveFrom="opacity-100 scale-200"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-[#111111] border border-[#1c1c1c] p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-gray-40/20 border border-[#1c1c1c] p-6 text-left align-middle shadow-xl transition-all">
                   <Dialog.Title className="text-lg font-medium leading-6 text-white">
                     Sources
                   </Dialog.Title>
                   <div className="grid grid-cols-2 gap-2 overflow-auto max-h-[300px] mt-2 pr-2">
                     {sources.map((source, i) => (
                       <a
-                        className="bg-[#111111] hover:bg-[#1c1c1c] border border-[#1c1c1c] transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
+                        className="bg-gray-40/20 hover:bg-[#1c1c1c] border border-[#1c1c1c] transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
                         key={i}
                         href={source.metadata.url}
                         target="_blank"

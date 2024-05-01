@@ -88,7 +88,7 @@ const SettingsDialog = ({
               leaveFrom="opacity-100 scale-200"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-[#111111] border border-[#1c1c1c] p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-gray-40/20 border border-[#1c1c1c] p-6 text-left align-middle shadow-xl transition-all">
                 <Dialog.Title className="text-xl font-medium leading-6 text-white">
                   Settings
                 </Dialog.Title>
@@ -108,7 +108,7 @@ const SettingsDialog = ({
                                 config.providers[e.target.value][0],
                             })
                           }
-                          className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                          className="bg-gray-40/20 px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                         >
                           {Object.keys(config.providers).map((provider) => (
                             <option
@@ -133,7 +133,7 @@ const SettingsDialog = ({
                               selectedChatModel: e.target.value,
                             })
                           }
-                          className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                          className="bg-gray-40/20 px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                         >
                           {config.providers[config.selectedProvider] ? (
                             config.providers[config.selectedProvider].length >
@@ -176,7 +176,7 @@ const SettingsDialog = ({
                             openeaiApiKey: e.target.value,
                           })
                         }
-                        className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                        className="bg-gray-40/20 px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                       />
                     </div>
                     <div className="flex flex-col space-y-1">
@@ -191,7 +191,7 @@ const SettingsDialog = ({
                             ollamaApiUrl: e.target.value,
                           })
                         }
-                        className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                        className="bg-gray-40/20 px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                       />
                     </div>
                   </div>
