@@ -8,6 +8,7 @@ interface SettingsType {
   };
   selectedProvider: string;
   selectedChatModel: string;
+  openaiUrl: string;
   openeaiApiKey: string;
   groqApiKey: string;
   ollamaApiUrl: string;
@@ -165,6 +166,21 @@ const SettingsDialog = ({
                         </select>
                       </div>
                     )}
+                    <div className="flex flex-col space-y-1">
+                        <p className="text-white/70 text-sm">OpenAI Url</p>
+                        <input
+                            type="text"
+                            placeholder="OpenAI Url"
+                            defaultValue={config.openaiUrl}
+                            onChange={(e) =>
+                                setConfig({
+                                  ...config,
+                                  openaiUrl: e.target.value,
+                                })
+                            }
+                            className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                        />
+                      </div>
                     <div className="flex flex-col space-y-1">
                       <p className="text-white/70 text-sm">OpenAI API Key</p>
                       <input

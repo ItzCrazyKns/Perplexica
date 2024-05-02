@@ -1,3 +1,4 @@
+import { type ClientOptions } from 'openai';
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
@@ -5,6 +6,7 @@ import {
   getGroqApiKey,
   getOllamaApiEndpoint,
   getOpenaiApiKey,
+  getOpenaiUrl,
 } from '../config';
 import logger from '../utils/logger';
 
@@ -12,6 +14,10 @@ export const getAvailableProviders = async () => {
   const openAIApiKey = getOpenaiApiKey();
   const groqApiKey = getGroqApiKey();
   const ollamaEndpoint = getOllamaApiEndpoint();
+  const openaiUrl = getOpenaiUrl();
+  const configuration: ClientOptions = {
+    baseURL: openaiUrl
+  };
 
   const models = {};
 
@@ -20,22 +26,26 @@ export const getAvailableProviders = async () => {
       models['openai'] = {
         'GPT-3.5 turbo': new ChatOpenAI({
           openAIApiKey,
-          modelName: 'gpt-3.5-turbo',
+          modelName: 'gpt-3.5-turbo-1106',
           temperature: 0.7,
+          configuration,
         }),
         'GPT-4': new ChatOpenAI({
           openAIApiKey,
-          modelName: 'gpt-4',
+          modelName: 'gpt-4-1106-preview',
           temperature: 0.7,
+          configuration,
         }),
         'GPT-4 turbo': new ChatOpenAI({
           openAIApiKey,
           modelName: 'gpt-4-turbo',
           temperature: 0.7,
+          configuration,
         }),
         embeddings: new OpenAIEmbeddings({
           openAIApiKey,
           modelName: 'text-embedding-3-large',
+          configuration,
         }),
       };
     } catch (err) {

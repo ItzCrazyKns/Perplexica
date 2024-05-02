@@ -14,6 +14,7 @@ interface Config {
   API_KEYS: {
     OPENAI: string;
     GROQ: string;
+    OPENAI_URL: string;
   };
   API_ENDPOINTS: {
     SEARXNG: string;
@@ -39,6 +40,8 @@ export const getChatModelProvider = () =>
   loadConfig().GENERAL.CHAT_MODEL_PROVIDER;
 
 export const getChatModel = () => loadConfig().GENERAL.CHAT_MODEL;
+
+export const getOpenaiUrl = () => loadConfig().API_KEYS.OPENAI_URL;
 
 export const getOpenaiApiKey = () => loadConfig().API_KEYS.OPENAI;
 

@@ -7,6 +7,7 @@ CHAT_MODEL = "gpt-3.5-turbo" # Name of the model to use
 [API_KEYS]
 OPENAI = "" # OpenAI API key - sk-1234567890abcdef1234567890abcdef
 GROQ = "" # Groq API key - gsk_1234567890abcdef1234567890abcdef
+OPENAI_URL = "https://api.openai.com/v1"
 
 [API_ENDPOINTS]
 SEARXNG = "http://localhost:32768" # SearxNG API URL
