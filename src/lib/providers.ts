@@ -5,11 +5,13 @@ import {
   getGroqApiKey,
   getOllamaApiEndpoint,
   getOpenaiApiKey,
+  getOpenaiBaseUrl,
 } from '../config';
 import logger from '../utils/logger';
 
 export const getAvailableProviders = async () => {
   const openAIApiKey = getOpenaiApiKey();
+  const openAIBaseUrl = getOpenaiBaseUrl();
   const groqApiKey = getGroqApiKey();
   const ollamaEndpoint = getOllamaApiEndpoint();
 
@@ -18,25 +20,45 @@ export const getAvailableProviders = async () => {
   if (openAIApiKey) {
     try {
       models['openai'] = {
-        'GPT-3.5 turbo': new ChatOpenAI({
-          openAIApiKey,
-          modelName: 'gpt-3.5-turbo',
-          temperature: 0.7,
-        }),
-        'GPT-4': new ChatOpenAI({
-          openAIApiKey,
-          modelName: 'gpt-4',
-          temperature: 0.7,
-        }),
-        'GPT-4 turbo': new ChatOpenAI({
-          openAIApiKey,
-          modelName: 'gpt-4-turbo',
-          temperature: 0.7,
-        }),
-        embeddings: new OpenAIEmbeddings({
-          openAIApiKey,
-          modelName: 'text-embedding-3-large',
-        }),
+        'GPT-3.5 turbo': new ChatOpenAI(
+          {
+            openAIApiKey,
+            modelName: 'gpt-3.5-turbo',
+            temperature: 0.7,
+          },
+          {
+            baseURL: openAIBaseUrl,
+          },
+        ),
+        'GPT-4': new ChatOpenAI(
+          {
+            openAIApiKey,
+            modelName: 'gpt-4',
+            temperature: 0.7,
+          },
+          {
+            baseURL: openAIBaseUrl,
+          },
+        ),
+        'GPT-4 turbo': new ChatOpenAI(
+          {
+            openAIApiKey,
+            modelName: 'gpt-4-turbo',
+            temperature: 0.7,
+          },
+          {
+            baseURL: openAIBaseUrl,
+          },
+        ),
+        embeddings: new OpenAIEmbeddings(
+          {
+            openAIApiKey,
+            modelName: 'text-embedding-3-large',
+          },
+          {
+            baseURL: openAIBaseUrl,
+          },
+        ),
       };
     } catch (err) {
       logger.error(`Error loading OpenAI models: ${err}`);
@@ -86,10 +108,15 @@ export const getAvailableProviders = async () => {
             baseURL: 'https://api.groq.com/openai/v1',
           },
         ),
-        embeddings: new OpenAIEmbeddings({
-          openAIApiKey: openAIApiKey,
-          modelName: 'text-embedding-3-large',
-        }),
+        embeddings: new OpenAIEmbeddings(
+          {
+            openAIApiKey: openAIApiKey,
+            modelName: 'text-embedding-3-large',
+          },
+          {
+            baseURL: openAIBaseUrl,
+          },
+        ),
       };
     } catch (err) {
       logger.error(`Error loading Groq models: ${err}`);

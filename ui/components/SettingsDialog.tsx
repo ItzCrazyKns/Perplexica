@@ -7,6 +7,7 @@ interface SettingsType {
     [key: string]: string[];
   };
   openaiApiKey: string;
+  openaiBaseUrl: string;
   groqApiKey: string;
   ollamaApiUrl: string;
 }
@@ -178,6 +179,21 @@ const SettingsDialog = ({
                           setConfig({
                             ...config,
                             openaiApiKey: e.target.value,
+                          })
+                        }
+                        className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-white/70 text-sm">OpenAI Base URL</p>
+                      <input
+                        type="text"
+                        placeholder="OpenAI Base URL"
+                        defaultValue={config.openaiBaseUrl}
+                        onChange={(e) =>
+                          setConfig({
+                            ...config,
+                            openaiBaseUrl: e.target.value,
                           })
                         }
                         className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"

@@ -11,6 +11,7 @@ interface Config {
   };
   API_KEYS: {
     OPENAI: string;
+    OPENAI_BASE_URL: string;
     GROQ: string;
   };
   API_ENDPOINTS: {
@@ -34,6 +35,9 @@ export const getSimilarityMeasure = () =>
   loadConfig().GENERAL.SIMILARITY_MEASURE;
 
 export const getOpenaiApiKey = () => loadConfig().API_KEYS.OPENAI;
+
+export const getOpenaiBaseUrl = () =>
+  loadConfig().API_KEYS.OPENAI_BASE_URL || 'https://api.openai.com/v1';
 
 export const getGroqApiKey = () => loadConfig().API_KEYS.GROQ;
 

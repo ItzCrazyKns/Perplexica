@@ -4,6 +4,7 @@ SIMILARITY_MEASURE = "cosine" # "cosine" or "dot"
 
 [API_KEYS]
 OPENAI = "" # OpenAI API key - sk-1234567890abcdef1234567890abcdef
+OPENAI_BASE_URL = "https://api.openai.com/v1" # OpenAI API base URL
 GROQ = "" # Groq API key - gsk_1234567890abcdef1234567890abcdef
 
 [API_ENDPOINTS]
