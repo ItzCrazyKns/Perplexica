@@ -12,6 +12,7 @@ interface Config {
   API_KEYS: {
     OPENAI: string;
     OPENAI_BASE_URL: string;
+    OPENAI_CUSTOM_CHAT_MODEL: string;
     GROQ: string;
   };
   API_ENDPOINTS: {
@@ -38,6 +39,9 @@ export const getOpenaiApiKey = () => loadConfig().API_KEYS.OPENAI;
 
 export const getOpenaiBaseUrl = () =>
   loadConfig().API_KEYS.OPENAI_BASE_URL || 'https://api.openai.com/v1';
+
+export const getOpenaiCustomChatModel = () =>
+  loadConfig().API_KEYS.OPENAI_CUSTOM_CHAT_MODEL;
 
 export const getGroqApiKey = () => loadConfig().API_KEYS.GROQ;
 

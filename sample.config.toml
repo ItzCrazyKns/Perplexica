@@ -5,6 +5,7 @@ SIMILARITY_MEASURE = "cosine" # "cosine" or "dot"
 [API_KEYS]
 OPENAI = "" # OpenAI API key - sk-1234567890abcdef1234567890abcdef
 OPENAI_BASE_URL = "https://api.openai.com/v1" # OpenAI API base URL
+OPENAI_CUSTOM_CHAT_MODEL = "" # OpenAI custom chat model ID - gpt-3.5-turbo-1106
 GROQ = "" # Groq API key - gsk_1234567890abcdef1234567890abcdef
 
 [API_ENDPOINTS]

@@ -6,12 +6,14 @@ import {
   getOllamaApiEndpoint,
   getOpenaiApiKey,
   getOpenaiBaseUrl,
+  getOpenaiCustomChatModel,
 } from '../config';
 import logger from '../utils/logger';
 
 export const getAvailableProviders = async () => {
   const openAIApiKey = getOpenaiApiKey();
   const openAIBaseUrl = getOpenaiBaseUrl();
+  const openAICustomChatModel = getOpenaiCustomChatModel();
   const groqApiKey = getGroqApiKey();
   const ollamaEndpoint = getOllamaApiEndpoint();
 
@@ -50,6 +52,20 @@ export const getAvailableProviders = async () => {
             baseURL: openAIBaseUrl,
           },
         ),
+        ...(openAICustomChatModel.length > 0
+          ? {
+              openAICustomChatModel: new ChatOpenAI(
+                {
+                  openAIApiKey,
+                  modelName: openAICustomChatModel,
+                  temperature: 0.7,
+                },
+                {
+                  baseURL: openAIBaseUrl,
+                },
+              ),
+            }
+          : {}),
         embeddings: new OpenAIEmbeddings(
           {
             openAIApiKey,
