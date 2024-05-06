@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: searxng.dockerfile
     expose:
-      - 4000
+      - 8080
     ports:
       - 4000:8080
     networks:
