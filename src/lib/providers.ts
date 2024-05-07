@@ -4,6 +4,7 @@ import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
 import {
   getGroqApiKey,
   getOllamaApiEndpoint,
+  getOpenaiApiEndpoint,
   getOpenaiApiKey,
 } from '../config';
 import logger from '../utils/logger';
@@ -12,6 +13,7 @@ export const getAvailableProviders = async () => {
   const openAIApiKey = getOpenaiApiKey();
   const groqApiKey = getGroqApiKey();
   const ollamaEndpoint = getOllamaApiEndpoint();
+  const openaiEndpoint = getOpenaiApiEndpoint();
 
   const models = {};
 
@@ -20,21 +22,33 @@ export const getAvailableProviders = async () => {
       models['openai'] = {
         'GPT-3.5 turbo': new ChatOpenAI({
           openAIApiKey,
+          configuration: {
+            baseURL: openaiEndpoint,
+          },
           modelName: 'gpt-3.5-turbo',
           temperature: 0.7,
         }),
         'GPT-4': new ChatOpenAI({
           openAIApiKey,
+          configuration: {
+            baseURL: openaiEndpoint,
+          },
           modelName: 'gpt-4',
           temperature: 0.7,
         }),
         'GPT-4 turbo': new ChatOpenAI({
           openAIApiKey,
+          configuration: {
+            baseURL: openaiEndpoint,
+          },
           modelName: 'gpt-4-turbo',
           temperature: 0.7,
         }),
         embeddings: new OpenAIEmbeddings({
           openAIApiKey,
+          configuration: {
+            baseURL: openaiEndpoint,
+          },
           modelName: 'text-embedding-3-large',
         }),
       };

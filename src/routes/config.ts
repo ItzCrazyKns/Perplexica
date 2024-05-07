@@ -4,6 +4,7 @@ import {
   getGroqApiKey,
   getOllamaApiEndpoint,
   getOpenaiApiKey,
+  getOpenaiApiEndpoint,
   updateConfig,
 } from '../config';
 
@@ -27,6 +28,7 @@ router.get('/', async (_, res) => {
   config['openaiApiKey'] = getOpenaiApiKey();
   config['ollamaApiUrl'] = getOllamaApiEndpoint();
   config['groqApiKey'] = getGroqApiKey();
+  config['openaiApiUrl'] = getOpenaiApiEndpoint();
 
   res.status(200).json(config);
 });
@@ -41,6 +43,7 @@ router.post('/', async (req, res) => {
     },
     API_ENDPOINTS: {
       OLLAMA: config.ollamaApiUrl,
+      OPENAI: config.openaiApiUrl,
     },
   };
 
