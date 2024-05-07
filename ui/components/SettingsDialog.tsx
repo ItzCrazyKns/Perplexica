@@ -3,7 +3,10 @@ import { CloudUpload, RefreshCcw, RefreshCw } from 'lucide-react';
 import React, { Fragment, useEffect, useState } from 'react';
 
 interface SettingsType {
-  providers: {
+  chatModelProviders: {
+    [key: string]: string[];
+  };
+  embeddingModelProviders: {
     [key: string]: string[];
   };
   openaiApiKey: string;
@@ -25,6 +28,13 @@ const SettingsDialog = ({
   const [selectedChatModel, setSelectedChatModel] = useState<string | null>(
     null,
   );
+  const [selectedEmbeddingModelProvider, setSelectedEmbeddingModelProvider] =
+    useState<string | null>(null);
+  const [selectedEmbeddingModel, setSelectedEmbeddingModel] = useState<
+    string | null
+  >(null);
+  const [customOpenAIApiKey, setCustomOpenAIApiKey] = useState<string>('');
+  const [customOpenAIBaseURL, setCustomOpenAIBaseURL] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -32,9 +42,54 @@ const SettingsDialog = ({
     if (isOpen) {
       const fetchConfig = async () => {
         setIsLoading(true);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`);
-        const data = await res.json();
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data = (await res.json()) as SettingsType;
         setConfig(data);
+
+        const chatModelProvidersKeys = Object.keys(
+          data.chatModelProviders || {},
+        );
+        const embeddingModelProvidersKeys = Object.keys(
+          data.embeddingModelProviders || {},
+        );
+
+        const defaultChatModelProvider =
+          chatModelProvidersKeys.length > 0 ? chatModelProvidersKeys[0] : '';
+        const defaultEmbeddingModelProvider =
+          embeddingModelProvidersKeys.length > 0
+            ? embeddingModelProvidersKeys[0]
+            : '';
+
+        const chatModelProvider =
+          localStorage.getItem('chatModelProvider') ||
+          defaultChatModelProvider ||
+          '';
+        const chatModel =
+          localStorage.getItem('chatModel') ||
+          (data.chatModelProviders &&
+            data.chatModelProviders[chatModelProvider]?.[0]) ||
+          '';
+        const embeddingModelProvider =
+          localStorage.getItem('embeddingModelProvider') ||
+          defaultEmbeddingModelProvider ||
+          '';
+        const embeddingModel =
+          localStorage.getItem('embeddingModel') ||
+          (data.embeddingModelProviders &&
+            data.embeddingModelProviders[embeddingModelProvider]?.[0]) ||
+          '';
+
+        setSelectedChatModelProvider(chatModelProvider);
+        setSelectedChatModel(chatModel);
+        setSelectedEmbeddingModelProvider(embeddingModelProvider);
+        setSelectedEmbeddingModel(embeddingModel);
+        setCustomOpenAIApiKey(localStorage.getItem('openAIApiKey') || '');
+        setCustomOpenAIBaseURL(localStorage.getItem('openAIBaseUrl') || '');
         setIsLoading(false);
       };
 
@@ -42,11 +97,6 @@ const SettingsDialog = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
-
-  useEffect(() => {
-    setSelectedChatModelProvider(localStorage.getItem('chatModelProvider'));
-    setSelectedChatModel(localStorage.getItem('chatModel'));
-  }, []);
 
   const handleSubmit = async () => {
     setIsUpdating(true);
@@ -62,6 +112,13 @@ const SettingsDialog = ({
 
       localStorage.setItem('chatModelProvider', selectedChatModelProvider!);
       localStorage.setItem('chatModel', selectedChatModel!);
+      localStorage.setItem(
+        'embeddingModelProvider',
+        selectedEmbeddingModelProvider!,
+      );
+      localStorage.setItem('embeddingModel', selectedEmbeddingModel!);
+      localStorage.setItem('openAIApiKey', customOpenAIApiKey!);
+      localStorage.setItem('openAIBaseURL', customOpenAIBaseURL!);
     } catch (err) {
       console.log(err);
     } finally {
@@ -107,57 +164,167 @@ const SettingsDialog = ({
                 </Dialog.Title>
                 {config && !isLoading && (
                   <div className="flex flex-col space-y-4 mt-6">
-                    {config.providers && (
+                    {config.chatModelProviders && (
                       <div className="flex flex-col space-y-1">
                         <p className="text-white/70 text-sm">
                           Chat model Provider
                         </p>
                         <select
+                          value={selectedChatModelProvider ?? undefined}
                           onChange={(e) => {
                             setSelectedChatModelProvider(e.target.value);
                             setSelectedChatModel(
-                              config.providers[e.target.value][0],
+                              config.chatModelProviders[e.target.value][0],
                             );
                           }}
                           className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                         >
-                          {Object.keys(config.providers).map((provider) => (
-                            <option
-                              key={provider}
-                              value={provider}
-                              selected={provider === selectedChatModelProvider}
-                            >
-                              {provider.charAt(0).toUpperCase() +
-                                provider.slice(1)}
-                            </option>
-                          ))}
+                          {Object.keys(config.chatModelProviders).map(
+                            (provider) => (
+                              <option key={provider} value={provider}>
+                                {provider.charAt(0).toUpperCase() +
+                                  provider.slice(1)}
+                              </option>
+                            ),
+                          )}
                         </select>
                       </div>
                     )}
-                    {selectedChatModelProvider && (
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-white/70 text-sm">Chat Model</p>
-                        <select
-                          onChange={(e) => setSelectedChatModel(e.target.value)}
-                          className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
-                        >
-                          {config.providers[selectedChatModelProvider] ? (
-                            config.providers[selectedChatModelProvider].length >
-                            0 ? (
-                              config.providers[selectedChatModelProvider].map(
-                                (model) => (
-                                  <option
-                                    key={model}
-                                    value={model}
-                                    selected={model === selectedChatModel}
-                                  >
+                    {selectedChatModelProvider &&
+                      selectedChatModelProvider != 'custom_openai' && (
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-white/70 text-sm">Chat Model</p>
+                          <select
+                            value={selectedChatModel ?? undefined}
+                            onChange={(e) =>
+                              setSelectedChatModel(e.target.value)
+                            }
+                            className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                          >
+                            {config.chatModelProviders[
+                              selectedChatModelProvider
+                            ] ? (
+                              config.chatModelProviders[
+                                selectedChatModelProvider
+                              ].length > 0 ? (
+                                config.chatModelProviders[
+                                  selectedChatModelProvider
+                                ].map((model) => (
+                                  <option key={model} value={model}>
                                     {model}
                                   </option>
-                                ),
+                                ))
+                              ) : (
+                                <option value="" disabled>
+                                  No models available
+                                </option>
                               )
                             ) : (
+                              <option value="" disabled>
+                                Invalid provider, please check backend logs
+                              </option>
+                            )}
+                          </select>
+                        </div>
+                      )}
+                    {selectedChatModelProvider &&
+                      selectedChatModelProvider === 'custom_openai' && (
+                        <>
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-white/70 text-sm">Model name</p>
+                            <input
+                              type="text"
+                              placeholder="Model name"
+                              defaultValue={selectedChatModel!}
+                              onChange={(e) =>
+                                setSelectedChatModel(e.target.value)
+                              }
+                              className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                            />
+                          </div>
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-white/70 text-sm">
+                              Custom OpenAI API Key
+                            </p>
+                            <input
+                              type="text"
+                              placeholder="Custom OpenAI API Key"
+                              defaultValue={customOpenAIApiKey!}
+                              onChange={(e) =>
+                                setCustomOpenAIApiKey(e.target.value)
+                              }
+                              className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                            />
+                          </div>
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-white/70 text-sm">
+                              Custom OpenAI Base URL
+                            </p>
+                            <input
+                              type="text"
+                              placeholder="Custom OpenAI Base URL"
+                              defaultValue={customOpenAIBaseURL!}
+                              onChange={(e) =>
+                                setCustomOpenAIBaseURL(e.target.value)
+                              }
+                              className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                            />
+                          </div>
+                        </>
+                      )}
+                    {/* Embedding models */}
+                    {config.embeddingModelProviders && (
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-white/70 text-sm">
+                          Embedding model Provider
+                        </p>
+                        <select
+                          value={selectedEmbeddingModelProvider ?? undefined}
+                          onChange={(e) => {
+                            setSelectedEmbeddingModelProvider(e.target.value);
+                            setSelectedEmbeddingModel(
+                              config.embeddingModelProviders[e.target.value][0],
+                            );
+                          }}
+                          className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                        >
+                          {Object.keys(config.embeddingModelProviders).map(
+                            (provider) => (
+                              <option key={provider} value={provider}>
+                                {provider.charAt(0).toUpperCase() +
+                                  provider.slice(1)}
+                              </option>
+                            ),
+                          )}
+                        </select>
+                      </div>
+                    )}
+                    {selectedEmbeddingModelProvider && (
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-white/70 text-sm">Embedding Model</p>
+                        <select
+                          value={selectedEmbeddingModel ?? undefined}
+                          onChange={(e) =>
+                            setSelectedEmbeddingModel(e.target.value)
+                          }
+                          className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
+                        >
+                          {config.embeddingModelProviders[
+                            selectedEmbeddingModelProvider
+                          ] ? (
+                            config.embeddingModelProviders[
+                              selectedEmbeddingModelProvider
+                            ].length > 0 ? (
+                              config.embeddingModelProviders[
+                                selectedEmbeddingModelProvider
+                              ].map((model) => (
+                                <option key={model} value={model}>
+                                  {model}
+                                </option>
+                              ))
+                            ) : (
                               <option value="" disabled selected>
-                                No models available
+                                No embedding models available
                               </option>
                             )
                           ) : (

@@ -5,6 +5,7 @@ import { Document } from '@langchain/core/documents';
 import Navbar from './Navbar';
 import Chat from './Chat';
 import EmptyChat from './EmptyChat';
+import { toast } from 'sonner';
 
 export type Message = {
   id: string;
@@ -22,31 +23,95 @@ const useSocket = (url: string) => {
       const connectWs = async () => {
         let chatModel = localStorage.getItem('chatModel');
         let chatModelProvider = localStorage.getItem('chatModelProvider');
+        let embeddingModel = localStorage.getItem('embeddingModel');
+        let embeddingModelProvider = localStorage.getItem(
+          'embeddingModelProvider',
+        );
 
-        if (!chatModel || !chatModelProvider) {
-          const chatModelProviders = await fetch(
+        if (
+          !chatModel ||
+          !chatModelProvider ||
+          !embeddingModel ||
+          !embeddingModelProvider
+        ) {
+          const providers = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL}/models`,
-          ).then(async (res) => (await res.json())['providers']);
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            },
+          ).then(async (res) => await res.json());
+
+          const chatModelProviders = providers.chatModelProviders;
+          const embeddingModelProviders = providers.embeddingModelProviders;
 
           if (
             !chatModelProviders ||
             Object.keys(chatModelProviders).length === 0
           )
-            return console.error('No chat models available');
+            return toast.error('No chat models available');
+
+          if (
+            !embeddingModelProviders ||
+            Object.keys(embeddingModelProviders).length === 0
+          )
+            return toast.error('No embedding models available');
 
           chatModelProvider = Object.keys(chatModelProviders)[0];
           chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
 
+          embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
+          embeddingModel = Object.keys(
+            embeddingModelProviders[embeddingModelProvider],
+          )[0];
+
           localStorage.setItem('chatModel', chatModel!);
           localStorage.setItem('chatModelProvider', chatModelProvider);
+          localStorage.setItem('embeddingModel', embeddingModel!);
+          localStorage.setItem(
+            'embeddingModelProvider',
+            embeddingModelProvider,
+          );
         }
 
-        const ws = new WebSocket(
-          `${url}?chatModel=${chatModel}&chatModelProvider=${chatModelProvider}`,
-        );
+        const wsURL = new URL(url);
+        const searchParams = new URLSearchParams({});
+
+        searchParams.append('chatModel', chatModel!);
+        searchParams.append('chatModelProvider', chatModelProvider);
+
+        if (chatModelProvider === 'custom_openai') {
+          searchParams.append(
+            'openAIApiKey',
+            localStorage.getItem('openAIApiKey')!,
+          );
+          searchParams.append(
+            'openAIBaseURL',
+            localStorage.getItem('openAIBaseURL')!,
+          );
+        }
+
+        searchParams.append('embeddingModel', embeddingModel!);
+        searchParams.append('embeddingModelProvider', embeddingModelProvider);
+
+        wsURL.search = searchParams.toString();
+
+        const ws = new WebSocket(wsURL.toString());
+
         ws.onopen = () => {
           console.log('[DEBUG] open');
           setWs(ws);
+        };
+
+        ws.onmessage = (e) => {
+          const parsedData = JSON.parse(e.data);
+          if (parsedData.type === 'error') {
+            toast.error(parsedData.data);
+            if (parsedData.key === 'INVALID_MODEL_SELECTED') {
+              localStorage.clear();
+            }
+          }
         };
       };
 
@@ -54,7 +119,6 @@ const useSocket = (url: string) => {
     }
 
     return () => {
-      1;
       ws?.close();
       console.log('[DEBUG] closed');
     };
@@ -101,6 +165,12 @@ const ChatWindow = () => {
 
     const messageHandler = (e: MessageEvent) => {
       const data = JSON.parse(e.data);
+
+      if (data.type === 'error') {
+        toast.error(data.data);
+        setLoading(false);
+        return;
+      }
 
       if (data.type === 'sources') {
         sources = data.data;

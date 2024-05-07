@@ -9,7 +9,7 @@ import {
 } from '../config';
 import logger from '../utils/logger';
 
-export const getAvailableProviders = async () => {
+export const getAvailableChatModelProviders = async () => {
   const openAIApiKey = getOpenaiApiKey();
   const groqApiKey = getGroqApiKey();
   const ollamaEndpoint = getOllamaApiEndpoint();
@@ -43,13 +43,6 @@ export const getAvailableProviders = async () => {
           },
           modelName: 'gpt-4-turbo',
           temperature: 0.7,
-        }),
-        embeddings: new OpenAIEmbeddings({
-          openAIApiKey,
-          configuration: {
-            baseURL: openaiEndpoint,
-          },
-          modelName: 'text-embedding-3-large',
         }),
       };
     } catch (err) {
@@ -100,10 +93,6 @@ export const getAvailableProviders = async () => {
             baseURL: 'https://api.groq.com/openai/v1',
           },
         ),
-        embeddings: new OpenAIEmbeddings({
-          openAIApiKey: openAIApiKey,
-          modelName: 'text-embedding-3-large',
-        }),
       };
     } catch (err) {
       logger.error(`Error loading Groq models: ${err}`);
@@ -112,7 +101,11 @@ export const getAvailableProviders = async () => {
 
   if (ollamaEndpoint) {
     try {
-      const response = await fetch(`${ollamaEndpoint}/api/tags`);
+      const response = await fetch(`${ollamaEndpoint}/api/tags`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       const { models: ollamaModels } = (await response.json()) as any;
 
@@ -124,15 +117,58 @@ export const getAvailableProviders = async () => {
         });
         return acc;
       }, {});
-
-      if (Object.keys(models['ollama']).length > 0) {
-        models['ollama']['embeddings'] = new OllamaEmbeddings({
-          baseUrl: ollamaEndpoint,
-          model: models['ollama'][Object.keys(models['ollama'])[0]].model,
-        });
-      }
     } catch (err) {
       logger.error(`Error loading Ollama models: ${err}`);
+    }
+  }
+
+  models['custom_openai'] = {};
+
+  return models;
+};
+
+export const getAvailableEmbeddingModelProviders = async () => {
+  const openAIApiKey = getOpenaiApiKey();
+  const ollamaEndpoint = getOllamaApiEndpoint();
+
+  const models = {};
+
+  if (openAIApiKey) {
+    try {
+      models['openai'] = {
+        'Text embedding 3 small': new OpenAIEmbeddings({
+          openAIApiKey,
+          modelName: 'text-embedding-3-small',
+        }),
+        'Text embedding 3 large': new OpenAIEmbeddings({
+          openAIApiKey,
+          modelName: 'text-embedding-3-large',
+        }),
+      };
+    } catch (err) {
+      logger.error(`Error loading OpenAI embeddings: ${err}`);
+    }
+  }
+
+  if (ollamaEndpoint) {
+    try {
+      const response = await fetch(`${ollamaEndpoint}/api/tags`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const { models: ollamaModels } = (await response.json()) as any;
+
+      models['ollama'] = ollamaModels.reduce((acc, model) => {
+        acc[model.model] = new OllamaEmbeddings({
+          baseUrl: ollamaEndpoint,
+          model: model.model,
+        });
+        return acc;
+      }, {});
+    } catch (err) {
+      logger.error(`Error loading Ollama embeddings: ${err}`);
     }
   }
 
