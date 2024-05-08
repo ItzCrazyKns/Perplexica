@@ -1,4 +1,4 @@
-FROM node:alpine
+FROM node:alpine as builder
 
 ARG NEXT_PUBLIC_WS_URL
 ARG NEXT_PUBLIC_API_URL
@@ -12,4 +12,6 @@ COPY ui /home/perplexica/
 RUN yarn install
 RUN yarn build
 
-CMD ["yarn", "start"]
+FROM nginx:stable-alpine-slim
+
+COPY --from=builder /home/perplexica/out /usr/share/nginx/html

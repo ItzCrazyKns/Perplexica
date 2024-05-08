@@ -31,7 +31,7 @@ services:
     depends_on:
       - perplexica-backend
     ports:
-      - 3000:3000
+      - 3000:80
     networks:
       - perplexica-network
 
