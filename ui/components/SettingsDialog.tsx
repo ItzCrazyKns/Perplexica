@@ -2,6 +2,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { CloudUpload, RefreshCcw, RefreshCw } from 'lucide-react';
 import React, { Fragment, useEffect, useState } from 'react';
 import { StyledInput } from './common/StyledInput';
+import { StyledSelect } from './common/StyledSelect';
 
 interface SettingsType {
   chatModelProviders: {
@@ -170,7 +171,7 @@ const SettingsDialog = ({
                         <p className="text-white/70 text-sm">
                           Chat model Provider
                         </p>
-                        <select
+                        <StyledSelect
                           value={selectedChatModelProvider ?? undefined}
                           onChange={(e) => {
                             setSelectedChatModelProvider(e.target.value);
@@ -178,29 +179,27 @@ const SettingsDialog = ({
                               config.chatModelProviders[e.target.value][0],
                             );
                           }}
-                          className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                         >
                           {Object.keys(config.chatModelProviders).map(
                             (provider) => (
-                              <option key={provider} value={provider}>
+                              <StyledSelect.Option key={provider} value={provider}>
                                 {provider.charAt(0).toUpperCase() +
                                   provider.slice(1)}
-                              </option>
+                              </StyledSelect.Option>
                             ),
                           )}
-                        </select>
+                        </StyledSelect>
                       </div>
                     )}
                     {selectedChatModelProvider &&
                       selectedChatModelProvider != 'custom_openai' && (
                         <div className="flex flex-col space-y-1">
                           <p className="text-white/70 text-sm">Chat Model</p>
-                          <select
+                          <StyledSelect
                             value={selectedChatModel ?? undefined}
                             onChange={(e) =>
                               setSelectedChatModel(e.target.value)
                             }
-                            className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                           >
                             {config.chatModelProviders[
                               selectedChatModelProvider
@@ -211,21 +210,21 @@ const SettingsDialog = ({
                                 config.chatModelProviders[
                                   selectedChatModelProvider
                                 ].map((model) => (
-                                  <option key={model} value={model}>
+                                  <StyledSelect.Option key={model} value={model}>
                                     {model}
-                                  </option>
+                                  </StyledSelect.Option>
                                 ))
                               ) : (
-                                <option value="" disabled>
+                                <StyledSelect.Option value="" disabled>
                                   No models available
-                                </option>
+                                </StyledSelect.Option>
                               )
                             ) : (
-                              <option value="" disabled>
+                              <StyledSelect.Option value="" disabled>
                                 Invalid provider, please check backend logs
-                              </option>
+                              </StyledSelect.Option>
                             )}
-                          </select>
+                          </StyledSelect>
                         </div>
                       )}
                     {selectedChatModelProvider &&
@@ -276,7 +275,7 @@ const SettingsDialog = ({
                         <p className="text-white/70 text-sm">
                           Embedding model Provider
                         </p>
-                        <select
+                        <StyledSelect
                           value={selectedEmbeddingModelProvider ?? undefined}
                           onChange={(e) => {
                             setSelectedEmbeddingModelProvider(e.target.value);
@@ -284,28 +283,26 @@ const SettingsDialog = ({
                               config.embeddingModelProviders[e.target.value][0],
                             );
                           }}
-                          className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                         >
                           {Object.keys(config.embeddingModelProviders).map(
                             (provider) => (
-                              <option key={provider} value={provider}>
+                              <StyledSelect.Option key={provider} value={provider}>
                                 {provider.charAt(0).toUpperCase() +
                                   provider.slice(1)}
-                              </option>
+                              </StyledSelect.Option>
                             ),
                           )}
-                        </select>
+                        </StyledSelect>
                       </div>
                     )}
                     {selectedEmbeddingModelProvider && (
                       <div className="flex flex-col space-y-1">
                         <p className="text-white/70 text-sm">Embedding Model</p>
-                        <select
+                        <StyledSelect
                           value={selectedEmbeddingModel ?? undefined}
                           onChange={(e) =>
                             setSelectedEmbeddingModel(e.target.value)
                           }
-                          className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                         >
                           {config.embeddingModelProviders[
                             selectedEmbeddingModelProvider
@@ -316,21 +313,21 @@ const SettingsDialog = ({
                               config.embeddingModelProviders[
                                 selectedEmbeddingModelProvider
                               ].map((model) => (
-                                <option key={model} value={model}>
+                                <StyledSelect.Option key={model} value={model}>
                                   {model}
-                                </option>
+                                </StyledSelect.Option>
                               ))
                             ) : (
-                              <option value="" disabled selected>
+                              <StyledSelect.Option value="" disabled selected>
                                 No embedding models available
-                              </option>
+                              </StyledSelect.Option>
                             )
                           ) : (
-                            <option value="" disabled selected>
+                            <StyledSelect.Option value="" disabled selected>
                               Invalid provider, please check backend logs
-                            </option>
+                            </StyledSelect.Option>
                           )}
-                        </select>
+                        </StyledSelect>
                       </div>
                     )}
                     <div className="flex flex-col space-y-1">
