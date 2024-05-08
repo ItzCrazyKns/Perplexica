@@ -4,6 +4,9 @@ WORKDIR /home/perplexica
 
 COPY ui /home/perplexica/
 
+# Specific Next.js output for standalone
+RUN echo "const nextConfig={output: 'standalone',images:{remotePatterns:[{hostname:'s2.googleusercontent.com'}]}};export default nextConfig;" > ./next.config.mjs
+
 RUN yarn install
 RUN yarn build
 
