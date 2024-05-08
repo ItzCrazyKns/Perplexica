@@ -1,6 +1,7 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { CloudUpload, RefreshCcw, RefreshCw } from 'lucide-react';
 import React, { Fragment, useEffect, useState } from 'react';
+import { StyledInput } from './common/StyledInput';
 
 interface SettingsType {
   chatModelProviders: {
@@ -232,42 +233,39 @@ const SettingsDialog = ({
                         <>
                           <div className="flex flex-col space-y-1">
                             <p className="text-white/70 text-sm">Model name</p>
-                            <input
+                            <StyledInput
                               type="text"
                               placeholder="Model name"
                               defaultValue={selectedChatModel!}
                               onChange={(e) =>
                                 setSelectedChatModel(e.target.value)
                               }
-                              className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                             />
                           </div>
                           <div className="flex flex-col space-y-1">
                             <p className="text-white/70 text-sm">
                               Custom OpenAI API Key
                             </p>
-                            <input
+                            <StyledInput
                               type="text"
                               placeholder="Custom OpenAI API Key"
                               defaultValue={customOpenAIApiKey!}
                               onChange={(e) =>
                                 setCustomOpenAIApiKey(e.target.value)
                               }
-                              className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                             />
                           </div>
                           <div className="flex flex-col space-y-1">
                             <p className="text-white/70 text-sm">
                               Custom OpenAI Base URL
                             </p>
-                            <input
+                            <StyledInput
                               type="text"
                               placeholder="Custom OpenAI Base URL"
                               defaultValue={customOpenAIBaseURL!}
                               onChange={(e) =>
                                 setCustomOpenAIBaseURL(e.target.value)
                               }
-                              className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                             />
                           </div>
                         </>
@@ -337,7 +335,7 @@ const SettingsDialog = ({
                     )}
                     <div className="flex flex-col space-y-1">
                       <p className="text-white/70 text-sm">OpenAI API Key</p>
-                      <input
+                      <StyledInput
                         type="text"
                         placeholder="OpenAI API Key"
                         defaultValue={config.openaiApiKey}
@@ -347,12 +345,11 @@ const SettingsDialog = ({
                             openaiApiKey: e.target.value,
                           })
                         }
-                        className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                       />
                     </div>
                     <div className="flex flex-col space-y-1">
                       <p className="text-white/70 text-sm">Ollama API URL</p>
-                      <input
+                      <StyledInput
                         type="text"
                         placeholder="Ollama API URL"
                         defaultValue={config.ollamaApiUrl}
@@ -362,12 +359,11 @@ const SettingsDialog = ({
                             ollamaApiUrl: e.target.value,
                           })
                         }
-                        className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                       />
                     </div>
                     <div className="flex flex-col space-y-1">
                       <p className="text-white/70 text-sm">GROQ API Key</p>
-                      <input
+                      <StyledInput
                         type="text"
                         placeholder="GROQ API Key"
                         defaultValue={config.groqApiKey}
@@ -377,7 +373,6 @@ const SettingsDialog = ({
                             groqApiKey: e.target.value,
                           })
                         }
-                        className="bg-[#111111] px-3 py-2 flex items-center overflow-hidden border border-[#1C1C1C] text-white rounded-lg text-sm"
                       />
                     </div>
                   </div>
