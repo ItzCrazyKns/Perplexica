@@ -4,9 +4,8 @@ import { cn } from '@/lib/utils';
 import { BookOpenText, Home, Search, SquarePen, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { useSelectedLayoutSegments } from 'next/navigation';
-import React, { Fragment, useState } from 'react';
+import React, { useState } from 'react';
 import Layout from './Layout';
-import { Dialog, Transition } from '@headlessui/react';
 import SettingsDialog from './SettingsDialog';
 
 const Sidebar = ({ children }: { children: React.ReactNode }) => {
