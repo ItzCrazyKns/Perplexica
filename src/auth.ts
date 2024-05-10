@@ -1,8 +1,8 @@
 import {
   getAccessKey,
-} from '../config';
+} from './config';
 
-const requireAccessKey = (req, res, next) => {
+export const requireAccessKey = (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (authHeader) {
@@ -11,6 +11,7 @@ const requireAccessKey = (req, res, next) => {
         if (token !== getAccessKey()) {
             return res.sendStatus(403);
         }
+
         next();
     } else {
         res.sendStatus(401);

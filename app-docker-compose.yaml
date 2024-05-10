@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: app.dockerfile
       args:
-        - SUPER_SECRET_KEY=${SUPER_SECRET_KEY}
+        - NEXT_PUBLIC_SUPER_SECRET_KEY=${SUPER_SECRET_KEY}
         - NEXT_PUBLIC_API_URL=http://${REMOTE_BACKEND_ADDRESS}/api
         - NEXT_PUBLIC_WS_URL=ws://${REMOTE_BACKEND_ADDRESS}
     expose:

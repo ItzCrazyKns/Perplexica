@@ -5,7 +5,8 @@ run:
 
 .PHONY: rebuild-run
 rebuild-run:
-	docker compose -f docker-compose.yaml up --build
+	docker compose -f docker-compose.yaml build --no-cache \
+	&& docker compose -f docker-compose.yaml up
 
 
 .PHONY: run-app-only
@@ -15,4 +16,5 @@ run-app-only:
 
 .PHONY: rebuild-run-app-only
 rebuild-run-app-only:
-	docker compose -f app-docker-compose.yaml up --build
+	docker compose -f app-docker-compose.yaml build --no-cache \
+	&& docker compose -f app-docker-compose.yaml up

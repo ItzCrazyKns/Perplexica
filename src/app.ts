@@ -14,19 +14,21 @@ const server = http.createServer(app);
 
 const corsOptions = {
   origin: '*',
+  allowedHeaders: ['Authorization', 'Content-Type'],
 };
 
 app.use(cors(corsOptions));
+
+if (getAccessKey()) {
+  app.all('*', requireAccessKey);
+};
+
 app.use(express.json());
 
 app.use('/api', routes);
 app.get('/api', (_, res) => {
   res.status(200).json({ status: 'ok' });
 });
-
-if (getAccessKey()) {
-  app.all('*', requireAccessKey);
-};
 
 server.listen(port, () => {
   logger.info(`Server is running on port ${port}`);
