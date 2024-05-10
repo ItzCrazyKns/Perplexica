@@ -15,7 +15,12 @@ services:
       context: .
       dockerfile: backend.dockerfile
       args:
-        - SEARXNG_API_URL=http://searxng:8080
+        - SEARXNG_API_URL=null
+    environment:
+      SEARXNG_API_URL: "http://searxng:8080"
+      OPENAI: ${OPENAI}
+      GROQ: ${GROQ}
+      OLLAMA_API_URL: ${OLLAMA_API_URL}
     depends_on:
       - searxng
     expose:
@@ -30,8 +35,9 @@ services:
       context: .
       dockerfile: app.dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
-        - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
+        - SUPER_SECRET_KEY=${SUPER_SECRET_KEY}
+        - NEXT_PUBLIC_API_URL=http://${REMOTE_BACKEND_ADDRESS}/api
+        - NEXT_PUBLIC_WS_URL=ws://${REMOTE_BACKEND_ADDRESS}
     depends_on:
       - perplexica-backend
     expose:

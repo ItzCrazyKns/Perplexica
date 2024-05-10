@@ -1,21 +1,14 @@
-# USAGE:
-# 0: Install `docker` and `terraform` (Process specific to your system)
-# 1: Copy the sample.env file to .env
-# 2: Fillout the GCP info in .env
-# 3: Edit GCP_REPO to the correct docker image repo path if you are using something other than Container registry
-# 4: Edit the PREFIX if you would like images and GKE entities to be prefixed with something else
-# 5: Run `make init` to initialize terraform
-# 6: Follow the normal Preplexica configuration steps outlined in the project readme
-# 7: Run `make build-deplpy` to build and push the project images to the repo, create a GKE cluster and deploy the app
-#
-# NOTES/ WARNINGS:
-# - The app endpoint is unsecured and exposed to the internet at large, you will need to implement your desired auth
-# - No auto scaling is enabled for this cluster and deployments, edit the terraform files accordingly for that
+# Adds all the deployment relevant sensitive information about project
 include .env
+
+# Adds secrets/ keys we have define for the project locally and deployment
+include ../../.env
 
 # Use `location-id-docker.pkg` for artifact registry Ex. west-1-docker.pkg
 GCP_REPO=gcr.io
 PREFIX=perplexica
+SEARCH_PORT=8080
+BACKEND_PORT=3001
 SEARCH_IMAGE_TAG=$(GCP_REPO)/$(GCP_PROJECT_ID)/$(PREFIX)-searxng:latest
 BACKEND_IMAGE_TAG=$(GCP_REPO)/$(GCP_PROJECT_ID)/$(PREFIX)-backend:latest
 APP_IMAGE_TAG=$(GCP_REPO)/$(GCP_PROJECT_ID)/$(PREFIX)-app:latest
@@ -38,8 +31,10 @@ show_config:
 	&& echo $(GCP_SERVICE_ACCOUNT_KEY_FILE) \
 	&& echo $(SEARCH_IMAGE_TAG) \
 	&& echo $(BACKEND_IMAGE_TAG) \
-	&& echo $(APP_IMAGE_TAG)
-
+	&& echo $(APP_IMAGE_TAG) \
+	&& echo $(SEARCH_PORT) \
+	&& echo $(BACKEND_PORT) \
+	&& echo $(OPENAI)
 
 .PHONY: docker-build-push-searxng
 docker-build-push-searxng:
@@ -49,14 +44,15 @@ docker-build-push-searxng:
 
 .PHONY: docker-build-push-backend
 docker-build-push-backend:
-	cd ../../ && docker build -f ./backed.dockerfile -t $(BACKEND_IMAGE_TAG) . --platform="linux/amd64"
+	cd ../../ && docker build -f ./backend.dockerfile -t $(BACKEND_IMAGE_TAG) . --platform="linux/amd64"
 	docker push $(BACKEND_IMAGE_TAG)
 
 
 .PHONY: docker-build-push-app
 docker-build-push-app:
-	cd ../../ && docker build -f ./app.dockerfile -t $(APP_IMAGE_TAG) . --platform="linux/amd64"
-	docker push $(APP_IMAGE_TAG)
+	#
+	# cd ../../ && docker build -f ./app.dockerfile -t $(APP_IMAGE_TAG) . --platform="linux/amd64"
+	# docker push $(APP_IMAGE_TAG)
 
 
 .PHONY: init
@@ -73,6 +69,9 @@ deploy:
 	&& export TF_VAR_search_image=$(SEARCH_IMAGE_TAG) \
 	&& export TF_VAR_backend_image=$(BACKEND_IMAGE_TAG) \
 	&& export TF_VAR_app_image=$(APP_IMAGE_TAG) \
+	&& export TF_VAR_search_port=$(SEARCH_PORT) \
+	&& export TF_VAR_backend_port=$(BACKEND_PORT) \
+	&& export TF_VAR_open_ai=$(OPENAI) \
 	&& terraform apply
 
 

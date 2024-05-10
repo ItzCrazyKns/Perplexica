@@ -35,6 +35,9 @@ provider "kubernetes" {
   )
 }
 
+##################################################################################################### 
+# SearXNG - Search engine deployment and service
+##################################################################################################### 
 resource "kubernetes_deployment" "searxng" {
   metadata {
     name = "searxng"
@@ -60,7 +63,7 @@ resource "kubernetes_deployment" "searxng" {
           image = var.search_image
           name = "searxng-container"
           port {
-            container_port = 8080
+            container_port = var.search_port
           }
         }
       }
@@ -80,14 +83,88 @@ resource "kubernetes_service" "searxng_service" {
     }
 
     port {
-      port        = 8080
-      target_port = 8080
+      port        = var.search_port
+      target_port = var.search_port
     }
 
     type = "LoadBalancer"
   }
 }
 
+##################################################################################################### 
+# Perplexica - backend deployment and service
+##################################################################################################### 
+resource "kubernetes_deployment" "backend" {
+  metadata {
+    name = "backend"
+    labels = {
+      app = "backend"
+    }
+  }
+  spec {
+    replicas = 1
+    selector {
+      match_labels = {
+        component = "backend"
+      }
+    }
+    template {
+      metadata {
+        labels = {
+          component = "backend"
+        }
+      }
+      spec {
+        container {
+          image = var.backend_image
+          name = "backend-container"
+          port {
+            container_port = var.backend_port
+          }
+        env {
+          # searxng service ip
+          name = "SEARXNG_API_URL"
+          value =  "http://${kubernetes_service.searxng_service.status[0].load_balancer[0].ingress[0].ip}:${var.search_port}" 
+        }
+        env {
+          # openai key
+          name = "OPENAI"
+          value = var.open_ai
+        }
+        env {
+          # port
+          name = "PORT"
+          value = var.backend_port 
+        }
+        }
+      }
+    }
+  }
+}
+
+resource "kubernetes_service" "backend_service" {
+  metadata {
+    name      = "backend-service"
+    namespace = "default"
+  }
+
+  spec {
+    selector = {
+      component = "backend"
+    }
+
+    port {
+      port        = var.backend_port
+      target_port = var.backend_port
+    }
+
+    type = "LoadBalancer"
+  }
+}
+
+##################################################################################################### 
+# Variable and module definitions
+##################################################################################################### 
 variable "project_id" {
   description = "The ID of the project in which the resources will be deployed."
   type        = string
@@ -113,7 +190,7 @@ variable "search_image" {
   type        = string
 }
 
-variable "backed_image" {
+variable "backend_image" {
   description = "Tag for the Perplexica backend image"
   type        = string
 }
@@ -121,6 +198,21 @@ variable "backed_image" {
 variable "app_image" {
   description = "Tag for the app image"
   type        = string
+}
+
+variable "open_ai" {
+  description = "OPENAI access key"
+  type        = string
+}
+
+variable "search_port" {
+  description = "Port for searxng service"
+  type        = number
+}
+
+variable "backend_port" {
+  description = "Port for backend service"
+  type        = number
 }
 
 module "gke-cluster" {

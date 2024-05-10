@@ -6,6 +6,7 @@ import Navbar from './Navbar';
 import Chat from './Chat';
 import EmptyChat from './EmptyChat';
 import { toast } from 'sonner';
+import { clientFetch } from '@/lib/utils';
 
 export type Message = {
   id: string;
@@ -34,8 +35,8 @@ const useSocket = (url: string) => {
           !embeddingModel ||
           !embeddingModelProvider
         ) {
-          const providers = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/models`,
+          const providers = await clientFetch(
+            '/models',
             {
               headers: {
                 'Content-Type': 'application/json',

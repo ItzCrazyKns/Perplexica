@@ -3,7 +3,8 @@ import express from 'express';
 import cors from 'cors';
 import http from 'http';
 import routes from './routes';
-import { getPort } from './config';
+import { requireAccessKey } from './auth';
+import { getAccessKey, getPort } from './config';
 import logger from './utils/logger';
 
 const port = getPort();
@@ -22,6 +23,10 @@ app.use('/api', routes);
 app.get('/api', (_, res) => {
   res.status(200).json({ status: 'ok' });
 });
+
+if (getAccessKey()) {
+  app.all('*', requireAccessKey);
+};
 
 server.listen(port, () => {
   logger.info(`Server is running on port ${port}`);
