@@ -136,6 +136,11 @@ resource "kubernetes_deployment" "backend" {
           name = "PORT"
           value = var.backend_port 
         }
+        env {
+          # Access key for backend
+          name = "SUPER_SECRET_KEY"
+          value = var.secret_key
+        }
         }
       }
     }
@@ -202,6 +207,11 @@ variable "app_image" {
 
 variable "open_ai" {
   description = "OPENAI access key"
+  type        = string
+}
+
+variable "secret_key" {
+  description = "Access key to secure backend endpoints"
   type        = string
 }
 

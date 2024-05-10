@@ -15,8 +15,8 @@ APP_IMAGE_TAG=$(GCP_REPO)/$(GCP_PROJECT_ID)/$(PREFIX)-app:latest
 CLUSTER_NAME=$(PREFIX)-cluster
 
 
-.PHONY: build-deplpy
-build-deplpy: docker-build-all deploy
+.PHONY: build-deploy
+build-deploy: docker-build-all deploy
 
 
 .PHONY: docker-build-all
@@ -34,7 +34,8 @@ show_config:
 	&& echo $(APP_IMAGE_TAG) \
 	&& echo $(SEARCH_PORT) \
 	&& echo $(BACKEND_PORT) \
-	&& echo $(OPENAI)
+	&& echo $(OPENAI) \
+	&& echo $(SUPER_SECRET_KEY)
 
 .PHONY: docker-build-push-searxng
 docker-build-push-searxng:
@@ -72,6 +73,7 @@ deploy:
 	&& export TF_VAR_search_port=$(SEARCH_PORT) \
 	&& export TF_VAR_backend_port=$(BACKEND_PORT) \
 	&& export TF_VAR_open_ai=$(OPENAI) \
+	&& export TF_VAR_secret_key=$(SUPER_SECRET_KEY) \
 	&& terraform apply
 
 

@@ -24,14 +24,14 @@ export const formatTimeDifference = (date1: Date, date2: Date): string => {
 export const clientFetch = async (path: string, payload: any): Promise<any> => {
   let headers = payload.headers;
   const url = `${getBackendURL()}${path}`;
-  const secret_token = getAccessKey();
+  const secretToken = getAccessKey();
 
-  if (secret_token) {
+  if (secretToken) {
     if (headers == null) {
       headers = {};
     };
 
-    headers['Authorization'] = `Bearer ${secret_token}`;
+    headers['Authorization'] = `Bearer ${secretToken}`;
     payload.headers = headers;
   };
 

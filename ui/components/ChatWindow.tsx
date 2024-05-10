@@ -7,6 +7,7 @@ import Chat from './Chat';
 import EmptyChat from './EmptyChat';
 import { toast } from 'sonner';
 import { clientFetch } from '@/lib/utils';
+import { getAccessKey } from '@/lib/config';
 
 export type Message = {
   id: string;
@@ -98,7 +99,14 @@ const useSocket = (url: string) => {
 
         wsURL.search = searchParams.toString();
 
-        const ws = new WebSocket(wsURL.toString());
+        let protocols: any[] = [];
+        const secretToken = getAccessKey();
+
+        if (secretToken) {
+          protocols = ["Authorization", `${secretToken}`];
+        };
+
+        const ws = new WebSocket(wsURL.toString(), protocols);
 
         ws.onopen = () => {
           console.log('[DEBUG] open');
