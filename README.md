@@ -79,6 +79,14 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
    docker compose up -d
    ```
 
+   If you are in China, you may need to modify `app.dockerfile` and `backend.dockerfile`, adding the following lines before the `RUN yarn install` command:
+
+   ```dockerfile
+    RUN yarn config set registry "https://registry.npmmirror.com/"
+    RUN yarn config set sharp_binary_host "https://npmmirror.com/mirrors/sharp"
+    RUN yarn config set sharp_libvips_binary_host "https://npmmirror.com/mirrors/sharp-libvips"
+    ```
+
 6. Wait a few minutes for the setup to complete. You can access Perplexica at http://localhost:3000 in your web browser.
 
 **Note**: After the containers are built, you can start Perplexica directly from Docker without having to open a terminal.
