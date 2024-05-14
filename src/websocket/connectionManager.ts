@@ -31,7 +31,7 @@ export const handleConnection = async (
           }),
         );
         ws.close();
-      };
+      }
     }
 
     const [chatModelProviders, embeddingModelProviders] = await Promise.all([

@@ -47,21 +47,18 @@ const Searchvideos = ({
             const chatModelProvider = localStorage.getItem('chatModelProvider');
             const chatModel = localStorage.getItem('chatModel');
 
-            const res = await clientFetch(
-              '/videos',
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  query: query,
-                  chat_history: chat_history,
-                  chat_model_provider: chatModelProvider,
-                  chat_model: chatModel,
-                }),
+            const res = await clientFetch('/videos', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
               },
-            );
+              body: JSON.stringify({
+                query: query,
+                chat_history: chat_history,
+                chat_model_provider: chatModelProvider,
+                chat_model: chatModel,
+              }),
+            });
 
             const data = await res.json();
 

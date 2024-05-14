@@ -17,7 +17,7 @@ services:
       args:
         - SEARXNG_API_URL=null
     environment:
-      SEARXNG_API_URL: "http://searxng:8080"
+      SEARXNG_API_URL: 'http://searxng:8080'
       SUPER_SECRET_KEY: ${SUPER_SECRET_KEY}
       OPENAI: ${OPENAI}
       GROQ: ${GROQ}

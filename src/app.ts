@@ -21,7 +21,7 @@ app.use(cors(corsOptions));
 
 if (getAccessKey()) {
   app.all('*', requireAccessKey);
-};
+}
 
 app.use(express.json());
 

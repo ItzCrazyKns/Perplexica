@@ -36,14 +36,11 @@ const useSocket = (url: string) => {
           !embeddingModel ||
           !embeddingModelProvider
         ) {
-          const providers = await clientFetch(
-            '/models',
-            {
-              headers: {
-                'Content-Type': 'application/json',
-              },
+          const providers = await clientFetch('/models', {
+            headers: {
+              'Content-Type': 'application/json',
             },
-          ).then(async (res) => await res.json());
+          }).then(async (res) => await res.json());
 
           const chatModelProviders = providers.chatModelProviders;
           const embeddingModelProviders = providers.embeddingModelProviders;
@@ -103,8 +100,8 @@ const useSocket = (url: string) => {
         const secretToken = getAccessKey();
 
         if (secretToken) {
-          protocols = ["Authorization", `${secretToken}`];
-        };
+          protocols = ['Authorization', `${secretToken}`];
+        }
 
         const ws = new WebSocket(wsURL.toString(), protocols);
 

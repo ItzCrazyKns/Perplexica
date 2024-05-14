@@ -1,6 +1,6 @@
 import clsx, { ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { getAccessKey, getBackendURL } from './config'
+import { getAccessKey, getBackendURL } from './config';
 
 export const cn = (...classes: ClassValue[]) => twMerge(clsx(...classes));
 
@@ -29,11 +29,11 @@ export const clientFetch = async (path: string, payload: any): Promise<any> => {
   if (secretToken) {
     if (headers == null) {
       headers = {};
-    };
+    }
 
     headers['Authorization'] = `Bearer ${secretToken}`;
     payload.headers = headers;
-  };
+  }
 
   return await fetch(url, payload);
 };
