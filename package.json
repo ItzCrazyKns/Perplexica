@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
+    "@langchain/google-vertexai": "^0.0.14",
     "@langchain/openai": "^0.0.25",
     "axios": "^1.6.8",
     "compute-cosine-similarity": "^1.1.0",
