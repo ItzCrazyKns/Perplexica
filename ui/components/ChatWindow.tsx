@@ -141,7 +141,11 @@ const ChatWindow = () => {
   const initialMessage = searchParams.get('q');
 
   const [isReady, setIsReady] = useState(false);
-  const ws = useSocket(process.env.NEXT_PUBLIC_WS_URL!, setIsReady);
+  const publicHostname = typeof window !== 'undefined' && window.location.hostname;
+  const publicPort = typeof window !== 'undefined' && window.location.port;
+  const publicUrl = `${publicHostname}${publicPort ? `:${publicPort}` : ''}`;
+  const webSocketUrl = process.env.NEXT_PUBLIC_WS_URL || `ws://${publicUrl}/ws`;
+  const ws = useSocket(webSocketUrl, setIsReady);
 
   const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
