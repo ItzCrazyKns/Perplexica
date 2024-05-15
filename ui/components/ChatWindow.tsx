@@ -144,7 +144,9 @@ const ChatWindow = () => {
   const publicHostname = typeof window !== 'undefined' && window.location.hostname;
   const publicPort = typeof window !== 'undefined' && window.location.port;
   const publicUrl = `${publicHostname}${publicPort ? `:${publicPort}` : ''}`;
-  const webSocketUrl = process.env.NEXT_PUBLIC_WS_URL || `ws://${publicUrl}/ws`;
+  const publicProtocol = typeof window !== 'undefined' && window.location.protocol;
+  const wsProtocol = publicProtocol === 'https:' ? 'wss:' : 'ws:';
+  const webSocketUrl = process.env.NEXT_PUBLIC_WS_URL || `${wsProtocol}://${publicUrl}/ws`;
   const ws = useSocket(webSocketUrl, setIsReady);
 
   const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
