@@ -1,5 +1,6 @@
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
+import { VertexAI } from "@langchain/google-vertexai";
 import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
 import { hasGCPCredentials } from '../auth';
 import {
