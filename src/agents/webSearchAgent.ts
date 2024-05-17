@@ -203,7 +203,6 @@ const createBasicWebSearchAnsweringChain = (
     ChatPromptTemplate.fromMessages([
       ['system', basicWebSearchResponsePrompt],
       new MessagesPlaceholder('chat_history'),
-      ['user', '{query}'],
     ]),
     llm,
     strParser,

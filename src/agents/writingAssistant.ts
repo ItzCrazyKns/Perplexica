@@ -46,7 +46,6 @@ const createWritingAssistantChain = (llm: BaseChatModel) => {
     ChatPromptTemplate.fromMessages([
       ['system', writingAssistantPrompt],
       new MessagesPlaceholder('chat_history'),
-      ['user', '{query}'],
     ]),
     llm,
     strParser,

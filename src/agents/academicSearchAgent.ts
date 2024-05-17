@@ -209,7 +209,6 @@ const createBasicAcademicSearchAnsweringChain = (
     ChatPromptTemplate.fromMessages([
       ['system', basicAcademicSearchResponsePrompt],
       new MessagesPlaceholder('chat_history'),
-      ['user', '{query}'],
     ]),
     llm,
     strParser,

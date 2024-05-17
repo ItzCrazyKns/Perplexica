@@ -205,7 +205,6 @@ const createBasicRedditSearchAnsweringChain = (
     ChatPromptTemplate.fromMessages([
       ['system', basicRedditSearchResponsePrompt],
       new MessagesPlaceholder('chat_history'),
-      ['user', '{query}'],
     ]),
     llm,
     strParser,
