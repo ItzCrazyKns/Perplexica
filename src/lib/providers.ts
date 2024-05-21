@@ -2,6 +2,7 @@ import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import { VertexAI } from "@langchain/google-vertexai";
 import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
+import { HuggingFaceTransformersEmbeddings } from './huggingfaceTransformer';
 import { hasGCPCredentials } from '../auth';
 import {
   getGroqApiKey,
@@ -33,6 +34,11 @@ export const getAvailableChatModelProviders = async () => {
         'GPT-4 turbo': new ChatOpenAI({
           openAIApiKey,
           modelName: 'gpt-4-turbo',
+          temperature: 0.7,
+        }),
+        'GPT-4 omni': new ChatOpenAI({
+          openAIApiKey,
+          modelName: 'gpt-4o',
           temperature: 0.7,
         }),
       };
@@ -178,6 +184,22 @@ export const getAvailableEmbeddingModelProviders = async () => {
     } catch (err) {
       logger.error(`Error loading Ollama embeddings: ${err}`);
     }
+  }
+
+  try {
+    models['local'] = {
+      'BGE Small': new HuggingFaceTransformersEmbeddings({
+        modelName: 'Xenova/bge-small-en-v1.5',
+      }),
+      'GTE Small': new HuggingFaceTransformersEmbeddings({
+        modelName: 'Xenova/gte-small',
+      }),
+      'Bert Multilingual': new HuggingFaceTransformersEmbeddings({
+        modelName: 'Xenova/bert-base-multilingual-uncased',
+      }),
+    };
+  } catch (err) {
+    logger.error(`Error loading local embeddings: ${err}`);
   }
 
   return models;

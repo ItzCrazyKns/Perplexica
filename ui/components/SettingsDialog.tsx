@@ -90,7 +90,7 @@ const SettingsDialog = ({
         setSelectedEmbeddingModelProvider(embeddingModelProvider);
         setSelectedEmbeddingModel(embeddingModel);
         setCustomOpenAIApiKey(localStorage.getItem('openAIApiKey') || '');
-        setCustomOpenAIBaseURL(localStorage.getItem('openAIBaseUrl') || '');
+        setCustomOpenAIBaseURL(localStorage.getItem('openAIBaseURL') || '');
         setIsLoading(false);
       };
 
