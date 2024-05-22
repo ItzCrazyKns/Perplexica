@@ -39,7 +39,7 @@ show_config:
 
 .PHONY: docker-build-push-searxng
 docker-build-push-searxng:
-	cd ../../ && docker build -f ./searxng.dockerfile -t $(SEARCH_IMAGE_TAG) . --platform="linux/amd64"
+	cd ../../ && docker build -f ./deploy/gcp/searxng.dockerfile -t $(SEARCH_IMAGE_TAG) . --platform="linux/amd64"
 	docker push $(SEARCH_IMAGE_TAG)
 
 
