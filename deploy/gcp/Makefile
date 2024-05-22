@@ -80,3 +80,13 @@ deploy:
 .PHONY: teardown
 teardown:
 	terraform destroy
+
+
+.PHONY: auth-kubectl
+auth-kubectl:
+	gcloud container clusters get-credentials $(CLUSTER_NAME) --region=$(GCP_REGION)
+
+
+.PHONY: rollout-new-version-backend
+rollout-new-version-backend: auth-kubectl
+	kubectl rollout restart deploy backend

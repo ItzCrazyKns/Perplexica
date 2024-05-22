@@ -87,7 +87,7 @@ resource "kubernetes_service" "searxng_service" {
       target_port = var.search_port
     }
 
-    type = "LoadBalancer"
+    type = "ClusterIP"
   }
 }
 
