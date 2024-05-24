@@ -1,14 +1,11 @@
-import { WebSocket } from 'ws';
-import { handleMessage } from './messageHandler';
-import {
-  getAvailableEmbeddingModelProviders,
-  getAvailableChatModelProviders,
-} from '../lib/providers';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import type { Embeddings } from '@langchain/core/embeddings';
-import type { IncomingMessage } from 'http';
+import {WebSocket} from 'ws';
+import {handleMessage} from './messageHandler';
+import {getAvailableChatModelProviders, getAvailableEmbeddingModelProviders,} from '../lib/providers';
+import {BaseChatModel} from '@langchain/core/language_models/chat_models';
+import type {Embeddings} from '@langchain/core/embeddings';
+import type {IncomingMessage} from 'http';
 import logger from '../utils/logger';
-import { ChatOpenAI } from '@langchain/openai';
+import {ChatOpenAI} from '@langchain/openai';
 
 export const handleConnection = async (
   ws: WebSocket,
@@ -49,7 +46,7 @@ export const handleConnection = async (
         | BaseChatModel
         | undefined;
     } else if (chatModelProvider == 'custom_openai') {
-      llm = new ChatOpenAI({
+      (llm as unknown as ChatOpenAI) = new ChatOpenAI({
         modelName: chatModel,
         openAIApiKey: searchParams.get('openAIApiKey'),
         temperature: 0.7,

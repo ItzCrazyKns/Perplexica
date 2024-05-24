@@ -1,8 +1,8 @@
 import express from 'express';
 import generateSuggestions from '../agents/suggestionGeneratorAgent';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { getAvailableChatModelProviders } from '../lib/providers';
-import { HumanMessage, AIMessage } from '@langchain/core/messages';
+import {BaseChatModel} from '@langchain/core/language_models/chat_models';
+import {getAvailableChatModelProviders} from '../lib/providers';
+import {AIMessage, HumanMessage} from '@langchain/core/messages';
 import logger from '../utils/logger';
 
 const router = express.Router();
@@ -34,6 +34,7 @@ router.post('/', async (req, res) => {
       return;
     }
 
+    // @ts-ignore
     const suggestions = await generateSuggestions({ chat_history }, llm);
 
     res.status(200).json({ suggestions: suggestions });

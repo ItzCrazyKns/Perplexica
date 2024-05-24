@@ -1,16 +1,8 @@
-import {
-  BadgePercent,
-  ChevronDown,
-  CopyPlus,
-  Globe,
-  Pencil,
-  ScanEye,
-  SwatchBook,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Popover, Switch, Transition } from '@headlessui/react';
-import { SiReddit, SiYoutube } from '@icons-pack/react-simple-icons';
-import { Fragment } from 'react';
+import {BadgePercent, ChevronDown, CopyPlus, Globe, Pencil, ScanEye, SwatchBook,} from 'lucide-react';
+import {cn} from '@/lib/utils';
+import {Popover, Switch, Transition} from '@headlessui/react';
+import {SiReddit, SiYoutube} from '@icons-pack/react-simple-icons';
+import {Fragment} from 'react';
 
 export const Attach = () => {
   return (
@@ -54,9 +46,9 @@ const focusModes = [
     description: 'Search and watch videos',
     icon: (
       <SiYoutube
-        className="h-5 w-auto mr-0.5"
-        onPointerEnterCapture={undefined}
-        onPointerLeaveCapture={undefined}
+          className="h-5 w-auto mr-0.5"
+          onPointerEnter={undefined}
+          onPointerLeave={undefined}
       />
     ),
   },
@@ -66,9 +58,9 @@ const focusModes = [
     description: 'Search for discussions and opinions',
     icon: (
       <SiReddit
-        className="h-5 w-auto mr-0.5"
-        onPointerEnterCapture={undefined}
-        onPointerLeaveCapture={undefined}
+          className="h-5 w-auto mr-0.5"
+          onPointerEnter={undefined}
+          onPointerLeave={undefined}
       />
     ),
   },
