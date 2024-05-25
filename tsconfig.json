@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
-    "lib": ["ESNext"],
+    "lib": [
+      "ESNext"
+    ],
     "module": "Node16",
     "moduleResolution": "Node16",
     "target": "ESNext",
@@ -13,6 +15,11 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true
   },
-  "include": ["src"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts"
+  ]
 }

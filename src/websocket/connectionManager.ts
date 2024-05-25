@@ -1,11 +1,14 @@
-import {WebSocket} from 'ws';
-import {handleMessage} from './messageHandler';
-import {getAvailableChatModelProviders, getAvailableEmbeddingModelProviders,} from '../lib/providers';
-import {BaseChatModel} from '@langchain/core/language_models/chat_models';
-import type {Embeddings} from '@langchain/core/embeddings';
-import type {IncomingMessage} from 'http';
+import { WebSocket } from 'ws';
+import { handleMessage } from './messageHandler';
+import {
+  getAvailableChatModelProviders,
+  getAvailableEmbeddingModelProviders,
+} from '../lib/providers';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import type { Embeddings } from '@langchain/core/embeddings';
+import type { IncomingMessage } from 'http';
 import logger from '../utils/logger';
-import {ChatOpenAI} from '@langchain/openai';
+import { ChatOpenAI } from '@langchain/openai';
 
 export const handleConnection = async (
   ws: WebSocket,

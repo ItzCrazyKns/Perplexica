@@ -1,7 +1,7 @@
 import express from 'express';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { getAvailableChatModelProviders } from '../lib/providers';
-import { HumanMessage, AIMessage } from '@langchain/core/messages';
+import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import logger from '../utils/logger';
 import handleVideoSearch from '../agents/videoSearchAgent';
 

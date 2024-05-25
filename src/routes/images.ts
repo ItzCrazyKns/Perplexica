@@ -2,7 +2,7 @@ import express from 'express';
 import handleImageSearch from '../agents/imageSearchAgent';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { getAvailableChatModelProviders } from '../lib/providers';
-import { HumanMessage, AIMessage } from '@langchain/core/messages';
+import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import logger from '../utils/logger';
 
 const router = express.Router();

@@ -1,5 +1,5 @@
 import { EventEmitter, WebSocket } from 'ws';
-import { BaseMessage, AIMessage, HumanMessage } from '@langchain/core/messages';
+import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 import handleWebSearch from '../agents/webSearchAgent';
 import handleAcademicSearch from '../agents/academicSearchAgent';
 import handleWritingAssistant from '../agents/writingAssistant';
