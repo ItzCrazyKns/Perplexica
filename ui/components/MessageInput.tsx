@@ -11,7 +11,7 @@ const MessageInput = ({
   sendMessage: (message: string) => void;
   loading: boolean;
 }) => {
-  const [copilotEnabled, setCopilotEnabled] = useState(false);
+  const [copilotToggled, setCopilotToggled] = useState(false);
   const [message, setMessage] = useState('');
   const [textareaRows, setTextareaRows] = useState(1);
   const [mode, setMode] = useState<'multi' | 'single'>('single');
@@ -57,8 +57,8 @@ const MessageInput = ({
       {mode === 'single' && (
         <div className="flex flex-row items-center space-x-4">
           <CopilotToggle
-            copilotEnabled={copilotEnabled}
-            setCopilotEnabled={setCopilotEnabled}
+            copilotToggled={copilotToggled}
+            setCopilotToggled={setCopilotToggled}
           />
           <button
             disabled={message.trim().length === 0 || loading}
@@ -73,8 +73,8 @@ const MessageInput = ({
           <Attach />
           <div className="flex flex-row items-center space-x-4">
             <CopilotToggle
-              copilotEnabled={copilotEnabled}
-              setCopilotEnabled={setCopilotEnabled}
+              copilotToggled={copilotToggled}
+              setCopilotToggled={setCopilotToggled}
             />
             <button
               disabled={message.trim().length === 0 || loading}

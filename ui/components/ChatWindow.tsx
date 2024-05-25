@@ -7,7 +7,7 @@ import Chat from './Chat';
 import EmptyChat from './EmptyChat';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
-import { getSuggestions } from '@/lib/actions';
+import { getConfig, getSuggestions } from '@/lib/actions';
 
 export type Message = {
   id: string;
@@ -155,6 +155,15 @@ const ChatWindow = () => {
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      const config = await getConfig();
+      localStorage.setItem('copilotEnabled', config.copilotEnabled.toString());
+    };
+
+    fetchConfig();
+  });
 
   const sendMessage = async (message: string) => {
     if (loading) return;

@@ -12,8 +12,9 @@ const EmptyChatMessageInput = ({
   focusMode: string;
   setFocusMode: (mode: string) => void;
 }) => {
-  const [copilotEnabled, setCopilotEnabled] = useState(false);
+  const [copilotToggled, setCopilotToggled] = useState(false);
   const [message, setMessage] = useState('');
+  const copilotEnabled = localStorage.getItem('copilotEnabled') === 'true';
 
   return (
     <form
@@ -45,10 +46,12 @@ const EmptyChatMessageInput = ({
             {/* <Attach /> */}
           </div>
           <div className="flex flex-row items-center space-x-4 -mx-2">
-            <CopilotToggle
-              copilotEnabled={copilotEnabled}
-              setCopilotEnabled={setCopilotEnabled}
-            />
+            {copilotEnabled && (
+              <CopilotToggle
+                copilotToggled={copilotToggled}
+                setCopilotToggled={setCopilotToggled}
+              />
+            )}
             <button
               disabled={message.trim().length === 0}
               className="bg-[#24A0ED] text-white disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#ececec21] rounded-full p-2"

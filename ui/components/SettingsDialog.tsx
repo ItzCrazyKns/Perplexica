@@ -1,18 +1,8 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { CloudUpload, RefreshCcw, RefreshCw } from 'lucide-react';
 import React, { Fragment, useEffect, useState } from 'react';
-
-interface SettingsType {
-  chatModelProviders: {
-    [key: string]: string[];
-  };
-  embeddingModelProviders: {
-    [key: string]: string[];
-  };
-  openaiApiKey: string;
-  groqApiKey: string;
-  ollamaApiUrl: string;
-}
+import { Settings } from '@/types/Settings';
+import { getConfig } from '@/lib/actions';
 
 const SettingsDialog = ({
   isOpen,
@@ -21,7 +11,7 @@ const SettingsDialog = ({
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }) => {
-  const [config, setConfig] = useState<SettingsType | null>(null);
+  const [config, setConfig] = useState<Settings | null>(null);
   const [selectedChatModelProvider, setSelectedChatModelProvider] = useState<
     string | null
   >(null);
@@ -42,13 +32,7 @@ const SettingsDialog = ({
     if (isOpen) {
       const fetchConfig = async () => {
         setIsLoading(true);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        const data = (await res.json()) as SettingsType;
+        const data = await getConfig();
         setConfig(data);
 
         const chatModelProvidersKeys = Object.keys(
@@ -66,30 +50,28 @@ const SettingsDialog = ({
             : '';
 
         const chatModelProvider =
-          localStorage.getItem('chatModelProvider') ||
-          defaultChatModelProvider ||
+          (localStorage.getItem('chatModelProvider') ??
+            defaultChatModelProvider) ||
           '';
         const chatModel =
-          localStorage.getItem('chatModel') ||
-          (data.chatModelProviders &&
-            data.chatModelProviders[chatModelProvider]?.[0]) ||
+          (localStorage.getItem('chatModel') ??
+            data.chatModelProviders?.[chatModelProvider]?.[0]) ||
           '';
         const embeddingModelProvider =
-          localStorage.getItem('embeddingModelProvider') ||
-          defaultEmbeddingModelProvider ||
+          (localStorage.getItem('embeddingModelProvider') ??
+            defaultEmbeddingModelProvider) ||
           '';
         const embeddingModel =
-          localStorage.getItem('embeddingModel') ||
-          (data.embeddingModelProviders &&
-            data.embeddingModelProviders[embeddingModelProvider]?.[0]) ||
+          (localStorage.getItem('embeddingModel') ??
+            data.embeddingModelProviders?.[embeddingModelProvider]?.[0]) ||
           '';
 
         setSelectedChatModelProvider(chatModelProvider);
         setSelectedChatModel(chatModel);
         setSelectedEmbeddingModelProvider(embeddingModelProvider);
         setSelectedEmbeddingModel(embeddingModel);
-        setCustomOpenAIApiKey(localStorage.getItem('openAIApiKey') || '');
-        setCustomOpenAIBaseURL(localStorage.getItem('openAIBaseURL') || '');
+        setCustomOpenAIApiKey(localStorage.getItem('openAIApiKey') ?? '');
+        setCustomOpenAIBaseURL(localStorage.getItem('openAIBaseURL') ?? '');
         setIsLoading(false);
       };
 
