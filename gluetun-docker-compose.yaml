@@ -1,0 +1,66 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    volumes:
+      - /home/user/Perplexica/gluetun:/gluetun  # in gluetun folder have servers.json
+    environment:
+      - VPN_SERVICE_PROVIDER=vpnprovidername
+      - OPENVPN_USER=
+      - OPENVPN_PASSWORD=
+      - SERVER_COUNTRIES=United States
+      - SERVER_HOSTNAMES=
+      - TZ=America/Phoenix
+      - BLOCK_MALICIOUS=on 
+      - BLOCK_SURVEILLANCE=on 
+      - BLOCK_ADS=on
+      - DOT=on
+      - FIREWALL_OUTBOUND_SUBNETS=192.168.1.0/24
+    networks:
+      - perplexica-network
+    ports:
+      - 3001:3001
+      - 3000:3000
+      - 4000:8080
+    restart: unless-stopped
+
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    network_mode: 'service:gluetun'
+    depends_on:
+      - gluetun
+    restart: unless-stopped
+
+  perplexica-backend:
+    build:
+      context: .
+      dockerfile: backend.dockerfile
+      args:
+        - SEARXNG_API_URL=http://localhost:8080  # localhost is important as it's in gluetun's network for DNS
+    depends_on:
+      - gluetun
+      - searxng
+    network_mode: 'service:gluetun'
+    restart: unless-stopped
+
+  perplexica-frontend:
+    build:
+      context: .
+      dockerfile: app.dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:3001/api  # if running on server and accessing from another machine add host ip of server, 192.168.x.x
+        - NEXT_PUBLIC_WS_URL=ws://localhost:3001  # # if running on server and accessing from another machine add host ip of server
+    depends_on:
+      - gluetun
+      - perplexica-backend
+    network_mode: 'service:gluetun'
+    restart: unless-stopped
+
+networks:
+  perplexica-network:
