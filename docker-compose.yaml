@@ -3,7 +3,6 @@ services:
     image: docker.io/searxng/searxng:latest
     volumes:
       - ./searxng:/etc/searxng:rw
-    restart: always
     ports:
       - 4000:8080
     networks:
@@ -16,7 +15,6 @@ services:
       dockerfile: backend.dockerfile
       args:
         - SEARXNG_API_URL=null
-    restart: always
     volumes:
       - "/Volumes/keys/headllamp/keys/:/var/keys/"
       - "${GOOGLE_APPLICATION_CREDENTIALS}:/var/keys/gcp_service_account.json"
@@ -27,6 +25,7 @@ services:
       GROQ: ${GROQ}
       OLLAMA_API_URL: ${OLLAMA_API_URL}
       GOOGLE_APPLICATION_CREDENTIALS: /var/keys/gcp_service_account.json
+      USE_JWT: ${USE_JWT}
     depends_on:
       - searxng
     ports:
