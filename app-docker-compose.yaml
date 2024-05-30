@@ -5,8 +5,8 @@ services:
       dockerfile: app.dockerfile
       args:
         - NEXT_PUBLIC_SUPER_SECRET_KEY=${SUPER_SECRET_KEY}
-        - NEXT_PUBLIC_API_URL=http://${REMOTE_BACKEND_ADDRESS}/api
-        - NEXT_PUBLIC_WS_URL=ws://${REMOTE_BACKEND_ADDRESS}
+        - NEXT_PUBLIC_API_URL=https://${REMOTE_BACKEND_ADDRESS}/api
+        - NEXT_PUBLIC_WS_URL=wss://${REMOTE_BACKEND_ADDRESS}
     expose:
       - 3000
     ports:

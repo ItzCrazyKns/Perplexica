@@ -75,6 +75,9 @@ resource "kubernetes_service" "searxng_service" {
   metadata {
     name      = "searxng-service"
     namespace = "default"
+    annotations = {
+      "networking.gke.io/load-balancer-type" = "Internal" # Remove to create an external loadbalancer
+    }
   }
 
   spec {
@@ -87,7 +90,7 @@ resource "kubernetes_service" "searxng_service" {
       target_port = var.search_port
     }
 
-    type = "ClusterIP"
+    type = "LoadBalancer"
   }
 }
 

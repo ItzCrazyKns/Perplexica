@@ -20,10 +20,14 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 if (getAccessKey()) {
-  app.all('*', requireAccessKey);
+  app.all('/api/*', requireAccessKey);
 }
 
 app.use(express.json());
+
+app.get('/', (_, res) => {
+  res.status(200).json({ status: 'ok' });
+});
 
 app.use('/api', routes);
 app.get('/api', (_, res) => {

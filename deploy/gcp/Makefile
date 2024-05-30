@@ -79,7 +79,18 @@ deploy:
 
 .PHONY: teardown
 teardown:
-	terraform destroy
+	export TF_VAR_project_id=$(GCP_PROJECT_ID) \
+	&& export TF_VAR_cluster_name=$(CLUSTER_NAME) \
+	&& export TF_VAR_region=$(GCP_REGION) \
+	&& export TF_VAR_key_file=$(GCP_SERVICE_ACCOUNT_KEY_FILE) \
+	&& export TF_VAR_search_image=$(SEARCH_IMAGE_TAG) \
+	&& export TF_VAR_backend_image=$(BACKEND_IMAGE_TAG) \
+	&& export TF_VAR_app_image=$(APP_IMAGE_TAG) \
+	&& export TF_VAR_search_port=$(SEARCH_PORT) \
+	&& export TF_VAR_backend_port=$(BACKEND_PORT) \
+	&& export TF_VAR_open_ai=$(OPENAI) \
+	&& export TF_VAR_secret_key=$(SUPER_SECRET_KEY) \
+	&& terraform destroy
 
 
 .PHONY: auth-kubectl
