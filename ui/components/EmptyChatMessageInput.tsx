@@ -23,7 +23,7 @@ const EmptyChatMessageInput = ({
         setMessage('');
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === 'Enter' && !e.shiftKey && e.keyCode != 229) {
           e.preventDefault();
           sendMessage(message);
           setMessage('');
