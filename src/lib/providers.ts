@@ -1,7 +1,10 @@
 import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
+import { VertexAI } from "@langchain/google-vertexai";
+import { GoogleVertexAIEmbeddings } from "@langchain/community/embeddings/googlevertexai";
 import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
 import { HuggingFaceTransformersEmbeddings } from './huggingfaceTransformer';
+import { hasGCPCredentials } from '../auth';
 import {
   getGroqApiKey,
   getOllamaApiEndpoint,
@@ -117,6 +120,23 @@ export const getAvailableChatModelProviders = async () => {
     }
   }
 
+  if (await hasGCPCredentials()) {
+    try {
+      models['vertexai'] = {
+        'gemini-1.5-pro (preview-0409)': new VertexAI({
+          temperature: 0.7,
+          modelName: 'gemini-1.5-pro-preview-0409',
+        }),
+        'gemini-1.0-pro (Latest)': new VertexAI({
+          temperature: 0.7,
+          modelName: 'gemini-1.0-pro',
+        }),
+      };
+    } catch (err) {
+      logger.error(`Error loading VertexAI models: ${err}`);
+    }
+  }
+
   models['custom_openai'] = {};
 
   return models;
@@ -164,6 +184,16 @@ export const getAvailableEmbeddingModelProviders = async () => {
       }, {});
     } catch (err) {
       logger.error(`Error loading Ollama embeddings: ${err}`);
+    }
+  }
+
+  if (await hasGCPCredentials()) {
+    try {
+      models['vertexai'] = {
+        'Text Gecko default': new GoogleVertexAIEmbeddings(),
+      }
+    } catch (err) {
+      logger.error(`Error loading VertexAI embeddings: ${err}`);
     }
   }
 

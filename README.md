@@ -118,6 +118,27 @@ If you wish to use Perplexica as an alternative to traditional search engines li
 
 [![Deploy to RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/?app_id=267)
 
+## Deploy Perplexica backend to Google GKE
+
+0: Install `docker` and `terraform` (Process specific to your system)
+1a: Copy the `sample.env` file to `.env`
+1b: Copy the `deploy/gcp/sample.env` file to `deploy/gcp/.env`
+2a: Fillout desired LLM provider access keys etc. in `.env`
+
+- Note: you will have to comeback and edit this file again once you have the address of the K8s backend deploy
+  2b: Fillout the GCP info in `deploy/gcp/.env`
+  3: Edit `GCP_REPO` to the correct docker image repo path if you are using something other than Container registry
+  4: Edit the `PREFIX` if you would like images and GKE entities to be prefixed with something else
+  5: In `deploy/gcp` run `make init` to initialize terraform
+  6: Follow the normal Preplexica configuration steps outlined in the project readme
+  7: Auth docker with the appropriate credential for repo Ex. for `gcr.io` -> `gcloud auth configure-docker`
+  8: In `deploy/gcp` run `make build-deplpy` to build and push the project images to the repo, create a GKE cluster and deploy the app
+  9: Once deployed successfully edit the `.env` file in the root project folder and update the `REMOTE_BACKEND_ADDRESS` with the remote k8s deployment address and port
+  10: In root project folder run `make rebuild-run-app-only`
+
+If you configured everything correctly frontend app will run locally and provide you with a local url to open it.
+Now you can run queries against the remotely deployed backend from your local machine. :celebrate:
+
 ## Upcoming Features
 
 - [ ] Finalizing Copilot Mode

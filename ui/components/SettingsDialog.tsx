@@ -1,6 +1,7 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { CloudUpload, RefreshCcw, RefreshCw } from 'lucide-react';
 import React, { Fragment, useEffect, useState } from 'react';
+import { clientFetch } from '@/lib/utils';
 
 interface SettingsType {
   chatModelProviders: {
@@ -42,7 +43,7 @@ const SettingsDialog = ({
     if (isOpen) {
       const fetchConfig = async () => {
         setIsLoading(true);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
+        const res = await clientFetch('/config', {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -102,7 +103,7 @@ const SettingsDialog = ({
     setIsUpdating(true);
 
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
+      await clientFetch('/config', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -8,6 +8,8 @@ import EmptyChat from './EmptyChat';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import { getSuggestions } from '@/lib/actions';
+import { clientFetch } from '@/lib/utils';
+import { getAccessKey } from '@/lib/config';
 
 export type Message = {
   id: string;
@@ -37,14 +39,11 @@ const useSocket = (url: string, setIsReady: (ready: boolean) => void) => {
           !embeddingModel ||
           !embeddingModelProvider
         ) {
-          const providers = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/models`,
-            {
-              headers: {
-                'Content-Type': 'application/json',
-              },
+          const providers = await clientFetch('/models', {
+            headers: {
+              'Content-Type': 'application/json',
             },
-          ).then(async (res) => await res.json());
+          }).then(async (res) => await res.json());
 
           const chatModelProviders = providers.chatModelProviders;
           const embeddingModelProviders = providers.embeddingModelProviders;
@@ -100,7 +99,14 @@ const useSocket = (url: string, setIsReady: (ready: boolean) => void) => {
 
         wsURL.search = searchParams.toString();
 
-        const ws = new WebSocket(wsURL.toString());
+        let protocols: any[] = [];
+        const secretToken = getAccessKey();
+
+        if (secretToken) {
+          protocols = ['Authorization', `${secretToken}`];
+        }
+
+        const ws = new WebSocket(wsURL.toString(), protocols);
 
         ws.onopen = () => {
           console.log('[DEBUG] open');

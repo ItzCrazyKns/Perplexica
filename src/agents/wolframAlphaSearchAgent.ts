@@ -165,7 +165,6 @@ const createBasicWolframAlphaSearchAnsweringChain = (llm: BaseChatModel) => {
     ChatPromptTemplate.fromMessages([
       ['system', basicWolframAlphaSearchResponsePrompt],
       new MessagesPlaceholder('chat_history'),
-      ['user', '{query}'],
     ]),
     llm,
     strParser,

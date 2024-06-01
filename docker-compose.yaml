@@ -7,25 +7,39 @@ services:
       - 4000:8080
     networks:
       - perplexica-network
+    restart: unless-stopped
 
   perplexica-backend:
     build:
       context: .
       dockerfile: backend.dockerfile
       args:
-        - SEARXNG_API_URL=http://searxng:8080
+        - SEARXNG_API_URL=null
+    volumes:
+      - "/Volumes/keys/headllamp/keys/:/var/keys/"
+      - "${GOOGLE_APPLICATION_CREDENTIALS}:/var/keys/gcp_service_account.json"
+    environment:
+      SEARXNG_API_URL: 'http://searxng:8080'
+      SUPER_SECRET_KEY: ${SUPER_SECRET_KEY}
+      OPENAI: ${OPENAI}
+      GROQ: ${GROQ}
+      OLLAMA_API_URL: ${OLLAMA_API_URL}
+      GOOGLE_APPLICATION_CREDENTIALS: /var/keys/gcp_service_account.json
+      USE_JWT: ${USE_JWT}
     depends_on:
       - searxng
     ports:
       - 3001:3001
     networks:
       - perplexica-network
+    restart: unless-stopped
 
   perplexica-frontend:
     build:
       context: .
       dockerfile: app.dockerfile
       args:
+        - NEXT_PUBLIC_SUPER_SECRET_KEY=${SUPER_SECRET_KEY}
         - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
         - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
     depends_on:
@@ -34,6 +48,7 @@ services:
       - 3000:3000
     networks:
       - perplexica-network
+    restart: unless-stopped
 
 networks:
   perplexica-network:

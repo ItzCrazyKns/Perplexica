@@ -205,7 +205,6 @@ const createBasicYoutubeSearchAnsweringChain = (
     ChatPromptTemplate.fromMessages([
       ['system', basicYoutubeSearchResponsePrompt],
       new MessagesPlaceholder('chat_history'),
-      ['user', '{query}'],
     ]),
     llm,
     strParser,

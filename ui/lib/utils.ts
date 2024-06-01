@@ -1,5 +1,6 @@
 import clsx, { ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { getAccessKey, getBackendURL } from './config';
 
 export const cn = (...classes: ClassValue[]) => twMerge(clsx(...classes));
 
@@ -18,4 +19,21 @@ export const formatTimeDifference = (date1: Date, date2: Date): string => {
     return `${Math.floor(diffInSeconds / 86400)} day${Math.floor(diffInSeconds / 86400) !== 1 ? 's' : ''}`;
   else
     return `${Math.floor(diffInSeconds / 31536000)} year${Math.floor(diffInSeconds / 31536000) !== 1 ? 's' : ''}`;
+};
+
+export const clientFetch = async (path: string, payload: any): Promise<any> => {
+  let headers = payload.headers;
+  const url = `${getBackendURL()}${path}`;
+  const secretToken = getAccessKey();
+
+  if (secretToken) {
+    if (headers == null) {
+      headers = {};
+    }
+
+    headers['Authorization'] = `Bearer ${secretToken}`;
+    payload.headers = headers;
+  }
+
+  return await fetch(url, payload);
 };

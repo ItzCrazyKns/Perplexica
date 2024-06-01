@@ -9,6 +9,8 @@ import type { Embeddings } from '@langchain/core/embeddings';
 import type { IncomingMessage } from 'http';
 import logger from '../utils/logger';
 import { ChatOpenAI } from '@langchain/openai';
+import { getAccessKey } from '../config';
+import { checkAccessKey } from '../auth';
 
 export const handleConnection = async (
   ws: WebSocket,
@@ -17,6 +19,20 @@ export const handleConnection = async (
   try {
     const searchParams = new URL(request.url, `http://${request.headers.host}`)
       .searchParams;
+
+    if (getAccessKey()) {
+      const securtyProtocolHeader = request.headers['sec-websocket-protocol'];
+      if (!checkAccessKey(securtyProtocolHeader)) {
+        ws.send(
+          JSON.stringify({
+            type: 'error',
+            data: 'Incorrect or missing authentication token.',
+            key: 'FAILED_AUTHORIZATION',
+          }),
+        );
+        ws.close();
+      }
+    }
 
     const [chatModelProviders, embeddingModelProviders] = await Promise.all([
       getAvailableChatModelProviders(),
