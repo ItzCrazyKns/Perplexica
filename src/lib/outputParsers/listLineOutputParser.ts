@@ -5,6 +5,7 @@ interface LineListOutputParserArgs {
 }
 
 class LineListOutputParser extends BaseOutputParser<string[]> {
+  lc_namespace = ['langchain', 'output_parsers', 'line_list_output_parser'];
   private key = 'questions';
 
   constructor(args?: LineListOutputParserArgs) {
@@ -15,8 +16,6 @@ class LineListOutputParser extends BaseOutputParser<string[]> {
   static lc_name() {
     return 'LineListOutputParser';
   }
-
-  lc_namespace = ['langchain', 'output_parsers', 'line_list_output_parser'];
 
   async parse(text: string): Promise<string[]> {
     const regex = /^(\s*(-|\*|\d+\.\s|\d+\)\s|\u2022)\s*)+/;

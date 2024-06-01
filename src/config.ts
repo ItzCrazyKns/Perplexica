@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import toml from '@iarna/toml';
+import { parse, stringify } from 'smol-toml';
 
 const configFileName = 'config.toml';
 
@@ -8,6 +8,7 @@ interface Config {
   GENERAL: {
     PORT: number;
     SIMILARITY_MEASURE: string;
+    ENABLE_COPILOT: boolean;
   };
   API_KEYS: {
     OPENAI: string;
@@ -17,6 +18,23 @@ interface Config {
     SEARXNG: string;
     OLLAMA: string;
   };
+  MODELS: [
+    {
+      name: string;
+      api_key: string;
+      base_url: string;
+      provider: string;
+    },
+  ];
+  EMBEDDINGS: [
+    {
+      name: string;
+      model: string;
+      api_key: string;
+      base_url: string;
+      provider: string;
+    },
+  ];
 }
 
 type RecursivePartial<T> = {
@@ -24,7 +42,7 @@ type RecursivePartial<T> = {
 };
 
 const loadConfig = () =>
-  toml.parse(
+  parse(
     fs.readFileSync(path.join(__dirname, `../${configFileName}`), 'utf-8'),
   ) as any as Config;
 
@@ -41,29 +59,21 @@ export const getSearxngApiEndpoint = () => loadConfig().API_ENDPOINTS.SEARXNG;
 
 export const getOllamaApiEndpoint = () => loadConfig().API_ENDPOINTS.OLLAMA;
 
+export const getCustomModels = () => loadConfig().MODELS;
+
+export const getCustomEmbeddingModels = () => loadConfig().EMBEDDINGS;
+
+export const getCopilotEnabled = () => loadConfig().GENERAL.ENABLE_COPILOT;
+
 export const updateConfig = (config: RecursivePartial<Config>) => {
   const currentConfig = loadConfig();
 
-  for (const key in currentConfig) {
-    if (!config[key]) config[key] = {};
+  const updatedConfig = {
+    ...currentConfig,
+    ...config,
+  };
 
-    if (typeof currentConfig[key] === 'object' && currentConfig[key] !== null) {
-      for (const nestedKey in currentConfig[key]) {
-        if (
-          !config[key][nestedKey] &&
-          currentConfig[key][nestedKey] &&
-          config[key][nestedKey] !== ''
-        ) {
-          config[key][nestedKey] = currentConfig[key][nestedKey];
-        }
-      }
-    } else if (currentConfig[key] && config[key] !== '') {
-      config[key] = currentConfig[key];
-    }
-  }
+  const toml = stringify(updatedConfig);
 
-  fs.writeFileSync(
-    path.join(__dirname, `../${configFileName}`),
-    toml.stringify(config),
-  );
+  fs.writeFileSync(path.join(__dirname, `../${configFileName}`), toml);
 };

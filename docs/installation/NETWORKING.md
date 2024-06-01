@@ -1,6 +1,7 @@
 # Expose Perplexica to a network
 
-This guide will show you how to make Perplexica available over a network. Follow these steps to allow computers on the same network to interact with Perplexica. Choose the instructions that match the operating system you are using.
+This guide will show you how to make Perplexica available over a network. Follow these steps to allow computers on the
+same network to interact with Perplexica. Choose the instructions that match the operating system you are using.
 
 ## Windows
 

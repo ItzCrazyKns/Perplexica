@@ -1,6 +1,7 @@
 import { Message } from '@/components/ChatWindow';
+import { Settings } from '@/types/Settings';
 
-export const getSuggestions = async (chatHisory: Message[]) => {
+export const getSuggestions = async (chatHistory: Message[]) => {
   const chatModel = localStorage.getItem('chatModel');
   const chatModelProvider = localStorage.getItem('chatModelProvider');
 
@@ -10,7 +11,7 @@ export const getSuggestions = async (chatHisory: Message[]) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      chat_history: chatHisory,
+      chat_history: chatHistory,
       chat_model: chatModel,
       chat_model_provider: chatModelProvider,
     }),
@@ -20,3 +21,13 @@ export const getSuggestions = async (chatHisory: Message[]) => {
 
   return data.suggestions;
 };
+
+export async function getConfig() {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  return (await res.json()) as Settings;
+}

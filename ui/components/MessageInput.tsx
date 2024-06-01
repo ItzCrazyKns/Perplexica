@@ -11,10 +11,11 @@ const MessageInput = ({
   sendMessage: (message: string) => void;
   loading: boolean;
 }) => {
-  const [copilotEnabled, setCopilotEnabled] = useState(false);
+  const [copilotToggled, setCopilotToggled] = useState(false);
   const [message, setMessage] = useState('');
   const [textareaRows, setTextareaRows] = useState(1);
   const [mode, setMode] = useState<'multi' | 'single'>('single');
+  const copilotEnabled = localStorage.getItem('copilotEnabled') === 'true';
 
   useEffect(() => {
     if (textareaRows >= 2 && message && mode === 'single') {
@@ -56,10 +57,12 @@ const MessageInput = ({
       />
       {mode === 'single' && (
         <div className="flex flex-row items-center space-x-4">
-          <CopilotToggle
-            copilotEnabled={copilotEnabled}
-            setCopilotEnabled={setCopilotEnabled}
-          />
+          {copilotEnabled && (
+            <CopilotToggle
+              copilotToggled={copilotToggled}
+              setCopilotToggled={setCopilotToggled}
+            />
+          )}
           <button
             disabled={message.trim().length === 0 || loading}
             className="bg-[#24A0ED] text-white disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#ececec21] rounded-full p-2"
@@ -72,10 +75,12 @@ const MessageInput = ({
         <div className="flex flex-row items-center justify-between w-full pt-2">
           <Attach />
           <div className="flex flex-row items-center space-x-4">
-            <CopilotToggle
-              copilotEnabled={copilotEnabled}
-              setCopilotEnabled={setCopilotEnabled}
-            />
+            {copilotEnabled && (
+              <CopilotToggle
+                copilotToggled={copilotToggled}
+                setCopilotToggled={setCopilotToggled}
+              />
+            )}
             <button
               disabled={message.trim().length === 0 || loading}
               className="bg-[#24A0ED] text-white disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#ececec21] rounded-full p-2"

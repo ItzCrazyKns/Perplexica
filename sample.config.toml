@@ -9,3 +9,23 @@ GROQ = "" # Groq API key - gsk_1234567890abcdef1234567890abcdef
 [API_ENDPOINTS]
 SEARXNG = "http://localhost:32768" # SearxNG API URL
 OLLAMA = "" # Ollama API URL - http://host.docker.internal:11434
+
+[[MODELS]]
+name = "text-generation-webui"
+api_key = "blah"
+base_url = "http://localhost:5000/v1"
+provider = "openai"
+
+[[EMBEDDINGS]]
+name = "text-generation-webui-small"
+model = "text-embedding-3-small"
+api_key = "blah"
+base_url = "http://localhost:5000/v1"
+provider = "openai"
+
+[[EMBEDDINGS]]
+name = "text-generation-webui-large"
+model = "text-embedding-3-large"
+api_key = "blah"
+base_url = "http://localhost:5000/v1"
+provider = "openai"

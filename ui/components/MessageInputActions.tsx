@@ -55,8 +55,8 @@ const focusModes = [
     icon: (
       <SiYoutube
         className="h-5 w-auto mr-0.5"
-        onPointerEnterCapture={undefined}
-        onPointerLeaveCapture={undefined}
+        onPointerEnter={undefined}
+        onPointerLeave={undefined}
       />
     ),
   },
@@ -67,8 +67,8 @@ const focusModes = [
     icon: (
       <SiReddit
         className="h-5 w-auto mr-0.5"
-        onPointerEnterCapture={undefined}
-        onPointerLeaveCapture={undefined}
+        onPointerEnter={undefined}
+        onPointerLeave={undefined}
       />
     ),
   },
@@ -141,23 +141,23 @@ export const Focus = ({
 };
 
 export const CopilotToggle = ({
-  copilotEnabled,
-  setCopilotEnabled,
+  copilotToggled,
+  setCopilotToggled,
 }: {
-  copilotEnabled: boolean;
-  setCopilotEnabled: (enabled: boolean) => void;
+  copilotToggled: boolean;
+  setCopilotToggled: (enabled: boolean) => void;
 }) => {
   return (
     <div className="group flex flex-row items-center space-x-1 active:scale-95 duration-200 transition cursor-pointer">
       <Switch
-        checked={copilotEnabled}
-        onChange={setCopilotEnabled}
+        checked={copilotToggled}
+        onChange={setCopilotToggled}
         className="bg-[#111111] border border-[#1C1C1C] relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full"
       >
         <span className="sr-only">Copilot</span>
         <span
           className={cn(
-            copilotEnabled
+            copilotToggled
               ? 'translate-x-6 bg-[#24A0ED]'
               : 'translate-x-1 bg-white/50',
             'inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full transition-all duration-200',
@@ -165,10 +165,10 @@ export const CopilotToggle = ({
         />
       </Switch>
       <p
-        onClick={() => setCopilotEnabled(!copilotEnabled)}
+        onClick={() => setCopilotToggled(!copilotToggled)}
         className={cn(
           'text-xs font-medium transition-colors duration-150 ease-in-out',
-          copilotEnabled
+          copilotToggled
             ? 'text-[#24A0ED]'
             : 'text-white/50 group-hover:text-white',
         )}

@@ -2,10 +2,13 @@
 node_modules/
 npm-debug.log
 yarn-error.log
+.yarnrc.yml
 
 # Build output
 /.next/
 /out/
+dist/
+.yarn/
 
 # IDE/Editor specific
 .vscode/

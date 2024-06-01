@@ -7,11 +7,10 @@ import { cn } from '@/lib/utils';
 import {
   BookCopy,
   Disc3,
-  Share,
-  Volume2,
-  StopCircle,
   Layers3,
   Plus,
+  StopCircle,
+  Volume2,
 } from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
 import Copy from './MessageActions/Copy';
@@ -157,6 +156,7 @@ const MessageBox = ({
                               onClick={() => {
                                 sendMessage(suggestion);
                               }}
+                              role="button"
                               className="cursor-pointer flex flex-row justify-between font-medium space-x-2 items-center"
                             >
                               <p className="transition duration-200 hover:text-[#24A0ED]">

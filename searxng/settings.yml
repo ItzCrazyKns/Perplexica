@@ -32,12 +32,12 @@ search:
   # Existing autocomplete backends: "dbpedia", "duckduckgo", "google", "yandex", "mwmbl",
   # "seznam", "startpage", "stract", "swisscows", "qwant", "wikipedia" - leave blank to turn it off
   # by default.
-  autocomplete: 'google'
+  autocomplete: 'duckduckgo'
   # minimun characters to type before autocompleter starts
-  autocomplete_min: 4
+  autocomplete_min: 3
   # Default search language - leave blank to detect from browser information or
   # use codes from 'languages.py'
-  default_lang: 'auto'
+  default_lang: 'en-US'
   # max_page: 0  # if engine supports paging, 0 means unlimited numbers of pages
   # Available languages
   # languages:
@@ -213,15 +213,15 @@ outgoing:
 
 # Comment or un-comment plugin to activate / deactivate by default.
 #
-# enabled_plugins:
-#   # these plugins are enabled if nothing is configured ..
-#   - 'Hash plugin'
-#   - 'Self Information'
-#   - 'Tracker URL remover'
-#   - 'Ahmia blacklist'  # activation depends on outgoing.using_tor_proxy
-#   # these plugins are disabled if nothing is configured ..
-#   - 'Hostname replace'  # see hostname_replace configuration below
-#   - 'Open Access DOI rewrite'
+enabled_plugins:
+  #   # these plugins are enabled if nothing is configured ..
+  #   - 'Hash plugin'
+  #   - 'Self Information'
+  #   - 'Tracker URL remover'
+  #   - 'Ahmia blacklist'  # activation depends on outgoing.using_tor_proxy
+  #   # these plugins are disabled if nothing is configured ..
+  #   - 'Hostname replace'  # see hostname_replace configuration below
+  - 'Open Access DOI rewrite'
 #   - 'Tor check plugin'
 #   # Read the docs before activate: auto-detection of the language could be
 #   # detrimental to users expectations / users can activate the plugin in the
@@ -265,17 +265,17 @@ checker:
         lang: en
       result_container:
         - not_empty
-        - ['one_title_contains', 'citizen kane']
+        - [ 'one_title_contains', 'citizen kane' ]
       test:
         - unique_results
 
     android: &test_android
       matrix:
-        query: ['android']
-        lang: ['en', 'de', 'fr', 'zh-CN']
+        query: [ 'android' ]
+        lang: [ 'en', 'de', 'fr', 'zh-CN' ]
       result_container:
         - not_empty
-        - ['one_title_contains', 'google']
+        - [ 'one_title_contains', 'google' ]
       test:
         - unique_results
 
@@ -284,7 +284,7 @@ checker:
     infobox: &tests_infobox
       infobox:
         matrix:
-          query: ['linux', 'new york', 'bbc']
+          query: [ 'linux', 'new york', 'bbc' ]
         result_container:
           - has_infobox
 
@@ -384,9 +384,9 @@ engines:
     engine: wikipedia
     shortcut: wp
     # add "list" to the array to get results in the results list
-    display_type: ['infobox']
+    display_type: [ 'infobox' ]
     base_url: 'https://{language}.wikipedia.org/'
-    categories: [general]
+    categories: [ general ]
 
   - name: bilibili
     engine: bilibili
@@ -417,7 +417,7 @@ engines:
     url_xpath: //article[@class="repo-summary"]//a[@class="repo-link"]/@href
     title_xpath: //article[@class="repo-summary"]//a[@class="repo-link"]
     content_xpath: //article[@class="repo-summary"]/p
-    categories: [it, repos]
+    categories: [ it, repos ]
     timeout: 4.0
     disabled: true
     shortcut: bb
@@ -593,7 +593,7 @@ engines:
   - name: docker hub
     engine: docker_hub
     shortcut: dh
-    categories: [it, packages]
+    categories: [ it, packages ]
 
   - name: erowid
     engine: xpath
@@ -604,7 +604,7 @@ engines:
     url_xpath: //dl[@class="results-list"]/dt[@class="result-title"]/a/@href
     title_xpath: //dl[@class="results-list"]/dt[@class="result-title"]/a/text()
     content_xpath: //dl[@class="results-list"]/dd[@class="result-details"]
-    categories: []
+    categories: [ ]
     shortcut: ew
     disabled: true
     about:
@@ -635,31 +635,32 @@ engines:
     timeout: 3.0
     weight: 2
     # add "list" to the array to get results in the results list
-    display_type: ['infobox']
+    display_type: [ 'infobox' ]
     tests: *tests_infobox
-    categories: [general]
+    categories: [ general ]
 
   - name: duckduckgo
     engine: duckduckgo
     shortcut: ddg
+    weight: 2.0
 
   - name: duckduckgo images
     engine: duckduckgo_extra
-    categories: [images, web]
+    categories: [ images, web ]
     ddg_category: images
     shortcut: ddi
     disabled: true
 
   - name: duckduckgo videos
     engine: duckduckgo_extra
-    categories: [videos, web]
+    categories: [ videos, web ]
     ddg_category: videos
     shortcut: ddv
     disabled: true
 
   - name: duckduckgo news
     engine: duckduckgo_extra
-    categories: [news, web]
+    categories: [ news, web ]
     ddg_category: news
     shortcut: ddn
     disabled: true
@@ -696,7 +697,7 @@ engines:
     content_xpath: //section[contains(@class, "word__defination")]
     first_page_num: 1
     shortcut: et
-    categories: [dictionaries]
+    categories: [ dictionaries ]
     about:
       website: https://www.etymonline.com/
       wikidata_id: Q1188617
@@ -736,7 +737,7 @@ engines:
   - name: free software directory
     engine: mediawiki
     shortcut: fsd
-    categories: [it, software wikis]
+    categories: [ it, software wikis ]
     base_url: https://directory.fsf.org/
     search_type: title
     timeout: 5.0
@@ -781,7 +782,7 @@ engines:
     title_query: name_with_namespace
     content_query: description
     page_size: 20
-    categories: [it, repos]
+    categories: [ it, repos ]
     shortcut: gl
     timeout: 10.0
     disabled: true
@@ -807,7 +808,7 @@ engines:
     url_query: html_url
     title_query: name
     content_query: description
-    categories: [it, repos]
+    categories: [ it, repos ]
     shortcut: cb
     disabled: true
     about:
@@ -860,7 +861,7 @@ engines:
 
   - name: google play apps
     engine: google_play
-    categories: [files, apps]
+    categories: [ files, apps ]
     shortcut: gpa
     play_categ: apps
     disabled: true
@@ -932,7 +933,7 @@ engines:
     url_xpath: './/div[@class="ans"]//a/@href'
     content_xpath: './/div[@class="from"]'
     page_size: 20
-    categories: [it, packages]
+    categories: [ it, packages ]
     shortcut: ho
     about:
       website: https://hoogle.haskell.org/
@@ -1093,7 +1094,7 @@ engines:
   - name: mdn
     shortcut: mdn
     engine: json_engine
-    categories: [it]
+    categories: [ it ]
     paging: true
     search_url: https://developer.mozilla.org/api/v1/search?q={query}&page={pageno}
     results_query: documents
@@ -1167,7 +1168,7 @@ engines:
     title_query: package/name
     content_query: package/description
     page_size: 25
-    categories: [it, packages]
+    categories: [ it, packages ]
     disabled: true
     timeout: 5.0
     shortcut: npm
@@ -1281,7 +1282,7 @@ engines:
     url_query: url
     title_query: name
     content_query: description
-    categories: [it, packages]
+    categories: [ it, packages ]
     disabled: true
     timeout: 5.0
     shortcut: pack
@@ -1355,7 +1356,7 @@ engines:
   - name: presearch
     engine: presearch
     search_type: search
-    categories: [general, web]
+    categories: [ general, web ]
     shortcut: ps
     timeout: 4.0
     disabled: true
@@ -1364,7 +1365,7 @@ engines:
     engine: presearch
     network: presearch
     search_type: images
-    categories: [images, web]
+    categories: [ images, web ]
     timeout: 4.0
     shortcut: psimg
     disabled: true
@@ -1373,7 +1374,7 @@ engines:
     engine: presearch
     network: presearch
     search_type: videos
-    categories: [general, web]
+    categories: [ general, web ]
     timeout: 4.0
     shortcut: psvid
     disabled: true
@@ -1382,7 +1383,7 @@ engines:
     engine: presearch
     network: presearch
     search_type: news
-    categories: [news, web]
+    categories: [ news, web ]
     timeout: 4.0
     shortcut: psnews
     disabled: true
@@ -1396,7 +1397,7 @@ engines:
     url_xpath: ./div/h3/a/@href
     title_xpath: ./div/h3/a
     content_xpath: ./div/div/div[contains(@class,"packages-description")]/span
-    categories: [packages, it]
+    categories: [ packages, it ]
     timeout: 3.0
     disabled: true
     first_page_num: 1
@@ -1423,7 +1424,7 @@ engines:
     content_xpath: ./p
     suggestion_xpath: /html/body/main/div/div/div/form/div/div[@class="callout-block"]/p/span/a[@class="link"]
     first_page_num: 1
-    categories: [it, packages]
+    categories: [ it, packages ]
     about:
       website: https://pypi.org
       wikidata_id: Q2984686
@@ -1436,7 +1437,7 @@ engines:
     qwant_categ: web
     engine: qwant
     shortcut: qw
-    categories: [general, web]
+    categories: [ general, web ]
     additional_tests:
       rosebud: *test_rosebud
 
@@ -1451,14 +1452,14 @@ engines:
     qwant_categ: images
     engine: qwant
     shortcut: qwi
-    categories: [images, web]
+    categories: [ images, web ]
     network: qwant
 
   - name: qwant videos
     qwant_categ: videos
     engine: qwant
     shortcut: qwv
-    categories: [videos, web]
+    categories: [ videos, web ]
     network: qwant
 
   # - name: library
@@ -1526,13 +1527,13 @@ engines:
     engine: stackexchange
     shortcut: st
     api_site: 'stackoverflow'
-    categories: [it, q&a]
+    categories: [ it, q&a ]
 
   - name: askubuntu
     engine: stackexchange
     shortcut: ubuntu
     api_site: 'askubuntu'
-    categories: [it, q&a]
+    categories: [ it, q&a ]
 
   - name: internetarchivescholar
     engine: internet_archive_scholar
@@ -1543,7 +1544,7 @@ engines:
     engine: stackexchange
     shortcut: su
     api_site: 'superuser'
-    categories: [it, q&a]
+    categories: [ it, q&a ]
 
   - name: searchcode code
     engine: searchcode_code
@@ -1737,7 +1738,7 @@ engines:
     url_query: URL
     title_query: Title
     content_query: Snippet
-    categories: [general, web]
+    categories: [ general, web ]
     shortcut: wib
     disabled: true
     about:
@@ -1766,7 +1767,7 @@ engines:
     engine: mediawiki
     weight: 0.5
     shortcut: wb
-    categories: [general, wikimedia]
+    categories: [ general, wikimedia ]
     base_url: 'https://{language}.wikibooks.org/'
     search_type: text
     disabled: true
@@ -1777,7 +1778,7 @@ engines:
   - name: wikinews
     engine: mediawiki
     shortcut: wn
-    categories: [news, wikimedia]
+    categories: [ news, wikimedia ]
     base_url: 'https://{language}.wikinews.org/'
     search_type: text
     srsort: create_timestamp_desc
@@ -1789,7 +1790,7 @@ engines:
     engine: mediawiki
     weight: 0.5
     shortcut: wq
-    categories: [general, wikimedia]
+    categories: [ general, wikimedia ]
     base_url: 'https://{language}.wikiquote.org/'
     search_type: text
     disabled: true
@@ -1803,7 +1804,7 @@ engines:
     engine: mediawiki
     weight: 0.5
     shortcut: ws
-    categories: [general, wikimedia]
+    categories: [ general, wikimedia ]
     base_url: 'https://{language}.wikisource.org/'
     search_type: text
     disabled: true
@@ -1814,7 +1815,7 @@ engines:
   - name: wikispecies
     engine: mediawiki
     shortcut: wsp
-    categories: [general, science, wikimedia]
+    categories: [ general, science, wikimedia ]
     base_url: 'https://species.wikimedia.org/'
     search_type: text
     disabled: true
@@ -1825,7 +1826,7 @@ engines:
   - name: wiktionary
     engine: mediawiki
     shortcut: wt
-    categories: [dictionaries, wikimedia]
+    categories: [ dictionaries, wikimedia ]
     base_url: 'https://{language}.wiktionary.org/'
     search_type: text
     about:
@@ -1836,7 +1837,7 @@ engines:
     engine: mediawiki
     weight: 0.5
     shortcut: wv
-    categories: [general, wikimedia]
+    categories: [ general, wikimedia ]
     base_url: 'https://{language}.wikiversity.org/'
     search_type: text
     disabled: true
@@ -1848,7 +1849,7 @@ engines:
     engine: mediawiki
     weight: 0.5
     shortcut: wy
-    categories: [general, wikimedia]
+    categories: [ general, wikimedia ]
     base_url: 'https://{language}.wikivoyage.org/'
     search_type: text
     disabled: true
@@ -1926,7 +1927,7 @@ engines:
     shortcut: mjk
     engine: xpath
     paging: true
-    categories: [general, web]
+    categories: [ general, web ]
     search_url: https://www.mojeek.com/search?q={query}&s={pageno}&lang={lang}&lb={lang}
     results_xpath: //ul[@class="results-standard"]/li/a[@class="ob"]
     url_xpath: ./@href
@@ -1952,7 +1953,7 @@ engines:
 
   - name: naver
     shortcut: nvr
-    categories: [general, web]
+    categories: [ general, web ]
     engine: xpath
     paging: true
     search_url: https://search.naver.com/search.naver?where=webkr&sm=osp_hty&ie=UTF-8&query={query}&start={pageno}
@@ -1982,7 +1983,7 @@ engines:
     content_xpath: ./span/p
     suggestion_xpath: /html/body/main/div/div[@class="search__suggestions"]/p/a
     first_page_num: 1
-    categories: [it, packages]
+    categories: [ it, packages ]
     disabled: true
     about:
       website: https://rubygems.org/
@@ -2047,20 +2048,20 @@ engines:
     engine: wordnik
     shortcut: def
     base_url: https://www.wordnik.com/
-    categories: [dictionaries]
+    categories: [ dictionaries ]
     timeout: 5.0
 
   - name: woxikon.de synonyme
     engine: xpath
     shortcut: woxi
-    categories: [dictionaries]
+    categories: [ dictionaries ]
     timeout: 5.0
     disabled: true
     search_url: https://synonyme.woxikon.de/synonyme/{query}.php
     url_xpath: //div[@class="upper-synonyms"]/a/@href
     content_xpath: //div[@class="synonyms-list-group"]
     title_xpath: //div[@class="upper-synonyms"]/a
-    no_result_for_http_status: [404]
+    no_result_for_http_status: [ 404 ]
     about:
       website: https://www.woxikon.de/
       wikidata_id: # No Wikidata ID
@@ -2154,7 +2155,7 @@ engines:
     shortcut: br
     time_range_support: true
     paging: true
-    categories: [general, web]
+    categories: [ general, web ]
     brave_category: search
     # brave_spellcheck: true
 
@@ -2162,14 +2163,14 @@ engines:
     engine: brave
     network: brave
     shortcut: brimg
-    categories: [images, web]
+    categories: [ images, web ]
     brave_category: images
 
   - name: brave.videos
     engine: brave
     network: brave
     shortcut: brvid
-    categories: [videos, web]
+    categories: [ videos, web ]
     brave_category: videos
 
   - name: brave.news
@@ -2197,7 +2198,7 @@ engines:
     url_xpath: ./@href
     title_xpath: ./div[@class="h"]/h4
     content_xpath: ./div[@class="h"]/p
-    categories: [it, packages]
+    categories: [ it, packages ]
     disabled: true
     about:
       website: https://lib.rs
@@ -2216,7 +2217,7 @@ engines:
     title_xpath: ./h4/a[2]
     content_xpath: ./p
     first_page_num: 1
-    categories: [it, repos]
+    categories: [ it, repos ]
     disabled: true
     about:
       website: https://sr.ht
@@ -2235,7 +2236,7 @@ engines:
     title_xpath: //div[@class="result"]/p[@class='title fsL1']/a
     content_xpath: //p[contains(@class,'url fsM')]/following-sibling::p
     first_page_num: 0
-    categories: [general, web]
+    categories: [ general, web ]
     disabled: true
     timeout: 4.0
     about:
@@ -2258,7 +2259,7 @@ engines:
     url_xpath: ./div[@class="SearchSnippet-headerContainer"]/h2/a/@href
     title_xpath: ./div[@class="SearchSnippet-headerContainer"]/h2/a
     content_xpath: ./p[@class="SearchSnippet-synopsis"]
-    categories: [packages, it]
+    categories: [ packages, it ]
     timeout: 3.0
     disabled: true
     about:

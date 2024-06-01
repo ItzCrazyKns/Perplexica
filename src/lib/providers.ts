@@ -3,6 +3,8 @@ import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
 import { HuggingFaceTransformersEmbeddings } from './huggingfaceTransformer';
 import {
+  getCustomEmbeddingModels,
+  getCustomModels,
   getGroqApiKey,
   getOllamaApiEndpoint,
   getOpenaiApiKey,
@@ -13,6 +15,7 @@ export const getAvailableChatModelProviders = async () => {
   const openAIApiKey = getOpenaiApiKey();
   const groqApiKey = getGroqApiKey();
   const ollamaEndpoint = getOllamaApiEndpoint();
+  const customModels = getCustomModels();
 
   const models = {};
 
@@ -119,22 +122,49 @@ export const getAvailableChatModelProviders = async () => {
 
   models['custom_openai'] = {};
 
+  if (customModels && customModels.length > 0) {
+    models['custom'] = {};
+    try {
+      customModels.forEach((model) => {
+        if (model.provider === 'openai') {
+          models['custom'] = {
+            ...models['custom'],
+            [model.name]: new ChatOpenAI({
+              openAIApiKey: model.api_key,
+              modelName: model.name,
+              temperature: 0.7,
+              configuration: {
+                baseURL: model.base_url,
+              },
+            }),
+          };
+        }
+      });
+    } catch (err) {
+      logger.error(`Error loading custom models: ${err}`);
+    }
+  }
+
   return models;
 };
 
 export const getAvailableEmbeddingModelProviders = async () => {
   const openAIApiKey = getOpenaiApiKey();
   const ollamaEndpoint = getOllamaApiEndpoint();
+  const customEmbeddingModels = getCustomEmbeddingModels();
 
   const models = {};
 
   if (openAIApiKey) {
     try {
       models['openai'] = {
-        'Text embedding 3 small': new OpenAIEmbeddings({
-          openAIApiKey,
-          modelName: 'text-embedding-3-small',
-        }),
+        'Text embedding 3 small': new OpenAIEmbeddings(
+          {
+            openAIApiKey,
+            modelName: 'text-embedding-3-small',
+          },
+          { baseURL: 'http://10.0.1.2:5000/v1' },
+        ),
         'Text embedding 3 large': new OpenAIEmbeddings({
           openAIApiKey,
           modelName: 'text-embedding-3-large',
@@ -164,6 +194,30 @@ export const getAvailableEmbeddingModelProviders = async () => {
       }, {});
     } catch (err) {
       logger.error(`Error loading Ollama embeddings: ${err}`);
+    }
+  }
+
+  if (customEmbeddingModels && customEmbeddingModels.length > 0) {
+    models['custom'] = {};
+    try {
+      customEmbeddingModels.forEach((model) => {
+        if (model.provider === 'openai') {
+          models['custom'] = {
+            ...models['custom'],
+            [model.name]: new OpenAIEmbeddings(
+              {
+                openAIApiKey: model.api_key,
+                modelName: model.model,
+              },
+              {
+                baseURL: model.base_url,
+              },
+            ),
+          };
+        }
+      });
+    } catch (err) {
+      logger.error(`Error loading custom models: ${err}`);
     }
   }
 

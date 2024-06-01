@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
-import { Dialog, Transition } from '@headlessui/react';
-import { Document } from '@langchain/core/documents';
-import { Fragment, useState } from 'react';
+import {Dialog, Transition} from '@headlessui/react';
+import {Document} from '@langchain/core/documents';
+import {Fragment, useState} from 'react';
 
 const MessageSources = ({ sources }: { sources: Document[] }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);

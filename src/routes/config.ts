@@ -4,6 +4,7 @@ import {
   getAvailableEmbeddingModelProviders,
 } from '../lib/providers';
 import {
+  getCopilotEnabled,
   getGroqApiKey,
   getOllamaApiEndpoint,
   getOpenaiApiKey,
@@ -38,6 +39,7 @@ router.get('/', async (_, res) => {
   config['openaiApiKey'] = getOpenaiApiKey();
   config['ollamaApiUrl'] = getOllamaApiEndpoint();
   config['groqApiKey'] = getGroqApiKey();
+  config['copilotEnabled'] = getCopilotEnabled();
 
   res.status(200).json(config);
 });
