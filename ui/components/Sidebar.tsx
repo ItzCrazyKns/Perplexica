@@ -1,13 +1,12 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { BookOpenText, Home, Search, SquarePen, Settings } from 'lucide-react';
+import { BookOpenText, Home, Search, SquarePen } from 'lucide-react';
 import Link from 'next/link';
 import { useSelectedLayoutSegments } from 'next/navigation';
 import React, { useState, type ReactNode } from 'react';
 import Layout from './Layout';
-import SettingsDialog from './SettingsDialog';
-import ThemeSwitcher from './theme/Switcher';
+import SettingsEntry from './SettingsEntry';
 
 const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
   return (
@@ -68,15 +67,7 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
             ))}
           </VerticalIconContainer>
 
-          <Settings
-            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-            className="cursor-pointer"
-          />
-
-          <SettingsDialog
-            isOpen={isSettingsOpen}
-            setIsOpen={setIsSettingsOpen}
-          />
+          <SettingsEntry />
         </div>
       </div>
 
