@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { Settings } from 'lucide-react';
+import type { LucideProps } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SettingsDialog from './SettingsDialog';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
-
-const SettingsEntry = ({ className }: InputProps) => {
+const SettingsEntry = ({ className, ...restProps }: LucideProps) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   return (
     <>
       <Settings
+        {...restProps}
         onClick={() => setIsSettingsOpen(!isSettingsOpen)}
         className={cn('cursor-pointer', className)}
       />
