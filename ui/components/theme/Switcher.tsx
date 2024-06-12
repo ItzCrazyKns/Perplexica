@@ -1,13 +1,13 @@
 'use client';
 import { useTheme } from 'next-themes';
-import { SunIcon, MoonIcon, MonitorIcon } from 'lucide-react';
+// import { SunIcon, MoonIcon, MonitorIcon } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
+// import { cn } from '@/lib/utils';
 import { Select } from '../SettingsDialog';
 
 type Theme = 'dark' | 'light' | 'system';
 
-const ThemeSwitcher = ({ className }: { className?: string }) => {
+const ThemeSwitcher = ({ className, size }: { className?: string, size?: any }) => {
   const [mounted, setMounted] = useState(false);
 
   const { theme, setTheme } = useTheme();
