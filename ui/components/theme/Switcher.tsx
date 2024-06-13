@@ -53,7 +53,7 @@ const ThemeSwitcher = ({ className }: { className?: string }) => {
       onChange={(e) => handleThemeSwitch(e.target.value as Theme)}
       options={[
         { value: 'light', label: 'Light' },
-        { value: 'dark', label: 'Dark' }
+        { value: 'dark', label: 'Dark' },
       ]}
     />
   );
