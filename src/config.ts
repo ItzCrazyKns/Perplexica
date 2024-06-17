@@ -16,6 +16,7 @@ interface Config {
   API_ENDPOINTS: {
     SEARXNG: string;
     OLLAMA: string;
+    OPENAI: string;
   };
 }
 
@@ -40,6 +41,8 @@ export const getGroqApiKey = () => loadConfig().API_KEYS.GROQ;
 export const getSearxngApiEndpoint = () => loadConfig().API_ENDPOINTS.SEARXNG;
 
 export const getOllamaApiEndpoint = () => loadConfig().API_ENDPOINTS.OLLAMA;
+
+export const getOpenaiApiEndpoint = () => loadConfig().API_ENDPOINTS.OPENAI;
 
 export const updateConfig = (config: RecursivePartial<Config>) => {
   const currentConfig = loadConfig();

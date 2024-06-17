@@ -6,6 +6,7 @@ import {
   getGroqApiKey,
   getOllamaApiEndpoint,
   getOpenaiApiKey,
+  getOpenaiApiEndpoint,
 } from '../config';
 import logger from '../utils/logger';
 
@@ -13,6 +14,7 @@ export const getAvailableChatModelProviders = async () => {
   const openAIApiKey = getOpenaiApiKey();
   const groqApiKey = getGroqApiKey();
   const ollamaEndpoint = getOllamaApiEndpoint();
+  const openAIEndpoint = getOpenaiApiEndpoint();
 
   const models = {};
 
@@ -23,22 +25,38 @@ export const getAvailableChatModelProviders = async () => {
           openAIApiKey,
           modelName: 'gpt-3.5-turbo',
           temperature: 0.7,
-        }),
+        },
+	      {
+	        baseURL:openAIEndpoint,
+	      },
+      ),
         'GPT-4': new ChatOpenAI({
           openAIApiKey,
           modelName: 'gpt-4',
           temperature: 0.7,
-        }),
+        },
+        {
+	        baseURL:openAIEndpoint,
+	      },
+      ),
         'GPT-4 turbo': new ChatOpenAI({
           openAIApiKey,
           modelName: 'gpt-4-turbo',
           temperature: 0.7,
-        }),
+        },
+        {
+	        baseURL:openAIEndpoint,
+	      },
+      ),
         'GPT-4 omni': new ChatOpenAI({
           openAIApiKey,
           modelName: 'gpt-4o',
           temperature: 0.7,
-        }),
+        },
+        {
+	        baseURL:openAIEndpoint,
+	      },
+      ),
       };
     } catch (err) {
       logger.error(`Error loading OpenAI models: ${err}`);
@@ -117,6 +135,8 @@ export const getAvailableChatModelProviders = async () => {
     }
   }
 
+  
+
   models['custom_openai'] = {};
 
   return models;
@@ -125,6 +145,7 @@ export const getAvailableChatModelProviders = async () => {
 export const getAvailableEmbeddingModelProviders = async () => {
   const openAIApiKey = getOpenaiApiKey();
   const ollamaEndpoint = getOllamaApiEndpoint();
+  const openAIEndpoint = getOpenaiApiEndpoint();
 
   const models = {};
 
@@ -134,11 +155,19 @@ export const getAvailableEmbeddingModelProviders = async () => {
         'Text embedding 3 small': new OpenAIEmbeddings({
           openAIApiKey,
           modelName: 'text-embedding-3-small',
-        }),
+        },
+        {
+	        baseURL:openAIEndpoint,
+	      },
+      ),
         'Text embedding 3 large': new OpenAIEmbeddings({
           openAIApiKey,
           modelName: 'text-embedding-3-large',
-        }),
+        },
+        {
+	        baseURL:openAIEndpoint,
+	      },
+      ),
       };
     } catch (err) {
       logger.error(`Error loading OpenAI embeddings: ${err}`);
@@ -166,6 +195,7 @@ export const getAvailableEmbeddingModelProviders = async () => {
       logger.error(`Error loading Ollama embeddings: ${err}`);
     }
   }
+
 
   try {
     models['local'] = {
