@@ -20,7 +20,7 @@ services:
     ports:
       - 3001:3001
     extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - 'host.docker.internal:host-gateway'
     networks:
       - perplexica-network
     restart: unless-stopped
