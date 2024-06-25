@@ -17,6 +17,10 @@ interface Config {
     SEARXNG: string;
     OLLAMA: string;
   };
+  DATABASE:{
+    MONGODB_URI: string;
+    DATABASE_NAME: string;
+  }
 }
 
 type RecursivePartial<T> = {
@@ -40,6 +44,10 @@ export const getGroqApiKey = () => loadConfig().API_KEYS.GROQ;
 export const getSearxngApiEndpoint = () => loadConfig().API_ENDPOINTS.SEARXNG;
 
 export const getOllamaApiEndpoint = () => loadConfig().API_ENDPOINTS.OLLAMA;
+
+export const getMongodbUri = () => loadConfig().DATABASE.MONGODB_URI;
+
+export const getDatabaseName = () => loadConfig().DATABASE.DATABASE_NAME;
 
 export const updateConfig = (config: RecursivePartial<Config>) => {
   const currentConfig = loadConfig();

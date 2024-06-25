@@ -17,19 +17,22 @@
     "nodemon": "^3.1.0",
     "prettier": "^3.2.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.3"
+    "typescript": "^5.5.3"
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
     "@langchain/openai": "^0.0.25",
+    "@types/node": "^20.14.8",
     "@xenova/transformers": "^2.17.1",
     "axios": "^1.6.8",
     "compute-cosine-similarity": "^1.1.0",
     "compute-dot": "^1.1.0",
     "cors": "^2.8.5",
+    "cron": "^3.1.7",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "langchain": "^0.1.30",
+    "mongoose": "^8.4.3",
     "winston": "^3.13.0",
     "ws": "^8.17.1",
     "zod": "^3.22.4"
