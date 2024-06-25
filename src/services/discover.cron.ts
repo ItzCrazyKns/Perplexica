@@ -36,7 +36,7 @@ async function discover() {
 
 const job = new CronJob('*/60 * * * * *', () => {
   discover();
-  console.log('This job runs every 30 seconds.');
+  console.log('This job runs every 60 seconds.');
 });
 
 export default job;
