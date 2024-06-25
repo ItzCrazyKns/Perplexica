@@ -32,3 +32,5 @@ logs/
 # Miscellaneous
 .DS_Store
 Thumbs.db
+
+yarn.lock
