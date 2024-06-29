@@ -8,5 +8,5 @@ GROQ = "" # Groq API key - gsk_1234567890abcdef1234567890abcdef
 ANTHROPIC = "" # Anthropic API key - sk-ant-1234567890abcdef1234567890abcdef
 
 [API_ENDPOINTS]
-SEARXNG = "http://localhost:32768" # SearxNG API URL
+SEARXNG = "" # SearxNG API URL - http://localhost:32768
 OLLAMA = "" # Ollama API URL - http://host.docker.internal:11434
