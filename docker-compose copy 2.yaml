@@ -1,13 +1,10 @@
-version: '3.7'
-
 services:
   searxng:
     image: docker.io/searxng/searxng:latest
     volumes:
-      - ./settings.yml:/searxng/settings.yml
-      - ./limiter.toml:/etc/searxng/limiter.toml
+      - ./searxng:/etc/searxng:rw
     ports:
-      - 8080:8080
+      - 8080:8080 # Changed to 8080:8080 for Digital Ocean compatibility
     networks:
       - perplexica-network
     restart: unless-stopped
@@ -23,16 +20,14 @@ services:
     depends_on:
       - searxng
     ports:
-      - 3001:3001
+      - 3001:3001 # Kept original port
     volumes:
       - backend-dbstore:/home/perplexica/data
-      - ./config/config.toml:/app/config.toml:ro # Mount config.toml
     networks:
       - perplexica-network
     restart: unless-stopped
     environment:
       - PORT=3001
-      - CONFIG_PATH=/app/config.toml
 
   perplexica-frontend:
     build:

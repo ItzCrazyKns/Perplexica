@@ -1,50 +1,45 @@
-version: '3.7'
-
 services:
   searxng:
     image: docker.io/searxng/searxng:latest
     volumes:
-      - ./settings.yml:/searxng/settings.yml
-      - ./limiter.toml:/etc/searxng/limiter.toml
+      - ./searxng:/etc/searxng:rw
     ports:
-      - 8080:8080
+      - 8080:8080 # Changed to 8080:8080 for Digital Ocean compatibility
     networks:
       - perplexica-network
     restart: unless-stopped
     environment:
-      - BASE_URL=https://clownfish-app-fvz8p.ondigitalocean.app/ghcr-io-lego-4005-searxng
+      - BASE_URL=${SEARXNG_BASE_URL:-http://0.0.0.0:8080/}
 
   perplexica-backend:
     build:
       context: .
       dockerfile: backend.dockerfile
       args:
-        SEARXNG_API_URL: https://clownfish-app-fvz8p.ondigitalocean.app/ghcr-io-lego-4005-searxng
+        - SEARXNG_API_URL=https://searxng:8080
     depends_on:
       - searxng
     ports:
-      - 3001:3001
+      - 3001:3001 # Kept original port
     volumes:
       - backend-dbstore:/home/perplexica/data
-      - ./config/config.toml:/app/config.toml:ro # Mount config.toml
     networks:
       - perplexica-network
     restart: unless-stopped
     environment:
       - PORT=3001
-      - CONFIG_PATH=/app/config.toml
 
   perplexica-frontend:
     build:
       context: .
       dockerfile: app.dockerfile
       args:
-        NEXT_PUBLIC_API_URL: https://clownfish-app-fvz8p.ondigitalocean.app/ghcr-io-lego-4005-perplexica-bac/api
-        NEXT_PUBLIC_WS_URL: wss://clownfish-app-fvz8p.ondigitalocean.app/ghcr-io-lego-4005-perplexica-bac
+        - NEXT_PUBLIC_API_URL=${BACKEND_URL:-https://0.0.0.0:3001/api}
+        - NEXT_PUBLIC_WS_URL=${WS_URL:-ws://0.0.0.0:3001}
     depends_on:
       - perplexica-backend
     ports:
-      - 3000:3000
+      - 3000:3000 # Kept original port
     networks:
       - perplexica-network
     restart: unless-stopped

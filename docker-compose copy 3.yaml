@@ -4,8 +4,7 @@ services:
   searxng:
     image: docker.io/searxng/searxng:latest
     volumes:
-      - ./settings.yml:/searxng/settings.yml
-      - ./limiter.toml:/etc/searxng/limiter.toml
+      - ./config/limiter.toml:/etc/searxng/limiter.toml:ro # Mount limiter.toml
     ports:
       - 8080:8080
     networks:

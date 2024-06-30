@@ -1,0 +1,12 @@
+version: '3.7'
+
+services:
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./settings.yml:/searxng/settings.yml
+      - ./limiter.toml:/etc/searxng/limiter.toml
+    restart: always

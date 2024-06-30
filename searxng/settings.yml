@@ -74,11 +74,11 @@ search:
 
 server:
   # Is overwritten by ${SEARXNG_PORT} and ${SEARXNG_BIND_ADDRESS}
-  port: 8888
-  bind_address: '127.0.0.1'
+  port: 8080
+  bind_address: '0.0.0.0'
   # public URL of the instance, to ensure correct inbound links. Is overwritten
   # by ${SEARXNG_URL}.
-  base_url: / # "http://example.com/location"
+  base_url: 'https://clownfish-app-fvz8p.ondigitalocean.app/ghcr-io-lego-4005-searxng'
   limiter: false # rate limit the number of request on the instance, block some bots
   public_instance: false # enable features designed only for public instances
 
@@ -87,7 +87,7 @@ server:
 
   secret_key: 'a2fb23f1b02e6ee83875b09826990de0f6bd908b6638e8c10277d415f6ab852b' # Is overwritten by ${SEARXNG_SECRET}
   # Proxying image results through searx
-  image_proxy: false
+  image_proxy: true
   # 1.0 and 1.1 are supported
   http_protocol_version: '1.0'
   # POST queries are more secure as they don't show up in history but may cause
@@ -114,11 +114,11 @@ ui:
   # it decreases the privacy, since the browser can records the page titles.
   query_in_title: false
   # infinite_scroll: When true, automatically loads the next page when scrolling to bottom of the current page.
-  infinite_scroll: false
+  infinite_scroll: true
   # ui theme
-  default_theme: simple
+  default_theme: oscar
   # center the results ?
-  center_alignment: false
+  center_alignment: true
   # URL prefix of the internet archive, don't forget trailing slash (if needed).
   # cache_url: "https://webcache.googleusercontent.com/search?q=cache:"
   # Default interface locale - leave blank to detect from browser information or
@@ -131,7 +131,7 @@ ui:
     simple_style: auto
   # Perform search immediately if a category selected.
   # Disable to select multiple categories at once and start the search manually.
-  search_on_category_select: true
+  search_on_category_select: false
   # Hotkeys: default or vim
   hotkeys: default
 
@@ -161,9 +161,9 @@ ui:
 #
 outgoing:
   # default timeout in seconds, can be override by engine
-  request_timeout: 3.0
+  request_timeout: 30.0
   # the maximum timeout in seconds
-  # max_request_timeout: 10.0
+  max_request_timeout: 60.0
   # suffix of searx_useragent, could contain information like an email address
   # to the administrator
   useragent_suffix: ''
@@ -396,7 +396,7 @@ engines:
   - name: bing
     engine: bing
     shortcut: bi
-    disabled: true
+    disabled: false
 
   - name: bing images
     engine: bing_images
@@ -1439,6 +1439,7 @@ engines:
     categories: [general, web]
     additional_tests:
       rosebud: *test_rosebud
+    disabled: true
 
   - name: qwant news
     qwant_categ: news
@@ -1446,6 +1447,7 @@ engines:
     shortcut: qwn
     categories: news
     network: qwant
+    disabled: true
 
   - name: qwant images
     qwant_categ: images
@@ -1453,6 +1455,7 @@ engines:
     shortcut: qwi
     categories: [images, web]
     network: qwant
+    disabled: true
 
   - name: qwant videos
     qwant_categ: videos
@@ -1460,6 +1463,7 @@ engines:
     shortcut: qwv
     categories: [videos, web]
     network: qwant
+    disabled: true
 
   # - name: library
   #   engine: recoll
@@ -1521,6 +1525,7 @@ engines:
   - name: soundcloud
     engine: soundcloud
     shortcut: sc
+    disabled: true
 
   - name: stackoverflow
     engine: stackexchange
@@ -2353,4 +2358,4 @@ doi_resolvers:
   sci-hub.st: 'https://sci-hub.st/'
   sci-hub.ru: 'https://sci-hub.ru/'
 
-default_doi_resolver: 'oadoi.org'
+default_doi_resolver: 'doi.org'
