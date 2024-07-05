@@ -1,5 +1,6 @@
-import fs from "fs";
-import path from "path";
+/* eslint-disable unicorn/prefer-module */
+import fs from "node:fs";
+import path from "node:path";
 import toml from "@iarna/toml";
 
 const configFileName = "config.toml";
@@ -24,7 +25,7 @@ type RecursivePartial<T> = {
 };
 
 const loadConfig = () =>
-  toml.parse(fs.readFileSync(path.join(__dirname, `../${configFileName}`), "utf-8")) as unknown as Config;
+  toml.parse(fs.readFileSync(path.join(__dirname, `../${configFileName}`), "utf8")) as unknown as Config;
 
 export const getPort = () => loadConfig().GENERAL.PORT;
 

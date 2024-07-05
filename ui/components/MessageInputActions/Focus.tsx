@@ -54,14 +54,14 @@ const Focus = ({ focusMode, setFocusMode }: { focusMode: string; setFocusMode: (
         type="button"
         className="p-2 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
       >
-        {focusMode !== "webSearch" ? (
+        {focusMode === "webSearch" ? (
+          <ScanEye />
+        ) : (
           <div className="flex flex-row items-center space-x-1">
             {focusModes.find(mode => mode.key === focusMode)?.icon}
             <p className="text-xs font-medium">{focusModes.find(mode => mode.key === focusMode)?.title}</p>
             <ChevronDown size={20} />
           </div>
-        ) : (
-          <ScanEye />
         )}
       </Popover.Button>
       <Transition
@@ -75,10 +75,10 @@ const Focus = ({ focusMode, setFocusMode }: { focusMode: string; setFocusMode: (
       >
         <Popover.Panel className="absolute z-10 w-full">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-1 bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-full p-2 max-h-[200px] md:max-h-none overflow-y-auto">
-            {focusModes.map((mode, i) => (
+            {focusModes.map((mode, index) => (
               <Popover.Button
                 onClick={() => setFocusMode(mode.key)}
-                key={i}
+                key={index}
                 className={cn(
                   "p-2 rounded-lg flex flex-col items-start justify-start text-start space-y-2 duration-200 cursor-pointer transition",
                   focusMode === mode.key

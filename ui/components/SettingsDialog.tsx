@@ -1,15 +1,16 @@
+/* eslint-disable unicorn/no-nested-ternary */
 import { cn } from "@/lib/utils";
 import { Dialog, Transition } from "@headlessui/react";
 import { CloudUpload, RefreshCcw, RefreshCw } from "lucide-react";
 import React, { Fragment, useEffect, useState, type SelectHTMLAttributes } from "react";
 import ThemeSwitcher from "./theme/Switcher";
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+interface InputProperties extends React.InputHTMLAttributes<HTMLInputElement> {}
 
-const Input = ({ className, ...restProps }: InputProps) => {
+const Input = ({ className, ...restProperties }: InputProperties) => {
   return (
     <input
-      {...restProps}
+      {...restProperties}
       className={cn(
         "bg-light-secondary dark:bg-dark-secondary px-3 py-2 flex items-center overflow-hidden border border-light-200 dark:border-dark-200 dark:text-white rounded-lg text-sm",
         className,
@@ -18,14 +19,14 @@ const Input = ({ className, ...restProps }: InputProps) => {
   );
 };
 
-interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProperties extends SelectHTMLAttributes<HTMLSelectElement> {
   options: { value: string; label: string; disabled?: boolean }[];
 }
 
-export const Select = ({ className, options, ...restProps }: SelectProps) => {
+export const Select = ({ className, options, ...restProperties }: SelectProperties) => {
   return (
     <select
-      {...restProps}
+      {...restProperties}
       className={cn(
         "bg-light-secondary dark:bg-dark-secondary px-3 py-2 flex items-center overflow-hidden border border-light-200 dark:border-dark-200 dark:text-white rounded-lg text-sm",
         className,
@@ -129,8 +130,8 @@ const SettingsDialog = ({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (is
       localStorage.setItem("embeddingModel", selectedEmbeddingModel!);
       localStorage.setItem("openAIApiKey", customOpenAIApiKey!);
       localStorage.setItem("openAIBaseURL", customOpenAIBaseURL!);
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      console.log(error);
     } finally {
       setIsUpdating(false);
       setIsOpen(false);

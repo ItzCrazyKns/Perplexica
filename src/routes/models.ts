@@ -4,7 +4,7 @@ import { getAvailableChatModelProviders, getAvailableEmbeddingModelProviders } f
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
+router.get("/", async (request, res) => {
   try {
     const [chatModelProviders, embeddingModelProviders] = await Promise.all([
       getAvailableChatModelProviders(),
@@ -12,9 +12,9 @@ router.get("/", async (req, res) => {
     ]);
 
     res.status(200).json({ chatModelProviders, embeddingModelProviders });
-  } catch (err) {
+  } catch (error) {
     res.status(500).json({ message: "An error has occurred." });
-    logger.error(err.message);
+    logger.error(error.message);
   }
 });
 

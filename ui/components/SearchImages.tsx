@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import { ImagesIcon, PlusIcon } from "lucide-react";
 import { useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
@@ -15,6 +14,7 @@ const SearchImages = ({ query, chat_history }: { query: string; chat_history: Me
   const [images, setImages] = useState<Image[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [slides, setSlides] = useState<any[]>([]);
 
   return (
@@ -64,9 +64,9 @@ const SearchImages = ({ query, chat_history }: { query: string; chat_history: Me
       )}
       {loading && (
         <div className="grid grid-cols-2 gap-2">
-          {[...Array(4)].map((_, i) => (
+          {Array.from({ length: 4 }).map((_, index) => (
             <div
-              key={i}
+              key={index}
               className="bg-light-secondary dark:bg-dark-secondary h-32 w-full rounded-lg animate-pulse aspect-video object-cover"
             />
           ))}
@@ -76,25 +76,25 @@ const SearchImages = ({ query, chat_history }: { query: string; chat_history: Me
         <>
           <div className="grid grid-cols-2 gap-2">
             {images.length > 4
-              ? images.slice(0, 3).map((image, i) => (
+              ? images.slice(0, 3).map((image, index) => (
                   <img
                     onClick={() => {
                       setOpen(true);
-                      setSlides([slides[i], ...slides.slice(0, i), ...slides.slice(i + 1)]);
+                      setSlides([slides[index], ...slides.slice(0, index), ...slides.slice(index + 1)]);
                     }}
-                    key={i}
+                    key={index}
                     src={image.img_src}
                     alt={image.title}
                     className="h-full w-full aspect-video object-cover rounded-lg transition duration-200 active:scale-95 hover:scale-[1.02] cursor-zoom-in"
                   />
                 ))
-              : images.map((image, i) => (
+              : images.map((image, index) => (
                   <img
                     onClick={() => {
                       setOpen(true);
-                      setSlides([slides[i], ...slides.slice(0, i), ...slides.slice(i + 1)]);
+                      setSlides([slides[index], ...slides.slice(0, index), ...slides.slice(index + 1)]);
                     }}
-                    key={i}
+                    key={index}
                     src={image.img_src}
                     alt={image.title}
                     className="h-full w-full aspect-video object-cover rounded-lg transition duration-200 active:scale-95 hover:scale-[1.02] cursor-zoom-in"
@@ -106,9 +106,9 @@ const SearchImages = ({ query, chat_history }: { query: string; chat_history: Me
                 className="bg-light-100 hover:bg-light-200 dark:bg-dark-100 dark:hover:bg-dark-200 transition duration-200 active:scale-95 hover:scale-[1.02] h-auto w-full rounded-lg flex flex-col justify-between text-white p-2"
               >
                 <div className="flex flex-row items-center space-x-1">
-                  {images.slice(3, 6).map((image, i) => (
+                  {images.slice(3, 6).map((image, index) => (
                     <img
-                      key={i}
+                      key={index}
                       src={image.img_src}
                       alt={image.title}
                       className="h-6 w-12 rounded-md lg:h-3 lg:w-6 lg:rounded-sm aspect-video object-cover"

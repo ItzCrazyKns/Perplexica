@@ -9,10 +9,10 @@ import handleRedditSearch from "../agents/redditSearchAgent";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import type { Embeddings } from "@langchain/core/embeddings";
 import logger from "../utils/logger";
-import db from "../db";
+import database from "../db";
 import { chats, messages } from "../db/schema";
 import { eq } from "drizzle-orm";
-import crypto from "crypto";
+import crypto from "node:crypto";
 
 type Message = {
   messageId: string;
@@ -66,7 +66,8 @@ const handleEmitterEvents = (emitter: EventEmitter, ws: WebSocket, messageId: st
   emitter.on("end", () => {
     ws.send(JSON.stringify({ type: "messageEnd", messageId: messageId }));
 
-    db.insert(messages)
+    database
+      .insert(messages)
       .values({
         content: recievedMessage,
         chatId: chatId,
@@ -107,16 +108,14 @@ export const handleMessage = async (message: string, ws: WebSocket, llm: BaseCha
         }),
       );
 
-    const history: BaseMessage[] = parsedWSMessage.history.map(msg => {
-      if (msg[0] === "human") {
-        return new HumanMessage({
-          content: msg[1],
-        });
-      } else {
-        return new AIMessage({
-          content: msg[1],
-        });
-      }
+    const history: BaseMessage[] = parsedWSMessage.history.map(message_ => {
+      return message_[0] === "human"
+        ? new HumanMessage({
+            content: message_[1],
+          })
+        : new AIMessage({
+            content: message_[1],
+          });
     });
 
     if (parsedWSMessage.type === "message") {
@@ -127,12 +126,12 @@ export const handleMessage = async (message: string, ws: WebSocket, llm: BaseCha
 
         handleEmitterEvents(emitter, ws, id, parsedMessage.chatId);
 
-        const chat = await db.query.chats.findFirst({
+        const chat = await database.query.chats.findFirst({
           where: eq(chats.id, parsedMessage.chatId),
         });
 
         if (!chat) {
-          await db
+          await database
             .insert(chats)
             .values({
               id: parsedMessage.chatId,
@@ -143,7 +142,7 @@ export const handleMessage = async (message: string, ws: WebSocket, llm: BaseCha
             .execute();
         }
 
-        await db
+        await database
           .insert(messages)
           .values({
             content: parsedMessage.content,
@@ -165,7 +164,7 @@ export const handleMessage = async (message: string, ws: WebSocket, llm: BaseCha
         );
       }
     }
-  } catch (err) {
+  } catch (error) {
     ws.send(
       JSON.stringify({
         type: "error",
@@ -173,6 +172,6 @@ export const handleMessage = async (message: string, ws: WebSocket, llm: BaseCha
         key: "INVALID_FORMAT",
       }),
     );
-    logger.error(`Failed to handle message: ${err}`);
+    logger.error(`Failed to handle message: ${error}`);
   }
 };

@@ -36,11 +36,11 @@ const MessageBox = ({
   const [speechMessage, setSpeechMessage] = useState(message.content);
 
   useEffect(() => {
-    const regex = /\[(\d+)\]/g;
+    const regex = /\[(\d+)]/g;
 
     if (message.role === "assistant" && message?.sources && message.sources.length > 0) {
       return setParsedMessage(
-        message.content.replace(
+        message.content.replaceAll(
           regex,
           (_, number) =>
             `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
@@ -48,7 +48,7 @@ const MessageBox = ({
       );
     }
 
-    setSpeechMessage(message.content.replace(regex, ""));
+    setSpeechMessage(message.content.replaceAll(regex, ""));
     setParsedMessage(message.content);
   }, [message.content, message.sources, message.role]);
 
@@ -128,8 +128,8 @@ const MessageBox = ({
                         <h3 className="text-xl font-medium">Related</h3>
                       </div>
                       <div className="flex flex-col space-y-3">
-                        {message.suggestions.map((suggestion, i) => (
-                          <div className="flex flex-col space-y-3 text-sm" key={i}>
+                        {message.suggestions.map((suggestion, index) => (
+                          <div className="flex flex-col space-y-3 text-sm" key={index}>
                             <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
                             <div
                               onClick={() => {

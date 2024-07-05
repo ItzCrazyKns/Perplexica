@@ -32,7 +32,7 @@ type VideoSearchChainInput = {
   query: string;
 };
 
-const strParser = new StringOutputParser();
+const stringParser = new StringOutputParser();
 
 const createVideoSearchChain = (llm: BaseChatModel) => {
   return RunnableSequence.from([
@@ -46,7 +46,7 @@ const createVideoSearchChain = (llm: BaseChatModel) => {
     }),
     PromptTemplate.fromTemplate(VideoSearchChainPrompt),
     llm,
-    strParser,
+    stringParser,
     RunnableLambda.from(async (input: string) => {
       const res = await searchSearxng(input, {
         engines: ["youtube"],
@@ -54,7 +54,7 @@ const createVideoSearchChain = (llm: BaseChatModel) => {
 
       const videos = [];
 
-      res.results.forEach(result => {
+      for (const result of res.results) {
         if (result.thumbnail && result.url && result.title && result.iframe_src) {
           videos.push({
             img_src: result.thumbnail,
@@ -63,7 +63,7 @@ const createVideoSearchChain = (llm: BaseChatModel) => {
             iframe_src: result.iframe_src,
           });
         }
-      });
+      }
 
       return videos.slice(0, 10);
     }),

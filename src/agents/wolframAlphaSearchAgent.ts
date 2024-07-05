@@ -8,7 +8,7 @@ import type { StreamEvent } from "@langchain/core/tracers/log_stream";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import type { Embeddings } from "@langchain/core/embeddings";
 import formatChatHistoryAsString from "../utils/formatHistory";
-import eventEmitter from "events";
+import eventEmitter from "node:events";
 import logger from "../utils/logger";
 
 const basicWolframAlphaSearchRetrieverPrompt = `
@@ -54,7 +54,7 @@ const basicWolframAlphaSearchResponsePrompt = `
     Anything between the \`context\` is retrieved from Wolfram Alpha and is not a part of the conversation with the user. Today's date is ${new Date().toISOString()}
 `;
 
-const strParser = new StringOutputParser();
+const stringParser = new StringOutputParser();
 
 const handleStream = async (stream: AsyncGenerator<StreamEvent, unknown, unknown>, emitter: eventEmitter) => {
   for await (const event of stream) {
@@ -79,7 +79,7 @@ const createBasicWolframAlphaSearchRetrieverChain = (llm: BaseChatModel) => {
   return RunnableSequence.from([
     PromptTemplate.fromTemplate(basicWolframAlphaSearchRetrieverPrompt),
     llm,
-    strParser,
+    stringParser,
     RunnableLambda.from(async (input: string) => {
       if (input === "not_needed") {
         return { query: "", docs: [] };
@@ -107,12 +107,12 @@ const createBasicWolframAlphaSearchRetrieverChain = (llm: BaseChatModel) => {
   ]);
 };
 
+const processDocs = (docs: Document[]) => {
+  return docs.map((_, index) => `${index + 1}. ${docs[index].pageContent}`).join("\n");
+};
+
 const createBasicWolframAlphaSearchAnsweringChain = (llm: BaseChatModel) => {
   const basicWolframAlphaSearchRetrieverChain = createBasicWolframAlphaSearchRetrieverChain(llm);
-
-  const processDocs = (docs: Document[]) => {
-    return docs.map((_, index) => `${index + 1}. ${docs[index].pageContent}`).join("\n");
-  };
 
   return RunnableSequence.from([
     RunnableMap.from({
@@ -139,7 +139,7 @@ const createBasicWolframAlphaSearchAnsweringChain = (llm: BaseChatModel) => {
       ["user", "{query}"],
     ]),
     llm,
-    strParser,
+    stringParser,
   ]).withConfig({
     runName: "FinalResponseGenerator",
   });
@@ -161,9 +161,9 @@ const basicWolframAlphaSearch = (query: string, history: BaseMessage[], llm: Bas
     );
 
     handleStream(stream, emitter);
-  } catch (err) {
+  } catch (error) {
     emitter.emit("error", JSON.stringify({ data: "An error has occurred please try again later" }));
-    logger.error(`Error in WolframAlphaSearch: ${err}`);
+    logger.error(`Error in WolframAlphaSearch: ${error}`);
   }
 
   return emitter;

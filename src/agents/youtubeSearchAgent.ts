@@ -8,7 +8,7 @@ import type { StreamEvent } from "@langchain/core/tracers/log_stream";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import type { Embeddings } from "@langchain/core/embeddings";
 import formatChatHistoryAsString from "../utils/formatHistory";
-import eventEmitter from "events";
+import eventEmitter from "node:events";
 import computeSimilarity from "../utils/computeSimilarity";
 import logger from "../utils/logger";
 
@@ -55,7 +55,7 @@ const basicYoutubeSearchResponsePrompt = `
     Anything between the \`context\` is retrieved from Youtube and is not a part of the conversation with the user. Today's date is ${new Date().toISOString()}
 `;
 
-const strParser = new StringOutputParser();
+const stringParser = new StringOutputParser();
 
 const handleStream = async (stream: AsyncGenerator<StreamEvent, unknown, unknown>, emitter: eventEmitter) => {
   for await (const event of stream) {
@@ -80,7 +80,7 @@ const createBasicYoutubeSearchRetrieverChain = (llm: BaseChatModel) => {
   return RunnableSequence.from([
     PromptTemplate.fromTemplate(basicYoutubeSearchRetrieverPrompt),
     llm,
-    strParser,
+    stringParser,
     RunnableLambda.from(async (input: string) => {
       if (input === "not_needed") {
         return { query: "", docs: [] };
@@ -94,7 +94,7 @@ const createBasicYoutubeSearchRetrieverChain = (llm: BaseChatModel) => {
       const documents = res.results.map(
         result =>
           new Document({
-            pageContent: result.content ? result.content : result.title,
+            pageContent: result.content ?? result.title,
             metadata: {
               title: result.title,
               url: result.url,
@@ -108,30 +108,30 @@ const createBasicYoutubeSearchRetrieverChain = (llm: BaseChatModel) => {
   ]);
 };
 
+const processDocs = async (docs: Document[]) => {
+  return docs.map((_, index) => `${index + 1}. ${docs[index].pageContent}`).join("\n");
+};
+
 const createBasicYoutubeSearchAnsweringChain = (llm: BaseChatModel, embeddings: Embeddings) => {
   const basicYoutubeSearchRetrieverChain = createBasicYoutubeSearchRetrieverChain(llm);
-
-  const processDocs = async (docs: Document[]) => {
-    return docs.map((_, index) => `${index + 1}. ${docs[index].pageContent}`).join("\n");
-  };
 
   const rerankDocs = async ({ query, docs }: { query: string; docs: Document[] }) => {
     if (docs.length === 0) {
       return docs;
     }
 
-    const docsWithContent = docs.filter(doc => doc.pageContent && doc.pageContent.length > 0);
+    const docsWithContent = docs.filter(document => document.pageContent && document.pageContent.length > 0);
 
-    const [docEmbeddings, queryEmbedding] = await Promise.all([
-      embeddings.embedDocuments(docsWithContent.map(doc => doc.pageContent)),
+    const [documentEmbeddings, queryEmbedding] = await Promise.all([
+      embeddings.embedDocuments(docsWithContent.map(document => document.pageContent)),
       embeddings.embedQuery(query),
     ]);
 
-    const similarity = docEmbeddings.map((docEmbedding, i) => {
-      const sim = computeSimilarity(queryEmbedding, docEmbedding);
+    const similarity = documentEmbeddings.map((documentEmbedding, index) => {
+      const sim = computeSimilarity(queryEmbedding, documentEmbedding);
 
       return {
-        index: i,
+        index: index,
         similarity: sim,
       };
     });
@@ -168,7 +168,7 @@ const createBasicYoutubeSearchAnsweringChain = (llm: BaseChatModel, embeddings: 
       ["user", "{query}"],
     ]),
     llm,
-    strParser,
+    stringParser,
   ]).withConfig({
     runName: "FinalResponseGenerator",
   });
@@ -191,9 +191,9 @@ const basicYoutubeSearch = (query: string, history: BaseMessage[], llm: BaseChat
     );
 
     handleStream(stream, emitter);
-  } catch (err) {
+  } catch (error) {
     emitter.emit("error", JSON.stringify({ data: "An error has occurred please try again later" }));
-    logger.error(`Error in youtube search: ${err}`);
+    logger.error(`Error in youtube search: ${error}`);
   }
 
   return emitter;

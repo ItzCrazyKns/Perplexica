@@ -1,6 +1,6 @@
 import { WebSocketServer } from "ws";
 import { handleConnection } from "./connectionManager";
-import http from "http";
+import http from "node:http";
 import { getPort } from "../config";
 import logger from "../utils/logger";
 

@@ -36,8 +36,8 @@ export const getAvailableChatModelProviders = async () => {
           temperature: 0.7,
         }),
       };
-    } catch (err) {
-      logger.error(`Error loading OpenAI models: ${err}`);
+    } catch (error) {
+      logger.error(`Error loading OpenAI models: ${error}`);
     }
   }
 
@@ -85,8 +85,8 @@ export const getAvailableChatModelProviders = async () => {
           },
         ),
       };
-    } catch (err) {
-      logger.error(`Error loading Groq models: ${err}`);
+    } catch (error) {
+      logger.error(`Error loading Groq models: ${error}`);
     }
   }
 
@@ -101,16 +101,17 @@ export const getAvailableChatModelProviders = async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { models: ollamaModels } = (await response.json()) as any;
 
-      models["ollama"] = ollamaModels.reduce((acc, model) => {
-        acc[model.model] = new ChatOllama({
+      // eslint-disable-next-line unicorn/no-array-reduce
+      models["ollama"] = ollamaModels.reduce((accumulator, model) => {
+        accumulator[model.model] = new ChatOllama({
           baseUrl: ollamaEndpoint,
           model: model.model,
           temperature: 0.7,
         });
-        return acc;
+        return accumulator;
       }, {});
-    } catch (err) {
-      logger.error(`Error loading Ollama models: ${err}`);
+    } catch (error) {
+      logger.error(`Error loading Ollama models: ${error}`);
     }
   }
 
@@ -137,8 +138,8 @@ export const getAvailableEmbeddingModelProviders = async () => {
           modelName: "text-embedding-3-large",
         }),
       };
-    } catch (err) {
-      logger.error(`Error loading OpenAI embeddings: ${err}`);
+    } catch (error) {
+      logger.error(`Error loading OpenAI embeddings: ${error}`);
     }
   }
 
@@ -153,15 +154,16 @@ export const getAvailableEmbeddingModelProviders = async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { models: ollamaModels } = (await response.json()) as any;
 
-      models["ollama"] = ollamaModels.reduce((acc, model) => {
-        acc[model.model] = new OllamaEmbeddings({
+      // eslint-disable-next-line unicorn/no-array-reduce
+      models["ollama"] = ollamaModels.reduce((accumulator, model) => {
+        accumulator[model.model] = new OllamaEmbeddings({
           baseUrl: ollamaEndpoint,
           model: model.model,
         });
-        return acc;
+        return accumulator;
       }, {});
-    } catch (err) {
-      logger.error(`Error loading Ollama embeddings: ${err}`);
+    } catch (error) {
+      logger.error(`Error loading Ollama embeddings: ${error}`);
     }
   }
 
@@ -177,8 +179,8 @@ export const getAvailableEmbeddingModelProviders = async () => {
         modelName: "Xenova/bert-base-multilingual-uncased",
       }),
     };
-  } catch (err) {
-    logger.error(`Error loading local embeddings: ${err}`);
+  } catch (error) {
+    logger.error(`Error loading local embeddings: ${error}`);
   }
 
   return models;

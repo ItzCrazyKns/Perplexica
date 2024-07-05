@@ -19,20 +19,20 @@ interface SearxngSearchResult {
   iframe_src?: string;
 }
 
-export const searchSearxng = async (query: string, opts?: SearxngSearchOptions) => {
+export const searchSearxng = async (query: string, options?: SearxngSearchOptions) => {
   const searxngURL = getSearxngApiEndpoint();
 
   const url = new URL(`${searxngURL}/search?format=json`);
   url.searchParams.append("q", query);
 
-  if (opts) {
-    Object.keys(opts).forEach(key => {
-      if (Array.isArray(opts[key])) {
-        url.searchParams.append(key, opts[key].join(","));
-        return;
+  if (options) {
+    for (const key of Object.keys(options)) {
+      if (Array.isArray(options[key])) {
+        url.searchParams.append(key, options[key].join(","));
+        continue;
       }
-      url.searchParams.append(key, opts[key]);
-    });
+      url.searchParams.append(key, options[key]);
+    }
   }
 
   const res = await axios.get(url.toString());

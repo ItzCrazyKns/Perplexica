@@ -7,16 +7,16 @@ import logger from "../utils/logger";
 
 const router = express.Router();
 
-router.post("/", async (req, res) => {
+router.post("/", async (request, res) => {
   try {
-    const { chat_history: raw_chat_history, chat_model, chat_model_provider } = req.body;
+    const { chat_history: raw_chat_history, chat_model, chat_model_provider } = request.body;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const chat_history = raw_chat_history.map((msg: any) => {
-      if (msg.role === "user") {
-        return new HumanMessage(msg.content);
-      } else if (msg.role === "assistant") {
-        return new AIMessage(msg.content);
+    const chat_history = raw_chat_history.map((message: any) => {
+      if (message.role === "user") {
+        return new HumanMessage(message.content);
+      } else if (message.role === "assistant") {
+        return new AIMessage(message.content);
       }
     });
 
@@ -38,9 +38,9 @@ router.post("/", async (req, res) => {
     const suggestions = await generateSuggestions({ chat_history }, llm);
 
     res.status(200).json({ suggestions: suggestions });
-  } catch (err) {
+  } catch (error) {
     res.status(500).json({ message: "An error has occurred." });
-    logger.error(`Error in generating suggestions: ${err.message}`);
+    logger.error(`Error in generating suggestions: ${error.message}`);
   }
 });
 

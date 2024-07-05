@@ -3,8 +3,8 @@ import Database from "better-sqlite3";
 import * as schema from "./schema";
 
 const sqlite = new Database("data/db.sqlite");
-const db = drizzle(sqlite, {
+const database = drizzle(sqlite, {
   schema: schema,
 });
 
-export default db;
+export default database;

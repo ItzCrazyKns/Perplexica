@@ -6,7 +6,7 @@ import { Document } from "@langchain/core/documents";
 import Navbar from "./Navbar";
 import Chat from "./Chat";
 import EmptyChat from "./EmptyChat";
-import crypto from "crypto";
+import crypto from "node:crypto";
 import { toast } from "sonner";
 import { useSearchParams } from "next/navigation";
 import { getSuggestions } from "@/lib/actions";
@@ -62,20 +62,20 @@ const useSocket = (url: string, setIsWSReady: (ready: boolean) => void, setError
         }
 
         const wsURL = new URL(url);
-        const searchParams = new URLSearchParams({});
+        const searchParameters = new URLSearchParams({});
 
-        searchParams.append("chatModel", chatModel!);
-        searchParams.append("chatModelProvider", chatModelProvider);
+        searchParameters.append("chatModel", chatModel!);
+        searchParameters.append("chatModelProvider", chatModelProvider);
 
         if (chatModelProvider === "custom_openai") {
-          searchParams.append("openAIApiKey", localStorage.getItem("openAIApiKey")!);
-          searchParams.append("openAIBaseURL", localStorage.getItem("openAIBaseURL")!);
+          searchParameters.append("openAIApiKey", localStorage.getItem("openAIApiKey")!);
+          searchParameters.append("openAIBaseURL", localStorage.getItem("openAIBaseURL")!);
         }
 
-        searchParams.append("embeddingModel", embeddingModel!);
-        searchParams.append("embeddingModelProvider", embeddingModelProvider);
+        searchParameters.append("embeddingModel", embeddingModel!);
+        searchParameters.append("embeddingModelProvider", embeddingModelProvider);
 
-        wsURL.search = searchParams.toString();
+        wsURL.search = searchParameters.toString();
 
         const ws = new WebSocket(wsURL.toString());
 
@@ -85,26 +85,27 @@ const useSocket = (url: string, setIsWSReady: (ready: boolean) => void, setError
             setError(true);
             toast.error("Failed to connect to the server. Please try again later.");
           }
-        }, 10000);
+        }, 10_000);
 
-        ws.onopen = () => {
+        ws.addEventListener("open", () => {
           console.log("[DEBUG] open");
           clearTimeout(timeoutId);
           setError(false);
           setIsWSReady(true);
-        };
+        });
 
+        // eslint-disable-next-line unicorn/prefer-add-event-listener
         ws.onerror = () => {
           clearTimeout(timeoutId);
           setError(true);
           toast.error("WebSocket connection error.");
         };
 
-        ws.onclose = () => {
+        ws.addEventListener("close", () => {
           clearTimeout(timeoutId);
           setError(true);
           console.log("[DEBUG] closed");
-        };
+        });
 
         setWs(ws);
       };
@@ -144,17 +145,17 @@ const loadMessages = async (
 
   const data = await res.json();
 
-  const messages = data.messages.map((msg: any) => {
+  const messages = data.messages.map((message: any) => {
     return {
-      ...msg,
-      ...JSON.parse(msg.metadata),
+      ...message,
+      ...JSON.parse(message.metadata),
     };
   }) as Message[];
 
   setMessages(messages);
 
-  const history = messages.map(msg => {
-    return [msg.role, msg.content];
+  const history = messages.map(message => {
+    return [message.role, message.content];
   }) as [string, string][];
 
   console.log("[DEBUG] messages loaded");
@@ -167,8 +168,8 @@ const loadMessages = async (
 };
 
 const ChatWindow = ({ id }: { id?: string }) => {
-  const searchParams = useSearchParams();
-  const initialMessage = searchParams.get("q");
+  const searchParameters = useSearchParams();
+  const initialMessage = searchParameters.get("q");
 
   const [chatId, setChatId] = useState<string | undefined>(id);
   const [newChatCreated, setNewChatCreated] = useState(false);
@@ -202,10 +203,10 @@ const ChatWindow = ({ id }: { id?: string }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const messagesRef = useRef<Message[]>([]);
+  const messagesReference = useRef<Message[]>([]);
 
   useEffect(() => {
-    messagesRef.current = messages;
+    messagesReference.current = messages;
   }, [messages]);
 
   useEffect(() => {
@@ -219,7 +220,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     setLoading(true);
     setMessageAppeared(false);
 
-    let sources: Document[] | undefined = undefined;
+    let sources: Document[] | undefined;
     let recievedMessage = "";
     let added = false;
 
@@ -237,8 +238,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
       }),
     );
 
-    setMessages(prevMessages => [
-      ...prevMessages,
+    setMessages(previousMessages => [
+      ...previousMessages,
       {
         content: message,
         messageId: messageId,
@@ -260,8 +261,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
       if (data.type === "sources") {
         sources = data.data;
         if (!added) {
-          setMessages(prevMessages => [
-            ...prevMessages,
+          setMessages(previousMessages => [
+            ...previousMessages,
             {
               content: "",
               messageId: data.messageId,
@@ -278,8 +279,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
       if (data.type === "message") {
         if (!added) {
-          setMessages(prevMessages => [
-            ...prevMessages,
+          setMessages(previousMessages => [
+            ...previousMessages,
             {
               content: data.data,
               messageId: data.messageId,
@@ -292,8 +293,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
           added = true;
         }
 
-        setMessages(prev =>
-          prev.map(message => {
+        setMessages(previous =>
+          previous.map(message => {
             if (message.messageId === data.messageId) {
               return { ...message, content: message.content + data.data };
             }
@@ -307,21 +308,27 @@ const ChatWindow = ({ id }: { id?: string }) => {
       }
 
       if (data.type === "messageEnd") {
-        setChatHistory(prevHistory => [...prevHistory, ["human", message], ["assistant", recievedMessage]]);
+        setChatHistory(previousHistory => [...previousHistory, ["human", message], ["assistant", recievedMessage]]);
 
         ws?.removeEventListener("message", messageHandler);
         setLoading(false);
 
-        const lastMsg = messagesRef.current[messagesRef.current.length - 1];
+        const lastMessage = messagesReference.current.at(-1);
 
-        if (lastMsg.role === "assistant" && lastMsg.sources && lastMsg.sources.length > 0 && !lastMsg.suggestions) {
-          const suggestions = await getSuggestions(messagesRef.current);
-          setMessages(prev =>
-            prev.map(msg => {
-              if (msg.messageId === lastMsg.messageId) {
-                return { ...msg, suggestions: suggestions };
+        if (
+          lastMessage &&
+          lastMessage.role === "assistant" &&
+          lastMessage.sources &&
+          lastMessage.sources.length > 0 &&
+          !lastMessage.suggestions
+        ) {
+          const suggestions = await getSuggestions(messagesReference.current);
+          setMessages(previous =>
+            previous.map(message_ => {
+              if (message_.messageId === lastMessage.messageId) {
+                return { ...message_, suggestions: suggestions };
               }
-              return msg;
+              return message_;
             }),
           );
         }
@@ -332,17 +339,19 @@ const ChatWindow = ({ id }: { id?: string }) => {
   };
 
   const rewrite = (messageId: string) => {
-    const index = messages.findIndex(msg => msg.messageId === messageId);
+    const index = messages.findIndex(message_ => message_.messageId === messageId);
 
     if (index === -1) return;
 
     const message = messages[index - 1];
 
-    setMessages(prev => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
+    setMessages(previous => {
+      // eslint-disable-next-line unicorn/no-useless-spread
+      return [...previous.slice(0, messages.length > 2 ? index - 1 : 0)];
     });
-    setChatHistory(prev => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
+    setChatHistory(previous => {
+      // eslint-disable-next-line unicorn/no-useless-spread
+      return [...previous.slice(0, messages.length > 2 ? index - 1 : 0)];
     });
 
     sendMessage(message.content);

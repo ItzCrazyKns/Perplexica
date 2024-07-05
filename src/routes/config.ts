@@ -30,8 +30,8 @@ router.get("/", async (_, res) => {
   res.status(200).json(config);
 });
 
-router.post("/", async (req, res) => {
-  const config = req.body;
+router.post("/", async (request, res) => {
+  const config = request.body;
 
   const updatedConfig = {
     API_KEYS: {

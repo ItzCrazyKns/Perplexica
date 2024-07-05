@@ -32,7 +32,7 @@ type ImageSearchChainInput = {
   query: string;
 };
 
-const strParser = new StringOutputParser();
+const stringParser = new StringOutputParser();
 
 const createImageSearchChain = (llm: BaseChatModel) => {
   return RunnableSequence.from([
@@ -46,7 +46,7 @@ const createImageSearchChain = (llm: BaseChatModel) => {
     }),
     PromptTemplate.fromTemplate(imageSearchChainPrompt),
     llm,
-    strParser,
+    stringParser,
     RunnableLambda.from(async (input: string) => {
       const res = await searchSearxng(input, {
         engines: ["bing images", "google images"],
@@ -54,7 +54,7 @@ const createImageSearchChain = (llm: BaseChatModel) => {
 
       const images = [];
 
-      res.results.forEach(result => {
+      for (const result of res.results) {
         if (result.img_src && result.url && result.title) {
           images.push({
             img_src: result.img_src,
@@ -62,7 +62,7 @@ const createImageSearchChain = (llm: BaseChatModel) => {
             title: result.title,
           });
         }
-      });
+      }
 
       return images.slice(0, 10);
     }),

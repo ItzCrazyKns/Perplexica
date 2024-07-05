@@ -46,9 +46,9 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
             <SquarePen className="cursor-pointer" />
           </a>
           <VerticalIconContainer>
-            {navLinks.map((link, i) => (
+            {navLinks.map((link, index) => (
               <Link
-                key={i}
+                key={index}
                 href={link.href}
                 className={cn(
                   "relative flex flex-row items-center justify-center cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 duration-150 transition w-full py-2 rounded-lg",
@@ -70,10 +70,10 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       <div className="fixed bottom-0 w-full z-50 flex flex-row items-center gap-x-6 bg-light-primary dark:bg-dark-primary px-4 py-4 shadow-sm lg:hidden">
-        {navLinks.map((link, i) => (
+        {navLinks.map((link, index) => (
           <Link
             href={link.href}
-            key={i}
+            key={index}
             className={cn(
               "relative flex flex-col items-center space-y-1 text-center w-full",
               link.active ? "text-black dark:text-white" : "text-black dark:text-white/70",

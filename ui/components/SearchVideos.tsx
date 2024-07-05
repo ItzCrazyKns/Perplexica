@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import { PlayCircle, PlayIcon, PlusIcon, VideoIcon } from "lucide-react";
 import { useState } from "react";
 import Lightbox, { GenericSlide, VideoSlide } from "yet-another-react-lightbox";
@@ -79,9 +78,9 @@ const Searchvideos = ({ query, chat_history }: { query: string; chat_history: Me
       )}
       {loading && (
         <div className="grid grid-cols-2 gap-2">
-          {[...Array(4)].map((_, i) => (
+          {Array.from({ length: 4 }).map((_, index) => (
             <div
-              key={i}
+              key={index}
               className="bg-light-secondary dark:bg-dark-secondary h-32 w-full rounded-lg animate-pulse aspect-video object-cover"
             />
           ))}
@@ -91,14 +90,14 @@ const Searchvideos = ({ query, chat_history }: { query: string; chat_history: Me
         <>
           <div className="grid grid-cols-2 gap-2">
             {videos.length > 4
-              ? videos.slice(0, 3).map((video, i) => (
+              ? videos.slice(0, 3).map((video, index) => (
                   <div
                     onClick={() => {
                       setOpen(true);
-                      setSlides([slides[i], ...slides.slice(0, i), ...slides.slice(i + 1)]);
+                      setSlides([slides[index], ...slides.slice(0, index), ...slides.slice(index + 1)]);
                     }}
                     className="relative transition duration-200 active:scale-95 hover:scale-[1.02] cursor-pointer"
-                    key={i}
+                    key={index}
                   >
                     <img
                       src={video.img_src}
@@ -111,14 +110,14 @@ const Searchvideos = ({ query, chat_history }: { query: string; chat_history: Me
                     </div>
                   </div>
                 ))
-              : videos.map((video, i) => (
+              : videos.map((video, index) => (
                   <div
                     onClick={() => {
                       setOpen(true);
-                      setSlides([slides[i], ...slides.slice(0, i), ...slides.slice(i + 1)]);
+                      setSlides([slides[index], ...slides.slice(0, index), ...slides.slice(index + 1)]);
                     }}
                     className="relative transition duration-200 active:scale-95 hover:scale-[1.02] cursor-pointer"
-                    key={i}
+                    key={index}
                   >
                     <img
                       src={video.img_src}
@@ -137,9 +136,9 @@ const Searchvideos = ({ query, chat_history }: { query: string; chat_history: Me
                 className="bg-light-100 hover:bg-light-200 dark:bg-dark-100 dark:hover:bg-dark-200 transition duration-200 active:scale-95 hover:scale-[1.02] h-auto w-full rounded-lg flex flex-col justify-between text-white p-2"
               >
                 <div className="flex flex-row items-center space-x-1">
-                  {videos.slice(3, 6).map((video, i) => (
+                  {videos.slice(3, 6).map((video, index) => (
                     <img
-                      key={i}
+                      key={index}
                       src={video.img_src}
                       alt={video.title}
                       className="h-6 w-12 rounded-md lg:h-3 lg:w-6 lg:rounded-sm aspect-video object-cover"

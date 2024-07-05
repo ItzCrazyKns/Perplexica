@@ -1,15 +1,15 @@
 import { BaseOutputParser } from "@langchain/core/output_parsers";
 
-interface LineListOutputParserArgs {
+interface LineListOutputParserArguments {
   key?: string;
 }
 
 class LineListOutputParser extends BaseOutputParser<string[]> {
   private key = "questions";
 
-  constructor(args?: LineListOutputParserArgs) {
+  constructor(arguments_?: LineListOutputParserArguments) {
     super();
-    this.key = args.key ?? this.key;
+    this.key = arguments_.key ?? this.key;
   }
 
   static lc_name() {

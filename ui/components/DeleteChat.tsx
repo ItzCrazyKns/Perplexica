@@ -33,8 +33,9 @@ const DeleteChat = ({
       const newChats = chats.filter(chat => chat.id !== chatId);
 
       setChats(newChats);
-    } catch (err: any) {
-      toast.error(err.message);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      toast.error(error.message);
     } finally {
       setConfirmationDialogOpen(false);
       setLoading(false);

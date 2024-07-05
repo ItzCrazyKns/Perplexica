@@ -16,12 +16,12 @@ const EmptyChatMessageInput = ({
   const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [message, setMessage] = useState("");
 
-  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const inputReference = useRef<HTMLTextAreaElement | null>(null);
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === "/") {
       e.preventDefault();
-      inputRef.current?.focus();
+      inputReference.current?.focus();
     }
   };
 
@@ -51,7 +51,7 @@ const EmptyChatMessageInput = ({
     >
       <div className="flex flex-col bg-light-secondary dark:bg-dark-secondary px-5 pt-5 pb-2 rounded-lg w-full border border-light-200 dark:border-dark-200">
         <TextareaAutosize
-          ref={inputRef}
+          ref={inputReference}
           value={message}
           onChange={e => setMessage(e.target.value)}
           minRows={2}

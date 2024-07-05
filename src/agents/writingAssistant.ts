@@ -3,7 +3,7 @@ import { ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts
 import { RunnableSequence } from "@langchain/core/runnables";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import type { StreamEvent } from "@langchain/core/tracers/log_stream";
-import eventEmitter from "events";
+import eventEmitter from "node:events";
 import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import type { Embeddings } from "@langchain/core/embeddings";
 import logger from "../utils/logger";
@@ -13,7 +13,7 @@ You are Perplexica, an AI model who is expert at searching the web and answering
 Since you are a writing assistant, you would not perform web searches. If you think you lack information to answer the query, you can ask the user for more information or suggest them to switch to a different focus mode.
 `;
 
-const strParser = new StringOutputParser();
+const stringParser = new StringOutputParser();
 
 const handleStream = async (stream: AsyncGenerator<StreamEvent, unknown, unknown>, emitter: eventEmitter) => {
   for await (const event of stream) {
@@ -34,7 +34,7 @@ const createWritingAssistantChain = (llm: BaseChatModel) => {
       ["user", "{query}"],
     ]),
     llm,
-    strParser,
+    stringParser,
   ]).withConfig({
     runName: "FinalResponseGenerator",
   });
@@ -62,9 +62,9 @@ const handleWritingAssistant = (
     );
 
     handleStream(stream, emitter);
-  } catch (err) {
+  } catch (error) {
     emitter.emit("error", JSON.stringify({ data: "An error has occurred please try again later" }));
-    logger.error(`Error in writing assistant: ${err}`);
+    logger.error(`Error in writing assistant: ${error}`);
   }
 
   return emitter;

@@ -10,7 +10,7 @@ const Navbar = ({ messages }: { messages: Message[] }) => {
   useEffect(() => {
     if (messages.length > 0) {
       const newTitle =
-        messages[0].content.length > 20 ? `${messages[0].content.substring(0, 20).trim()}...` : messages[0].content;
+        messages[0].content.length > 20 ? `${messages[0].content.slice(0, 20).trim()}...` : messages[0].content;
       setTitle(newTitle);
       const newTimeAgo = formatTimeDifference(new Date(), messages[0].createdAt);
       setTimeAgo(newTimeAgo);

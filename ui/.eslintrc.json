@@ -1,3 +1,23 @@
 {
-  "overrides": []
+  "extends": ["../.eslintrc.json"],
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "plugins": ["react", "react-hooks"],
+      "extends": ["plugin:react/recommended", "plugin:react-hooks/recommended", "plugin:react/jsx-runtime"]
+    },
+    {
+      "files": [
+        "postcss.config.js",
+        "tailwind.config.js",
+        "tailwind.config.ts"
+      ],
+      "rules": {
+        "unicorn/prefer-module": "off"
+      },
+      "env": {
+        "node": true
+      }
+    }
+  ]
 }

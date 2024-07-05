@@ -19,12 +19,12 @@ const MessageInput = ({ sendMessage, loading }: { sendMessage: (message: string)
     }
   }, [textareaRows, mode, message]);
 
-  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const inputReference = useRef<HTMLTextAreaElement | null>(null);
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === "/") {
       e.preventDefault();
-      inputRef.current?.focus();
+      inputReference.current?.focus();
     }
   };
 
@@ -58,11 +58,11 @@ const MessageInput = ({ sendMessage, loading }: { sendMessage: (message: string)
     >
       {mode === "single" && <Attach />}
       <TextareaAutosize
-        ref={inputRef}
+        ref={inputReference}
         value={message}
         onChange={e => setMessage(e.target.value)}
-        onHeightChange={(height, props) => {
-          setTextareaRows(Math.ceil(height / props.rowHeight));
+        onHeightChange={(height, properties) => {
+          setTextareaRows(Math.ceil(height / properties.rowHeight));
         }}
         className="transition bg-transparent dark:placeholder:text-white/50 placeholder:text-sm text-sm dark:text-white resize-none focus:outline-none w-full px-2 max-h-24 lg:max-h-36 xl:max-h-48 flex-grow flex-shrink"
         placeholder="Ask a follow-up"

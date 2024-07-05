@@ -71,10 +71,10 @@ const Page = () => {
       )}
       {chats.length > 0 && (
         <div className="flex flex-col pt-16 lg:pt-24">
-          {chats.map((chat, i) => (
+          {chats.map((chat, index) => (
             <div
               className="flex flex-col space-y-4 border-b border-white-200 dark:border-dark-200 py-6 lg:mx-4"
-              key={i}
+              key={index}
             >
               <Link
                 href={`/c/${chat.id}`}

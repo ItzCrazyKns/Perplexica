@@ -1,7 +1,7 @@
 import { startWebSocketServer } from "./websocket";
 import express from "express";
 import cors from "cors";
-import http from "http";
+import http from "node:http";
 import routes from "./routes";
 import { getPort } from "./config";
 import logger from "./utils/logger";
