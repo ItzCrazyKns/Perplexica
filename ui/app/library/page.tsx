@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import DeleteChat from '@/components/DeleteChat';
-import { formatTimeDifference } from '@/lib/utils';
-import { BookOpenText, ClockIcon, Delete, ScanEye } from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import DeleteChat from "@/components/DeleteChat";
+import { formatTimeDifference } from "@/lib/utils";
+import { BookOpenText, ClockIcon } from "lucide-react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export interface Chat {
   id: string;
@@ -22,9 +22,9 @@ const Page = () => {
       setLoading(true);
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chats`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
@@ -61,24 +61,20 @@ const Page = () => {
       <div className="fixed z-40 top-0 left-0 right-0 lg:pl-[104px] lg:pr-6 lg:px-8 px-4 py-4 lg:py-6 border-b border-light-200 dark:border-dark-200">
         <div className="flex flex-row items-center space-x-2 max-w-screen-lg lg:mx-auto">
           <BookOpenText />
-          <h2 className="text-black dark:text-white lg:text-3xl lg:font-medium">
-            Library
-          </h2>
+          <h2 className="text-black dark:text-white lg:text-3xl lg:font-medium">Library</h2>
         </div>
       </div>
       {chats.length === 0 && (
         <div className="flex flex-row items-center justify-center min-h-screen">
-          <p className="text-black/70 dark:text-white/70 text-sm">
-            No chats found.
-          </p>
+          <p className="text-black/70 dark:text-white/70 text-sm">No chats found.</p>
         </div>
       )}
       {chats.length > 0 && (
         <div className="flex flex-col pt-16 lg:pt-24">
-          {chats.map((chat, i) => (
+          {chats.map((chat, index) => (
             <div
               className="flex flex-col space-y-4 border-b border-white-200 dark:border-dark-200 py-6 lg:mx-4"
-              key={i}
+              key={index}
             >
               <Link
                 href={`/c/${chat.id}`}
@@ -89,15 +85,9 @@ const Page = () => {
               <div className="flex flex-row items-center justify-between w-full">
                 <div className="flex flex-row items-center space-x-1 lg:space-x-1.5 text-black/70 dark:text-white/70">
                   <ClockIcon size={15} />
-                  <p className="text-xs">
-                    {formatTimeDifference(new Date(), chat.createdAt)} Ago
-                  </p>
+                  <p className="text-xs">{formatTimeDifference(new Date(), chat.createdAt)} Ago</p>
                 </div>
-                <DeleteChat
-                  chatId={chat.id}
-                  chats={chats}
-                  setChats={setChats}
-                />
+                <DeleteChat chatId={chat.id} chats={chats} setChats={setChats} />
               </div>
             </div>
           ))}

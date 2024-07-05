@@ -1,0 +1,32 @@
+{
+  "root": true,
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended",
+    "plugin:unicorn/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint",
+    "prettier",
+    "unicorn"
+  ],
+  "rules": {
+    "unicorn/filename-case": [
+      "error",
+      {
+        "cases": {
+          "camelCase": true,
+          "pascalCase": true
+        }
+      }
+    ],
+    "unicorn/prevent-abbreviations": "warn",
+    "unicorn/no-null": "off",
+    "@typescript-eslint/no-unused-vars": "off"
+  },
+  "overrides": [
+    
+  ]
+}

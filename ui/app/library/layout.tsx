@@ -1,8 +1,8 @@
-import { Metadata } from 'next';
-import React from 'react';
+import { Metadata } from "next";
+import React from "react";
 
 export const metadata: Metadata = {
-  title: 'Library - Perplexica',
+  title: "Library - Perplexica",
 };
 
 const Layout = ({ children }: { children: React.ReactNode }) => {

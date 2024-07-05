@@ -1,23 +1,15 @@
-import { BaseMessage } from '@langchain/core/messages';
-import {
-  PromptTemplate,
-  ChatPromptTemplate,
-  MessagesPlaceholder,
-} from '@langchain/core/prompts';
-import {
-  RunnableSequence,
-  RunnableMap,
-  RunnableLambda,
-} from '@langchain/core/runnables';
-import { StringOutputParser } from '@langchain/core/output_parsers';
-import { Document } from '@langchain/core/documents';
-import { searchSearxng } from '../lib/searxng';
-import type { StreamEvent } from '@langchain/core/tracers/log_stream';
-import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import type { Embeddings } from '@langchain/core/embeddings';
-import formatChatHistoryAsString from '../utils/formatHistory';
-import eventEmitter from 'events';
-import logger from '../utils/logger';
+import { BaseMessage } from "@langchain/core/messages";
+import { PromptTemplate, ChatPromptTemplate, MessagesPlaceholder } from "@langchain/core/prompts";
+import { RunnableSequence, RunnableMap, RunnableLambda } from "@langchain/core/runnables";
+import { StringOutputParser } from "@langchain/core/output_parsers";
+import { Document } from "@langchain/core/documents";
+import { searchSearxng } from "../lib/searxng";
+import type { StreamEvent } from "@langchain/core/tracers/log_stream";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import type { Embeddings } from "@langchain/core/embeddings";
+import formatChatHistoryAsString from "../utils/formatHistory";
+import eventEmitter from "node:events";
+import logger from "../utils/logger";
 
 const basicWolframAlphaSearchRetrieverPrompt = `
 You will be given a conversation below and a follow up question. You need to rephrase the follow-up question if needed so it is a standalone question that can be used by the LLM to search the web for information.
@@ -62,36 +54,18 @@ const basicWolframAlphaSearchResponsePrompt = `
     Anything between the \`context\` is retrieved from Wolfram Alpha and is not a part of the conversation with the user. Today's date is ${new Date().toISOString()}
 `;
 
-const strParser = new StringOutputParser();
+const stringParser = new StringOutputParser();
 
-const handleStream = async (
-  stream: AsyncGenerator<StreamEvent, any, unknown>,
-  emitter: eventEmitter,
-) => {
+const handleStream = async (stream: AsyncGenerator<StreamEvent, unknown, unknown>, emitter: eventEmitter) => {
   for await (const event of stream) {
-    if (
-      event.event === 'on_chain_end' &&
-      event.name === 'FinalSourceRetriever'
-    ) {
-      emitter.emit(
-        'data',
-        JSON.stringify({ type: 'sources', data: event.data.output }),
-      );
+    if (event.event === "on_chain_end" && event.name === "FinalSourceRetriever") {
+      emitter.emit("data", JSON.stringify({ type: "sources", data: event.data.output }));
     }
-    if (
-      event.event === 'on_chain_stream' &&
-      event.name === 'FinalResponseGenerator'
-    ) {
-      emitter.emit(
-        'data',
-        JSON.stringify({ type: 'response', data: event.data.chunk }),
-      );
+    if (event.event === "on_chain_stream" && event.name === "FinalResponseGenerator") {
+      emitter.emit("data", JSON.stringify({ type: "response", data: event.data.chunk }));
     }
-    if (
-      event.event === 'on_chain_end' &&
-      event.name === 'FinalResponseGenerator'
-    ) {
-      emitter.emit('end');
+    if (event.event === "on_chain_end" && event.name === "FinalResponseGenerator") {
+      emitter.emit("end");
     }
   }
 };
@@ -105,19 +79,19 @@ const createBasicWolframAlphaSearchRetrieverChain = (llm: BaseChatModel) => {
   return RunnableSequence.from([
     PromptTemplate.fromTemplate(basicWolframAlphaSearchRetrieverPrompt),
     llm,
-    strParser,
+    stringParser,
     RunnableLambda.from(async (input: string) => {
-      if (input === 'not_needed') {
-        return { query: '', docs: [] };
+      if (input === "not_needed") {
+        return { query: "", docs: [] };
       }
 
       const res = await searchSearxng(input, {
-        language: 'en',
-        engines: ['wolframalpha'],
+        language: "en",
+        engines: ["wolframalpha"],
       });
 
       const documents = res.results.map(
-        (result) =>
+        result =>
           new Document({
             pageContent: result.content,
             metadata: {
@@ -133,74 +107,63 @@ const createBasicWolframAlphaSearchRetrieverChain = (llm: BaseChatModel) => {
   ]);
 };
 
-const createBasicWolframAlphaSearchAnsweringChain = (llm: BaseChatModel) => {
-  const basicWolframAlphaSearchRetrieverChain =
-    createBasicWolframAlphaSearchRetrieverChain(llm);
+const processDocs = (docs: Document[]) => {
+  return docs.map((_, index) => `${index + 1}. ${docs[index].pageContent}`).join("\n");
+};
 
-  const processDocs = (docs: Document[]) => {
-    return docs
-      .map((_, index) => `${index + 1}. ${docs[index].pageContent}`)
-      .join('\n');
-  };
+const createBasicWolframAlphaSearchAnsweringChain = (llm: BaseChatModel) => {
+  const basicWolframAlphaSearchRetrieverChain = createBasicWolframAlphaSearchRetrieverChain(llm);
 
   return RunnableSequence.from([
     RunnableMap.from({
       query: (input: BasicChainInput) => input.query,
       chat_history: (input: BasicChainInput) => input.chat_history,
       context: RunnableSequence.from([
-        (input) => ({
+        input => ({
           query: input.query,
           chat_history: formatChatHistoryAsString(input.chat_history),
         }),
         basicWolframAlphaSearchRetrieverChain
-          .pipe(({ query, docs }) => {
+          .pipe(({ docs }) => {
             return docs;
           })
           .withConfig({
-            runName: 'FinalSourceRetriever',
+            runName: "FinalSourceRetriever",
           })
           .pipe(processDocs),
       ]),
     }),
     ChatPromptTemplate.fromMessages([
-      ['system', basicWolframAlphaSearchResponsePrompt],
-      new MessagesPlaceholder('chat_history'),
-      ['user', '{query}'],
+      ["system", basicWolframAlphaSearchResponsePrompt],
+      new MessagesPlaceholder("chat_history"),
+      ["user", "{query}"],
     ]),
     llm,
-    strParser,
+    stringParser,
   ]).withConfig({
-    runName: 'FinalResponseGenerator',
+    runName: "FinalResponseGenerator",
   });
 };
 
-const basicWolframAlphaSearch = (
-  query: string,
-  history: BaseMessage[],
-  llm: BaseChatModel,
-) => {
+const basicWolframAlphaSearch = (query: string, history: BaseMessage[], llm: BaseChatModel) => {
   const emitter = new eventEmitter();
 
   try {
-    const basicWolframAlphaSearchAnsweringChain =
-      createBasicWolframAlphaSearchAnsweringChain(llm);
+    const basicWolframAlphaSearchAnsweringChain = createBasicWolframAlphaSearchAnsweringChain(llm);
     const stream = basicWolframAlphaSearchAnsweringChain.streamEvents(
       {
         chat_history: history,
         query: query,
       },
       {
-        version: 'v1',
+        version: "v1",
       },
     );
 
     handleStream(stream, emitter);
-  } catch (err) {
-    emitter.emit(
-      'error',
-      JSON.stringify({ data: 'An error has occurred please try again later' }),
-    );
-    logger.error(`Error in WolframAlphaSearch: ${err}`);
+  } catch (error) {
+    emitter.emit("error", JSON.stringify({ data: "An error has occurred please try again later" }));
+    logger.error(`Error in WolframAlphaSearch: ${error}`);
   }
 
   return emitter;
@@ -210,7 +173,8 @@ const handleWolframAlphaSearch = (
   message: string,
   history: BaseMessage[],
   llm: BaseChatModel,
-  embeddings: Embeddings,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _embeddings: Embeddings,
 ) => {
   const emitter = basicWolframAlphaSearch(message, history, llm);
   return emitter;

@@ -1,17 +1,15 @@
-'use client';
+"use client";
 
-import { cn } from '@/lib/utils';
-import { BookOpenText, Home, Search, SquarePen, Settings } from 'lucide-react';
-import Link from 'next/link';
-import { useSelectedLayoutSegments } from 'next/navigation';
-import React, { useState, type ReactNode } from 'react';
-import Layout from './Layout';
-import SettingsDialog from './SettingsDialog';
+import { cn } from "@/lib/utils";
+import { BookOpenText, Home, Search, SquarePen, Settings } from "lucide-react";
+import Link from "next/link";
+import { useSelectedLayoutSegments } from "next/navigation";
+import React, { useState, type ReactNode } from "react";
+import Layout from "./Layout";
+import SettingsDialog from "./SettingsDialog";
 
 const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
-  return (
-    <div className="flex flex-col items-center gap-y-3 w-full">{children}</div>
-  );
+  return <div className="flex flex-col items-center gap-y-3 w-full">{children}</div>;
 };
 
 const Sidebar = ({ children }: { children: React.ReactNode }) => {
@@ -22,21 +20,21 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
   const navLinks = [
     {
       icon: Home,
-      href: '/',
-      active: segments.length === 0 || segments.includes('c'),
-      label: 'Home',
+      href: "/",
+      active: segments.length === 0 || segments.includes("c"),
+      label: "Home",
     },
     {
       icon: Search,
-      href: '/discover',
-      active: segments.includes('discover'),
-      label: 'Discover',
+      href: "/discover",
+      active: segments.includes("discover"),
+      label: "Discover",
     },
     {
       icon: BookOpenText,
-      href: '/library',
-      active: segments.includes('library'),
-      label: 'Library',
+      href: "/library",
+      active: segments.includes("library"),
+      label: "Library",
     },
   ];
 
@@ -48,15 +46,13 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
             <SquarePen className="cursor-pointer" />
           </a>
           <VerticalIconContainer>
-            {navLinks.map((link, i) => (
+            {navLinks.map((link, index) => (
               <Link
-                key={i}
+                key={index}
                 href={link.href}
                 className={cn(
-                  'relative flex flex-row items-center justify-center cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 duration-150 transition w-full py-2 rounded-lg',
-                  link.active
-                    ? 'text-black dark:text-white'
-                    : 'text-black/70 dark:text-white/70',
+                  "relative flex flex-row items-center justify-center cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 duration-150 transition w-full py-2 rounded-lg",
+                  link.active ? "text-black dark:text-white" : "text-black/70 dark:text-white/70",
                 )}
               >
                 <link.icon />
@@ -67,33 +63,23 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
             ))}
           </VerticalIconContainer>
 
-          <Settings
-            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-            className="cursor-pointer"
-          />
+          <Settings onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="cursor-pointer" />
 
-          <SettingsDialog
-            isOpen={isSettingsOpen}
-            setIsOpen={setIsSettingsOpen}
-          />
+          <SettingsDialog isOpen={isSettingsOpen} setIsOpen={setIsSettingsOpen} />
         </div>
       </div>
 
       <div className="fixed bottom-0 w-full z-50 flex flex-row items-center gap-x-6 bg-light-primary dark:bg-dark-primary px-4 py-4 shadow-sm lg:hidden">
-        {navLinks.map((link, i) => (
+        {navLinks.map((link, index) => (
           <Link
             href={link.href}
-            key={i}
+            key={index}
             className={cn(
-              'relative flex flex-col items-center space-y-1 text-center w-full',
-              link.active
-                ? 'text-black dark:text-white'
-                : 'text-black dark:text-white/70',
+              "relative flex flex-col items-center space-y-1 text-center w-full",
+              link.active ? "text-black dark:text-white" : "text-black dark:text-white/70",
             )}
           >
-            {link.active && (
-              <div className="absolute top-0 -mt-4 h-1 w-full rounded-b-lg bg-black dark:bg-white" />
-            )}
+            {link.active && <div className="absolute top-0 -mt-4 h-1 w-full rounded-b-lg bg-black dark:bg-white" />}
             <link.icon />
             <p className="text-xs">{link.label}</p>
           </Link>

@@ -1,10 +1,10 @@
-import { RunnableSequence, RunnableMap } from '@langchain/core/runnables';
-import ListLineOutputParser from '../lib/outputParsers/listLineOutputParser';
-import { PromptTemplate } from '@langchain/core/prompts';
-import formatChatHistoryAsString from '../utils/formatHistory';
-import { BaseMessage } from '@langchain/core/messages';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { ChatOpenAI } from '@langchain/openai';
+import { RunnableSequence, RunnableMap } from "@langchain/core/runnables";
+import ListLineOutputParser from "../lib/outputParsers/listLineOutputParser";
+import { PromptTemplate } from "@langchain/core/prompts";
+import formatChatHistoryAsString from "../utils/formatHistory";
+import { BaseMessage } from "@langchain/core/messages";
+import { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import { ChatOpenAI } from "@langchain/openai";
 
 const suggestionGeneratorPrompt = `
 You are an AI suggestion generator for an AI powered search engine. You will be given a conversation below. You need to generate 4-5 suggestions based on the conversation. The suggestion should be relevant to the conversation that can be used by the user to ask the chat model for more information.
@@ -28,14 +28,13 @@ type SuggestionGeneratorInput = {
 };
 
 const outputParser = new ListLineOutputParser({
-  key: 'suggestions',
+  key: "suggestions",
 });
 
 const createSuggestionGeneratorChain = (llm: BaseChatModel) => {
   return RunnableSequence.from([
     RunnableMap.from({
-      chat_history: (input: SuggestionGeneratorInput) =>
-        formatChatHistoryAsString(input.chat_history),
+      chat_history: (input: SuggestionGeneratorInput) => formatChatHistoryAsString(input.chat_history),
     }),
     PromptTemplate.fromTemplate(suggestionGeneratorPrompt),
     llm,
@@ -43,10 +42,7 @@ const createSuggestionGeneratorChain = (llm: BaseChatModel) => {
   ]);
 };
 
-const generateSuggestions = (
-  input: SuggestionGeneratorInput,
-  llm: BaseChatModel,
-) => {
+const generateSuggestions = (input: SuggestionGeneratorInput, llm: BaseChatModel) => {
   (llm as ChatOpenAI).temperature = 0;
   const suggestionGeneratorChain = createSuggestionGeneratorChain(llm);
   return suggestionGeneratorChain.invoke(input);

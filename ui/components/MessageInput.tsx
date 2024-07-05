@@ -1,84 +1,75 @@
-import { cn } from '@/lib/utils';
-import { ArrowUp } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import TextareaAutosize from 'react-textarea-autosize';
-import Attach from './MessageInputActions/Attach';
-import CopilotToggle from './MessageInputActions/Copilot';
+import { cn } from "@/lib/utils";
+import { ArrowUp } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import TextareaAutosize from "react-textarea-autosize";
+import Attach from "./MessageInputActions/Attach";
+import CopilotToggle from "./MessageInputActions/Copilot";
 
-const MessageInput = ({
-  sendMessage,
-  loading,
-}: {
-  sendMessage: (message: string) => void;
-  loading: boolean;
-}) => {
+const MessageInput = ({ sendMessage, loading }: { sendMessage: (message: string) => void; loading: boolean }) => {
   const [copilotEnabled, setCopilotEnabled] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [textareaRows, setTextareaRows] = useState(1);
-  const [mode, setMode] = useState<'multi' | 'single'>('single');
+  const [mode, setMode] = useState<"multi" | "single">("single");
 
   useEffect(() => {
-    if (textareaRows >= 2 && message && mode === 'single') {
-      setMode('multi');
-    } else if (!message && mode === 'multi') {
-      setMode('single');
+    if (textareaRows >= 2 && message && mode === "single") {
+      setMode("multi");
+    } else if (!message && mode === "multi") {
+      setMode("single");
     }
   }, [textareaRows, mode, message]);
 
-  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const inputReference = useRef<HTMLTextAreaElement | null>(null);
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === '/') {
+    if (e.key === "/") {
       e.preventDefault();
-      inputRef.current?.focus();
+      inputReference.current?.focus();
     }
   };
 
   useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
   return (
     <form
-      onSubmit={(e) => {
+      onSubmit={e => {
         if (loading) return;
         e.preventDefault();
         sendMessage(message);
-        setMessage('');
+        setMessage("");
       }}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' && !e.shiftKey && !loading) {
+      onKeyDown={e => {
+        if (e.key === "Enter" && !e.shiftKey && !loading) {
           e.preventDefault();
           sendMessage(message);
-          setMessage('');
+          setMessage("");
         }
       }}
       className={cn(
-        'bg-light-secondary dark:bg-dark-secondary p-4 flex items-center overflow-hidden border border-light-200 dark:border-dark-200',
-        mode === 'multi' ? 'flex-col rounded-lg' : 'flex-row rounded-full',
+        "bg-light-secondary dark:bg-dark-secondary p-4 flex items-center overflow-hidden border border-light-200 dark:border-dark-200",
+        mode === "multi" ? "flex-col rounded-lg" : "flex-row rounded-full",
       )}
     >
-      {mode === 'single' && <Attach />}
+      {mode === "single" && <Attach />}
       <TextareaAutosize
-        ref={inputRef}
+        ref={inputReference}
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        onHeightChange={(height, props) => {
-          setTextareaRows(Math.ceil(height / props.rowHeight));
+        onChange={e => setMessage(e.target.value)}
+        onHeightChange={(height, properties) => {
+          setTextareaRows(Math.ceil(height / properties.rowHeight));
         }}
         className="transition bg-transparent dark:placeholder:text-white/50 placeholder:text-sm text-sm dark:text-white resize-none focus:outline-none w-full px-2 max-h-24 lg:max-h-36 xl:max-h-48 flex-grow flex-shrink"
         placeholder="Ask a follow-up"
       />
-      {mode === 'single' && (
+      {mode === "single" && (
         <div className="flex flex-row items-center space-x-4">
-          <CopilotToggle
-            copilotEnabled={copilotEnabled}
-            setCopilotEnabled={setCopilotEnabled}
-          />
+          <CopilotToggle copilotEnabled={copilotEnabled} setCopilotEnabled={setCopilotEnabled} />
           <button
             disabled={message.trim().length === 0 || loading}
             className="bg-[#24A0ED] text-white disabled:text-black/50 dark:disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#e0e0dc79] dark:disabled:bg-[#ececec21] rounded-full p-2"
@@ -87,14 +78,11 @@ const MessageInput = ({
           </button>
         </div>
       )}
-      {mode === 'multi' && (
+      {mode === "multi" && (
         <div className="flex flex-row items-center justify-between w-full pt-2">
           <Attach />
           <div className="flex flex-row items-center space-x-4">
-            <CopilotToggle
-              copilotEnabled={copilotEnabled}
-              setCopilotEnabled={setCopilotEnabled}
-            />
+            <CopilotToggle copilotEnabled={copilotEnabled} setCopilotEnabled={setCopilotEnabled} />
             <button
               disabled={message.trim().length === 0 || loading}
               className="bg-[#24A0ED] text-white text-black/50 dark:disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#e0e0dc79] dark:disabled:bg-[#ececec21] rounded-full p-2"

@@ -1,0 +1,39 @@
+name: PR-gated
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: github.event.pull_request.draft == false
+    name: Test on node ${{ matrix.node_version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        node_version:
+          - 20.x
+          - 22.x
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node_version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node_version }}
+      - name: yarn install
+        run: yarn --frozen-lockfile
+      - name: lint
+        run: yarn lint
+      - name: build
+        run: yarn build
+      - name: yarn install:ui
+        run: yarn --frozen-lockfine
+        working-directory: ./ui
+      - name: build:ui
+        run: yarn build
+        working-directory: ./ui

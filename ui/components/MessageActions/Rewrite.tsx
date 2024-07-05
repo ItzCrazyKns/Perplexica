@@ -1,12 +1,6 @@
-import { ArrowLeftRight } from 'lucide-react';
+import { ArrowLeftRight } from "lucide-react";
 
-const Rewrite = ({
-  rewrite,
-  messageId,
-}: {
-  rewrite: (messageId: string) => void;
-  messageId: string;
-}) => {
+const Rewrite = ({ rewrite, messageId }: { rewrite: (messageId: string) => void; messageId: string }) => {
   return (
     <button
       onClick={() => rewrite(messageId)}

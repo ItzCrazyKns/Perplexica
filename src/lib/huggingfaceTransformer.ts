@@ -1,8 +1,7 @@
-import { Embeddings, type EmbeddingsParams } from '@langchain/core/embeddings';
-import { chunkArray } from '@langchain/core/utils/chunk_array';
+import { Embeddings, type EmbeddingsParams } from "@langchain/core/embeddings";
+import { chunkArray } from "@langchain/core/utils/chunk_array";
 
-export interface HuggingFaceTransformersEmbeddingsParams
-  extends EmbeddingsParams {
+export interface HuggingFaceTransformersEmbeddingsParameters extends EmbeddingsParams {
   modelName: string;
 
   model: string;
@@ -16,11 +15,11 @@ export interface HuggingFaceTransformersEmbeddingsParams
 
 export class HuggingFaceTransformersEmbeddings
   extends Embeddings
-  implements HuggingFaceTransformersEmbeddingsParams
+  implements HuggingFaceTransformersEmbeddingsParameters
 {
-  modelName = 'Xenova/all-MiniLM-L6-v2';
+  modelName = "Xenova/all-MiniLM-L6-v2";
 
-  model = 'Xenova/all-MiniLM-L6-v2';
+  model = "Xenova/all-MiniLM-L6-v2";
 
   batchSize = 512;
 
@@ -28,9 +27,10 @@ export class HuggingFaceTransformersEmbeddings
 
   timeout?: number;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private pipelinePromise: Promise<any>;
 
-  constructor(fields?: Partial<HuggingFaceTransformersEmbeddingsParams>) {
+  constructor(fields?: Partial<HuggingFaceTransformersEmbeddingsParameters>) {
     super(fields ?? {});
 
     this.modelName = fields?.model ?? fields?.modelName ?? this.model;
@@ -40,19 +40,15 @@ export class HuggingFaceTransformersEmbeddings
   }
 
   async embedDocuments(texts: string[]): Promise<number[][]> {
-    const batches = chunkArray(
-      this.stripNewLines ? texts.map((t) => t.replace(/\n/g, ' ')) : texts,
-      this.batchSize,
-    );
+    const batches = chunkArray(this.stripNewLines ? texts.map(t => t.replaceAll("\n", " ")) : texts, this.batchSize);
 
-    const batchRequests = batches.map((batch) => this.runEmbedding(batch));
+    const batchRequests = batches.map(batch => this.runEmbedding(batch));
     const batchResponses = await Promise.all(batchRequests);
     const embeddings: number[][] = [];
 
-    for (let i = 0; i < batchResponses.length; i += 1) {
-      const batchResponse = batchResponses[i];
-      for (let j = 0; j < batchResponse.length; j += 1) {
-        embeddings.push(batchResponse[j]);
+    for (const batchResponse of batchResponses) {
+      for (const element of batchResponse) {
+        embeddings.push(element);
       }
     }
 
@@ -60,22 +56,17 @@ export class HuggingFaceTransformersEmbeddings
   }
 
   async embedQuery(text: string): Promise<number[]> {
-    const data = await this.runEmbedding([
-      this.stripNewLines ? text.replace(/\n/g, ' ') : text,
-    ]);
+    const data = await this.runEmbedding([this.stripNewLines ? text.replaceAll("\n", " ") : text]);
     return data[0];
   }
 
   private async runEmbedding(texts: string[]) {
-    const { pipeline } = await import('@xenova/transformers');
+    const { pipeline } = await import("@xenova/transformers");
 
-    const pipe = await (this.pipelinePromise ??= pipeline(
-      'feature-extraction',
-      this.model,
-    ));
+    const pipe = await (this.pipelinePromise ??= pipeline("feature-extraction", this.model));
 
     return this.caller.call(async () => {
-      const output = await pipe(texts, { pooling: 'mean', normalize: true });
+      const output = await pipe(texts, { pooling: "mean", normalize: true });
       return output.tolist();
     });
   }

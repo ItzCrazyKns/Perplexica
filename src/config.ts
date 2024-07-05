@@ -1,8 +1,9 @@
-import fs from 'fs';
-import path from 'path';
-import toml from '@iarna/toml';
+/* eslint-disable unicorn/prefer-module */
+import fs from "node:fs";
+import path from "node:path";
+import toml from "@iarna/toml";
 
-const configFileName = 'config.toml';
+const configFileName = "config.toml";
 
 interface Config {
   GENERAL: {
@@ -24,14 +25,11 @@ type RecursivePartial<T> = {
 };
 
 const loadConfig = () =>
-  toml.parse(
-    fs.readFileSync(path.join(__dirname, `../${configFileName}`), 'utf-8'),
-  ) as any as Config;
+  toml.parse(fs.readFileSync(path.join(__dirname, `../${configFileName}`), "utf8")) as unknown as Config;
 
 export const getPort = () => loadConfig().GENERAL.PORT;
 
-export const getSimilarityMeasure = () =>
-  loadConfig().GENERAL.SIMILARITY_MEASURE;
+export const getSimilarityMeasure = () => loadConfig().GENERAL.SIMILARITY_MEASURE;
 
 export const getOpenaiApiKey = () => loadConfig().API_KEYS.OPENAI;
 
@@ -47,23 +45,16 @@ export const updateConfig = (config: RecursivePartial<Config>) => {
   for (const key in currentConfig) {
     if (!config[key]) config[key] = {};
 
-    if (typeof currentConfig[key] === 'object' && currentConfig[key] !== null) {
+    if (typeof currentConfig[key] === "object" && currentConfig[key] !== null) {
       for (const nestedKey in currentConfig[key]) {
-        if (
-          !config[key][nestedKey] &&
-          currentConfig[key][nestedKey] &&
-          config[key][nestedKey] !== ''
-        ) {
+        if (!config[key][nestedKey] && currentConfig[key][nestedKey] && config[key][nestedKey] !== "") {
           config[key][nestedKey] = currentConfig[key][nestedKey];
         }
       }
-    } else if (currentConfig[key] && config[key] !== '') {
+    } else if (currentConfig[key] && config[key] !== "") {
       config[key] = currentConfig[key];
     }
   }
 
-  fs.writeFileSync(
-    path.join(__dirname, `../${configFileName}`),
-    toml.stringify(config),
-  );
+  fs.writeFileSync(path.join(__dirname, `../${configFileName}`), toml.stringify(config));
 };

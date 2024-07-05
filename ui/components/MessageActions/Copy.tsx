@@ -1,20 +1,15 @@
-import { Check, ClipboardList } from 'lucide-react';
-import { Message } from '../ChatWindow';
-import { useState } from 'react';
+import { Check, ClipboardList } from "lucide-react";
+import { Message } from "../ChatWindow";
+import { useState } from "react";
 
-const Copy = ({
-  message,
-  initialMessage,
-}: {
-  message: Message;
-  initialMessage: string;
-}) => {
+const Copy = ({ message, initialMessage }: { message: Message; initialMessage: string }) => {
   const [copied, setCopied] = useState(false);
 
   return (
     <button
       onClick={() => {
-        const contentToCopy = `${initialMessage}${message.sources && message.sources.length > 0 && `\n\nCitations:\n${message.sources?.map((source: any, i: any) => `[${i + 1}] ${source.metadata.url}`).join(`\n`)}`}`;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const contentToCopy = `${initialMessage}${message.sources && message.sources.length > 0 && `\n\nCitations:\n${message.sources?.map((source: any, index: any) => `[${index + 1}] ${source.metadata.url}`).join(`\n`)}`}`;
         navigator.clipboard.writeText(contentToCopy);
         setCopied(true);
         setTimeout(() => setCopied(false), 1000);

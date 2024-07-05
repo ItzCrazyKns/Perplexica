@@ -1,9 +1,8 @@
-/* eslint-disable @next/next/no-img-element */
-import { PlayCircle, PlayIcon, PlusIcon, VideoIcon } from 'lucide-react';
-import { useState } from 'react';
-import Lightbox, { GenericSlide, VideoSlide } from 'yet-another-react-lightbox';
-import 'yet-another-react-lightbox/styles.css';
-import { Message } from './ChatWindow';
+import { PlayCircle, PlayIcon, PlusIcon, VideoIcon } from "lucide-react";
+import { useState } from "react";
+import Lightbox, { GenericSlide, VideoSlide } from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
+import { Message } from "./ChatWindow";
 
 type Video = {
   url: string;
@@ -12,25 +11,19 @@ type Video = {
   iframe_src: string;
 };
 
-declare module 'yet-another-react-lightbox' {
+declare module "yet-another-react-lightbox" {
   export interface VideoSlide extends GenericSlide {
-    type: 'video-slide';
+    type: "video-slide";
     src: string;
     iframe_src: string;
   }
 
   interface SlideTypes {
-    'video-slide': VideoSlide;
+    "video-slide": VideoSlide;
   }
 }
 
-const Searchvideos = ({
-  query,
-  chat_history,
-}: {
-  query: string;
-  chat_history: Message[];
-}) => {
+const Searchvideos = ({ query, chat_history }: { query: string; chat_history: Message[] }) => {
   const [videos, setVideos] = useState<Video[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -43,24 +36,21 @@ const Searchvideos = ({
           onClick={async () => {
             setLoading(true);
 
-            const chatModelProvider = localStorage.getItem('chatModelProvider');
-            const chatModel = localStorage.getItem('chatModel');
+            const chatModelProvider = localStorage.getItem("chatModelProvider");
+            const chatModel = localStorage.getItem("chatModel");
 
-            const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/videos`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  query: query,
-                  chat_history: chat_history,
-                  chat_model_provider: chatModelProvider,
-                  chat_model: chatModel,
-                }),
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/videos`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
               },
-            );
+              body: JSON.stringify({
+                query: query,
+                chat_history: chat_history,
+                chat_model_provider: chatModelProvider,
+                chat_model: chatModel,
+              }),
+            });
 
             const data = await res.json();
 
@@ -69,7 +59,7 @@ const Searchvideos = ({
             setSlides(
               videos.map((video: Video) => {
                 return {
-                  type: 'video-slide',
+                  type: "video-slide",
                   iframe_src: video.iframe_src,
                   src: video.img_src,
                 };
@@ -88,9 +78,9 @@ const Searchvideos = ({
       )}
       {loading && (
         <div className="grid grid-cols-2 gap-2">
-          {[...Array(4)].map((_, i) => (
+          {Array.from({ length: 4 }).map((_, index) => (
             <div
-              key={i}
+              key={index}
               className="bg-light-secondary dark:bg-dark-secondary h-32 w-full rounded-lg animate-pulse aspect-video object-cover"
             />
           ))}
@@ -100,18 +90,14 @@ const Searchvideos = ({
         <>
           <div className="grid grid-cols-2 gap-2">
             {videos.length > 4
-              ? videos.slice(0, 3).map((video, i) => (
+              ? videos.slice(0, 3).map((video, index) => (
                   <div
                     onClick={() => {
                       setOpen(true);
-                      setSlides([
-                        slides[i],
-                        ...slides.slice(0, i),
-                        ...slides.slice(i + 1),
-                      ]);
+                      setSlides([slides[index], ...slides.slice(0, index), ...slides.slice(index + 1)]);
                     }}
                     className="relative transition duration-200 active:scale-95 hover:scale-[1.02] cursor-pointer"
-                    key={i}
+                    key={index}
                   >
                     <img
                       src={video.img_src}
@@ -124,18 +110,14 @@ const Searchvideos = ({
                     </div>
                   </div>
                 ))
-              : videos.map((video, i) => (
+              : videos.map((video, index) => (
                   <div
                     onClick={() => {
                       setOpen(true);
-                      setSlides([
-                        slides[i],
-                        ...slides.slice(0, i),
-                        ...slides.slice(i + 1),
-                      ]);
+                      setSlides([slides[index], ...slides.slice(0, index), ...slides.slice(index + 1)]);
                     }}
                     className="relative transition duration-200 active:scale-95 hover:scale-[1.02] cursor-pointer"
-                    key={i}
+                    key={index}
                   >
                     <img
                       src={video.img_src}
@@ -154,18 +136,16 @@ const Searchvideos = ({
                 className="bg-light-100 hover:bg-light-200 dark:bg-dark-100 dark:hover:bg-dark-200 transition duration-200 active:scale-95 hover:scale-[1.02] h-auto w-full rounded-lg flex flex-col justify-between text-white p-2"
               >
                 <div className="flex flex-row items-center space-x-1">
-                  {videos.slice(3, 6).map((video, i) => (
+                  {videos.slice(3, 6).map((video, index) => (
                     <img
-                      key={i}
+                      key={index}
                       src={video.img_src}
                       alt={video.title}
                       className="h-6 w-12 rounded-md lg:h-3 lg:w-6 lg:rounded-sm aspect-video object-cover"
                     />
                   ))}
                 </div>
-                <p className="text-black/70 dark:text-white/70 text-xs">
-                  View {videos.length - 3} more
-                </p>
+                <p className="text-black/70 dark:text-white/70 text-xs">View {videos.length - 3} more</p>
               </button>
             )}
           </div>
@@ -175,7 +155,7 @@ const Searchvideos = ({
             slides={slides}
             render={{
               slide: ({ slide }) =>
-                slide.type === 'video-slide' ? (
+                slide.type === "video-slide" ? (
                   <div className="h-full w-full flex flex-row items-center justify-center">
                     <iframe
                       src={slide.iframe_src}

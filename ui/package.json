@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "format:write": "prettier . --write"
   },
   "dependencies": {
@@ -16,16 +16,19 @@
     "@langchain/openai": "^0.0.25",
     "@tailwindcss/typography": "^0.5.12",
     "clsx": "^2.1.0",
+    "crypto-browserify": "^3.12.0",
     "langchain": "^0.1.30",
     "lucide-react": "^0.363.0",
     "markdown-to-jsx": "^7.4.5",
     "next": "14.1.4",
     "next-themes": "^0.3.0",
+    "process": "^0.11.10",
     "react": "^18",
     "react-dom": "^18",
     "react-text-to-speech": "^0.14.5",
     "react-textarea-autosize": "^8.5.3",
     "sonner": "^1.4.41",
+    "stream-browserify": "^3.0.0",
     "tailwind-merge": "^2.2.2",
     "yet-another-react-lightbox": "^3.17.2",
     "zod": "^3.22.4"
