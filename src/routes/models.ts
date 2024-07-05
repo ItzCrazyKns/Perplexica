@@ -4,7 +4,7 @@ import { getAvailableChatModelProviders, getAvailableEmbeddingModelProviders } f
 
 const router = express.Router();
 
-router.get("/", async (request, res) => {
+router.get("/", async (_request, res) => {
   try {
     const [chatModelProviders, embeddingModelProviders] = await Promise.all([
       getAvailableChatModelProviders(),
