@@ -1,21 +1,21 @@
-import express from 'express';
-import handleImageSearch from '../agents/imageSearchAgent';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { getAvailableChatModelProviders } from '../lib/providers';
-import { HumanMessage, AIMessage } from '@langchain/core/messages';
-import logger from '../utils/logger';
+import express from "express";
+import handleImageSearch from "../agents/imageSearchAgent";
+import { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import { getAvailableChatModelProviders } from "../lib/providers";
+import { HumanMessage, AIMessage } from "@langchain/core/messages";
+import logger from "../utils/logger";
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { query, chat_history: raw_chat_history, chat_model_provider, chat_model } = req.body;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const chat_history = raw_chat_history.map((msg: any) => {
-      if (msg.role === 'user') {
+      if (msg.role === "user") {
         return new HumanMessage(msg.content);
-      } else if (msg.role === 'assistant') {
+      } else if (msg.role === "assistant") {
         return new AIMessage(msg.content);
       }
     });
@@ -31,7 +31,7 @@ router.post('/', async (req, res) => {
     }
 
     if (!llm) {
-      res.status(500).json({ message: 'Invalid LLM model selected' });
+      res.status(500).json({ message: "Invalid LLM model selected" });
       return;
     }
 
@@ -39,7 +39,7 @@ router.post('/', async (req, res) => {
 
     res.status(200).json({ images });
   } catch (err) {
-    res.status(500).json({ message: 'An error has occurred.' });
+    res.status(500).json({ message: "An error has occurred." });
     logger.error(`Error in image search: ${err.message}`);
   }
 });

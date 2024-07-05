@@ -1,14 +1,10 @@
-import {
-  RunnableSequence,
-  RunnableMap,
-  RunnableLambda,
-} from '@langchain/core/runnables';
-import { PromptTemplate } from '@langchain/core/prompts';
-import formatChatHistoryAsString from '../utils/formatHistory';
-import { BaseMessage } from '@langchain/core/messages';
-import { StringOutputParser } from '@langchain/core/output_parsers';
-import { searchSearxng } from '../lib/searxng';
-import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { RunnableSequence, RunnableMap, RunnableLambda } from "@langchain/core/runnables";
+import { PromptTemplate } from "@langchain/core/prompts";
+import formatChatHistoryAsString from "../utils/formatHistory";
+import { BaseMessage } from "@langchain/core/messages";
+import { StringOutputParser } from "@langchain/core/output_parsers";
+import { searchSearxng } from "../lib/searxng";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 
 const VideoSearchChainPrompt = `
   You will be given a conversation below and a follow up question. You need to rephrase the follow-up question so it is a standalone question that can be used by the LLM to search Youtube for videos.
@@ -53,18 +49,13 @@ const createVideoSearchChain = (llm: BaseChatModel) => {
     strParser,
     RunnableLambda.from(async (input: string) => {
       const res = await searchSearxng(input, {
-        engines: ['youtube'],
+        engines: ["youtube"],
       });
 
       const videos = [];
 
-      res.results.forEach((result) => {
-        if (
-          result.thumbnail &&
-          result.url &&
-          result.title &&
-          result.iframe_src
-        ) {
+      res.results.forEach(result => {
+        if (result.thumbnail && result.url && result.title && result.iframe_src) {
           videos.push({
             img_src: result.thumbnail,
             url: result.url,
@@ -79,10 +70,7 @@ const createVideoSearchChain = (llm: BaseChatModel) => {
   ]);
 };
 
-const handleVideoSearch = (
-  input: VideoSearchChainInput,
-  llm: BaseChatModel,
-) => {
+const handleVideoSearch = (input: VideoSearchChainInput, llm: BaseChatModel) => {
   const VideoSearchChain = createVideoSearchChain(llm);
   return VideoSearchChain.invoke(input);
 };

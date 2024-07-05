@@ -1,13 +1,9 @@
-import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
-import { ChatOllama } from '@langchain/community/chat_models/ollama';
-import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
-import { HuggingFaceTransformersEmbeddings } from './huggingfaceTransformer';
-import {
-  getGroqApiKey,
-  getOllamaApiEndpoint,
-  getOpenaiApiKey,
-} from '../config';
-import logger from '../utils/logger';
+import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
+import { ChatOllama } from "@langchain/community/chat_models/ollama";
+import { OllamaEmbeddings } from "@langchain/community/embeddings/ollama";
+import { HuggingFaceTransformersEmbeddings } from "./huggingfaceTransformer";
+import { getGroqApiKey, getOllamaApiEndpoint, getOpenaiApiKey } from "../config";
+import logger from "../utils/logger";
 
 export const getAvailableChatModelProviders = async () => {
   const openAIApiKey = getOpenaiApiKey();
@@ -18,25 +14,25 @@ export const getAvailableChatModelProviders = async () => {
 
   if (openAIApiKey) {
     try {
-      models['openai'] = {
-        'GPT-3.5 turbo': new ChatOpenAI({
+      models["openai"] = {
+        "GPT-3.5 turbo": new ChatOpenAI({
           openAIApiKey,
-          modelName: 'gpt-3.5-turbo',
+          modelName: "gpt-3.5-turbo",
           temperature: 0.7,
         }),
-        'GPT-4': new ChatOpenAI({
+        "GPT-4": new ChatOpenAI({
           openAIApiKey,
-          modelName: 'gpt-4',
+          modelName: "gpt-4",
           temperature: 0.7,
         }),
-        'GPT-4 turbo': new ChatOpenAI({
+        "GPT-4 turbo": new ChatOpenAI({
           openAIApiKey,
-          modelName: 'gpt-4-turbo',
+          modelName: "gpt-4-turbo",
           temperature: 0.7,
         }),
-        'GPT-4 omni': new ChatOpenAI({
+        "GPT-4 omni": new ChatOpenAI({
           openAIApiKey,
-          modelName: 'gpt-4o',
+          modelName: "gpt-4o",
           temperature: 0.7,
         }),
       };
@@ -47,45 +43,45 @@ export const getAvailableChatModelProviders = async () => {
 
   if (groqApiKey) {
     try {
-      models['groq'] = {
-        'LLaMA3 8b': new ChatOpenAI(
+      models["groq"] = {
+        "LLaMA3 8b": new ChatOpenAI(
           {
             openAIApiKey: groqApiKey,
-            modelName: 'llama3-8b-8192',
+            modelName: "llama3-8b-8192",
             temperature: 0.7,
           },
           {
-            baseURL: 'https://api.groq.com/openai/v1',
+            baseURL: "https://api.groq.com/openai/v1",
           },
         ),
-        'LLaMA3 70b': new ChatOpenAI(
+        "LLaMA3 70b": new ChatOpenAI(
           {
             openAIApiKey: groqApiKey,
-            modelName: 'llama3-70b-8192',
+            modelName: "llama3-70b-8192",
             temperature: 0.7,
           },
           {
-            baseURL: 'https://api.groq.com/openai/v1',
+            baseURL: "https://api.groq.com/openai/v1",
           },
         ),
-        'Mixtral 8x7b': new ChatOpenAI(
+        "Mixtral 8x7b": new ChatOpenAI(
           {
             openAIApiKey: groqApiKey,
-            modelName: 'mixtral-8x7b-32768',
+            modelName: "mixtral-8x7b-32768",
             temperature: 0.7,
           },
           {
-            baseURL: 'https://api.groq.com/openai/v1',
+            baseURL: "https://api.groq.com/openai/v1",
           },
         ),
-        'Gemma 7b': new ChatOpenAI(
+        "Gemma 7b": new ChatOpenAI(
           {
             openAIApiKey: groqApiKey,
-            modelName: 'gemma-7b-it',
+            modelName: "gemma-7b-it",
             temperature: 0.7,
           },
           {
-            baseURL: 'https://api.groq.com/openai/v1',
+            baseURL: "https://api.groq.com/openai/v1",
           },
         ),
       };
@@ -98,14 +94,14 @@ export const getAvailableChatModelProviders = async () => {
     try {
       const response = await fetch(`${ollamaEndpoint}/api/tags`, {
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { models: ollamaModels } = (await response.json()) as any;
 
-      models['ollama'] = ollamaModels.reduce((acc, model) => {
+      models["ollama"] = ollamaModels.reduce((acc, model) => {
         acc[model.model] = new ChatOllama({
           baseUrl: ollamaEndpoint,
           model: model.model,
@@ -118,7 +114,7 @@ export const getAvailableChatModelProviders = async () => {
     }
   }
 
-  models['custom_openai'] = {};
+  models["custom_openai"] = {};
 
   return models;
 };
@@ -131,14 +127,14 @@ export const getAvailableEmbeddingModelProviders = async () => {
 
   if (openAIApiKey) {
     try {
-      models['openai'] = {
-        'Text embedding 3 small': new OpenAIEmbeddings({
+      models["openai"] = {
+        "Text embedding 3 small": new OpenAIEmbeddings({
           openAIApiKey,
-          modelName: 'text-embedding-3-small',
+          modelName: "text-embedding-3-small",
         }),
-        'Text embedding 3 large': new OpenAIEmbeddings({
+        "Text embedding 3 large": new OpenAIEmbeddings({
           openAIApiKey,
-          modelName: 'text-embedding-3-large',
+          modelName: "text-embedding-3-large",
         }),
       };
     } catch (err) {
@@ -150,14 +146,14 @@ export const getAvailableEmbeddingModelProviders = async () => {
     try {
       const response = await fetch(`${ollamaEndpoint}/api/tags`, {
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { models: ollamaModels } = (await response.json()) as any;
 
-      models['ollama'] = ollamaModels.reduce((acc, model) => {
+      models["ollama"] = ollamaModels.reduce((acc, model) => {
         acc[model.model] = new OllamaEmbeddings({
           baseUrl: ollamaEndpoint,
           model: model.model,
@@ -170,15 +166,15 @@ export const getAvailableEmbeddingModelProviders = async () => {
   }
 
   try {
-    models['local'] = {
-      'BGE Small': new HuggingFaceTransformersEmbeddings({
-        modelName: 'Xenova/bge-small-en-v1.5',
+    models["local"] = {
+      "BGE Small": new HuggingFaceTransformersEmbeddings({
+        modelName: "Xenova/bge-small-en-v1.5",
       }),
-      'GTE Small': new HuggingFaceTransformersEmbeddings({
-        modelName: 'Xenova/gte-small',
+      "GTE Small": new HuggingFaceTransformersEmbeddings({
+        modelName: "Xenova/gte-small",
       }),
-      'Bert Multilingual': new HuggingFaceTransformersEmbeddings({
-        modelName: 'Xenova/bert-base-multilingual-uncased',
+      "Bert Multilingual": new HuggingFaceTransformersEmbeddings({
+        modelName: "Xenova/bert-base-multilingual-uncased",
       }),
     };
   } catch (err) {

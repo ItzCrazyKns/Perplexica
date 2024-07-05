@@ -1,110 +1,79 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { Document } from '@langchain/core/documents';
-import Navbar from './Navbar';
-import Chat from './Chat';
-import EmptyChat from './EmptyChat';
-import crypto from 'crypto';
-import { toast } from 'sonner';
-import { useSearchParams } from 'next/navigation';
-import { getSuggestions } from '@/lib/actions';
-import Error from 'next/error';
+import { useEffect, useRef, useState } from "react";
+import { Document } from "@langchain/core/documents";
+import Navbar from "./Navbar";
+import Chat from "./Chat";
+import EmptyChat from "./EmptyChat";
+import crypto from "crypto";
+import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
+import { getSuggestions } from "@/lib/actions";
+import Error from "next/error";
 
 export type Message = {
   messageId: string;
   chatId: string;
   createdAt: Date;
   content: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   suggestions?: string[];
   sources?: Document[];
 };
 
-const useSocket = (
-  url: string,
-  setIsWSReady: (ready: boolean) => void,
-  setError: (error: boolean) => void,
-) => {
+const useSocket = (url: string, setIsWSReady: (ready: boolean) => void, setError: (error: boolean) => void) => {
   const [ws, setWs] = useState<WebSocket | null>(null);
 
   useEffect(() => {
     if (!ws) {
       const connectWs = async () => {
-        let chatModel = localStorage.getItem('chatModel');
-        let chatModelProvider = localStorage.getItem('chatModelProvider');
-        let embeddingModel = localStorage.getItem('embeddingModel');
-        let embeddingModelProvider = localStorage.getItem(
-          'embeddingModelProvider',
-        );
+        let chatModel = localStorage.getItem("chatModel");
+        let chatModelProvider = localStorage.getItem("chatModelProvider");
+        let embeddingModel = localStorage.getItem("embeddingModel");
+        let embeddingModelProvider = localStorage.getItem("embeddingModelProvider");
 
-        if (
-          !chatModel ||
-          !chatModelProvider ||
-          !embeddingModel ||
-          !embeddingModelProvider
-        ) {
-          const providers = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/models`,
-            {
-              headers: {
-                'Content-Type': 'application/json',
-              },
+        if (!chatModel || !chatModelProvider || !embeddingModel || !embeddingModelProvider) {
+          const providers = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/models`, {
+            headers: {
+              "Content-Type": "application/json",
             },
-          ).then(async (res) => await res.json());
+          }).then(async res => await res.json());
 
           const chatModelProviders = providers.chatModelProviders;
           const embeddingModelProviders = providers.embeddingModelProviders;
 
-          if (
-            !chatModelProviders ||
-            Object.keys(chatModelProviders).length === 0
-          )
-            return toast.error('No chat models available');
+          if (!chatModelProviders || Object.keys(chatModelProviders).length === 0)
+            return toast.error("No chat models available");
 
-          if (
-            !embeddingModelProviders ||
-            Object.keys(embeddingModelProviders).length === 0
-          )
-            return toast.error('No embedding models available');
+          if (!embeddingModelProviders || Object.keys(embeddingModelProviders).length === 0)
+            return toast.error("No embedding models available");
 
           chatModelProvider = Object.keys(chatModelProviders)[0];
           chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
 
           embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
-          embeddingModel = Object.keys(
-            embeddingModelProviders[embeddingModelProvider],
-          )[0];
+          embeddingModel = Object.keys(embeddingModelProviders[embeddingModelProvider])[0];
 
-          localStorage.setItem('chatModel', chatModel!);
-          localStorage.setItem('chatModelProvider', chatModelProvider);
-          localStorage.setItem('embeddingModel', embeddingModel!);
-          localStorage.setItem(
-            'embeddingModelProvider',
-            embeddingModelProvider,
-          );
+          localStorage.setItem("chatModel", chatModel!);
+          localStorage.setItem("chatModelProvider", chatModelProvider);
+          localStorage.setItem("embeddingModel", embeddingModel!);
+          localStorage.setItem("embeddingModelProvider", embeddingModelProvider);
         }
 
         const wsURL = new URL(url);
         const searchParams = new URLSearchParams({});
 
-        searchParams.append('chatModel', chatModel!);
-        searchParams.append('chatModelProvider', chatModelProvider);
+        searchParams.append("chatModel", chatModel!);
+        searchParams.append("chatModelProvider", chatModelProvider);
 
-        if (chatModelProvider === 'custom_openai') {
-          searchParams.append(
-            'openAIApiKey',
-            localStorage.getItem('openAIApiKey')!,
-          );
-          searchParams.append(
-            'openAIBaseURL',
-            localStorage.getItem('openAIBaseURL')!,
-          );
+        if (chatModelProvider === "custom_openai") {
+          searchParams.append("openAIApiKey", localStorage.getItem("openAIApiKey")!);
+          searchParams.append("openAIBaseURL", localStorage.getItem("openAIBaseURL")!);
         }
 
-        searchParams.append('embeddingModel', embeddingModel!);
-        searchParams.append('embeddingModelProvider', embeddingModelProvider);
+        searchParams.append("embeddingModel", embeddingModel!);
+        searchParams.append("embeddingModelProvider", embeddingModelProvider);
 
         wsURL.search = searchParams.toString();
 
@@ -114,14 +83,12 @@ const useSocket = (
           if (ws.readyState !== 1) {
             ws.close();
             setError(true);
-            toast.error(
-              'Failed to connect to the server. Please try again later.',
-            );
+            toast.error("Failed to connect to the server. Please try again later.");
           }
         }, 10000);
 
         ws.onopen = () => {
-          console.log('[DEBUG] open');
+          console.log("[DEBUG] open");
           clearTimeout(timeoutId);
           setError(false);
           setIsWSReady(true);
@@ -130,13 +97,13 @@ const useSocket = (
         ws.onerror = () => {
           clearTimeout(timeoutId);
           setError(true);
-          toast.error('WebSocket connection error.');
+          toast.error("WebSocket connection error.");
         };
 
         ws.onclose = () => {
           clearTimeout(timeoutId);
           setError(true);
-          console.log('[DEBUG] closed');
+          console.log("[DEBUG] closed");
         };
 
         setWs(ws);
@@ -147,7 +114,7 @@ const useSocket = (
 
     return () => {
       ws?.close();
-      console.log('[DEBUG] closed');
+      console.log("[DEBUG] closed");
     };
   }, [ws, url, setIsWSReady, setError]);
 
@@ -162,15 +129,12 @@ const loadMessages = async (
   setFocusMode: (mode: string) => void,
   setNotFound: (notFound: boolean) => void,
 ) => {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/chats/${chatId}`,
-    {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chats/${chatId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
     },
-  );
+  });
 
   if (res.status === 404) {
     setNotFound(true);
@@ -189,11 +153,11 @@ const loadMessages = async (
 
   setMessages(messages);
 
-  const history = messages.map((msg) => {
+  const history = messages.map(msg => {
     return [msg.role, msg.content];
   }) as [string, string][];
 
-  console.log('[DEBUG] messages loaded');
+  console.log("[DEBUG] messages loaded");
 
   document.title = messages[0].content;
 
@@ -204,7 +168,7 @@ const loadMessages = async (
 
 const ChatWindow = ({ id }: { id?: string }) => {
   const searchParams = useSearchParams();
-  const initialMessage = searchParams.get('q');
+  const initialMessage = searchParams.get("q");
 
   const [chatId, setChatId] = useState<string | undefined>(id);
   const [newChatCreated, setNewChatCreated] = useState(false);
@@ -213,11 +177,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
   const [isReady, setIsReady] = useState(false);
 
   const [isWSReady, setIsWSReady] = useState(false);
-  const ws = useSocket(
-    process.env.NEXT_PUBLIC_WS_URL!,
-    setIsWSReady,
-    setHasError,
-  );
+  const ws = useSocket(process.env.NEXT_PUBLIC_WS_URL!, setIsWSReady, setHasError);
 
   const [loading, setLoading] = useState(false);
   const [messageAppeared, setMessageAppeared] = useState(false);
@@ -225,31 +185,19 @@ const ChatWindow = ({ id }: { id?: string }) => {
   const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
 
-  const [focusMode, setFocusMode] = useState('webSearch');
+  const [focusMode, setFocusMode] = useState("webSearch");
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (
-      chatId &&
-      !newChatCreated &&
-      !isMessagesLoaded &&
-      messages.length === 0
-    ) {
-      loadMessages(
-        chatId,
-        setMessages,
-        setIsMessagesLoaded,
-        setChatHistory,
-        setFocusMode,
-        setNotFound,
-      );
+    if (chatId && !newChatCreated && !isMessagesLoaded && messages.length === 0) {
+      loadMessages(chatId, setMessages, setIsMessagesLoaded, setChatHistory, setFocusMode, setNotFound);
     } else if (!chatId) {
       setNewChatCreated(true);
       setIsMessagesLoaded(true);
-      setChatId(crypto.randomBytes(20).toString('hex'));
+      setChatId(crypto.randomBytes(20).toString("hex"));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -272,30 +220,30 @@ const ChatWindow = ({ id }: { id?: string }) => {
     setMessageAppeared(false);
 
     let sources: Document[] | undefined = undefined;
-    let recievedMessage = '';
+    let recievedMessage = "";
     let added = false;
 
-    const messageId = crypto.randomBytes(7).toString('hex');
+    const messageId = crypto.randomBytes(7).toString("hex");
 
     ws?.send(
       JSON.stringify({
-        type: 'message',
+        type: "message",
         message: {
           chatId: chatId!,
           content: message,
         },
         focusMode: focusMode,
-        history: [...chatHistory, ['human', message]],
+        history: [...chatHistory, ["human", message]],
       }),
     );
 
-    setMessages((prevMessages) => [
+    setMessages(prevMessages => [
       ...prevMessages,
       {
         content: message,
         messageId: messageId,
         chatId: chatId!,
-        role: 'user',
+        role: "user",
         createdAt: new Date(),
       },
     ]);
@@ -303,22 +251,22 @@ const ChatWindow = ({ id }: { id?: string }) => {
     const messageHandler = async (e: MessageEvent) => {
       const data = JSON.parse(e.data);
 
-      if (data.type === 'error') {
+      if (data.type === "error") {
         toast.error(data.data);
         setLoading(false);
         return;
       }
 
-      if (data.type === 'sources') {
+      if (data.type === "sources") {
         sources = data.data;
         if (!added) {
-          setMessages((prevMessages) => [
+          setMessages(prevMessages => [
             ...prevMessages,
             {
-              content: '',
+              content: "",
               messageId: data.messageId,
               chatId: chatId!,
-              role: 'assistant',
+              role: "assistant",
               sources: sources,
               createdAt: new Date(),
             },
@@ -328,15 +276,15 @@ const ChatWindow = ({ id }: { id?: string }) => {
         setMessageAppeared(true);
       }
 
-      if (data.type === 'message') {
+      if (data.type === "message") {
         if (!added) {
-          setMessages((prevMessages) => [
+          setMessages(prevMessages => [
             ...prevMessages,
             {
               content: data.data,
               messageId: data.messageId,
               chatId: chatId!,
-              role: 'assistant',
+              role: "assistant",
               sources: sources,
               createdAt: new Date(),
             },
@@ -344,8 +292,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
           added = true;
         }
 
-        setMessages((prev) =>
-          prev.map((message) => {
+        setMessages(prev =>
+          prev.map(message => {
             if (message.messageId === data.messageId) {
               return { ...message, content: message.content + data.data };
             }
@@ -358,27 +306,18 @@ const ChatWindow = ({ id }: { id?: string }) => {
         setMessageAppeared(true);
       }
 
-      if (data.type === 'messageEnd') {
-        setChatHistory((prevHistory) => [
-          ...prevHistory,
-          ['human', message],
-          ['assistant', recievedMessage],
-        ]);
+      if (data.type === "messageEnd") {
+        setChatHistory(prevHistory => [...prevHistory, ["human", message], ["assistant", recievedMessage]]);
 
-        ws?.removeEventListener('message', messageHandler);
+        ws?.removeEventListener("message", messageHandler);
         setLoading(false);
 
         const lastMsg = messagesRef.current[messagesRef.current.length - 1];
 
-        if (
-          lastMsg.role === 'assistant' &&
-          lastMsg.sources &&
-          lastMsg.sources.length > 0 &&
-          !lastMsg.suggestions
-        ) {
+        if (lastMsg.role === "assistant" && lastMsg.sources && lastMsg.sources.length > 0 && !lastMsg.suggestions) {
           const suggestions = await getSuggestions(messagesRef.current);
-          setMessages((prev) =>
-            prev.map((msg) => {
+          setMessages(prev =>
+            prev.map(msg => {
               if (msg.messageId === lastMsg.messageId) {
                 return { ...msg, suggestions: suggestions };
               }
@@ -389,20 +328,20 @@ const ChatWindow = ({ id }: { id?: string }) => {
       }
     };
 
-    ws?.addEventListener('message', messageHandler);
+    ws?.addEventListener("message", messageHandler);
   };
 
   const rewrite = (messageId: string) => {
-    const index = messages.findIndex((msg) => msg.messageId === messageId);
+    const index = messages.findIndex(msg => msg.messageId === messageId);
 
     if (index === -1) return;
 
     const message = messages[index - 1];
 
-    setMessages((prev) => {
+    setMessages(prev => {
       return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
     });
-    setChatHistory((prev) => {
+    setChatHistory(prev => {
       return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
     });
 
@@ -443,11 +382,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
             />
           </>
         ) : (
-          <EmptyChat
-            sendMessage={sendMessage}
-            focusMode={focusMode}
-            setFocusMode={setFocusMode}
-          />
+          <EmptyChat sendMessage={sendMessage} focusMode={focusMode} setFocusMode={setFocusMode} />
         )}
       </div>
     )

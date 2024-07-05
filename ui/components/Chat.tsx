@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { Fragment, useEffect, useRef, useState } from 'react';
-import MessageInput from './MessageInput';
-import { Message } from './ChatWindow';
-import MessageBox from './MessageBox';
-import MessageBoxLoading from './MessageBoxLoading';
+import { Fragment, useEffect, useRef, useState } from "react";
+import MessageInput from "./MessageInput";
+import { Message } from "./ChatWindow";
+import MessageBox from "./MessageBox";
+import MessageBoxLoading from "./MessageBoxLoading";
 
 const Chat = ({
   loading,
@@ -32,15 +32,15 @@ const Chat = ({
 
     updateDividerWidth();
 
-    window.addEventListener('resize', updateDividerWidth);
+    window.addEventListener("resize", updateDividerWidth);
 
     return () => {
-      window.removeEventListener('resize', updateDividerWidth);
+      window.removeEventListener("resize", updateDividerWidth);
     };
   });
 
   useEffect(() => {
-    messageEnd.current?.scrollIntoView({ behavior: 'smooth' });
+    messageEnd.current?.scrollIntoView({ behavior: "smooth" });
 
     if (messages.length === 1) {
       document.title = `${messages[0].content.substring(0, 30)} - Perplexica`;
@@ -65,7 +65,7 @@ const Chat = ({
               rewrite={rewrite}
               sendMessage={sendMessage}
             />
-            {!isLast && msg.role === 'assistant' && (
+            {!isLast && msg.role === "assistant" && (
               <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
             )}
           </Fragment>
@@ -74,10 +74,7 @@ const Chat = ({
       {loading && !messageAppeared && <MessageBoxLoading />}
       <div ref={messageEnd} className="h-0" />
       {dividerWidth > 0 && (
-        <div
-          className="bottom-24 lg:bottom-10 fixed z-40"
-          style={{ width: dividerWidth }}
-        >
+        <div className="bottom-24 lg:bottom-10 fixed z-40" style={{ width: dividerWidth }}>
           <MessageInput loading={loading} sendMessage={sendMessage} />
         </div>
       )}

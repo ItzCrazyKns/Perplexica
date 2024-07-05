@@ -1,5 +1,5 @@
-import { cn } from '@/lib/utils';
-import { Switch } from '@headlessui/react';
+import { cn } from "@/lib/utils";
+import { Switch } from "@headlessui/react";
 
 const CopilotToggle = ({
   copilotEnabled,
@@ -18,20 +18,18 @@ const CopilotToggle = ({
         <span className="sr-only">Copilot</span>
         <span
           className={cn(
-            copilotEnabled
-              ? 'translate-x-6 bg-[#24A0ED]'
-              : 'translate-x-1 bg-black/50 dark:bg-white/50',
-            'inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full transition-all duration-200',
+            copilotEnabled ? "translate-x-6 bg-[#24A0ED]" : "translate-x-1 bg-black/50 dark:bg-white/50",
+            "inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full transition-all duration-200",
           )}
         />
       </Switch>
       <p
         onClick={() => setCopilotEnabled(!copilotEnabled)}
         className={cn(
-          'text-xs font-medium transition-colors duration-150 ease-in-out',
+          "text-xs font-medium transition-colors duration-150 ease-in-out",
           copilotEnabled
-            ? 'text-[#24A0ED]'
-            : 'text-black/50 dark:text-white/50 group-hover:text-black dark:group-hover:text-white',
+            ? "text-[#24A0ED]"
+            : "text-black/50 dark:text-white/50 group-hover:text-black dark:group-hover:text-white",
         )}
       >
         Copilot

@@ -1,10 +1,10 @@
-'use client';
-import { useTheme } from 'next-themes';
-import { SunIcon, MoonIcon, MonitorIcon } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { Select } from '../SettingsDialog';
+"use client";
+import { useTheme } from "next-themes";
+import { SunIcon, MoonIcon, MonitorIcon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Select } from "../SettingsDialog";
 
-type Theme = 'dark' | 'light' | 'system';
+type Theme = "dark" | "light" | "system";
 
 const ThemeSwitcher = ({ className }: { className?: string }) => {
   const [mounted, setMounted] = useState(false);
@@ -22,20 +22,18 @@ const ThemeSwitcher = ({ className }: { className?: string }) => {
   }, []);
 
   useEffect(() => {
-    if (isTheme('system')) {
-      const preferDarkScheme = window.matchMedia(
-        '(prefers-color-scheme: dark)',
-      );
+    if (isTheme("system")) {
+      const preferDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
 
       const detectThemeChange = (event: MediaQueryListEvent) => {
-        const theme: Theme = event.matches ? 'dark' : 'light';
+        const theme: Theme = event.matches ? "dark" : "light";
         setTheme(theme);
       };
 
-      preferDarkScheme.addEventListener('change', detectThemeChange);
+      preferDarkScheme.addEventListener("change", detectThemeChange);
 
       return () => {
-        preferDarkScheme.removeEventListener('change', detectThemeChange);
+        preferDarkScheme.removeEventListener("change", detectThemeChange);
       };
     }
   }, [isTheme, setTheme, theme]);
@@ -49,10 +47,10 @@ const ThemeSwitcher = ({ className }: { className?: string }) => {
     <Select
       className={className}
       value={theme}
-      onChange={(e) => handleThemeSwitch(e.target.value as Theme)}
+      onChange={e => handleThemeSwitch(e.target.value as Theme)}
       options={[
-        { value: 'light', label: 'Light' },
-        { value: 'dark', label: 'Dark' },
+        { value: "light", label: "Light" },
+        { value: "dark", label: "Dark" },
       ]}
     />
   );

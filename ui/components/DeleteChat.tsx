@@ -1,8 +1,8 @@
-import { Delete, Trash } from 'lucide-react';
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment, useState } from 'react';
-import { toast } from 'sonner';
-import { Chat } from '@/app/library/page';
+import { Delete, Trash } from "lucide-react";
+import { Dialog, Transition } from "@headlessui/react";
+import { Fragment, useState } from "react";
+import { toast } from "sonner";
+import { Chat } from "@/app/library/page";
 
 const DeleteChat = ({
   chatId,
@@ -19,21 +19,18 @@ const DeleteChat = ({
   const handleDelete = async () => {
     setLoading(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/chats/${chatId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chats/${chatId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+      });
 
       if (res.status != 200) {
-        throw new Error('Failed to delete chat');
+        throw new Error("Failed to delete chat");
       }
 
-      const newChats = chats.filter((chat) => chat.id !== chatId);
+      const newChats = chats.filter(chat => chat.id !== chatId);
 
       setChats(newChats);
     } catch (err: any) {

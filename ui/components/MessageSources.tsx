@@ -1,19 +1,19 @@
 /* eslint-disable @next/next/no-img-element */
-import { Dialog, Transition } from '@headlessui/react';
-import { Document } from '@langchain/core/documents';
-import { Fragment, useState } from 'react';
+import { Dialog, Transition } from "@headlessui/react";
+import { Document } from "@langchain/core/documents";
+import { Fragment, useState } from "react";
 
 const MessageSources = ({ sources }: { sources: Document[] }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const closeModal = () => {
     setIsDialogOpen(false);
-    document.body.classList.remove('overflow-hidden-scrollable');
+    document.body.classList.remove("overflow-hidden-scrollable");
   };
 
   const openModal = () => {
     setIsDialogOpen(true);
-    document.body.classList.add('overflow-hidden-scrollable');
+    document.body.classList.add("overflow-hidden-scrollable");
   };
 
   return (
@@ -38,7 +38,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
                 className="rounded-lg h-4 w-4"
               />
               <p className="text-xs text-black/50 dark:text-white/50 overflow-hidden whitespace-nowrap text-ellipsis">
-                {source.metadata.url.replace(/.+\/\/|www.|\..+/g, '')}
+                {source.metadata.url.replace(/.+\/\/|www.|\..+/g, "")}
               </p>
             </div>
             <div className="flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 text-xs">
@@ -65,9 +65,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
               />
             ))}
           </div>
-          <p className="text-xs text-black/50 dark:text-white/50">
-            View {sources.length - 3} more
-          </p>
+          <p className="text-xs text-black/50 dark:text-white/50">View {sources.length - 3} more</p>
         </button>
       )}
       <Transition appear show={isDialogOpen} as={Fragment}>
@@ -84,9 +82,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200 p-6 text-left align-middle shadow-xl transition-all">
-                  <Dialog.Title className="text-lg font-medium leading-6 dark:text-white">
-                    Sources
-                  </Dialog.Title>
+                  <Dialog.Title className="text-lg font-medium leading-6 dark:text-white">Sources</Dialog.Title>
                   <div className="grid grid-cols-2 gap-2 overflow-auto max-h-[300px] mt-2 pr-2">
                     {sources.map((source, i) => (
                       <a
@@ -108,10 +104,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
                               className="rounded-lg h-4 w-4"
                             />
                             <p className="text-xs text-black/50 dark:text-white/50 overflow-hidden whitespace-nowrap text-ellipsis">
-                              {source.metadata.url.replace(
-                                /.+\/\/|www.|\..+/g,
-                                '',
-                              )}
+                              {source.metadata.url.replace(/.+\/\/|www.|\..+/g, "")}
                             </p>
                           </div>
                           <div className="flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 text-xs">

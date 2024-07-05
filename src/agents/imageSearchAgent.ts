@@ -1,14 +1,10 @@
-import {
-  RunnableSequence,
-  RunnableMap,
-  RunnableLambda,
-} from '@langchain/core/runnables';
-import { PromptTemplate } from '@langchain/core/prompts';
-import formatChatHistoryAsString from '../utils/formatHistory';
-import { BaseMessage } from '@langchain/core/messages';
-import { StringOutputParser } from '@langchain/core/output_parsers';
-import { searchSearxng } from '../lib/searxng';
-import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { RunnableSequence, RunnableMap, RunnableLambda } from "@langchain/core/runnables";
+import { PromptTemplate } from "@langchain/core/prompts";
+import formatChatHistoryAsString from "../utils/formatHistory";
+import { BaseMessage } from "@langchain/core/messages";
+import { StringOutputParser } from "@langchain/core/output_parsers";
+import { searchSearxng } from "../lib/searxng";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
 
 const imageSearchChainPrompt = `
 You will be given a conversation below and a follow up question. You need to rephrase the follow-up question so it is a standalone question that can be used by the LLM to search the web for images.
@@ -53,12 +49,12 @@ const createImageSearchChain = (llm: BaseChatModel) => {
     strParser,
     RunnableLambda.from(async (input: string) => {
       const res = await searchSearxng(input, {
-        engines: ['bing images', 'google images'],
+        engines: ["bing images", "google images"],
       });
 
       const images = [];
 
-      res.results.forEach((result) => {
+      res.results.forEach(result => {
         if (result.img_src && result.url && result.title) {
           images.push({
             img_src: result.img_src,
@@ -73,10 +69,7 @@ const createImageSearchChain = (llm: BaseChatModel) => {
   ]);
 };
 
-const handleImageSearch = (
-  input: ImageSearchChainInput,
-  llm: BaseChatModel,
-) => {
+const handleImageSearch = (input: ImageSearchChainInput, llm: BaseChatModel) => {
   const imageSearchChain = createImageSearchChain(llm);
   return imageSearchChain.invoke(input);
 };

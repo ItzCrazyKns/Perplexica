@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
-import { ImagesIcon, PlusIcon } from 'lucide-react';
-import { useState } from 'react';
-import Lightbox from 'yet-another-react-lightbox';
-import 'yet-another-react-lightbox/styles.css';
-import { Message } from './ChatWindow';
+import { ImagesIcon, PlusIcon } from "lucide-react";
+import { useState } from "react";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
+import { Message } from "./ChatWindow";
 
 type Image = {
   url: string;
@@ -11,13 +11,7 @@ type Image = {
   title: string;
 };
 
-const SearchImages = ({
-  query,
-  chat_history,
-}: {
-  query: string;
-  chat_history: Message[];
-}) => {
+const SearchImages = ({ query, chat_history }: { query: string; chat_history: Message[] }) => {
   const [images, setImages] = useState<Image[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -30,24 +24,21 @@ const SearchImages = ({
           onClick={async () => {
             setLoading(true);
 
-            const chatModelProvider = localStorage.getItem('chatModelProvider');
-            const chatModel = localStorage.getItem('chatModel');
+            const chatModelProvider = localStorage.getItem("chatModelProvider");
+            const chatModel = localStorage.getItem("chatModel");
 
-            const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/images`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  query: query,
-                  chat_history: chat_history,
-                  chat_model_provider: chatModelProvider,
-                  chat_model: chatModel,
-                }),
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/images`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
               },
-            );
+              body: JSON.stringify({
+                query: query,
+                chat_history: chat_history,
+                chat_model_provider: chatModelProvider,
+                chat_model: chatModel,
+              }),
+            });
 
             const data = await res.json();
 
@@ -89,11 +80,7 @@ const SearchImages = ({
                   <img
                     onClick={() => {
                       setOpen(true);
-                      setSlides([
-                        slides[i],
-                        ...slides.slice(0, i),
-                        ...slides.slice(i + 1),
-                      ]);
+                      setSlides([slides[i], ...slides.slice(0, i), ...slides.slice(i + 1)]);
                     }}
                     key={i}
                     src={image.img_src}
@@ -105,11 +92,7 @@ const SearchImages = ({
                   <img
                     onClick={() => {
                       setOpen(true);
-                      setSlides([
-                        slides[i],
-                        ...slides.slice(0, i),
-                        ...slides.slice(i + 1),
-                      ]);
+                      setSlides([slides[i], ...slides.slice(0, i), ...slides.slice(i + 1)]);
                     }}
                     key={i}
                     src={image.img_src}
@@ -132,9 +115,7 @@ const SearchImages = ({
                     />
                   ))}
                 </div>
-                <p className="text-black/70 dark:text-white/70 text-xs">
-                  View {images.length - 3} more
-                </p>
+                <p className="text-black/70 dark:text-white/70 text-xs">View {images.length - 3} more</p>
               </button>
             )}
           </div>
