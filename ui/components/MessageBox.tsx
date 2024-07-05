@@ -1,6 +1,5 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
 import React, { MutableRefObject, useEffect, useState } from "react";
 import { Message } from "./ChatWindow";
 import { cn } from "@/lib/utils";
