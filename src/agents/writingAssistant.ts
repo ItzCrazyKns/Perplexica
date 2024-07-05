@@ -19,7 +19,7 @@ Since you are a writing assistant, you would not perform web searches. If you th
 const strParser = new StringOutputParser();
 
 const handleStream = async (
-  stream: AsyncGenerator<StreamEvent, any, unknown>,
+  stream: AsyncGenerator<StreamEvent, unknown, unknown>,
   emitter: eventEmitter,
 ) => {
   for await (const event of stream) {
@@ -59,7 +59,8 @@ const handleWritingAssistant = (
   query: string,
   history: BaseMessage[],
   llm: BaseChatModel,
-  embeddings: Embeddings,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _embeddings: Embeddings,
 ) => {
   const emitter = new eventEmitter();
 

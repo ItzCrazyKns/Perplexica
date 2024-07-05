@@ -102,6 +102,7 @@ export const getAvailableChatModelProviders = async () => {
         },
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { models: ollamaModels } = (await response.json()) as any;
 
       models['ollama'] = ollamaModels.reduce((acc, model) => {
@@ -153,6 +154,7 @@ export const getAvailableEmbeddingModelProviders = async () => {
         },
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { models: ollamaModels } = (await response.json()) as any;
 
       models['ollama'] = ollamaModels.reduce((acc, model) => {

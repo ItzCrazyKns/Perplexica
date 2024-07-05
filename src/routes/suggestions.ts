@@ -9,9 +9,10 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
   try {
-    let { chat_history, chat_model, chat_model_provider } = req.body;
+    const { chat_history: raw_chat_history, chat_model, chat_model_provider } = req.body;
 
-    chat_history = chat_history.map((msg: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const chat_history = raw_chat_history.map((msg: any) => {
       if (msg.role === 'user') {
         return new HumanMessage(msg.content);
       } else if (msg.role === 'assistant') {

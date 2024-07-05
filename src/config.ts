@@ -26,7 +26,7 @@ type RecursivePartial<T> = {
 const loadConfig = () =>
   toml.parse(
     fs.readFileSync(path.join(__dirname, `../${configFileName}`), 'utf-8'),
-  ) as any as Config;
+  ) as unknown as Config;
 
 export const getPort = () => loadConfig().GENERAL.PORT;
 

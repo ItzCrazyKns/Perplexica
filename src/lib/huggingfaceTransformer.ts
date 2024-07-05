@@ -28,6 +28,7 @@ export class HuggingFaceTransformersEmbeddings
 
   timeout?: number;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private pipelinePromise: Promise<any>;
 
   constructor(fields?: Partial<HuggingFaceTransformersEmbeddingsParams>) {

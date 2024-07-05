@@ -65,7 +65,7 @@ const basicWolframAlphaSearchResponsePrompt = `
 const strParser = new StringOutputParser();
 
 const handleStream = async (
-  stream: AsyncGenerator<StreamEvent, any, unknown>,
+  stream: AsyncGenerator<StreamEvent, unknown, unknown>,
   emitter: eventEmitter,
 ) => {
   for await (const event of stream) {
@@ -153,7 +153,7 @@ const createBasicWolframAlphaSearchAnsweringChain = (llm: BaseChatModel) => {
           chat_history: formatChatHistoryAsString(input.chat_history),
         }),
         basicWolframAlphaSearchRetrieverChain
-          .pipe(({ query, docs }) => {
+          .pipe(({ docs }) => {
             return docs;
           })
           .withConfig({
@@ -210,7 +210,8 @@ const handleWolframAlphaSearch = (
   message: string,
   history: BaseMessage[],
   llm: BaseChatModel,
-  embeddings: Embeddings,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _embeddings: Embeddings,
 ) => {
   const emitter = basicWolframAlphaSearch(message, history, llm);
   return emitter;
