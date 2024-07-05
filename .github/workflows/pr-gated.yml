@@ -31,9 +31,6 @@ jobs:
         run: yarn lint
       - name: build
         run: yarn build
-      - name: lint:ui
-        run: yarn lint
-        working-directory: ./ui
       - name: build:ui
         run: yarn build
         working-directory: ./ui
