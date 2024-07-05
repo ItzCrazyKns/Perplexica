@@ -8,11 +8,6 @@ yarn-error.log
 /out/
 /dist/
 
-# IDE/Editor specific
-.vscode/
-.idea/
-*.iml
-
 # Environment variables
 .env
 .env.local

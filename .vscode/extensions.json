@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "streetsidesoftware.code-spell-checker",
+    "github.codespaces",
+    "github.copilot",
+    "github.copilot-chat",
+    "github.vscode-pull-request-github",
+    "eamodio.gitlens",
+    "vincaslt.highlight-matching-tag",
+    "orta.vscode-jest",
+    "esbenp.prettier-vscode"
+  ]
+}
