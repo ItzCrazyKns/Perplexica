@@ -1,0 +1,1543 @@
+{
+    "title": "Apple Joins OpenAI Board as Observer, Strengthens AI Collaboration",
+    "sections": [
+        {
+            "title": "Introduction",
+            "content": "Apple has appointed Phil Schiller to an observer role on OpenAI's board, enhancing their AI partnership. This move follows Apple's plan to integrate ChatGPT into its devices, including iPhones and Macs. Schiller will attend board meetings without voting rights, providing Apple with insights into OpenAI's decisions. The collaboration, which involves no financial transactions, allows OpenAI access to millions of Apple users while Apple benefits from advanced AI features, aligning with its broader AI strategy.",
+            "context": [
+                {
+                    "name": "Apple unveils long-awaited AI strategy, partnership with OpenAI at WWDC",
+                    "url": "https://www.aljazeera.com/news/2024/6/11/apple-unveils-long-awaited-ai-strategy-partnership-with-openai",
+                    "description": "Apple signalled that the company would differentiate itself from rivals Microsoft and Google by putting privacy “at the core” of AI, which is known for hoovering vast amounts of data.",
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "Al Jazeera English"
+                        }
+                    ],
+                    "datePublished": "2024-06-11T00:00:00.0000000Z",
+                    "article": "CEO Tim Cook tells Worldwide Developers Conference AI features are the ‘next big step for Apple’.\nSave articles to read later and create your own reading list.\nApple has revealed a slew of new artificial intelligence-powered features backed by a partnership with OpenAI, as the iPhone maker battles perceptions that it is falling behind in the race to capitalise on the technology.\nApple executives including CEO Tim Cook unveiled “Apple Intelligence” on Monday during a nearly two-hour-long presentation at the company’s annual Worldwide Developers Conference in Cupertino, California.\n“All of this goes beyond artificial intelligence, it’s personal intelligence, and it is the next big step for Apple,” CEO Tim Cook said.\nThe upgrades include an overhaul of the virtual assistant Siri, which will be capable of hundreds of more tasks with the help of ChatGPT.\nApple users will also be able to create their own emojis based on language prompts and generate summaries of emails in the mailbox via the tech giant’s in-house technology.\nApple signalled that the company would differentiate itself from rivals Microsoft and Google by putting privacy “at the core” of AI, which is known for hoovering vast amounts of data.\nApple’s senior vice president of software engineering, Craig Federighi, said that “Apple Intelligence” puts AI models “right at the core of your iPhone, iPad and Mac” and “protects your privacy at every step”.\nThe upgrades will be available for free in Apple’s iOS 18 operating system, due for release later this year, although the full suite of features will only work on more recent models of the iPhone, iPad and Macbook.\nOpenAI CEO Sam Altman said in a social media post that he was “very happy” to be partnering with Apple to integrate ChatGPT into its products.\nBut billionaire Elon Musk, the founder of OpenAI rival xAI, blasted the partnership, claiming Apple could not account for user data once it was shared with OpenAI and was “selling you down the river”.\nUS politics, Canada’s multiculturalism, South America’s geopolitical rise—we bring you the stories that matter.\n“That is an unacceptable security violation,” Musk, who leads the electric vehicle manufacturer Tesla and rocket company SpaceX, said in a post on X.\n“And visitors will have to check their Apple devices at the door, where they will be stored in a Faraday cage.”\nApple, which has long avoided the term “artificial intelligence”, has been under mounting pressure to show that it is keeping pace with rivals Microsoft and Google in the competition to roll out AI.\nInvestors, however, appeared to be unimpressed with Monday’s announcements, with shares of Apple down by nearly 2 percent.\n",
+                    "score": 1.1056731894835528
+                },
+                {
+                    "name": "Apple shares hit all-time high after unveiling AI features for iPhone, other devices",
+                    "url": "https://nypost.com/2024/06/11/business/apple-shares-hit-all-time-high-after-unveiling-ai-features-for-iphone/",
+                    "description": "“We believe Apple’s AI strategy will leverage its golden installed base around personalization and LLMs on the phone that should change the growth trajectory of Cupertino as spur an AI driven ...",
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "New York Post"
+                        }
+                    ],
+                    "datePublished": "2024-06-11T21:43:00.0000000Z",
+                    "article": "Apple shares surged 7% to a record high Tuesday as Wall Street expressed optimism that the company’s newly announced AI plans will drive a fresh wave of iPhone purchases.\nIn what Apple CEO Tim Cook billed as a “game changer,” the Cupertino, California-based firm unveiled a partnership with ChatGPT maker OpenAI and an in-house platform called “Apple Intelligence” for its devices beginning this fall.\nNew features include a major AI overhaul of the Siri voice assistant, a new “Genmoji” system for creating custom images and various AI-powered writing tools.\nThe rally comes as a breather for the stock, that has underperformed versus the benchmark S&P 500 this year, as Apple grapples with weak sales for its premium consumer gadgets. REUTERS\nOnly Apple’s newest devices, most powerful devices, such as the iPhone Pro 15 Max and Macs equipped with M-series computer chips, are capable of using the AI features. That sparked predictions of a “super-cycle” of iPhone sales as Apple prepares to launch its next iPhone model later this year.\nEvercore ISI analyst Amit Daryanani said the Apple event left him with “increased confidence” about the company’s AI plans.\n“Restricting Apple Intelligence to iPhones sold within the last year adds to our conviction that AI can help kick off an iPhone super cycle,” Daryanani said in a note to clients. “We remain confident in Apple’s AI strategy and their ability to deliver GenAI to users without $10s of billions in GPU capex.”\nAnalysts for Bank of America and Morgan Stanley also signaled in client notes that Apple’s AI push could boost iPhone sales, CNBC reported.\nApple gained a whopping $180 billion in market value after its stock closed at $207.15.\nAnalysts said the latest features could encourage a cascade of new purchases. AP\nThe stock surge pushed Apple’s valuation to $3.15 trillion, trailing only Microsoft as the world’s most valuable company.\nThe announcements drew strong approval on Wall Street, with at least 13 research analysts raising their price targets for the company’s stock following the presentation.\nWedbush analyst Daniel Ives also had a bullish reaction to the announcements while maintaining an “outperform” rating and a $275 price target for Apple shares.\n“We believe Apple’s AI strategy will leverage its golden installed base around personalization and LLMs on the phone that should change the growth trajectory of Cupertino as spur an AI driven iPhone upgrade cycle starting with iPhone 16,” Ives said in a note.\nWhat do you think? Be the first to comment.\nThe rally on Tuesday marked a reversal in trends from a day earlier.\nApple closed Monday’s trading session nearly 2% lower after the presentation, with one analyst telling The Post that investors may have been underwhelmed by a lack of in-house AI innovation from the tech giant.\nWith Post wires\n",
+                    "score": 0.8354879161471953
+                },
+                {
+                    "name": "Apple's New Artificial Intelligence (AI) Features Could Push This Semiconductor Company to a $1 Trillion Valuation",
+                    "url": "https://www.msn.com/en-us/money/other/apples-new-artificial-intelligence-ai-features-could-push-this-semiconductor-company-to-a-1-trillion-valuation/ar-BB1pofel",
+                    "image": {
+                        "contentUrl": "https://g.foolcdn.com/editorial/images/782350/gettyimages-silicon-wafer-printed-semiconductor-chips.jpeg",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.Uk2GTN2ULNg6T_reCZmJAi&pid=News",
+                            "width": 700,
+                            "height": 466
+                        }
+                    },
+                    "description": "Founded in 1993, The Motley Fool is a financial services company dedicated to making the world smarter, happier, and richer. The Motley Fool reaches millions of people every month through our premium investing solutions, free guidance and market analysis on Fool.com, top-rated podcasts, and non-profit The Motley Fool Foundation.",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/b09a01ed-cc2b-fdee-1e94-5f5a5d1c0a3c",
+                            "name": "The Motley Fool"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9d99fb44-edac-0e03-1579-19d8d8591a49",
+                            "name": "Artificial intelligence"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/73881232-7a9a-4913-de6d-3bc13f00c2ca",
+                            "name": "Worldwide Developers Conference"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/ecbf3d98-1b70-7187-af1f-0408b5689f91",
+                            "name": "Siri"
+                        }
+                    ],
+                    "mentions": [
+                        {
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "name": "Push"
+                        },
+                        {
+                            "name": "Artificial intelligence"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "The Motley Fool on MSN.com",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.4QjIDUvHz3Rc67mtMVQu7A&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-04T08:08:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple (NASDAQ: AAPL) unveiled its new artificial intelligence features dubbed \"Apple Intelligence\" at its Worldwide Developers Conference a few weeks ago. The highlights include text generation and summarization across apps, advanced AI-assisted photo editing capabilities, and a much smarter and more powerful Siri. It also integrates third-party services like ChatGPT for more advanced prompts.\nWhat makes Apple Intelligence so compelling is the amount of AI processing it does on the device. Instead of taking your query, sending it to a server along with any relevant data, waiting for the server to process your request, and then downloading the results to your device, the entire process happens on your iPhone, Mac, or iPad. For more advanced queries requiring a larger foundation model, Apple uses its own servers and system called Private Cloud Compute, which protects users' privacy.\nBoth of those developments could be a major win for one of Apple's biggest suppliers. Since all of these new features run on Apple-designed silicon, chip foundry Taiwan Semiconductor Manufacturing Co. (NYSE: TSM) could see an increase in orders due to Apple Intelligence. What's more, as Apple leads the way in on-device AI processing, it could push other device makers to buy more advanced chips from TSMC as well.\nWith Apple Intelligence, Apple is ushering in the next phase of artificial intelligence known as edge AI (when data and algorithms are processed directly on the end device, in this case a smartphone, tablet, or personal computer).\nIn order to process AI queries on device, though, the devices need to be capable. That means hardware that's even just a few years old might not be able to handle AI requests as well as newer devices can, if they can even handle them at all. Apple, for example, is limiting Apple Intelligence features to the iPhone 15 Pro, iPhone 15 Pro Max, and the forthcoming iPhone 16 devices. (Note the limiting factor here is the amount of short-term memory, or RAM, on the device, not the processors themselves.)\nAs a result, Apple could see strong demand from users eager to upgrade their phones over the next few years as Apple Intelligence features roll out around the world. And more iPhone sales means more demand for TSMC's chips.\nBut TSMC doesn't just supply chips for Apple. It manufactures the majority of chips in the world, accounting for over 60% of the market. That scale gives it a massive\ncompetitive advantage\nover smaller foundries, as it can invest more money in R&D to develop more advanced processes to print more powerful and energy-efficient chips. That ensures it keeps existing customers like Apple that are looking for leading-edge chips, and it attracts more of their business. It also helps TSMC draw in new customers as innovations like edge AI push companies to adopt new chip designs.\nIn order to support third-party\nlarge language models\n(LLMs) and its own more advanced LLM, Apple created Private Cloud Compute (PCC). The system uses Apple servers that also deploy the tech titan's own chip designs.\nIt's worth noting that Apple isn't using the platform to train AI models. It's using PCC to process data and algorithms that would require more compute power than what's available on consumer devices. The first implementation is sending prompts to ChatGPT.\nThere's a lot of potential for Apple to grow its data center capacity as it partners with more businesses and developers looking to integrate their AI services with Apple's platform. When the company announced its partnership with OpenAI's ChatGPT, it said it's working to bring more partners to the platform later this year. If Apple pushes developers to use PCC, it could further increase Apple's demand for TSMC's services. It also offers another way for Apple to generate income from developers.\nThere's a long runway for Apple to grow AI features through third-party integrations. Just consider the phenomenal growth of the App Store over the past 15 years. Similar growth would be a boon for both Apple and TSMC.\nTSMC already has a market cap of around $900 billion. Even so, shares look undervalued at today's price given the growth potential spurred by continued demand for AI chips.\nThe stock trades for about 27x forward earnings estimates, which is a more than fair price to pay. It should be able to grow its earnings fast enough to justify that price as demand for more advanced chips supports its top-line growth and improves its operating margins. Analysts expect earnings will increase over 25% next year.\nA strong iPhone upgrade cycle over the next few years, incremental demand from Apple's new data centers, and the overall push toward edge computing all favor TSMC's continued growth. Its competitive advantage in creating the most advanced, powerful, and energy-efficient chips will serve it well over the next few years. It's only a matter of time before the company tops a $1 trillion market cap.\nThe\nMotley Fool Stock Advisor\nanalyst team just identified what they believe are the\n10 best stocks\nfor investors to buy now… and Taiwan Semiconductor Manufacturing wasn’t one of them. The 10 stocks that made the cut could produce monster returns in the coming years.\nConsider when Nvidia made this list on April 15, 2005... if you invested $1,000 at the time of our recommendation, you’d have $751,670!*\nStock Advisor\nprovides investors with an easy-to-follow blueprint for success, including guidance on building a portfolio, regular updates from analysts, and two new stock picks each month. The\nStock Advisor\nservice has\nmore than quadrupled\nthe return of S&P 500 since 2002*.\nSee the 10 stocks »\n*Stock Advisor returns as of July 2, 2024\nAdam Levy has positions in Apple and Taiwan Semiconductor Manufacturing. The Motley Fool has positions in and recommends Apple and Taiwan Semiconductor Manufacturing. The Motley Fool has a disclosure policy.\n",
+                    "score": 1.0362305573599153
+                },
+                {
+                    "name": "What Every Company Can Learn From Apple’s AI Strategy",
+                    "url": "https://www.forbes.com/sites/devpatnaik/2024/07/01/what-every-company-can-learn-from-apples-ai-strategy/",
+                    "image": {
+                        "contentUrl": "https://imageio.forbes.com/specials-images/imageserve/668169972d746bd9a32e8ed2/0x0.jpg?format=jpg&height=900&width=1600&fit=bounds",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.LH5yWg3rKKNijomuqP7i1C&pid=News",
+                            "width": 700,
+                            "height": 466
+                        }
+                    },
+                    "description": "Apple finally threw its hat into the ring of artificial intelligence. Apple’s approach isn’t a copycat of Microsoft or Google. Its entry got the important things right.",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9d99fb44-edac-0e03-1579-19d8d8591a49",
+                            "name": "Artificial intelligence"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/a92f6c87-d5f3-7bd6-c85c-f7e39061e30f",
+                            "name": "Steve Jobs"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/ceeab753-899f-4459-8ceb-d64ec0992439",
+                            "name": "iPhone"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9f5500d5-a48c-dc47-2c90-f8cc8558d9d2",
+                            "name": "iPad"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "Forbes",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.U6nYa4Huf-RFEhjg-V4hNg&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-02T08:48:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Dev Patnaik is CEO of future-focused strategy firm Jump Associates.\nClick to save this article.\nYou'll be asked to sign into your Forbes account.\nThis year’s show was actually worth the wait. A year and a half after OpenAI launched ChatGPT and shocked the world, Apple finally threw its hat into the ring of artificial intelligence.\nThe unveiling of “Apple Intelligence” at Apple’s Worldwide Developer Conference wasn’t an obviously mind-blowing event. It lacked the wow factor of those early Steve Jobs presentations, when we saw the first iPhone or iPad. And it fell short of OpenAI’s gasp-inducing launch of ChatGPT version 4o a month earlier, which seemed to bring human-like AI a step closer to reality.\nApple’s late arrival to the AI party should make the rest of us feel a little better. After all, if even one of the world’s most innovative, deep-pocketed corporations was caught flat-footed by generative AI, maybe we can go easier on the leaders of our regional bank or hospital system. Leaders from food and beverage firms to pharmaceutical companies to small and medium-sized businesses are struggling to respond to the most transformative new technology of our time.\nSome business leaders have responded with procrastination. They know that AI matters, but they aren’t treating it with the necessary urgency and focus to yield the greatest impact. Some are raising valid concerns around privacy or intellectual property as reasons not to do anything at all. This is the same mindset that led many retailers to underinvest in e-commerce in the early days of the internet, giving Amazon a free head start.\nOther execs are taking a scattershot approach. They’re demonstrating the right level of urgency, but they don’t really have a plan. As a result, they’re trying to sprinkle some AI magic dust over everything in the hope that something sticks. And while it isn’t a bad idea to start playing around with Midjourney or adding a chatbot to your website, these experiments can end up as distractions with little real payoff for the business.\nThe third approach has been to bet the house. These leaders are throwing so many resources at AI that it’s threatening to starve other initiatives that are critical to the long-term health of the business. Innovation isn’t just about embracing the latest cool thing—it’s also about preventing the business from going bust. AI may be the thing that kills you, but so could a few other threats that demand just as much attention.\nApple did none of these three things. Its entry into AI got the important things right. More importantly, it offered valuable lessons for every executive who’s struggling to figure out what their company might do as well.\nApple’s approach to artificial intelligence isn’t a copycat of Microsoft or Google. Its approach leverages a handful of unique strengths the company brings to the table.\nFirst, Apple has more devices in the hands of more people than anyone else. By integrating its version of AI into MacOS and iOS, the company is building on that installed base. Apple’s AI will work across iPhones, iPads and Macbooks to allow users to work seamlessly from any device.\nSecond, Apple is leveraging its unique strengths in creating beautiful user experiences. As CEO Tim Cook put it, the overarching goal is to make “your most personal products even more useful and delightful.” The system will summarize and prioritize messages and offer rewriting tools for emails and other text. This should help ensure faster adoption by mainstream consumers who have no desire to become skillful prompt engineers.\nThird, Apple has built unique competences in designing its own hardware, including its own CPUs. The company announced that the new AI features will leverage those chips, first on local devices and then in a proprietary cloud powered by Apple’s processors. This should give it a head start on its rivals and avoid dependency on dominant AI chipmaker Nvidia.\nFourth, and perhaps most importantly, Apple has differentiated itself in recent years by being the rare tech company that seems to genuinely care about consumers’ privacy. A big chunk of the presentation was devoted to explaining how Apple’s version of AI will protect users’ personal data. Much of the processing will be done on-device and even Apple won’t know the details of more power-hungry queries that need to go to the cloud.\nLike Apple, companies would be wise to take a moment and clearly identify the assets and capabilities they bring to the table when formulating their AI strategy.\nHaving leveraged what makes the company great, Apple’s approach to artificial intelligence also helps solve critical challenges to the business.\nOne of its biggest challenges has been sagging sales of new iPhones. Sales of its flagship device fell 10% year-on-year in the quarter through March. That’s largely because there isn’t a strong reason for users to upgrade to the latest model. Sure, the iPhone 15 has a superb camera but the ones on the iPhone 14 and 13 are pretty great, too. Because Apple’s AI strategy focuses on processing on your local device, its new features won’t work on old devices. Consumers will finally have a reason to upgrade.\nAnother challenge has been Apple’s struggle to connect with consumers outside of a screen. Its Siri virtual assistant has languished for years, even as competitors like Amazon used its Alexa interface to get into more people’s homes. As part of the new strategy, Siri gets an AI brain transplant, enabling it to respond to commands and take actions based on the user’s “personal context.” That should help level the playing field.\nThe company has also struggled to attract and retain technical talent in this space. It turns out that many AI researchers have the mindset of academics and like to share and publish what they discover. That hasn’t squared with Apple’s notoriously secretive culture. Apple is trying to solve the problem by partnering with OpenAI and a host of other players yet to be named. Admittedly, it’s unclear how effective this approach will be. But it’s a start.\nOf course, the biggest challenge that Apple faces is with the public markets. For the last year and a half, investors have been wanting to know what Apple’s plan was. Any strategy that looked like a copycat approach to OpenAI or Google would only show how late Apple was to the game. Instead, the company reframed AI as “Apple Intelligence,” and focused on more immediate (and admittedly smaller scale) solutions that are more about helping write an email than they are about developing true Artificial General Intelligence. That said, I have no doubt that there’s a team working at breakneck speed inside of Apple to catch up to OpenAI, Google, Anthropic and the rest. That’s just not part of the public strategy. And the public strategy seems to be working. Hours after its AI launch, Apple’s share price hit an all-time high.\nWhen creating an effective AI strategy, the most important thing that business leaders can do is to define the problems to be solved. Those aren’t technical challenges—they’re business challenges.\nGet In The Game\nIn the end, Apple’s first big foray into AI is table stakes compared to what it could do in the years ahead. But the important thing is that—rather than procrastinate, get distracted, or go all in on AI—it got into the game with a great initial strategy based firmly on what makes it great and the key challenges it faces. That’s a lesson that every CEO and head of strategy can take away.\nDev Patnaik is the CEO of Jump Associates.\nFollow me on Twitter or LinkedIn .\nI’m the CEO of Jump Associates, the leading firm for future-focused strategy. Over the last 25 years, I’ve had the pleasure of working with the\n...\nRead More\n",
+                    "score": 1.1718377136296196
+                },
+                {
+                    "name": "Even staunch fans are calling out Apple's less-than-transparent AI training data harvesting",
+                    "url": "https://www.techspot.com/news/103665-even-staunch-fans-calling-out-apple-less-than.html",
+                    "image": {
+                        "contentUrl": "https://www.techspot.com/images2/news/bigimage/2024/07/2024-07-03-image-27.jpg",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.q5JQcpqKo7HMz0KnBRipOi&pid=News",
+                            "width": 700,
+                            "height": 393
+                        }
+                    },
+                    "description": "So far, we haven't had a fair look at the feature since Apple Intelligence doesn't make a public debut until later this year. We have only",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9d99fb44-edac-0e03-1579-19d8d8591a49",
+                            "name": "Artificial intelligence"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/73881232-7a9a-4913-de6d-3bc13f00c2ca",
+                            "name": "Worldwide Developers Conference"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "TechSpot",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.lK_Pb1dzSoft564j8nm9vw&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-03T21:30:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Serving tech enthusiasts for over 25 years.\nTechSpot means tech analysis and advice you can trust .\nBottom line: Apple has been very slow and careful in jumping on the AI bandwagon. It even refused to call its model AI during WWDC, introducing Apple Intelligence instead to set itself apart. However, no matter what you call it, developers must still feed models with hundreds of millions or even billions of data samples to remain competitive.\nSo far, we haven't had a fair look at the feature since Apple Intelligence doesn't make a public debut until later this year. We have only seen what Apple showed us at WWDC, which is not an unbiased assessment. Like any other company, Apple will only present the best of what it has to offer. It can hash out the fine print later. However, with the rapid growth of commercial AI, that's not good enough.\nThe company could have easily released some information or a FAQ page on how it trains its generative AI models but has so far remained as quiet as it was before officially announcing its AI tech. The only thing it has reported on the subject is that it collects data like everybody else, using a tool it calls AppleBot, which is supposed to be more privacy-friendly. However, minding privacy and minding IP rights are two different things.\nNow, some of Apple's most passionate supporters are calling out its lack of transparency on the hows and whats of Apple Intelligence data gathering.\n\"I wish Apple would have explained to the public in a more transparent way how they collected their training data,\" video games artist and creators' rights activist Jon Lam told Engadget. \"I think their announcement could not have come at a worse time.\"\nIt's personal, powerful, and private---and it's integrated into the apps you rely on every day.\nIntroducing Apple Intelligence---our next chapter in AI. https://t.co/uOfIrcTYm7\n– Tim Cook (@tim_cook)\nJune 10, 2024\nOne would think that with Apple's slow roll on AI, it would have learned that the climate on information harvesting for generative model training has been and continues to be chilly. More than a few artists have filed IP infringement lawsuits against AI developers for using their work without permission or payment – over a dozen by Engadget's count. Infringement lawsuits against AI providers have popped up from prominent industry players like The New York Times and Universal to the most minor independent artists.\n\"That's why I wanted to give them a slight benefit of the doubt,\" said Lam. \"I thought they would approach the ethics conversation differently.\"\nIt's an even bigger PR violation when considering Cupertino's stance on privacy and that Apple has long positioned itself as the artist's best tool. The company charges a premium for its high-end production platforms that millions of creative users swear by. Tarnishing its reputation with unscrupulous data collection is the last thing it needs.\nJohn Giannandrea, Apple's senior vice president of machine learning and AI strategy, downplayed the company's sample collection by saying that Apple trained its models mostly on in-house data. However, Giannandrea didn't get into specifics, like how much \"mostly\" is and where it obtained the rest of its training samples.\nInc. reports that Apple has entered licensing deals with extensive image databases like Shutterstock and Photobucket, but the company has not publicly confirmed these reports. The status quo has never been a pillar of Apple's business. While the Cupertino powerhouse hasn't commented on the negative feedback yet, it would be surprising if it didn't address the issue before launching Apple Intelligence this fall.\nCreate your free account to leave a comment. Join thousands of tech enthusiasts and participate.\n",
+                    "score": 0.8907160504831342
+                },
+                {
+                    "name": "Apple's Phil Schiller to Serve as OpenAI Board Observer as Part of iOS 18 AI Agreement",
+                    "url": "https://www.macrumors.com/2024/07/02/apple-schiller-openai-board-observer/",
+                    "image": {
+                        "contentUrl": "https://images.macrumors.com/t/7dsbIaosd3Op153XpVVz5XfY258=/1600x/article-new/2024/06/open-ai-logo.jpg",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.eeLgeCl0hHRJMWwJxYglRS&pid=News",
+                            "width": 700,
+                            "height": 393
+                        }
+                    },
+                    "description": "Apple Fellow and App Store chief Phil Schiller will take on a board observer position at OpenAI, reports Bloomberg. Apple has been granted",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/b81576e2-b392-9271-9f90-3a01758e615d",
+                            "name": "App Store"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/c5ad466d-fd68-f389-4727-7f3b9daaebf6",
+                            "name": "Bloomberg L.P."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/a093e9b9-90f5-a3d5-c4b8-5855e1b01f85",
+                            "name": "Microsoft"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "MacRumors",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.fdtIJqPboMQMjJtsLkn8ww&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-02T21:13:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple Fellow and App Store chief Phil Schiller will take on a board observer position at OpenAI, reports Bloomberg. Apple has been granted an observer role as part of its agreement with OpenAI, which will see ChatGPT integrated into iOS 18, iPadOS 18, and macOS Sequoia, and Schiller has been selected for the role.\nA board observer is an informal board position where the participant is able to attend and contribute to board meetings, but is not allowed to vote and has no control. OpenAI has also given a board observer role to Microsoft, so Apple and Microsoft will be on even footing with Schiller's new position.\nGiven Microsoft's relationship with OpenAI, future board meetings could cover new arrangements between OpenAI and Microsoft, which Bloomberg suggests could cause tension if Schiller is present. Microsoft can request that Schiller be excluded from these meetings, however.\nSchiller has not yet attended any OpenAI board meetings and is not set to do so until later in the year.\nApple and OpenAI's deal will see Siri able to hand complicated user requests over to ChatGPT with explicit user permission. OpenAI is not paying Apple to integrate ChatGPT in its operating systems, nor is Apple paying OpenAI. No money is being exchanged under the terms of the arrangement at the current time.\nGet weekly top MacRumors stories in your inbox.\nCode discovered in Apple's backend by Nicolás Alvarez and shared with MacRumors confirms Apple's plans to release four iPhone 16 models this year, and it indicates that the devices will all have the same A-series chip. There are mentions of new model numbers that are not associated with existing iPhones, and that have the numbering scheme Apple uses for its flagship devices. The code...\nThe upcoming iPhone 16 Pro and iPhone 16 Pro Max will be the first Apple smartphones to adopt Samsung's high performance \"M14\" OLED display panel, claims a new report coming out of South Korea. According to ETNews, Samsung's \"M\" series of OLED panels are made for flagship smartphones, while \"14\" refers to the number of high-performance materials used to produce them. \"M14\" is the first...\nApple today reclassified the iPhone X, first-generation HomePod, and first-generation AirPods as \"vintage\" products. The products appeared on Apple's vintage and obsolete products list earlier today. Products are considered vintage when Apple stopped distributing them for sale more than five and less than seven years ago. Apple Stores and Apple Authorized Service Providers continue to offer...\nTwo years after Apple paid $50 million to settle a class-action lawsuit over faulty MacBook butterfly keyboards, funds from the settlement will be going out to affected customers. An update on the MacBook Keyboard Litigation Settlement website says that the court issued a payment order on June 27, 2024, with payments set to be issued for approved claims by August 2024. Emails about the...\nApple eventually plans to turn some of its artificial intelligence features into paid services, similar to iCloud+ subscriptions, according to Bloomberg reporter Mark Gurman. Writing in his latest Power On newsletter, Gurman said that while Apple Intelligence will be free to start, Apple's long-term plan is to launch something like \"Apple Intelligence+,\" with extra features that users pay...\nApple's upcoming iOS 18 software update is packed with features for supported iPhones, but it also promises to make your AirPods Pro experience better with a handful of sophisticated new capabilities that draw from machine learning improvements and AI enhancements. The following five AirPods Pro features are expected to arrive later this year, when iOS 18 is released to the general public in ...\nOh, wow.....This should be interesting.\nIf it were up to me, I would have kicked him out a long time ago. Arrogant, smug, and hostile towards developers. These people have had their time; now it’s enough. Get out of here.\nAt least now, when people ask why OpenAI isn't releasing GPT-5 or why it feels like the competition is out- innovating them, the board can say that it's because Schiller is giving them extra helpings of Courage™. :p\nSo a former marketing guy in the board meetings. Good for him!\nSo not only is Tim not paying them, but one of his agents now get to sit and listen in on board meetings? Interesting\nOpenAI is getting paid in exposure and potential paid sign-ups.\n\"No money is being exchanged under the terms of the arrangement at the current time\".....at the current time....\n",
+                    "score": 1.0892439956653845
+                },
+                {
+                    "name": "Apple to Join OpenAI Board as Observer Amid Growing AI Collaboration",
+                    "url": "https://www.econotimes.com/Apple-to-Join-OpenAI-Board-as-Observer-Amid-Growing-AI-Collaboration-1680786",
+                    "image": {
+                        "contentUrl": "https://f1.econotimes.com/2024/07/cpa5l6vws7_th_1024x0.jpeg",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.A4m1jpRVHTIDLfTppc2gpy&pid=News",
+                            "width": 700,
+                            "height": 419
+                        }
+                    },
+                    "description": "Apple will gain an observer role on OpenAIs board, enhancing its AI collaboration. This move follows Apples announcement to integrate ChatGPT into its devices, marking a significant partnership in the",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/c5ad466d-fd68-f389-4727-7f3b9daaebf6",
+                            "name": "Bloomberg L.P."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/32b4f273-8574-40ea-af2c-169d967e733e",
+                            "name": "App store"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "EconoTimes",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.6ak8EFvo-jj7ASiNXowAbw&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-03T13:28:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple gains observer role on OpenAI's board, enhancing AI collaboration and integration.\nApple will gain an observer role on OpenAI's board, enhancing its AI collaboration. This move follows Apple’s announcement to integrate ChatGPT into its devices, marking a significant partnership in the tech industry.\nApple Strengthens AI Partnership with OpenAI, Gains Board Observer Role Amid Integration of ChatGPT\nAs part of a groundbreaking agreement disclosed last month, Apple will be granted an observer role on OpenAI's board, further strengthening the relationship between the previously unlikely partners.\nAccording to individuals with knowledge of the matter (via Bloomberg ), Phil Schiller, Apple's former marketing chief and current director of the App Store, was selected for the position. The individual, who requested anonymity due to the nature of the matter, stated that he would not be operating as a full-fledged director or board observer.\nThe action was taken in response to Apple's June announcement that ChatGPT would be included in a suite of artificial intelligence features for the iPhone, iPad, and Mac. According to the individuals, Schiller has not attended any meetings, and the board arrangement will be implemented later this year. The situation's specifics may still be subject to change.\nThe board observer role will align Apple with Microsoft, OpenAI's primary AI technology provider and most prominent financial supporter. The position enables an individual to participate in board meetings without the ability to vote or exercise any other director powers. Nevertheless, observers do acquire an understanding of the company's decision-making process.\nApple and OpenAI representatives declined to provide commentary.\nThe tech titans, who have been rivals and partners for decades, may encounter complications because Microsoft and Apple participate in board meetings. Future AI initiatives between OpenAI and Microsoft will likely be discussed at specific OpenAI board meetings. Microsoft may wish to exclude Schiller from these discussions. Board observers frequently comply and depart meetings during discussions that are perceived as sensitive.\nPhil Schiller Joins OpenAI Board as Observer, Enhancing Apple's AI Strategy and Collaboration\nSchiller's extensive experience as a brand administrator at Apple renders him well-suited for the observer position even though he does not oversee the company's artificial intelligence initiatives. In 2020, the 64-year-old resigned from his marketing director position and is currently employed as an Apple Fellow. He continues supervising the company's product launch events and the App Store. In addition to his position at Apple, he serves as a director at Illumina, a medical technology corporation.\nThrough the partnership, Apple is collaborating with the most significant and influential AI start-up, OpenAI. However, the business is also renowned for its controversy and disruption. Last year, OpenAI's Chief Executive Officer, Sam Altman, was momentarily removed from his position due to allegations that he was not sufficiently transparent with the board. The organization has also faced criticism for its failure to acknowledge the safety concerns associated with artificial intelligence (AI) and its use of a synthetic voice that bore a striking resemblance to actress Scarlett Johansson without prior consent.\nAccording to SCMP, Apple's AI strategy encompasses in-house capabilities in addition to the OpenAI integration. Its technology, Apple Intelligence, transcribes voice memos, generates custom emoticons and images, and summarizes articles and notifications. The initiative also encompasses a redesigned version of Apple's Siri digital assistant; however, most of these improvements will be implemented in the following year.\nAt present, Apple's partnership with OpenAI is not a financial arrangement. OpenAI is gaining access to hundreds of millions of potential users rather than money-changing hands. On the other hand, Apple acquired a chatbot feature in high consumer demand. Additionally, users can access a paid version of ChatGPT on Apple devices, which could result in the iPhone manufacturer incurring App Store fees.\nApple continues to discuss providing supplementary chatbots to customers with Alphabet's Google and start-up Anthropic. It is also negotiating potential agreements with Baidu and Alibaba Group Holding to make its AI features available on devices in China. Apple Intelligence will initially be available in American English, followed by an international rollout.\nWhile it is not uncommon for high-ranking Apple executives to serve as directors of other organizations, it is exceedingly uncommon for them to join the boards of high-profile partners. Apple did, however, briefly occupy a board seat at DiDi Global after investing US$1 billion in the China-based Uber rival.\nPhoto: Microsoft Bing\n",
+                    "score": 1.1261664020795312
+                },
+                {
+                    "name": "Apple poised to get OpenAI board observer role as part of AI pact",
+                    "url": "https://www.msn.com/en-in/money/news/apple-poised-to-get-openai-board-observer-role-as-part-of-ai-pact/ar-BB1poofz",
+                    "image": {
+                        "contentUrl": "https://img-s-msn-com.akamaized.net/tenant/amp/entityid/BB1poofs.img?w=1926&h=1280&m=4&q=60",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.8pe09QAyYAMWpHlmqZYnOy&pid=News",
+                            "width": 700,
+                            "height": 465
+                        }
+                    },
+                    "description": "Apple will get an observer role on OpenAI's board as part of a landmark AI agreement announced last month, Bloomberg News reported on Tuesday. Phil Schiller, the head of Apple's App Store and its former marketing chief,",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/8ddd8af9-a143-8926-cea9-70b91c29fc5c",
+                            "name": "Bloomberg News"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/b81576e2-b392-9271-9f90-3a01758e615d",
+                            "name": "App Store"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9f417f89-9a37-e0d0-912e-99dccfb8982d",
+                            "name": "Reuters"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/ecbf3d98-1b70-7187-af1f-0408b5689f91",
+                            "name": "Siri"
+                        }
+                    ],
+                    "mentions": [
+                        {
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "name": "Role"
+                        },
+                        {
+                            "name": "Pact"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "The Economic Times on MSN.com",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.ajXT0U6_LaErmc8AT6Kh3Q&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-04T08:40:03.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple will get an observer role on OpenAI's board as part of a landmark AI agreement announced last month, Bloomberg News reported on Tuesday.\nPhil Schiller, the head of Apple's App Store and its former marketing chief, was chosen for the position, the report said.\nThe board arrangement will take effect later this year, and Schiller has not yet attended any meetings, according to the report.\nAn observer can attend board meetings without being able to vote or exercise other powers that directors usually have, according to the report. Observers, however, do gain insights into how decisions are made at the company.\nApple and OpenAI declined to comment when contacted by Reuters.\nThe move comes on the heels of Apple's announcement in June, bringing OpenAI's chatbot ChatGPT to its devices and integrating its new \"Apple Intelligence\" technology across its suite of apps, including virtual assistant Siri.\nOpenAI said in March it was appointing new directors to the board, including company CEO Sam Altman, Sue Desmond-Hellmann, a former CEO of the Bill and Melinda Gates Foundation, Nicole Seligman, a former president of Sony Entertainment, and Fidji Simo, CEO of Instacart\nFor more news like this visit The Economic Times.\n",
+                    "score": 1.0985763522939342
+                },
+                {
+                    "name": "Phil Schiller to join OpenAI board in ‘observer’ role following Apple’s ChatGPT deal",
+                    "url": "https://9to5mac.com/2024/07/02/apple-phil-schiller-openai-board-observer/",
+                    "image": {
+                        "contentUrl": "https://9to5mac.com/wp-content/uploads/sites/6/2024/02/Phil-Schiller-advances-to-apple-fellow_08042020_big.jpg.large_2x-2.jpg?quality=82&strip=all&w=1600",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.XIpRZ87Cb6MRWwCdFOhb_C&pid=News",
+                            "width": 700,
+                            "height": 393
+                        }
+                    },
+                    "description": "At WWDC last month, Apple announced its partnership with OpenAI to integrate ChatGPT into iOS 18. While no money is changing hands between Apple and OpenAI, a new report today reveals that Apple will get an “observer role” on OpenAI’s board of directors as part of the arrangement.",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/5cf88a0b-4021-daaf-bb9d-96fde25de0b2",
+                            "name": "WWDC"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/c5ad466d-fd68-f389-4727-7f3b9daaebf6",
+                            "name": "Bloomberg L.P."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/a093e9b9-90f5-a3d5-c4b8-5855e1b01f85",
+                            "name": "Microsoft"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "9to5Mac",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.je8Klcy9ubQRbeUUjYnX9w&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-02T21:04:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "At WWDC last month, Apple announced its partnership with OpenAI to integrate ChatGPT into iOS 18. While no money is changing hands between Apple and OpenAI, a new report today reveals that Apple will get an “observer role” on OpenAI’s board of directors as part of the arrangement.\nThe man chosen for the job? Everyone’s favorite Apple Fellow, Phil Schiller.\nAs reported by Bloomberg, Apple having an “observer role” on the OpenAI board matches the role of Microsoft. Schiller will be able to observe and attend board meetings, but will not have any voting power:\nThe board observer role will put Apple on par with Microsoft Corp., OpenAI’s biggest backer and its main AI technology provider. The job allows someone to attend board meetings without being able to vote or exercise other director powers. Observers, however, do gain insights into how decisions are made at the company.\nThe arrangement will take effect later this year, according to Bloomberg. Schiller “hasn’t yet attended any meetings” of the OpenAI board and “details of the situation could still change.”\nSchiller served as Apple’s long-time marketing chief before transitioning to an Apple Fellow role in 2020. In this role, Schiller continues to lead the App Store and Apple events and reports directly to Apple CEO Tim Cook. Schiller is also leading Apple’s efforts to defend the App Store against antitrust allegations around the world.\nApple announced its deal with OpenAI at WWDC in June, bringing ChatGPT to iOS 18 as part of its Apple Intelligence suite of features. Bloomberg previously reported that Apple isn’t paying OpenAI as part of this arrangement, nor is OpenAI paying Apple. Instead, Apple believes the exposure given to ChatGPT in iOS 18 is “of equal or greater value” than cash\nAdd 9to5Mac to your Google News feed.\nFTC: We use income earning auto affiliate links. More.\n",
+                    "score": 0.9543851758429898
+                },
+                {
+                    "name": "Apple to get OpenAI board observer seat for integrating ChatGPT in iOS 18. Everything we know so far",
+                    "url": "https://www.msn.com/en-in/money/news/apple-to-get-openai-board-observer-seat-for-integrating-chatgpt-in-ios-18-everything-we-know-so-far/ar-BB1pjyNv",
+                    "image": {
+                        "contentUrl": "https://www.livemint.com/lm-img/img/2024/07/03/1600x900/APPLE-LAWYER--0_1719969783179_1719969806224.JPG",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.wEDgTkIR3I_EPxUxeJjfeC&pid=News",
+                            "width": 700,
+                            "height": 393
+                        }
+                    },
+                    "description": "The report states that Phil Schiller, head of Apple's App Store and former marketing chief, has been chosen to take on the role of board observer. The observer role would mean that Schiller could attend OpenAI board meetings, but would not be able to vote on board decisions.",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/ceeab753-899f-4459-8ceb-d64ec0992439",
+                            "name": "iPhone"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/c5ad466d-fd68-f389-4727-7f3b9daaebf6",
+                            "name": "Bloomberg L.P."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/7f1a7e64-5f83-eb8c-5d7e-ba38363babb0",
+                            "name": "Sam Altman"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/b81576e2-b392-9271-9f90-3a01758e615d",
+                            "name": "App Store"
+                        }
+                    ],
+                    "mentions": [
+                        {
+                            "name": "Mint"
+                        },
+                        {
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "name": "Everything"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "Mint on MSN.com",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.W8vM8p2PIvfc6Sh2F0nZpA&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-03T09:56:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple announced its partnership with OpenAI at the WWDC 2024 event earlier this year. Later on, it was revealed that while OpenAI was getting access to millions of iPhone users via the new partnership, Apple isn't paying the company for leveraging its technology in iOS 18. However, a new report by Bloomberg's Mark Gurnman has revealed that Apple is also getting an OpenAI observer role as part of the agreement it had worked out with the Sam Altman led company.\nThe report states that Phil Schiller, Head of Apple's Apple app store and former marketing chief, has been chosen to take the board observer role. The observer role would entail that Schiller could attend OpenAI board meetings but he cannot vote on any board decisions.\nSchiller had stepped down down as Apple's head of marketing in 2020 and is currently employed as an ‘Apple Fellow’. Apart from heading the App Store, the veteran also looks after Apple's product launch events. Apart from his Apple work, Schiller is also a director at a medical technology company called Illumina Inc.\nThe board observer role will put Apple in similar stead as Microsoft, a company which it has a mixed history with. While Microsoft and Apple are stark competitors in the PC race, the Satya Nadella-led company has also offered lucrative deals in the past to replace Google as the default search engine on iPhones.\nGurnman states the addition of Apple on OpenAI board could be an issue when discussions related to AI initiatives between Microsoft and OpenAI are discussed in these board meetings. He does state though that board members usually do oblige and exit meetings when sensitive discussions take place.\nNotably, Microsft has invested around $13 billion in OpenAI and also allows the AI startup access to many of its cloud and computing resources needed to run ChatGPT and other AI technology.\n",
+                    "score": 1.0143343402687195
+                },
+                {
+                    "name": "Apple secures seat on OpenAI's board after integrating ChatGPT with iPhones: Report",
+                    "url": "https://www.msn.com/en-in/money/topstories/apple-secures-seat-on-openais-board-after-integrating-chatgpt-with-iphones-report/ar-BB1pjLp8",
+                    "description": "Apple has managed to secure an observer role on OpenAI's board, according to a report by Bloomberg. This new alliance follows Apple's recent decision to integrate ChatGPT into its devices. The report suggests Apple has picked Phil Schiller, the head of its ...",
+                    "mentions": [
+                        {
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "name": "iPhone"
+                        },
+                        {
+                            "name": "BT TV"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "Business Today on MSN.com"
+                        }
+                    ],
+                    "datePublished": "2024-07-03T16:31:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple has managed to secure an observer role on OpenAI's board, according to a report by Bloomberg. This new alliance follows Apple's recent decision to integrate ChatGPT into its devices. The report suggests Apple has picked Phil Schiller, the head of its App Store and former marketing guru, for the observer position. While he won't have voting rights or any real power, Schiller will get a front-row seat to OpenAI's board meetings.\nThis observer role is set to kick in later this year. In the month of June, Apple announced its partnership with ChatGPT during the WWDC 2024. The large language model will be made available on eligible iPhones, iPads, and Macs. The iOS 18 will have the biggest impact via the iPhones with Apple Intelligence. The smaller AI-related tasks will be handled by the on-device AI model. For more complicated tasks, Apple will send specific requests to OpenAI.\nOpenAI won’t be the only AI company that will partner with Apple. Apple's Senior Vice President of Software Engineering, Craig Federighi, has talked about the possibility of incorporating Google's Gemini AI model in the future. Federighi said Apple wants to give its users the power of choice. After mentioning ChatGPT as a prime example, he teased the potential for domain-specific AI models, adding, “We want to enable users ultimately to choose the models they want, maybe Google Gemini in the future. Nothing to announce right now.”\nOpenAI, on its part, has been busy shuffling its board. In March, it added CEO Sam Altman, Sue Desmond-Hellmann, Nicole Seligman, and Fidji Simo to its roster of directors. Last year’s fiasco that ended up with Sam Altman’s removal from the company for a few days, highlighted the fractured board. However, most of the current board members were not part of the coup against Altman.\nWatch Live TV in English\nWatch Live TV in Hindi\n",
+                    "score": 0.9936389016316934
+                }
+            ]
+        },
+        {
+            "title": "Phil Schiller's New Role",
+            "content": "Phil Schiller, Apple's former marketing chief and current head of the App Store, has been appointed to an observer role on OpenAI's board as part of a landmark AI agreement between the two companies. This strategic move follows Apple's announcement to integrate ChatGPT into its devices, including iOS 18, iPadOS 18, and macOS Sequoia, enhancing its AI capabilities [[c:2]]. Schiller, who transitioned to an Apple Fellow role in 2020, will attend OpenAI board meetings without voting rights, providing Apple with insights into the company's decision-making processes [[c:3]]. This observer role aligns Apple with Microsoft, which also holds a similar position on OpenAI's board [[c:1]]. The collaboration is notable for its non-financial nature, with no money exchanged between Apple and OpenAI; instead, OpenAI gains access to millions of potential users, while Apple integrates a highly demanded chatbot feature [[c:5]]. Schiller's extensive experience and longstanding ties to Apple make him a fitting choice for this role, despite potential complications arising from Microsoft's significant investment and influence in OpenAI [[c:6]]. This partnership underscores Apple's commitment to advancing its AI strategy, which includes both in-house developments and collaborations with other AI companies [[c:4]].",
+            "context": [
+                {
+                    "name": "Apple's Phil Schiller to Serve as OpenAI Board Observer as Part of iOS 18 AI Agreement",
+                    "url": "https://www.macrumors.com/2024/07/02/apple-schiller-openai-board-observer/",
+                    "image": {
+                        "contentUrl": "https://images.macrumors.com/t/7dsbIaosd3Op153XpVVz5XfY258=/1600x/article-new/2024/06/open-ai-logo.jpg",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.eeLgeCl0hHRJMWwJxYglRS&pid=News",
+                            "width": 700,
+                            "height": 393
+                        }
+                    },
+                    "description": "Apple Fellow and App Store chief Phil Schiller will take on a board observer position at OpenAI, reports Bloomberg. Apple has been granted",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/b81576e2-b392-9271-9f90-3a01758e615d",
+                            "name": "App Store"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/c5ad466d-fd68-f389-4727-7f3b9daaebf6",
+                            "name": "Bloomberg L.P."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/a093e9b9-90f5-a3d5-c4b8-5855e1b01f85",
+                            "name": "Microsoft"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "MacRumors",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.fdtIJqPboMQMjJtsLkn8ww&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-02T21:13:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple Fellow and App Store chief Phil Schiller will take on a board observer position at OpenAI, reports Bloomberg. Apple has been granted an observer role as part of its agreement with OpenAI, which will see ChatGPT integrated into iOS 18, iPadOS 18, and macOS Sequoia, and Schiller has been selected for the role.\nA board observer is an informal board position where the participant is able to attend and contribute to board meetings, but is not allowed to vote and has no control. OpenAI has also given a board observer role to Microsoft, so Apple and Microsoft will be on even footing with Schiller's new position.\nGiven Microsoft's relationship with OpenAI, future board meetings could cover new arrangements between OpenAI and Microsoft, which Bloomberg suggests could cause tension if Schiller is present. Microsoft can request that Schiller be excluded from these meetings, however.\nSchiller has not yet attended any OpenAI board meetings and is not set to do so until later in the year.\nApple and OpenAI's deal will see Siri able to hand complicated user requests over to ChatGPT with explicit user permission. OpenAI is not paying Apple to integrate ChatGPT in its operating systems, nor is Apple paying OpenAI. No money is being exchanged under the terms of the arrangement at the current time.\nGet weekly top MacRumors stories in your inbox.\nCode discovered in Apple's backend by Nicolás Alvarez and shared with MacRumors confirms Apple's plans to release four iPhone 16 models this year, and it indicates that the devices will all have the same A-series chip. There are mentions of new model numbers that are not associated with existing iPhones, and that have the numbering scheme Apple uses for its flagship devices. The code...\nThe upcoming iPhone 16 Pro and iPhone 16 Pro Max will be the first Apple smartphones to adopt Samsung's high performance \"M14\" OLED display panel, claims a new report coming out of South Korea. According to ETNews, Samsung's \"M\" series of OLED panels are made for flagship smartphones, while \"14\" refers to the number of high-performance materials used to produce them. \"M14\" is the first...\nApple today reclassified the iPhone X, first-generation HomePod, and first-generation AirPods as \"vintage\" products. The products appeared on Apple's vintage and obsolete products list earlier today. Products are considered vintage when Apple stopped distributing them for sale more than five and less than seven years ago. Apple Stores and Apple Authorized Service Providers continue to offer...\nTwo years after Apple paid $50 million to settle a class-action lawsuit over faulty MacBook butterfly keyboards, funds from the settlement will be going out to affected customers. An update on the MacBook Keyboard Litigation Settlement website says that the court issued a payment order on June 27, 2024, with payments set to be issued for approved claims by August 2024. Emails about the...\nApple eventually plans to turn some of its artificial intelligence features into paid services, similar to iCloud+ subscriptions, according to Bloomberg reporter Mark Gurman. Writing in his latest Power On newsletter, Gurman said that while Apple Intelligence will be free to start, Apple's long-term plan is to launch something like \"Apple Intelligence+,\" with extra features that users pay...\nApple's upcoming iOS 18 software update is packed with features for supported iPhones, but it also promises to make your AirPods Pro experience better with a handful of sophisticated new capabilities that draw from machine learning improvements and AI enhancements. The following five AirPods Pro features are expected to arrive later this year, when iOS 18 is released to the general public in ...\nOh, wow.....This should be interesting.\nIf it were up to me, I would have kicked him out a long time ago. Arrogant, smug, and hostile towards developers. These people have had their time; now it’s enough. Get out of here.\nAt least now, when people ask why OpenAI isn't releasing GPT-5 or why it feels like the competition is out- innovating them, the board can say that it's because Schiller is giving them extra helpings of Courage™. :p\nSo a former marketing guy in the board meetings. Good for him!\nSo not only is Tim not paying them, but one of his agents now get to sit and listen in on board meetings? Interesting\nOpenAI is getting paid in exposure and potential paid sign-ups.\n\"No money is being exchanged under the terms of the arrangement at the current time\".....at the current time....\n",
+                    "score": 1.0892439956653845
+                },
+                {
+                    "name": "Apple to Join OpenAI Board as Observer Amid Growing AI Collaboration",
+                    "url": "https://www.econotimes.com/Apple-to-Join-OpenAI-Board-as-Observer-Amid-Growing-AI-Collaboration-1680786",
+                    "image": {
+                        "contentUrl": "https://f1.econotimes.com/2024/07/cpa5l6vws7_th_1024x0.jpeg",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.A4m1jpRVHTIDLfTppc2gpy&pid=News",
+                            "width": 700,
+                            "height": 419
+                        }
+                    },
+                    "description": "Apple will gain an observer role on OpenAIs board, enhancing its AI collaboration. This move follows Apples announcement to integrate ChatGPT into its devices, marking a significant partnership in the",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/c5ad466d-fd68-f389-4727-7f3b9daaebf6",
+                            "name": "Bloomberg L.P."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/32b4f273-8574-40ea-af2c-169d967e733e",
+                            "name": "App store"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "EconoTimes",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.6ak8EFvo-jj7ASiNXowAbw&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-03T13:28:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple gains observer role on OpenAI's board, enhancing AI collaboration and integration.\nApple will gain an observer role on OpenAI's board, enhancing its AI collaboration. This move follows Apple’s announcement to integrate ChatGPT into its devices, marking a significant partnership in the tech industry.\nApple Strengthens AI Partnership with OpenAI, Gains Board Observer Role Amid Integration of ChatGPT\nAs part of a groundbreaking agreement disclosed last month, Apple will be granted an observer role on OpenAI's board, further strengthening the relationship between the previously unlikely partners.\nAccording to individuals with knowledge of the matter (via Bloomberg ), Phil Schiller, Apple's former marketing chief and current director of the App Store, was selected for the position. The individual, who requested anonymity due to the nature of the matter, stated that he would not be operating as a full-fledged director or board observer.\nThe action was taken in response to Apple's June announcement that ChatGPT would be included in a suite of artificial intelligence features for the iPhone, iPad, and Mac. According to the individuals, Schiller has not attended any meetings, and the board arrangement will be implemented later this year. The situation's specifics may still be subject to change.\nThe board observer role will align Apple with Microsoft, OpenAI's primary AI technology provider and most prominent financial supporter. The position enables an individual to participate in board meetings without the ability to vote or exercise any other director powers. Nevertheless, observers do acquire an understanding of the company's decision-making process.\nApple and OpenAI representatives declined to provide commentary.\nThe tech titans, who have been rivals and partners for decades, may encounter complications because Microsoft and Apple participate in board meetings. Future AI initiatives between OpenAI and Microsoft will likely be discussed at specific OpenAI board meetings. Microsoft may wish to exclude Schiller from these discussions. Board observers frequently comply and depart meetings during discussions that are perceived as sensitive.\nPhil Schiller Joins OpenAI Board as Observer, Enhancing Apple's AI Strategy and Collaboration\nSchiller's extensive experience as a brand administrator at Apple renders him well-suited for the observer position even though he does not oversee the company's artificial intelligence initiatives. In 2020, the 64-year-old resigned from his marketing director position and is currently employed as an Apple Fellow. He continues supervising the company's product launch events and the App Store. In addition to his position at Apple, he serves as a director at Illumina, a medical technology corporation.\nThrough the partnership, Apple is collaborating with the most significant and influential AI start-up, OpenAI. However, the business is also renowned for its controversy and disruption. Last year, OpenAI's Chief Executive Officer, Sam Altman, was momentarily removed from his position due to allegations that he was not sufficiently transparent with the board. The organization has also faced criticism for its failure to acknowledge the safety concerns associated with artificial intelligence (AI) and its use of a synthetic voice that bore a striking resemblance to actress Scarlett Johansson without prior consent.\nAccording to SCMP, Apple's AI strategy encompasses in-house capabilities in addition to the OpenAI integration. Its technology, Apple Intelligence, transcribes voice memos, generates custom emoticons and images, and summarizes articles and notifications. The initiative also encompasses a redesigned version of Apple's Siri digital assistant; however, most of these improvements will be implemented in the following year.\nAt present, Apple's partnership with OpenAI is not a financial arrangement. OpenAI is gaining access to hundreds of millions of potential users rather than money-changing hands. On the other hand, Apple acquired a chatbot feature in high consumer demand. Additionally, users can access a paid version of ChatGPT on Apple devices, which could result in the iPhone manufacturer incurring App Store fees.\nApple continues to discuss providing supplementary chatbots to customers with Alphabet's Google and start-up Anthropic. It is also negotiating potential agreements with Baidu and Alibaba Group Holding to make its AI features available on devices in China. Apple Intelligence will initially be available in American English, followed by an international rollout.\nWhile it is not uncommon for high-ranking Apple executives to serve as directors of other organizations, it is exceedingly uncommon for them to join the boards of high-profile partners. Apple did, however, briefly occupy a board seat at DiDi Global after investing US$1 billion in the China-based Uber rival.\nPhoto: Microsoft Bing\n",
+                    "score": 1.1261664020795312
+                },
+                {
+                    "name": "Apple poised to get OpenAI board observer role as part of AI pact",
+                    "url": "https://www.msn.com/en-in/money/news/apple-poised-to-get-openai-board-observer-role-as-part-of-ai-pact/ar-BB1poofz",
+                    "image": {
+                        "contentUrl": "https://img-s-msn-com.akamaized.net/tenant/amp/entityid/BB1poofs.img?w=1926&h=1280&m=4&q=60",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.8pe09QAyYAMWpHlmqZYnOy&pid=News",
+                            "width": 700,
+                            "height": 465
+                        }
+                    },
+                    "description": "Apple will get an observer role on OpenAI's board as part of a landmark AI agreement announced last month, Bloomberg News reported on Tuesday. Phil Schiller, the head of Apple's App Store and its former marketing chief,",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/8ddd8af9-a143-8926-cea9-70b91c29fc5c",
+                            "name": "Bloomberg News"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/b81576e2-b392-9271-9f90-3a01758e615d",
+                            "name": "App Store"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9f417f89-9a37-e0d0-912e-99dccfb8982d",
+                            "name": "Reuters"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/ecbf3d98-1b70-7187-af1f-0408b5689f91",
+                            "name": "Siri"
+                        }
+                    ],
+                    "mentions": [
+                        {
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "name": "Role"
+                        },
+                        {
+                            "name": "Pact"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "The Economic Times on MSN.com",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.ajXT0U6_LaErmc8AT6Kh3Q&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-04T08:40:03.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple will get an observer role on OpenAI's board as part of a landmark AI agreement announced last month, Bloomberg News reported on Tuesday.\nPhil Schiller, the head of Apple's App Store and its former marketing chief, was chosen for the position, the report said.\nThe board arrangement will take effect later this year, and Schiller has not yet attended any meetings, according to the report.\nAn observer can attend board meetings without being able to vote or exercise other powers that directors usually have, according to the report. Observers, however, do gain insights into how decisions are made at the company.\nApple and OpenAI declined to comment when contacted by Reuters.\nThe move comes on the heels of Apple's announcement in June, bringing OpenAI's chatbot ChatGPT to its devices and integrating its new \"Apple Intelligence\" technology across its suite of apps, including virtual assistant Siri.\nOpenAI said in March it was appointing new directors to the board, including company CEO Sam Altman, Sue Desmond-Hellmann, a former CEO of the Bill and Melinda Gates Foundation, Nicole Seligman, a former president of Sony Entertainment, and Fidji Simo, CEO of Instacart\nFor more news like this visit The Economic Times.\n",
+                    "score": 1.0985763522939342
+                },
+                {
+                    "name": "Phil Schiller to join OpenAI board in ‘observer’ role following Apple’s ChatGPT deal",
+                    "url": "https://9to5mac.com/2024/07/02/apple-phil-schiller-openai-board-observer/",
+                    "image": {
+                        "contentUrl": "https://9to5mac.com/wp-content/uploads/sites/6/2024/02/Phil-Schiller-advances-to-apple-fellow_08042020_big.jpg.large_2x-2.jpg?quality=82&strip=all&w=1600",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.XIpRZ87Cb6MRWwCdFOhb_C&pid=News",
+                            "width": 700,
+                            "height": 393
+                        }
+                    },
+                    "description": "At WWDC last month, Apple announced its partnership with OpenAI to integrate ChatGPT into iOS 18. While no money is changing hands between Apple and OpenAI, a new report today reveals that Apple will get an “observer role” on OpenAI’s board of directors as part of the arrangement.",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/5cf88a0b-4021-daaf-bb9d-96fde25de0b2",
+                            "name": "WWDC"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/c5ad466d-fd68-f389-4727-7f3b9daaebf6",
+                            "name": "Bloomberg L.P."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/a093e9b9-90f5-a3d5-c4b8-5855e1b01f85",
+                            "name": "Microsoft"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "9to5Mac",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.je8Klcy9ubQRbeUUjYnX9w&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-02T21:04:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "At WWDC last month, Apple announced its partnership with OpenAI to integrate ChatGPT into iOS 18. While no money is changing hands between Apple and OpenAI, a new report today reveals that Apple will get an “observer role” on OpenAI’s board of directors as part of the arrangement.\nThe man chosen for the job? Everyone’s favorite Apple Fellow, Phil Schiller.\nAs reported by Bloomberg, Apple having an “observer role” on the OpenAI board matches the role of Microsoft. Schiller will be able to observe and attend board meetings, but will not have any voting power:\nThe board observer role will put Apple on par with Microsoft Corp., OpenAI’s biggest backer and its main AI technology provider. The job allows someone to attend board meetings without being able to vote or exercise other director powers. Observers, however, do gain insights into how decisions are made at the company.\nThe arrangement will take effect later this year, according to Bloomberg. Schiller “hasn’t yet attended any meetings” of the OpenAI board and “details of the situation could still change.”\nSchiller served as Apple’s long-time marketing chief before transitioning to an Apple Fellow role in 2020. In this role, Schiller continues to lead the App Store and Apple events and reports directly to Apple CEO Tim Cook. Schiller is also leading Apple’s efforts to defend the App Store against antitrust allegations around the world.\nApple announced its deal with OpenAI at WWDC in June, bringing ChatGPT to iOS 18 as part of its Apple Intelligence suite of features. Bloomberg previously reported that Apple isn’t paying OpenAI as part of this arrangement, nor is OpenAI paying Apple. Instead, Apple believes the exposure given to ChatGPT in iOS 18 is “of equal or greater value” than cash\nAdd 9to5Mac to your Google News feed.\nFTC: We use income earning auto affiliate links. More.\n",
+                    "score": 0.9543851758429898
+                },
+                {
+                    "name": "Apple to get OpenAI board observer seat for integrating ChatGPT in iOS 18. Everything we know so far",
+                    "url": "https://www.msn.com/en-in/money/news/apple-to-get-openai-board-observer-seat-for-integrating-chatgpt-in-ios-18-everything-we-know-so-far/ar-BB1pjyNv",
+                    "image": {
+                        "contentUrl": "https://www.livemint.com/lm-img/img/2024/07/03/1600x900/APPLE-LAWYER--0_1719969783179_1719969806224.JPG",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.wEDgTkIR3I_EPxUxeJjfeC&pid=News",
+                            "width": 700,
+                            "height": 393
+                        }
+                    },
+                    "description": "The report states that Phil Schiller, head of Apple's App Store and former marketing chief, has been chosen to take on the role of board observer. The observer role would mean that Schiller could attend OpenAI board meetings, but would not be able to vote on board decisions.",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/ceeab753-899f-4459-8ceb-d64ec0992439",
+                            "name": "iPhone"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/c5ad466d-fd68-f389-4727-7f3b9daaebf6",
+                            "name": "Bloomberg L.P."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/7f1a7e64-5f83-eb8c-5d7e-ba38363babb0",
+                            "name": "Sam Altman"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/b81576e2-b392-9271-9f90-3a01758e615d",
+                            "name": "App Store"
+                        }
+                    ],
+                    "mentions": [
+                        {
+                            "name": "Mint"
+                        },
+                        {
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "name": "Everything"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "Mint on MSN.com",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.W8vM8p2PIvfc6Sh2F0nZpA&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-03T09:56:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple announced its partnership with OpenAI at the WWDC 2024 event earlier this year. Later on, it was revealed that while OpenAI was getting access to millions of iPhone users via the new partnership, Apple isn't paying the company for leveraging its technology in iOS 18. However, a new report by Bloomberg's Mark Gurnman has revealed that Apple is also getting an OpenAI observer role as part of the agreement it had worked out with the Sam Altman led company.\nThe report states that Phil Schiller, Head of Apple's Apple app store and former marketing chief, has been chosen to take the board observer role. The observer role would entail that Schiller could attend OpenAI board meetings but he cannot vote on any board decisions.\nSchiller had stepped down down as Apple's head of marketing in 2020 and is currently employed as an ‘Apple Fellow’. Apart from heading the App Store, the veteran also looks after Apple's product launch events. Apart from his Apple work, Schiller is also a director at a medical technology company called Illumina Inc.\nThe board observer role will put Apple in similar stead as Microsoft, a company which it has a mixed history with. While Microsoft and Apple are stark competitors in the PC race, the Satya Nadella-led company has also offered lucrative deals in the past to replace Google as the default search engine on iPhones.\nGurnman states the addition of Apple on OpenAI board could be an issue when discussions related to AI initiatives between Microsoft and OpenAI are discussed in these board meetings. He does state though that board members usually do oblige and exit meetings when sensitive discussions take place.\nNotably, Microsft has invested around $13 billion in OpenAI and also allows the AI startup access to many of its cloud and computing resources needed to run ChatGPT and other AI technology.\n",
+                    "score": 1.0143343402687195
+                },
+                {
+                    "name": "Apple secures seat on OpenAI's board after integrating ChatGPT with iPhones: Report",
+                    "url": "https://www.msn.com/en-in/money/topstories/apple-secures-seat-on-openais-board-after-integrating-chatgpt-with-iphones-report/ar-BB1pjLp8",
+                    "description": "Apple has managed to secure an observer role on OpenAI's board, according to a report by Bloomberg. This new alliance follows Apple's recent decision to integrate ChatGPT into its devices. The report suggests Apple has picked Phil Schiller, the head of its ...",
+                    "mentions": [
+                        {
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "name": "iPhone"
+                        },
+                        {
+                            "name": "BT TV"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "Business Today on MSN.com"
+                        }
+                    ],
+                    "datePublished": "2024-07-03T16:31:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple has managed to secure an observer role on OpenAI's board, according to a report by Bloomberg. This new alliance follows Apple's recent decision to integrate ChatGPT into its devices. The report suggests Apple has picked Phil Schiller, the head of its App Store and former marketing guru, for the observer position. While he won't have voting rights or any real power, Schiller will get a front-row seat to OpenAI's board meetings.\nThis observer role is set to kick in later this year. In the month of June, Apple announced its partnership with ChatGPT during the WWDC 2024. The large language model will be made available on eligible iPhones, iPads, and Macs. The iOS 18 will have the biggest impact via the iPhones with Apple Intelligence. The smaller AI-related tasks will be handled by the on-device AI model. For more complicated tasks, Apple will send specific requests to OpenAI.\nOpenAI won’t be the only AI company that will partner with Apple. Apple's Senior Vice President of Software Engineering, Craig Federighi, has talked about the possibility of incorporating Google's Gemini AI model in the future. Federighi said Apple wants to give its users the power of choice. After mentioning ChatGPT as a prime example, he teased the potential for domain-specific AI models, adding, “We want to enable users ultimately to choose the models they want, maybe Google Gemini in the future. Nothing to announce right now.”\nOpenAI, on its part, has been busy shuffling its board. In March, it added CEO Sam Altman, Sue Desmond-Hellmann, Nicole Seligman, and Fidji Simo to its roster of directors. Last year’s fiasco that ended up with Sam Altman’s removal from the company for a few days, highlighted the fractured board. However, most of the current board members were not part of the coup against Altman.\nWatch Live TV in English\nWatch Live TV in Hindi\n",
+                    "score": 0.9936389016316934
+                }
+            ]
+        },
+        {
+            "title": "Strengthening Apple-OpenAI Partnership",
+            "content": "In a significant move to bolster its artificial intelligence capabilities, Apple has secured an observer role on OpenAI's board, marking a deepening of their collaboration. This development follows Apple's announcement at WWDC 2024 to integrate OpenAI's ChatGPT into its devices, including iPhones, iPads, and Macs, as part of the iOS 18 update [[c:2]]. Phil Schiller, Apple's former marketing chief and current head of the App Store, has been selected for this observer position. Although Schiller will not have voting rights, he will gain valuable insights into OpenAI's decision-making processes [[c:3]]. This arrangement aligns Apple with Microsoft, which also holds a non-voting observer role on OpenAI's board, potentially leading to complex dynamics in future board meetings [[c:1]]. The partnership is not a financial transaction; instead, it provides OpenAI access to millions of Apple users, while Apple benefits from integrating a highly sought-after AI feature [[c:4]]. This collaboration is part of Apple's broader AI strategy, which includes in-house developments and potential partnerships with other AI firms like Google and Anthropic [[c:5]].",
+            "context": [
+                {
+                    "name": "Apple's Phil Schiller to Serve as OpenAI Board Observer as Part of iOS 18 AI Agreement",
+                    "url": "https://www.macrumors.com/2024/07/02/apple-schiller-openai-board-observer/",
+                    "image": {
+                        "contentUrl": "https://images.macrumors.com/t/7dsbIaosd3Op153XpVVz5XfY258=/1600x/article-new/2024/06/open-ai-logo.jpg",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.eeLgeCl0hHRJMWwJxYglRS&pid=News",
+                            "width": 700,
+                            "height": 393
+                        }
+                    },
+                    "description": "Apple Fellow and App Store chief Phil Schiller will take on a board observer position at OpenAI, reports Bloomberg. Apple has been granted",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/b81576e2-b392-9271-9f90-3a01758e615d",
+                            "name": "App Store"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/c5ad466d-fd68-f389-4727-7f3b9daaebf6",
+                            "name": "Bloomberg L.P."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/a093e9b9-90f5-a3d5-c4b8-5855e1b01f85",
+                            "name": "Microsoft"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "MacRumors",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.fdtIJqPboMQMjJtsLkn8ww&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-02T21:13:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple Fellow and App Store chief Phil Schiller will take on a board observer position at OpenAI, reports Bloomberg. Apple has been granted an observer role as part of its agreement with OpenAI, which will see ChatGPT integrated into iOS 18, iPadOS 18, and macOS Sequoia, and Schiller has been selected for the role.\nA board observer is an informal board position where the participant is able to attend and contribute to board meetings, but is not allowed to vote and has no control. OpenAI has also given a board observer role to Microsoft, so Apple and Microsoft will be on even footing with Schiller's new position.\nGiven Microsoft's relationship with OpenAI, future board meetings could cover new arrangements between OpenAI and Microsoft, which Bloomberg suggests could cause tension if Schiller is present. Microsoft can request that Schiller be excluded from these meetings, however.\nSchiller has not yet attended any OpenAI board meetings and is not set to do so until later in the year.\nApple and OpenAI's deal will see Siri able to hand complicated user requests over to ChatGPT with explicit user permission. OpenAI is not paying Apple to integrate ChatGPT in its operating systems, nor is Apple paying OpenAI. No money is being exchanged under the terms of the arrangement at the current time.\nGet weekly top MacRumors stories in your inbox.\nCode discovered in Apple's backend by Nicolás Alvarez and shared with MacRumors confirms Apple's plans to release four iPhone 16 models this year, and it indicates that the devices will all have the same A-series chip. There are mentions of new model numbers that are not associated with existing iPhones, and that have the numbering scheme Apple uses for its flagship devices. The code...\nThe upcoming iPhone 16 Pro and iPhone 16 Pro Max will be the first Apple smartphones to adopt Samsung's high performance \"M14\" OLED display panel, claims a new report coming out of South Korea. According to ETNews, Samsung's \"M\" series of OLED panels are made for flagship smartphones, while \"14\" refers to the number of high-performance materials used to produce them. \"M14\" is the first...\nApple today reclassified the iPhone X, first-generation HomePod, and first-generation AirPods as \"vintage\" products. The products appeared on Apple's vintage and obsolete products list earlier today. Products are considered vintage when Apple stopped distributing them for sale more than five and less than seven years ago. Apple Stores and Apple Authorized Service Providers continue to offer...\nTwo years after Apple paid $50 million to settle a class-action lawsuit over faulty MacBook butterfly keyboards, funds from the settlement will be going out to affected customers. An update on the MacBook Keyboard Litigation Settlement website says that the court issued a payment order on June 27, 2024, with payments set to be issued for approved claims by August 2024. Emails about the...\nApple eventually plans to turn some of its artificial intelligence features into paid services, similar to iCloud+ subscriptions, according to Bloomberg reporter Mark Gurman. Writing in his latest Power On newsletter, Gurman said that while Apple Intelligence will be free to start, Apple's long-term plan is to launch something like \"Apple Intelligence+,\" with extra features that users pay...\nApple's upcoming iOS 18 software update is packed with features for supported iPhones, but it also promises to make your AirPods Pro experience better with a handful of sophisticated new capabilities that draw from machine learning improvements and AI enhancements. The following five AirPods Pro features are expected to arrive later this year, when iOS 18 is released to the general public in ...\nOh, wow.....This should be interesting.\nIf it were up to me, I would have kicked him out a long time ago. Arrogant, smug, and hostile towards developers. These people have had their time; now it’s enough. Get out of here.\nAt least now, when people ask why OpenAI isn't releasing GPT-5 or why it feels like the competition is out- innovating them, the board can say that it's because Schiller is giving them extra helpings of Courage™. :p\nSo a former marketing guy in the board meetings. Good for him!\nSo not only is Tim not paying them, but one of his agents now get to sit and listen in on board meetings? Interesting\nOpenAI is getting paid in exposure and potential paid sign-ups.\n\"No money is being exchanged under the terms of the arrangement at the current time\".....at the current time....\n",
+                    "score": 1.0892439956653845
+                },
+                {
+                    "name": "Apple to Join OpenAI Board as Observer Amid Growing AI Collaboration",
+                    "url": "https://www.econotimes.com/Apple-to-Join-OpenAI-Board-as-Observer-Amid-Growing-AI-Collaboration-1680786",
+                    "image": {
+                        "contentUrl": "https://f1.econotimes.com/2024/07/cpa5l6vws7_th_1024x0.jpeg",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.A4m1jpRVHTIDLfTppc2gpy&pid=News",
+                            "width": 700,
+                            "height": 419
+                        }
+                    },
+                    "description": "Apple will gain an observer role on OpenAIs board, enhancing its AI collaboration. This move follows Apples announcement to integrate ChatGPT into its devices, marking a significant partnership in the",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/c5ad466d-fd68-f389-4727-7f3b9daaebf6",
+                            "name": "Bloomberg L.P."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/32b4f273-8574-40ea-af2c-169d967e733e",
+                            "name": "App store"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "EconoTimes",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.6ak8EFvo-jj7ASiNXowAbw&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-03T13:28:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple gains observer role on OpenAI's board, enhancing AI collaboration and integration.\nApple will gain an observer role on OpenAI's board, enhancing its AI collaboration. This move follows Apple’s announcement to integrate ChatGPT into its devices, marking a significant partnership in the tech industry.\nApple Strengthens AI Partnership with OpenAI, Gains Board Observer Role Amid Integration of ChatGPT\nAs part of a groundbreaking agreement disclosed last month, Apple will be granted an observer role on OpenAI's board, further strengthening the relationship between the previously unlikely partners.\nAccording to individuals with knowledge of the matter (via Bloomberg ), Phil Schiller, Apple's former marketing chief and current director of the App Store, was selected for the position. The individual, who requested anonymity due to the nature of the matter, stated that he would not be operating as a full-fledged director or board observer.\nThe action was taken in response to Apple's June announcement that ChatGPT would be included in a suite of artificial intelligence features for the iPhone, iPad, and Mac. According to the individuals, Schiller has not attended any meetings, and the board arrangement will be implemented later this year. The situation's specifics may still be subject to change.\nThe board observer role will align Apple with Microsoft, OpenAI's primary AI technology provider and most prominent financial supporter. The position enables an individual to participate in board meetings without the ability to vote or exercise any other director powers. Nevertheless, observers do acquire an understanding of the company's decision-making process.\nApple and OpenAI representatives declined to provide commentary.\nThe tech titans, who have been rivals and partners for decades, may encounter complications because Microsoft and Apple participate in board meetings. Future AI initiatives between OpenAI and Microsoft will likely be discussed at specific OpenAI board meetings. Microsoft may wish to exclude Schiller from these discussions. Board observers frequently comply and depart meetings during discussions that are perceived as sensitive.\nPhil Schiller Joins OpenAI Board as Observer, Enhancing Apple's AI Strategy and Collaboration\nSchiller's extensive experience as a brand administrator at Apple renders him well-suited for the observer position even though he does not oversee the company's artificial intelligence initiatives. In 2020, the 64-year-old resigned from his marketing director position and is currently employed as an Apple Fellow. He continues supervising the company's product launch events and the App Store. In addition to his position at Apple, he serves as a director at Illumina, a medical technology corporation.\nThrough the partnership, Apple is collaborating with the most significant and influential AI start-up, OpenAI. However, the business is also renowned for its controversy and disruption. Last year, OpenAI's Chief Executive Officer, Sam Altman, was momentarily removed from his position due to allegations that he was not sufficiently transparent with the board. The organization has also faced criticism for its failure to acknowledge the safety concerns associated with artificial intelligence (AI) and its use of a synthetic voice that bore a striking resemblance to actress Scarlett Johansson without prior consent.\nAccording to SCMP, Apple's AI strategy encompasses in-house capabilities in addition to the OpenAI integration. Its technology, Apple Intelligence, transcribes voice memos, generates custom emoticons and images, and summarizes articles and notifications. The initiative also encompasses a redesigned version of Apple's Siri digital assistant; however, most of these improvements will be implemented in the following year.\nAt present, Apple's partnership with OpenAI is not a financial arrangement. OpenAI is gaining access to hundreds of millions of potential users rather than money-changing hands. On the other hand, Apple acquired a chatbot feature in high consumer demand. Additionally, users can access a paid version of ChatGPT on Apple devices, which could result in the iPhone manufacturer incurring App Store fees.\nApple continues to discuss providing supplementary chatbots to customers with Alphabet's Google and start-up Anthropic. It is also negotiating potential agreements with Baidu and Alibaba Group Holding to make its AI features available on devices in China. Apple Intelligence will initially be available in American English, followed by an international rollout.\nWhile it is not uncommon for high-ranking Apple executives to serve as directors of other organizations, it is exceedingly uncommon for them to join the boards of high-profile partners. Apple did, however, briefly occupy a board seat at DiDi Global after investing US$1 billion in the China-based Uber rival.\nPhoto: Microsoft Bing\n",
+                    "score": 1.1261664020795312
+                },
+                {
+                    "name": "Apple poised to get OpenAI board observer role as part of AI pact",
+                    "url": "https://www.msn.com/en-in/money/news/apple-poised-to-get-openai-board-observer-role-as-part-of-ai-pact/ar-BB1poofz",
+                    "image": {
+                        "contentUrl": "https://img-s-msn-com.akamaized.net/tenant/amp/entityid/BB1poofs.img?w=1926&h=1280&m=4&q=60",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.8pe09QAyYAMWpHlmqZYnOy&pid=News",
+                            "width": 700,
+                            "height": 465
+                        }
+                    },
+                    "description": "Apple will get an observer role on OpenAI's board as part of a landmark AI agreement announced last month, Bloomberg News reported on Tuesday. Phil Schiller, the head of Apple's App Store and its former marketing chief,",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/8ddd8af9-a143-8926-cea9-70b91c29fc5c",
+                            "name": "Bloomberg News"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/b81576e2-b392-9271-9f90-3a01758e615d",
+                            "name": "App Store"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9f417f89-9a37-e0d0-912e-99dccfb8982d",
+                            "name": "Reuters"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/ecbf3d98-1b70-7187-af1f-0408b5689f91",
+                            "name": "Siri"
+                        }
+                    ],
+                    "mentions": [
+                        {
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "name": "Role"
+                        },
+                        {
+                            "name": "Pact"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "The Economic Times on MSN.com",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.ajXT0U6_LaErmc8AT6Kh3Q&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-04T08:40:03.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple will get an observer role on OpenAI's board as part of a landmark AI agreement announced last month, Bloomberg News reported on Tuesday.\nPhil Schiller, the head of Apple's App Store and its former marketing chief, was chosen for the position, the report said.\nThe board arrangement will take effect later this year, and Schiller has not yet attended any meetings, according to the report.\nAn observer can attend board meetings without being able to vote or exercise other powers that directors usually have, according to the report. Observers, however, do gain insights into how decisions are made at the company.\nApple and OpenAI declined to comment when contacted by Reuters.\nThe move comes on the heels of Apple's announcement in June, bringing OpenAI's chatbot ChatGPT to its devices and integrating its new \"Apple Intelligence\" technology across its suite of apps, including virtual assistant Siri.\nOpenAI said in March it was appointing new directors to the board, including company CEO Sam Altman, Sue Desmond-Hellmann, a former CEO of the Bill and Melinda Gates Foundation, Nicole Seligman, a former president of Sony Entertainment, and Fidji Simo, CEO of Instacart\nFor more news like this visit The Economic Times.\n",
+                    "score": 1.0985763522939342
+                },
+                {
+                    "name": "Apple to get OpenAI board observer seat for integrating ChatGPT in iOS 18. Everything we know so far",
+                    "url": "https://www.msn.com/en-in/money/news/apple-to-get-openai-board-observer-seat-for-integrating-chatgpt-in-ios-18-everything-we-know-so-far/ar-BB1pjyNv",
+                    "image": {
+                        "contentUrl": "https://www.livemint.com/lm-img/img/2024/07/03/1600x900/APPLE-LAWYER--0_1719969783179_1719969806224.JPG",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.wEDgTkIR3I_EPxUxeJjfeC&pid=News",
+                            "width": 700,
+                            "height": 393
+                        }
+                    },
+                    "description": "The report states that Phil Schiller, head of Apple's App Store and former marketing chief, has been chosen to take on the role of board observer. The observer role would mean that Schiller could attend OpenAI board meetings, but would not be able to vote on board decisions.",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/ceeab753-899f-4459-8ceb-d64ec0992439",
+                            "name": "iPhone"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/c5ad466d-fd68-f389-4727-7f3b9daaebf6",
+                            "name": "Bloomberg L.P."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/7f1a7e64-5f83-eb8c-5d7e-ba38363babb0",
+                            "name": "Sam Altman"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/b81576e2-b392-9271-9f90-3a01758e615d",
+                            "name": "App Store"
+                        }
+                    ],
+                    "mentions": [
+                        {
+                            "name": "Mint"
+                        },
+                        {
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "name": "Everything"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "Mint on MSN.com",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.W8vM8p2PIvfc6Sh2F0nZpA&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-03T09:56:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple announced its partnership with OpenAI at the WWDC 2024 event earlier this year. Later on, it was revealed that while OpenAI was getting access to millions of iPhone users via the new partnership, Apple isn't paying the company for leveraging its technology in iOS 18. However, a new report by Bloomberg's Mark Gurnman has revealed that Apple is also getting an OpenAI observer role as part of the agreement it had worked out with the Sam Altman led company.\nThe report states that Phil Schiller, Head of Apple's Apple app store and former marketing chief, has been chosen to take the board observer role. The observer role would entail that Schiller could attend OpenAI board meetings but he cannot vote on any board decisions.\nSchiller had stepped down down as Apple's head of marketing in 2020 and is currently employed as an ‘Apple Fellow’. Apart from heading the App Store, the veteran also looks after Apple's product launch events. Apart from his Apple work, Schiller is also a director at a medical technology company called Illumina Inc.\nThe board observer role will put Apple in similar stead as Microsoft, a company which it has a mixed history with. While Microsoft and Apple are stark competitors in the PC race, the Satya Nadella-led company has also offered lucrative deals in the past to replace Google as the default search engine on iPhones.\nGurnman states the addition of Apple on OpenAI board could be an issue when discussions related to AI initiatives between Microsoft and OpenAI are discussed in these board meetings. He does state though that board members usually do oblige and exit meetings when sensitive discussions take place.\nNotably, Microsft has invested around $13 billion in OpenAI and also allows the AI startup access to many of its cloud and computing resources needed to run ChatGPT and other AI technology.\n",
+                    "score": 1.0143343402687195
+                },
+                {
+                    "name": "Apple secures seat on OpenAI's board after integrating ChatGPT with iPhones: Report",
+                    "url": "https://www.msn.com/en-in/money/topstories/apple-secures-seat-on-openais-board-after-integrating-chatgpt-with-iphones-report/ar-BB1pjLp8",
+                    "description": "Apple has managed to secure an observer role on OpenAI's board, according to a report by Bloomberg. This new alliance follows Apple's recent decision to integrate ChatGPT into its devices. The report suggests Apple has picked Phil Schiller, the head of its ...",
+                    "mentions": [
+                        {
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "name": "iPhone"
+                        },
+                        {
+                            "name": "BT TV"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "Business Today on MSN.com"
+                        }
+                    ],
+                    "datePublished": "2024-07-03T16:31:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple has managed to secure an observer role on OpenAI's board, according to a report by Bloomberg. This new alliance follows Apple's recent decision to integrate ChatGPT into its devices. The report suggests Apple has picked Phil Schiller, the head of its App Store and former marketing guru, for the observer position. While he won't have voting rights or any real power, Schiller will get a front-row seat to OpenAI's board meetings.\nThis observer role is set to kick in later this year. In the month of June, Apple announced its partnership with ChatGPT during the WWDC 2024. The large language model will be made available on eligible iPhones, iPads, and Macs. The iOS 18 will have the biggest impact via the iPhones with Apple Intelligence. The smaller AI-related tasks will be handled by the on-device AI model. For more complicated tasks, Apple will send specific requests to OpenAI.\nOpenAI won’t be the only AI company that will partner with Apple. Apple's Senior Vice President of Software Engineering, Craig Federighi, has talked about the possibility of incorporating Google's Gemini AI model in the future. Federighi said Apple wants to give its users the power of choice. After mentioning ChatGPT as a prime example, he teased the potential for domain-specific AI models, adding, “We want to enable users ultimately to choose the models they want, maybe Google Gemini in the future. Nothing to announce right now.”\nOpenAI, on its part, has been busy shuffling its board. In March, it added CEO Sam Altman, Sue Desmond-Hellmann, Nicole Seligman, and Fidji Simo to its roster of directors. Last year’s fiasco that ended up with Sam Altman’s removal from the company for a few days, highlighted the fractured board. However, most of the current board members were not part of the coup against Altman.\nWatch Live TV in English\nWatch Live TV in Hindi\n",
+                    "score": 0.9936389016316934
+                }
+            ]
+        },
+        {
+            "title": "Potential Microsoft Tensions",
+            "content": "The recent announcement that Apple will gain an observer role on OpenAI's board has sparked discussions about potential tensions with Microsoft, OpenAI's primary AI technology provider and significant financial backer. Phil Schiller, Apple's former marketing chief and current head of the App Store, has been selected for this observer position, which allows him to attend board meetings without voting rights or other director powers [[c:4]]. This move follows Apple's integration of ChatGPT into its devices, a partnership that does not involve any financial transactions but offers OpenAI access to millions of potential users [[c:2]]. However, the presence of both Apple and Microsoft at OpenAI board meetings could lead to complications, especially during discussions on future AI initiatives between OpenAI and Microsoft. Microsoft may request Schiller's exclusion from sensitive discussions, a common practice for board observers [[c:3]]. This development underscores the delicate balance of collaboration and competition between the tech giants, as both companies seek to leverage AI advancements while maintaining their strategic interests [[c:1]].",
+            "context": [
+                {
+                    "name": "Apple to get OpenAI board observer seat for integrating ChatGPT in iOS 18. Everything we know so far",
+                    "url": "https://www.msn.com/en-in/money/news/apple-to-get-openai-board-observer-seat-for-integrating-chatgpt-in-ios-18-everything-we-know-so-far/ar-BB1pjyNv",
+                    "image": {
+                        "contentUrl": "https://www.livemint.com/lm-img/img/2024/07/03/1600x900/APPLE-LAWYER--0_1719969783179_1719969806224.JPG",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.wEDgTkIR3I_EPxUxeJjfeC&pid=News",
+                            "width": 700,
+                            "height": 393
+                        }
+                    },
+                    "description": "The report states that Phil Schiller, head of Apple's App Store and former marketing chief, has been chosen to take on the role of board observer. The observer role would mean that Schiller could attend OpenAI board meetings, but would not be able to vote on board decisions.",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/ceeab753-899f-4459-8ceb-d64ec0992439",
+                            "name": "iPhone"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/c5ad466d-fd68-f389-4727-7f3b9daaebf6",
+                            "name": "Bloomberg L.P."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/7f1a7e64-5f83-eb8c-5d7e-ba38363babb0",
+                            "name": "Sam Altman"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/b81576e2-b392-9271-9f90-3a01758e615d",
+                            "name": "App Store"
+                        }
+                    ],
+                    "mentions": [
+                        {
+                            "name": "Mint"
+                        },
+                        {
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "name": "Everything"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "Mint on MSN.com",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.W8vM8p2PIvfc6Sh2F0nZpA&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-03T09:56:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple announced its partnership with OpenAI at the WWDC 2024 event earlier this year. Later on, it was revealed that while OpenAI was getting access to millions of iPhone users via the new partnership, Apple isn't paying the company for leveraging its technology in iOS 18. However, a new report by Bloomberg's Mark Gurnman has revealed that Apple is also getting an OpenAI observer role as part of the agreement it had worked out with the Sam Altman led company.\nThe report states that Phil Schiller, Head of Apple's Apple app store and former marketing chief, has been chosen to take the board observer role. The observer role would entail that Schiller could attend OpenAI board meetings but he cannot vote on any board decisions.\nSchiller had stepped down down as Apple's head of marketing in 2020 and is currently employed as an ‘Apple Fellow’. Apart from heading the App Store, the veteran also looks after Apple's product launch events. Apart from his Apple work, Schiller is also a director at a medical technology company called Illumina Inc.\nThe board observer role will put Apple in similar stead as Microsoft, a company which it has a mixed history with. While Microsoft and Apple are stark competitors in the PC race, the Satya Nadella-led company has also offered lucrative deals in the past to replace Google as the default search engine on iPhones.\nGurnman states the addition of Apple on OpenAI board could be an issue when discussions related to AI initiatives between Microsoft and OpenAI are discussed in these board meetings. He does state though that board members usually do oblige and exit meetings when sensitive discussions take place.\nNotably, Microsft has invested around $13 billion in OpenAI and also allows the AI startup access to many of its cloud and computing resources needed to run ChatGPT and other AI technology.\n",
+                    "score": 1.0143343402687195
+                },
+                {
+                    "name": "Apple poised to get OpenAI board observer role as part of AI pact",
+                    "url": "https://www.msn.com/en-in/money/news/apple-poised-to-get-openai-board-observer-role-as-part-of-ai-pact/ar-BB1poofz",
+                    "image": {
+                        "contentUrl": "https://img-s-msn-com.akamaized.net/tenant/amp/entityid/BB1poofs.img?w=1926&h=1280&m=4&q=60",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.8pe09QAyYAMWpHlmqZYnOy&pid=News",
+                            "width": 700,
+                            "height": 465
+                        }
+                    },
+                    "description": "Apple will get an observer role on OpenAI's board as part of a landmark AI agreement announced last month, Bloomberg News reported on Tuesday. Phil Schiller, the head of Apple's App Store and its former marketing chief,",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/8ddd8af9-a143-8926-cea9-70b91c29fc5c",
+                            "name": "Bloomberg News"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/b81576e2-b392-9271-9f90-3a01758e615d",
+                            "name": "App Store"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9f417f89-9a37-e0d0-912e-99dccfb8982d",
+                            "name": "Reuters"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/ecbf3d98-1b70-7187-af1f-0408b5689f91",
+                            "name": "Siri"
+                        }
+                    ],
+                    "mentions": [
+                        {
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "name": "Role"
+                        },
+                        {
+                            "name": "Pact"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "The Economic Times on MSN.com",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.ajXT0U6_LaErmc8AT6Kh3Q&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-04T08:40:03.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple will get an observer role on OpenAI's board as part of a landmark AI agreement announced last month, Bloomberg News reported on Tuesday.\nPhil Schiller, the head of Apple's App Store and its former marketing chief, was chosen for the position, the report said.\nThe board arrangement will take effect later this year, and Schiller has not yet attended any meetings, according to the report.\nAn observer can attend board meetings without being able to vote or exercise other powers that directors usually have, according to the report. Observers, however, do gain insights into how decisions are made at the company.\nApple and OpenAI declined to comment when contacted by Reuters.\nThe move comes on the heels of Apple's announcement in June, bringing OpenAI's chatbot ChatGPT to its devices and integrating its new \"Apple Intelligence\" technology across its suite of apps, including virtual assistant Siri.\nOpenAI said in March it was appointing new directors to the board, including company CEO Sam Altman, Sue Desmond-Hellmann, a former CEO of the Bill and Melinda Gates Foundation, Nicole Seligman, a former president of Sony Entertainment, and Fidji Simo, CEO of Instacart\nFor more news like this visit The Economic Times.\n",
+                    "score": 1.0985763522939342
+                },
+                {
+                    "name": "Apple's Phil Schiller to Serve as OpenAI Board Observer as Part of iOS 18 AI Agreement",
+                    "url": "https://www.macrumors.com/2024/07/02/apple-schiller-openai-board-observer/",
+                    "image": {
+                        "contentUrl": "https://images.macrumors.com/t/7dsbIaosd3Op153XpVVz5XfY258=/1600x/article-new/2024/06/open-ai-logo.jpg",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.eeLgeCl0hHRJMWwJxYglRS&pid=News",
+                            "width": 700,
+                            "height": 393
+                        }
+                    },
+                    "description": "Apple Fellow and App Store chief Phil Schiller will take on a board observer position at OpenAI, reports Bloomberg. Apple has been granted",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/b81576e2-b392-9271-9f90-3a01758e615d",
+                            "name": "App Store"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/c5ad466d-fd68-f389-4727-7f3b9daaebf6",
+                            "name": "Bloomberg L.P."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/a093e9b9-90f5-a3d5-c4b8-5855e1b01f85",
+                            "name": "Microsoft"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "MacRumors",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.fdtIJqPboMQMjJtsLkn8ww&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-02T21:13:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple Fellow and App Store chief Phil Schiller will take on a board observer position at OpenAI, reports Bloomberg. Apple has been granted an observer role as part of its agreement with OpenAI, which will see ChatGPT integrated into iOS 18, iPadOS 18, and macOS Sequoia, and Schiller has been selected for the role.\nA board observer is an informal board position where the participant is able to attend and contribute to board meetings, but is not allowed to vote and has no control. OpenAI has also given a board observer role to Microsoft, so Apple and Microsoft will be on even footing with Schiller's new position.\nGiven Microsoft's relationship with OpenAI, future board meetings could cover new arrangements between OpenAI and Microsoft, which Bloomberg suggests could cause tension if Schiller is present. Microsoft can request that Schiller be excluded from these meetings, however.\nSchiller has not yet attended any OpenAI board meetings and is not set to do so until later in the year.\nApple and OpenAI's deal will see Siri able to hand complicated user requests over to ChatGPT with explicit user permission. OpenAI is not paying Apple to integrate ChatGPT in its operating systems, nor is Apple paying OpenAI. No money is being exchanged under the terms of the arrangement at the current time.\nGet weekly top MacRumors stories in your inbox.\nCode discovered in Apple's backend by Nicolás Alvarez and shared with MacRumors confirms Apple's plans to release four iPhone 16 models this year, and it indicates that the devices will all have the same A-series chip. There are mentions of new model numbers that are not associated with existing iPhones, and that have the numbering scheme Apple uses for its flagship devices. The code...\nThe upcoming iPhone 16 Pro and iPhone 16 Pro Max will be the first Apple smartphones to adopt Samsung's high performance \"M14\" OLED display panel, claims a new report coming out of South Korea. According to ETNews, Samsung's \"M\" series of OLED panels are made for flagship smartphones, while \"14\" refers to the number of high-performance materials used to produce them. \"M14\" is the first...\nApple today reclassified the iPhone X, first-generation HomePod, and first-generation AirPods as \"vintage\" products. The products appeared on Apple's vintage and obsolete products list earlier today. Products are considered vintage when Apple stopped distributing them for sale more than five and less than seven years ago. Apple Stores and Apple Authorized Service Providers continue to offer...\nTwo years after Apple paid $50 million to settle a class-action lawsuit over faulty MacBook butterfly keyboards, funds from the settlement will be going out to affected customers. An update on the MacBook Keyboard Litigation Settlement website says that the court issued a payment order on June 27, 2024, with payments set to be issued for approved claims by August 2024. Emails about the...\nApple eventually plans to turn some of its artificial intelligence features into paid services, similar to iCloud+ subscriptions, according to Bloomberg reporter Mark Gurman. Writing in his latest Power On newsletter, Gurman said that while Apple Intelligence will be free to start, Apple's long-term plan is to launch something like \"Apple Intelligence+,\" with extra features that users pay...\nApple's upcoming iOS 18 software update is packed with features for supported iPhones, but it also promises to make your AirPods Pro experience better with a handful of sophisticated new capabilities that draw from machine learning improvements and AI enhancements. The following five AirPods Pro features are expected to arrive later this year, when iOS 18 is released to the general public in ...\nOh, wow.....This should be interesting.\nIf it were up to me, I would have kicked him out a long time ago. Arrogant, smug, and hostile towards developers. These people have had their time; now it’s enough. Get out of here.\nAt least now, when people ask why OpenAI isn't releasing GPT-5 or why it feels like the competition is out- innovating them, the board can say that it's because Schiller is giving them extra helpings of Courage™. :p\nSo a former marketing guy in the board meetings. Good for him!\nSo not only is Tim not paying them, but one of his agents now get to sit and listen in on board meetings? Interesting\nOpenAI is getting paid in exposure and potential paid sign-ups.\n\"No money is being exchanged under the terms of the arrangement at the current time\".....at the current time....\n",
+                    "score": 1.0892439956653845
+                },
+                {
+                    "name": "Apple to Join OpenAI Board as Observer Amid Growing AI Collaboration",
+                    "url": "https://www.econotimes.com/Apple-to-Join-OpenAI-Board-as-Observer-Amid-Growing-AI-Collaboration-1680786",
+                    "image": {
+                        "contentUrl": "https://f1.econotimes.com/2024/07/cpa5l6vws7_th_1024x0.jpeg",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.A4m1jpRVHTIDLfTppc2gpy&pid=News",
+                            "width": 700,
+                            "height": 419
+                        }
+                    },
+                    "description": "Apple will gain an observer role on OpenAIs board, enhancing its AI collaboration. This move follows Apples announcement to integrate ChatGPT into its devices, marking a significant partnership in the",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/c5ad466d-fd68-f389-4727-7f3b9daaebf6",
+                            "name": "Bloomberg L.P."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/4075668a-9ed2-7a39-c769-9b1dfc2b6a34",
+                            "name": "Phil Schiller"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/32b4f273-8574-40ea-af2c-169d967e733e",
+                            "name": "App store"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "EconoTimes",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.6ak8EFvo-jj7ASiNXowAbw&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-03T13:28:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple gains observer role on OpenAI's board, enhancing AI collaboration and integration.\nApple will gain an observer role on OpenAI's board, enhancing its AI collaboration. This move follows Apple’s announcement to integrate ChatGPT into its devices, marking a significant partnership in the tech industry.\nApple Strengthens AI Partnership with OpenAI, Gains Board Observer Role Amid Integration of ChatGPT\nAs part of a groundbreaking agreement disclosed last month, Apple will be granted an observer role on OpenAI's board, further strengthening the relationship between the previously unlikely partners.\nAccording to individuals with knowledge of the matter (via Bloomberg ), Phil Schiller, Apple's former marketing chief and current director of the App Store, was selected for the position. The individual, who requested anonymity due to the nature of the matter, stated that he would not be operating as a full-fledged director or board observer.\nThe action was taken in response to Apple's June announcement that ChatGPT would be included in a suite of artificial intelligence features for the iPhone, iPad, and Mac. According to the individuals, Schiller has not attended any meetings, and the board arrangement will be implemented later this year. The situation's specifics may still be subject to change.\nThe board observer role will align Apple with Microsoft, OpenAI's primary AI technology provider and most prominent financial supporter. The position enables an individual to participate in board meetings without the ability to vote or exercise any other director powers. Nevertheless, observers do acquire an understanding of the company's decision-making process.\nApple and OpenAI representatives declined to provide commentary.\nThe tech titans, who have been rivals and partners for decades, may encounter complications because Microsoft and Apple participate in board meetings. Future AI initiatives between OpenAI and Microsoft will likely be discussed at specific OpenAI board meetings. Microsoft may wish to exclude Schiller from these discussions. Board observers frequently comply and depart meetings during discussions that are perceived as sensitive.\nPhil Schiller Joins OpenAI Board as Observer, Enhancing Apple's AI Strategy and Collaboration\nSchiller's extensive experience as a brand administrator at Apple renders him well-suited for the observer position even though he does not oversee the company's artificial intelligence initiatives. In 2020, the 64-year-old resigned from his marketing director position and is currently employed as an Apple Fellow. He continues supervising the company's product launch events and the App Store. In addition to his position at Apple, he serves as a director at Illumina, a medical technology corporation.\nThrough the partnership, Apple is collaborating with the most significant and influential AI start-up, OpenAI. However, the business is also renowned for its controversy and disruption. Last year, OpenAI's Chief Executive Officer, Sam Altman, was momentarily removed from his position due to allegations that he was not sufficiently transparent with the board. The organization has also faced criticism for its failure to acknowledge the safety concerns associated with artificial intelligence (AI) and its use of a synthetic voice that bore a striking resemblance to actress Scarlett Johansson without prior consent.\nAccording to SCMP, Apple's AI strategy encompasses in-house capabilities in addition to the OpenAI integration. Its technology, Apple Intelligence, transcribes voice memos, generates custom emoticons and images, and summarizes articles and notifications. The initiative also encompasses a redesigned version of Apple's Siri digital assistant; however, most of these improvements will be implemented in the following year.\nAt present, Apple's partnership with OpenAI is not a financial arrangement. OpenAI is gaining access to hundreds of millions of potential users rather than money-changing hands. On the other hand, Apple acquired a chatbot feature in high consumer demand. Additionally, users can access a paid version of ChatGPT on Apple devices, which could result in the iPhone manufacturer incurring App Store fees.\nApple continues to discuss providing supplementary chatbots to customers with Alphabet's Google and start-up Anthropic. It is also negotiating potential agreements with Baidu and Alibaba Group Holding to make its AI features available on devices in China. Apple Intelligence will initially be available in American English, followed by an international rollout.\nWhile it is not uncommon for high-ranking Apple executives to serve as directors of other organizations, it is exceedingly uncommon for them to join the boards of high-profile partners. Apple did, however, briefly occupy a board seat at DiDi Global after investing US$1 billion in the China-based Uber rival.\nPhoto: Microsoft Bing\n",
+                    "score": 1.1261664020795312
+                }
+            ]
+        },
+        {
+            "title": "Apple's AI Strategy Evolution",
+            "content": "Apple's recent unveiling of its AI strategy, branded as \"Apple Intelligence,\" at the 2024 Worldwide Developers Conference (WWDC) has marked a significant milestone in the company's technological evolution. Unlike the dramatic launches of past innovations, this introduction was more subdued but strategically profound. Apple Intelligence integrates advanced AI features directly into its devices, leveraging the company's extensive installed base of iPhones, iPads, and MacBooks to deliver seamless user experiences across its ecosystem [[c:4]]. This approach emphasizes on-device processing, ensuring user privacy by minimizing data sent to external servers, a move that sets Apple apart from competitors like Microsoft and Google [[c:3]]. The new AI capabilities include text generation, summarization, and enhanced photo editing, alongside a smarter Siri powered by ChatGPT-4o, thanks to a partnership with OpenAI [[c:1]]. These features are expected to drive a significant upgrade cycle, particularly as they are limited to newer devices like the iPhone 15 Pro and forthcoming iPhone 16, potentially boosting sales and benefiting suppliers like Taiwan Semiconductor Manufacturing Co. [[c:3]]. Despite some criticism regarding transparency in data collection for AI training, Apple's focus on privacy and user-centric design continues to resonate with its consumer base [[c:5]]. The company's stock has surged, reflecting investor confidence in this AI-driven growth trajectory [[c:2]].",
+            "context": [
+                {
+                    "name": "Apple unveils long-awaited AI strategy, partnership with OpenAI at WWDC",
+                    "url": "https://www.aljazeera.com/news/2024/6/11/apple-unveils-long-awaited-ai-strategy-partnership-with-openai",
+                    "description": "Apple signalled that the company would differentiate itself from rivals Microsoft and Google by putting privacy “at the core” of AI, which is known for hoovering vast amounts of data.",
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "Al Jazeera English"
+                        }
+                    ],
+                    "datePublished": "2024-06-11T00:00:00.0000000Z",
+                    "article": "CEO Tim Cook tells Worldwide Developers Conference AI features are the ‘next big step for Apple’.\nSave articles to read later and create your own reading list.\nApple has revealed a slew of new artificial intelligence-powered features backed by a partnership with OpenAI, as the iPhone maker battles perceptions that it is falling behind in the race to capitalise on the technology.\nApple executives including CEO Tim Cook unveiled “Apple Intelligence” on Monday during a nearly two-hour-long presentation at the company’s annual Worldwide Developers Conference in Cupertino, California.\n“All of this goes beyond artificial intelligence, it’s personal intelligence, and it is the next big step for Apple,” CEO Tim Cook said.\nThe upgrades include an overhaul of the virtual assistant Siri, which will be capable of hundreds of more tasks with the help of ChatGPT.\nApple users will also be able to create their own emojis based on language prompts and generate summaries of emails in the mailbox via the tech giant’s in-house technology.\nApple signalled that the company would differentiate itself from rivals Microsoft and Google by putting privacy “at the core” of AI, which is known for hoovering vast amounts of data.\nApple’s senior vice president of software engineering, Craig Federighi, said that “Apple Intelligence” puts AI models “right at the core of your iPhone, iPad and Mac” and “protects your privacy at every step”.\nThe upgrades will be available for free in Apple’s iOS 18 operating system, due for release later this year, although the full suite of features will only work on more recent models of the iPhone, iPad and Macbook.\nOpenAI CEO Sam Altman said in a social media post that he was “very happy” to be partnering with Apple to integrate ChatGPT into its products.\nBut billionaire Elon Musk, the founder of OpenAI rival xAI, blasted the partnership, claiming Apple could not account for user data once it was shared with OpenAI and was “selling you down the river”.\nUS politics, Canada’s multiculturalism, South America’s geopolitical rise—we bring you the stories that matter.\n“That is an unacceptable security violation,” Musk, who leads the electric vehicle manufacturer Tesla and rocket company SpaceX, said in a post on X.\n“And visitors will have to check their Apple devices at the door, where they will be stored in a Faraday cage.”\nApple, which has long avoided the term “artificial intelligence”, has been under mounting pressure to show that it is keeping pace with rivals Microsoft and Google in the competition to roll out AI.\nInvestors, however, appeared to be unimpressed with Monday’s announcements, with shares of Apple down by nearly 2 percent.\n",
+                    "score": 1.1056731894835528
+                },
+                {
+                    "name": "Apple shares hit all-time high after unveiling AI features for iPhone, other devices",
+                    "url": "https://nypost.com/2024/06/11/business/apple-shares-hit-all-time-high-after-unveiling-ai-features-for-iphone/",
+                    "description": "“We believe Apple’s AI strategy will leverage its golden installed base around personalization and LLMs on the phone that should change the growth trajectory of Cupertino as spur an AI driven ...",
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "New York Post"
+                        }
+                    ],
+                    "datePublished": "2024-06-11T21:43:00.0000000Z",
+                    "article": "Apple shares surged 7% to a record high Tuesday as Wall Street expressed optimism that the company’s newly announced AI plans will drive a fresh wave of iPhone purchases.\nIn what Apple CEO Tim Cook billed as a “game changer,” the Cupertino, California-based firm unveiled a partnership with ChatGPT maker OpenAI and an in-house platform called “Apple Intelligence” for its devices beginning this fall.\nNew features include a major AI overhaul of the Siri voice assistant, a new “Genmoji” system for creating custom images and various AI-powered writing tools.\nThe rally comes as a breather for the stock, that has underperformed versus the benchmark S&P 500 this year, as Apple grapples with weak sales for its premium consumer gadgets. REUTERS\nOnly Apple’s newest devices, most powerful devices, such as the iPhone Pro 15 Max and Macs equipped with M-series computer chips, are capable of using the AI features. That sparked predictions of a “super-cycle” of iPhone sales as Apple prepares to launch its next iPhone model later this year.\nEvercore ISI analyst Amit Daryanani said the Apple event left him with “increased confidence” about the company’s AI plans.\n“Restricting Apple Intelligence to iPhones sold within the last year adds to our conviction that AI can help kick off an iPhone super cycle,” Daryanani said in a note to clients. “We remain confident in Apple’s AI strategy and their ability to deliver GenAI to users without $10s of billions in GPU capex.”\nAnalysts for Bank of America and Morgan Stanley also signaled in client notes that Apple’s AI push could boost iPhone sales, CNBC reported.\nApple gained a whopping $180 billion in market value after its stock closed at $207.15.\nAnalysts said the latest features could encourage a cascade of new purchases. AP\nThe stock surge pushed Apple’s valuation to $3.15 trillion, trailing only Microsoft as the world’s most valuable company.\nThe announcements drew strong approval on Wall Street, with at least 13 research analysts raising their price targets for the company’s stock following the presentation.\nWedbush analyst Daniel Ives also had a bullish reaction to the announcements while maintaining an “outperform” rating and a $275 price target for Apple shares.\n“We believe Apple’s AI strategy will leverage its golden installed base around personalization and LLMs on the phone that should change the growth trajectory of Cupertino as spur an AI driven iPhone upgrade cycle starting with iPhone 16,” Ives said in a note.\nWhat do you think? Be the first to comment.\nThe rally on Tuesday marked a reversal in trends from a day earlier.\nApple closed Monday’s trading session nearly 2% lower after the presentation, with one analyst telling The Post that investors may have been underwhelmed by a lack of in-house AI innovation from the tech giant.\nWith Post wires\n",
+                    "score": 0.8354879161471953
+                },
+                {
+                    "name": "Apple's New Artificial Intelligence (AI) Features Could Push This Semiconductor Company to a $1 Trillion Valuation",
+                    "url": "https://www.msn.com/en-us/money/other/apples-new-artificial-intelligence-ai-features-could-push-this-semiconductor-company-to-a-1-trillion-valuation/ar-BB1pofel",
+                    "image": {
+                        "contentUrl": "https://g.foolcdn.com/editorial/images/782350/gettyimages-silicon-wafer-printed-semiconductor-chips.jpeg",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.Uk2GTN2ULNg6T_reCZmJAi&pid=News",
+                            "width": 700,
+                            "height": 466
+                        }
+                    },
+                    "description": "Founded in 1993, The Motley Fool is a financial services company dedicated to making the world smarter, happier, and richer. The Motley Fool reaches millions of people every month through our premium investing solutions, free guidance and market analysis on Fool.com, top-rated podcasts, and non-profit The Motley Fool Foundation.",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/b09a01ed-cc2b-fdee-1e94-5f5a5d1c0a3c",
+                            "name": "The Motley Fool"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9d99fb44-edac-0e03-1579-19d8d8591a49",
+                            "name": "Artificial intelligence"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/73881232-7a9a-4913-de6d-3bc13f00c2ca",
+                            "name": "Worldwide Developers Conference"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/ecbf3d98-1b70-7187-af1f-0408b5689f91",
+                            "name": "Siri"
+                        }
+                    ],
+                    "mentions": [
+                        {
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "name": "Push"
+                        },
+                        {
+                            "name": "Artificial intelligence"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "The Motley Fool on MSN.com",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.4QjIDUvHz3Rc67mtMVQu7A&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-04T08:08:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Apple (NASDAQ: AAPL) unveiled its new artificial intelligence features dubbed \"Apple Intelligence\" at its Worldwide Developers Conference a few weeks ago. The highlights include text generation and summarization across apps, advanced AI-assisted photo editing capabilities, and a much smarter and more powerful Siri. It also integrates third-party services like ChatGPT for more advanced prompts.\nWhat makes Apple Intelligence so compelling is the amount of AI processing it does on the device. Instead of taking your query, sending it to a server along with any relevant data, waiting for the server to process your request, and then downloading the results to your device, the entire process happens on your iPhone, Mac, or iPad. For more advanced queries requiring a larger foundation model, Apple uses its own servers and system called Private Cloud Compute, which protects users' privacy.\nBoth of those developments could be a major win for one of Apple's biggest suppliers. Since all of these new features run on Apple-designed silicon, chip foundry Taiwan Semiconductor Manufacturing Co. (NYSE: TSM) could see an increase in orders due to Apple Intelligence. What's more, as Apple leads the way in on-device AI processing, it could push other device makers to buy more advanced chips from TSMC as well.\nWith Apple Intelligence, Apple is ushering in the next phase of artificial intelligence known as edge AI (when data and algorithms are processed directly on the end device, in this case a smartphone, tablet, or personal computer).\nIn order to process AI queries on device, though, the devices need to be capable. That means hardware that's even just a few years old might not be able to handle AI requests as well as newer devices can, if they can even handle them at all. Apple, for example, is limiting Apple Intelligence features to the iPhone 15 Pro, iPhone 15 Pro Max, and the forthcoming iPhone 16 devices. (Note the limiting factor here is the amount of short-term memory, or RAM, on the device, not the processors themselves.)\nAs a result, Apple could see strong demand from users eager to upgrade their phones over the next few years as Apple Intelligence features roll out around the world. And more iPhone sales means more demand for TSMC's chips.\nBut TSMC doesn't just supply chips for Apple. It manufactures the majority of chips in the world, accounting for over 60% of the market. That scale gives it a massive\ncompetitive advantage\nover smaller foundries, as it can invest more money in R&D to develop more advanced processes to print more powerful and energy-efficient chips. That ensures it keeps existing customers like Apple that are looking for leading-edge chips, and it attracts more of their business. It also helps TSMC draw in new customers as innovations like edge AI push companies to adopt new chip designs.\nIn order to support third-party\nlarge language models\n(LLMs) and its own more advanced LLM, Apple created Private Cloud Compute (PCC). The system uses Apple servers that also deploy the tech titan's own chip designs.\nIt's worth noting that Apple isn't using the platform to train AI models. It's using PCC to process data and algorithms that would require more compute power than what's available on consumer devices. The first implementation is sending prompts to ChatGPT.\nThere's a lot of potential for Apple to grow its data center capacity as it partners with more businesses and developers looking to integrate their AI services with Apple's platform. When the company announced its partnership with OpenAI's ChatGPT, it said it's working to bring more partners to the platform later this year. If Apple pushes developers to use PCC, it could further increase Apple's demand for TSMC's services. It also offers another way for Apple to generate income from developers.\nThere's a long runway for Apple to grow AI features through third-party integrations. Just consider the phenomenal growth of the App Store over the past 15 years. Similar growth would be a boon for both Apple and TSMC.\nTSMC already has a market cap of around $900 billion. Even so, shares look undervalued at today's price given the growth potential spurred by continued demand for AI chips.\nThe stock trades for about 27x forward earnings estimates, which is a more than fair price to pay. It should be able to grow its earnings fast enough to justify that price as demand for more advanced chips supports its top-line growth and improves its operating margins. Analysts expect earnings will increase over 25% next year.\nA strong iPhone upgrade cycle over the next few years, incremental demand from Apple's new data centers, and the overall push toward edge computing all favor TSMC's continued growth. Its competitive advantage in creating the most advanced, powerful, and energy-efficient chips will serve it well over the next few years. It's only a matter of time before the company tops a $1 trillion market cap.\nThe\nMotley Fool Stock Advisor\nanalyst team just identified what they believe are the\n10 best stocks\nfor investors to buy now… and Taiwan Semiconductor Manufacturing wasn’t one of them. The 10 stocks that made the cut could produce monster returns in the coming years.\nConsider when Nvidia made this list on April 15, 2005... if you invested $1,000 at the time of our recommendation, you’d have $751,670!*\nStock Advisor\nprovides investors with an easy-to-follow blueprint for success, including guidance on building a portfolio, regular updates from analysts, and two new stock picks each month. The\nStock Advisor\nservice has\nmore than quadrupled\nthe return of S&P 500 since 2002*.\nSee the 10 stocks »\n*Stock Advisor returns as of July 2, 2024\nAdam Levy has positions in Apple and Taiwan Semiconductor Manufacturing. The Motley Fool has positions in and recommends Apple and Taiwan Semiconductor Manufacturing. The Motley Fool has a disclosure policy.\n",
+                    "score": 1.0362305573599153
+                },
+                {
+                    "name": "What Every Company Can Learn From Apple’s AI Strategy",
+                    "url": "https://www.forbes.com/sites/devpatnaik/2024/07/01/what-every-company-can-learn-from-apples-ai-strategy/",
+                    "image": {
+                        "contentUrl": "https://imageio.forbes.com/specials-images/imageserve/668169972d746bd9a32e8ed2/0x0.jpg?format=jpg&height=900&width=1600&fit=bounds",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.LH5yWg3rKKNijomuqP7i1C&pid=News",
+                            "width": 700,
+                            "height": 466
+                        }
+                    },
+                    "description": "Apple finally threw its hat into the ring of artificial intelligence. Apple’s approach isn’t a copycat of Microsoft or Google. Its entry got the important things right.",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9d99fb44-edac-0e03-1579-19d8d8591a49",
+                            "name": "Artificial intelligence"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9b131545-38a3-0bb6-c48a-345435a9a0a6",
+                            "name": "OpenAI"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/a92f6c87-d5f3-7bd6-c85c-f7e39061e30f",
+                            "name": "Steve Jobs"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/ceeab753-899f-4459-8ceb-d64ec0992439",
+                            "name": "iPhone"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9f5500d5-a48c-dc47-2c90-f8cc8558d9d2",
+                            "name": "iPad"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "Forbes",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.U6nYa4Huf-RFEhjg-V4hNg&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-02T08:48:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Dev Patnaik is CEO of future-focused strategy firm Jump Associates.\nClick to save this article.\nYou'll be asked to sign into your Forbes account.\nThis year’s show was actually worth the wait. A year and a half after OpenAI launched ChatGPT and shocked the world, Apple finally threw its hat into the ring of artificial intelligence.\nThe unveiling of “Apple Intelligence” at Apple’s Worldwide Developer Conference wasn’t an obviously mind-blowing event. It lacked the wow factor of those early Steve Jobs presentations, when we saw the first iPhone or iPad. And it fell short of OpenAI’s gasp-inducing launch of ChatGPT version 4o a month earlier, which seemed to bring human-like AI a step closer to reality.\nApple’s late arrival to the AI party should make the rest of us feel a little better. After all, if even one of the world’s most innovative, deep-pocketed corporations was caught flat-footed by generative AI, maybe we can go easier on the leaders of our regional bank or hospital system. Leaders from food and beverage firms to pharmaceutical companies to small and medium-sized businesses are struggling to respond to the most transformative new technology of our time.\nSome business leaders have responded with procrastination. They know that AI matters, but they aren’t treating it with the necessary urgency and focus to yield the greatest impact. Some are raising valid concerns around privacy or intellectual property as reasons not to do anything at all. This is the same mindset that led many retailers to underinvest in e-commerce in the early days of the internet, giving Amazon a free head start.\nOther execs are taking a scattershot approach. They’re demonstrating the right level of urgency, but they don’t really have a plan. As a result, they’re trying to sprinkle some AI magic dust over everything in the hope that something sticks. And while it isn’t a bad idea to start playing around with Midjourney or adding a chatbot to your website, these experiments can end up as distractions with little real payoff for the business.\nThe third approach has been to bet the house. These leaders are throwing so many resources at AI that it’s threatening to starve other initiatives that are critical to the long-term health of the business. Innovation isn’t just about embracing the latest cool thing—it’s also about preventing the business from going bust. AI may be the thing that kills you, but so could a few other threats that demand just as much attention.\nApple did none of these three things. Its entry into AI got the important things right. More importantly, it offered valuable lessons for every executive who’s struggling to figure out what their company might do as well.\nApple’s approach to artificial intelligence isn’t a copycat of Microsoft or Google. Its approach leverages a handful of unique strengths the company brings to the table.\nFirst, Apple has more devices in the hands of more people than anyone else. By integrating its version of AI into MacOS and iOS, the company is building on that installed base. Apple’s AI will work across iPhones, iPads and Macbooks to allow users to work seamlessly from any device.\nSecond, Apple is leveraging its unique strengths in creating beautiful user experiences. As CEO Tim Cook put it, the overarching goal is to make “your most personal products even more useful and delightful.” The system will summarize and prioritize messages and offer rewriting tools for emails and other text. This should help ensure faster adoption by mainstream consumers who have no desire to become skillful prompt engineers.\nThird, Apple has built unique competences in designing its own hardware, including its own CPUs. The company announced that the new AI features will leverage those chips, first on local devices and then in a proprietary cloud powered by Apple’s processors. This should give it a head start on its rivals and avoid dependency on dominant AI chipmaker Nvidia.\nFourth, and perhaps most importantly, Apple has differentiated itself in recent years by being the rare tech company that seems to genuinely care about consumers’ privacy. A big chunk of the presentation was devoted to explaining how Apple’s version of AI will protect users’ personal data. Much of the processing will be done on-device and even Apple won’t know the details of more power-hungry queries that need to go to the cloud.\nLike Apple, companies would be wise to take a moment and clearly identify the assets and capabilities they bring to the table when formulating their AI strategy.\nHaving leveraged what makes the company great, Apple’s approach to artificial intelligence also helps solve critical challenges to the business.\nOne of its biggest challenges has been sagging sales of new iPhones. Sales of its flagship device fell 10% year-on-year in the quarter through March. That’s largely because there isn’t a strong reason for users to upgrade to the latest model. Sure, the iPhone 15 has a superb camera but the ones on the iPhone 14 and 13 are pretty great, too. Because Apple’s AI strategy focuses on processing on your local device, its new features won’t work on old devices. Consumers will finally have a reason to upgrade.\nAnother challenge has been Apple’s struggle to connect with consumers outside of a screen. Its Siri virtual assistant has languished for years, even as competitors like Amazon used its Alexa interface to get into more people’s homes. As part of the new strategy, Siri gets an AI brain transplant, enabling it to respond to commands and take actions based on the user’s “personal context.” That should help level the playing field.\nThe company has also struggled to attract and retain technical talent in this space. It turns out that many AI researchers have the mindset of academics and like to share and publish what they discover. That hasn’t squared with Apple’s notoriously secretive culture. Apple is trying to solve the problem by partnering with OpenAI and a host of other players yet to be named. Admittedly, it’s unclear how effective this approach will be. But it’s a start.\nOf course, the biggest challenge that Apple faces is with the public markets. For the last year and a half, investors have been wanting to know what Apple’s plan was. Any strategy that looked like a copycat approach to OpenAI or Google would only show how late Apple was to the game. Instead, the company reframed AI as “Apple Intelligence,” and focused on more immediate (and admittedly smaller scale) solutions that are more about helping write an email than they are about developing true Artificial General Intelligence. That said, I have no doubt that there’s a team working at breakneck speed inside of Apple to catch up to OpenAI, Google, Anthropic and the rest. That’s just not part of the public strategy. And the public strategy seems to be working. Hours after its AI launch, Apple’s share price hit an all-time high.\nWhen creating an effective AI strategy, the most important thing that business leaders can do is to define the problems to be solved. Those aren’t technical challenges—they’re business challenges.\nGet In The Game\nIn the end, Apple’s first big foray into AI is table stakes compared to what it could do in the years ahead. But the important thing is that—rather than procrastinate, get distracted, or go all in on AI—it got into the game with a great initial strategy based firmly on what makes it great and the key challenges it faces. That’s a lesson that every CEO and head of strategy can take away.\nDev Patnaik is the CEO of Jump Associates.\nFollow me on Twitter or LinkedIn .\nI’m the CEO of Jump Associates, the leading firm for future-focused strategy. Over the last 25 years, I’ve had the pleasure of working with the\n...\nRead More\n",
+                    "score": 1.1718377136296196
+                },
+                {
+                    "name": "Even staunch fans are calling out Apple's less-than-transparent AI training data harvesting",
+                    "url": "https://www.techspot.com/news/103665-even-staunch-fans-calling-out-apple-less-than.html",
+                    "image": {
+                        "contentUrl": "https://www.techspot.com/images2/news/bigimage/2024/07/2024-07-03-image-27.jpg",
+                        "thumbnail": {
+                            "contentUrl": "https://www.bing.com/th?id=OVFT.q5JQcpqKo7HMz0KnBRipOi&pid=News",
+                            "width": 700,
+                            "height": 393
+                        }
+                    },
+                    "description": "So far, we haven't had a fair look at the feature since Apple Intelligence doesn't make a public debut until later this year. We have only",
+                    "about": [
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/6fa57c29-e813-4a1d-7fba-3541ca4c1dc3",
+                            "name": "Apple Inc."
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/9d99fb44-edac-0e03-1579-19d8d8591a49",
+                            "name": "Artificial intelligence"
+                        },
+                        {
+                            "readLink": "https://api.bing.microsoft.com/api/v7/entities/73881232-7a9a-4913-de6d-3bc13f00c2ca",
+                            "name": "Worldwide Developers Conference"
+                        }
+                    ],
+                    "provider": [
+                        {
+                            "_type": "Organization",
+                            "name": "TechSpot",
+                            "image": {
+                                "thumbnail": {
+                                    "contentUrl": "https://www.bing.com/th?id=ODF.lK_Pb1dzSoft564j8nm9vw&pid=news"
+                                }
+                            }
+                        }
+                    ],
+                    "datePublished": "2024-07-03T21:30:00.0000000Z",
+                    "category": "ScienceAndTechnology",
+                    "article": "Serving tech enthusiasts for over 25 years.\nTechSpot means tech analysis and advice you can trust .\nBottom line: Apple has been very slow and careful in jumping on the AI bandwagon. It even refused to call its model AI during WWDC, introducing Apple Intelligence instead to set itself apart. However, no matter what you call it, developers must still feed models with hundreds of millions or even billions of data samples to remain competitive.\nSo far, we haven't had a fair look at the feature since Apple Intelligence doesn't make a public debut until later this year. We have only seen what Apple showed us at WWDC, which is not an unbiased assessment. Like any other company, Apple will only present the best of what it has to offer. It can hash out the fine print later. However, with the rapid growth of commercial AI, that's not good enough.\nThe company could have easily released some information or a FAQ page on how it trains its generative AI models but has so far remained as quiet as it was before officially announcing its AI tech. The only thing it has reported on the subject is that it collects data like everybody else, using a tool it calls AppleBot, which is supposed to be more privacy-friendly. However, minding privacy and minding IP rights are two different things.\nNow, some of Apple's most passionate supporters are calling out its lack of transparency on the hows and whats of Apple Intelligence data gathering.\n\"I wish Apple would have explained to the public in a more transparent way how they collected their training data,\" video games artist and creators' rights activist Jon Lam told Engadget. \"I think their announcement could not have come at a worse time.\"\nIt's personal, powerful, and private---and it's integrated into the apps you rely on every day.\nIntroducing Apple Intelligence---our next chapter in AI. https://t.co/uOfIrcTYm7\n– Tim Cook (@tim_cook)\nJune 10, 2024\nOne would think that with Apple's slow roll on AI, it would have learned that the climate on information harvesting for generative model training has been and continues to be chilly. More than a few artists have filed IP infringement lawsuits against AI developers for using their work without permission or payment – over a dozen by Engadget's count. Infringement lawsuits against AI providers have popped up from prominent industry players like The New York Times and Universal to the most minor independent artists.\n\"That's why I wanted to give them a slight benefit of the doubt,\" said Lam. \"I thought they would approach the ethics conversation differently.\"\nIt's an even bigger PR violation when considering Cupertino's stance on privacy and that Apple has long positioned itself as the artist's best tool. The company charges a premium for its high-end production platforms that millions of creative users swear by. Tarnishing its reputation with unscrupulous data collection is the last thing it needs.\nJohn Giannandrea, Apple's senior vice president of machine learning and AI strategy, downplayed the company's sample collection by saying that Apple trained its models mostly on in-house data. However, Giannandrea didn't get into specifics, like how much \"mostly\" is and where it obtained the rest of its training samples.\nInc. reports that Apple has entered licensing deals with extensive image databases like Shutterstock and Photobucket, but the company has not publicly confirmed these reports. The status quo has never been a pillar of Apple's business. While the Cupertino powerhouse hasn't commented on the negative feedback yet, it would be surprising if it didn't address the issue before launching Apple Intelligence this fall.\nCreate your free account to leave a comment. Join thousands of tech enthusiasts and participate.\n",
+                    "score": 0.8907160504831342
+                }
+            ]
+        }
+    ]
+}
