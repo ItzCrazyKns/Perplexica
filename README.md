@@ -76,7 +76,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 5. Ensure you are in the directory containing the `docker-compose.yaml` file and execute:
 
    ```bash
-   docker compose up -d
+   docker-compose up -d
    ```
 
 6. Wait a few minutes for the setup to complete. You can access Perplexica at http://localhost:3000 in your web browser.
