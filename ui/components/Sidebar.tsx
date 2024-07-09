@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { BookOpenText, Home, Search, SquarePen, Settings, Rss } from "lucide-react";
+import { BookOpenText, Home, Search, SquarePen, Settings, Newspaper } from "lucide-react";
 import Link from "next/link";
 import { useSelectedLayoutSegments } from "next/navigation";
 import React, { useState, type ReactNode } from "react";
@@ -37,7 +37,7 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
       label: "Library",
     },
     {
-      icon: Rss,
+      icon: Newspaper,
       href: "/news",
       active: segments.includes("news"),
       label: "News",
