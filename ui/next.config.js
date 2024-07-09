@@ -2,14 +2,20 @@
 // eslint-disable-next-line no-undef, @typescript-eslint/no-var-requires
 const webpack = require("webpack");
 
-/** @type {import('next').NextConfig} */
+/** @type {import("next").NextConfig} */
 const nextConfig = {
   images: {
     remotePatterns: [
       {
-        hostname: "s2.googleusercontent.com",
+        protocol: "https",
+        hostname: "**",
+      },
+      {
+        protocol: "http",
+        hostname: "**",
       },
     ],
+    domains: ["raw.githubusercontent.com"],
   },
 
   webpack: (config, { isServer }) => {
