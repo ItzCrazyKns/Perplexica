@@ -11,9 +11,9 @@ import { NodesRenderer } from "../NodesRenderer";
  * @see https://www.npmjs.com/package/@yozora/tokenizer-delete
  */
 export class DeleteRenderer extends React.Component<Delete> {
-  public override shouldComponentUpdate(nextProps: Readonly<Delete>): boolean {
-    const props = this.props;
-    return props.children !== nextProps.children;
+  public override shouldComponentUpdate(nextProperties: Readonly<Delete>): boolean {
+    const properties = this.props;
+    return properties.children !== nextProperties.children;
   }
 
   public override render(): React.ReactElement {

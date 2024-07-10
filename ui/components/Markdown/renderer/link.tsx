@@ -10,7 +10,7 @@ import { LinkRendererInner } from "./inner/LinkRendererInner";
  * @see https://www.npmjs.com/package/@yozora/tokenizer-autolink
  * @see https://www.npmjs.com/package/@yozora/tokenizer-autolink-extension
  */
-export const LinkRenderer: INodeRenderer<Link> = props => {
-  const { url, title, children: childNodes } = props;
+export const LinkRenderer: INodeRenderer<Link> = properties => {
+  const { url, title, children: childNodes } = properties;
   return <LinkRendererInner url={url} title={title} childNodes={childNodes} className={astClasses.link} />;
 };

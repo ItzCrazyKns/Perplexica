@@ -2,7 +2,7 @@ import React from "react";
 import Image from "next/image";
 import { ReactMarkdown } from "@/components/Markdown";
 
-interface ContextItemProps {
+interface ContextItemProperties {
   item: {
     name: string;
     url: string;
@@ -16,7 +16,7 @@ interface ContextItemProps {
   };
 }
 
-const ContextItem: React.FC<ContextItemProps> = ({ item }) => {
+const ContextItem: React.FC<ContextItemProperties> = ({ item }) => {
   return (
     <div className="border p-4 rounded-lg mb-4 dark:border-gray-700">
       <h4 className="font-bold text-black dark:text-white">{item.name}</h4>

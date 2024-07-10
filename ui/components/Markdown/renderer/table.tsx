@@ -16,23 +16,25 @@ import { NodesRenderer } from "../NodesRenderer";
  * @see https://www.npmjs.com/package/@yozora/tokenizer-table-cell
  */
 export class TableRenderer extends React.Component<Table> {
-  public override shouldComponentUpdate(nextProps: Readonly<Table>): boolean {
-    const props = this.props;
-    return !isEqual(props.columns, nextProps.columns) || !isEqual(props.children, nextProps.children);
+  public override shouldComponentUpdate(nextProperties: Readonly<Table>): boolean {
+    const properties = this.props;
+    return (
+      !isEqual(properties.columns, nextProperties.columns) || !isEqual(properties.children, nextProperties.children)
+    );
   }
 
   public override render(): React.ReactElement {
     const { columns, children: rows } = this.props;
     const aligns = columns.map(col => col.align ?? undefined);
     const [ths, ...tds] = rows.map(row =>
-      row.children.map((cell, idx) => <NodesRenderer key={idx} nodes={cell.children} />),
+      row.children.map((cell, index) => <NodesRenderer key={index} nodes={cell.children} />),
     );
     return (
       <table className={cls}>
         <thead>
           <tr>
-            {ths.map((children, idx) => (
-              <Th key={idx} align={aligns[idx]}>
+            {ths.map((children, index) => (
+              <Th key={index} align={aligns[index]}>
                 {children}
               </Th>
             ))}
@@ -41,8 +43,8 @@ export class TableRenderer extends React.Component<Table> {
         <tbody>
           {tds.map((row, rowIndex) => (
             <tr key={rowIndex}>
-              {row.map((children, idx) => (
-                <td key={idx} align={aligns[idx]}>
+              {row.map((children, index) => (
+                <td key={index} align={aligns[index]}>
                   {children}
                 </td>
               ))}
@@ -54,22 +56,22 @@ export class TableRenderer extends React.Component<Table> {
   }
 }
 
-interface IThProps {
+interface IThProperties {
   align: "left" | "center" | "right" | undefined;
   children: React.ReactNode;
 }
 
-class Th extends React.Component<IThProps> {
+class Th extends React.Component<IThProperties> {
   protected readonly ref: React.RefObject<HTMLTableCellElement>;
 
-  constructor(props: IThProps) {
-    super(props);
+  constructor(properties: IThProperties) {
+    super(properties);
     this.ref = { current: null };
   }
 
-  public override shouldComponentUpdate(nextProps: Readonly<IThProps>): boolean {
-    const props = this.props;
-    return props.align !== nextProps.align || props.children !== nextProps.children;
+  public override shouldComponentUpdate(nextProperties: Readonly<IThProperties>): boolean {
+    const properties = this.props;
+    return properties.align !== nextProperties.align || properties.children !== nextProperties.children;
   }
 
   public override render(): React.ReactElement {
@@ -84,6 +86,7 @@ class Th extends React.Component<IThProps> {
   public override componentDidMount(): void {
     const th = this.ref.current;
     if (th) {
+      // eslint-disable-next-line unicorn/prefer-dom-node-text-content
       th.setAttribute("title", th.innerText);
     }
   }
@@ -91,6 +94,7 @@ class Th extends React.Component<IThProps> {
   public override componentDidUpdate(): void {
     const th = this.ref.current;
     if (th) {
+      // eslint-disable-next-line unicorn/prefer-dom-node-text-content
       th.setAttribute("title", th.innerText);
     }
   }

@@ -3,21 +3,21 @@ import type { Node } from "@yozora/ast";
 import React from "react";
 import { NodesRenderer } from "../../NodesRenderer";
 
-interface IProps {
+interface IProperties {
   url: string;
   title: string | undefined;
   childNodes: Node[] | undefined;
   className: string;
 }
 
-export class LinkRendererInner extends React.Component<IProps> {
-  public override shouldComponentUpdate(nextProps: Readonly<IProps>): boolean {
-    const props = this.props;
+export class LinkRendererInner extends React.Component<IProperties> {
+  public override shouldComponentUpdate(nextProperties: Readonly<IProperties>): boolean {
+    const properties = this.props;
     return (
-      props.url !== nextProps.url ||
-      props.title !== nextProps.title ||
-      props.childNodes !== nextProps.childNodes ||
-      props.className !== nextProps.className
+      properties.url !== nextProperties.url ||
+      properties.title !== nextProperties.title ||
+      properties.childNodes !== nextProperties.childNodes ||
+      properties.className !== nextProperties.className
     );
   }
 

@@ -10,9 +10,9 @@ import { CodeRendererInner } from "./inner/CodeRendererInner";
  * @see https://www.npmjs.com/package/@yozora/tokenizer-indented-code
  * @see https://www.npmjs.com/package/@yozora/tokenizer-fenced-code
  */
-export const CodeRenderer: INodeRenderer<Code> = props => {
-  const { lang } = props;
-  const value: string = props.value.replace(/[\n\r]+$/, ""); // Remove trailing line endings.
+export const CodeRenderer: INodeRenderer<Code> = properties => {
+  const { lang } = properties;
+  const value: string = properties.value.replace(/[\n\r]+$/, ""); // Remove trailing line endings.
 
   const { viewmodel } = useNodeRendererContext();
   const preferCodeWrap: boolean = useStateValue(viewmodel.preferCodeWrap$);

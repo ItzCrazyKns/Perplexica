@@ -5,30 +5,30 @@ import React from "react";
 import type { INodeRenderer, INodeRendererMap } from "./context";
 import { useNodeRendererContext } from "./context";
 
-export interface INodesRendererProps {
+export interface INodesRendererProperties {
   /**
    * Ast nodes.
    */
   nodes?: Node[];
 }
 
-export const NodesRenderer: React.FC<INodesRendererProps> = props => {
-  const { nodes } = props;
+export const NodesRenderer: React.FC<INodesRendererProperties> = properties => {
+  const { nodes } = properties;
   const { viewmodel } = useNodeRendererContext();
   const rendererMap: Readonly<INodeRendererMap> = useStateValue(viewmodel.rendererMap$);
   if (!Array.isArray(nodes) || nodes.length <= 0) return <React.Fragment />;
   return <NodesRendererInner nodes={nodes} rendererMap={rendererMap} />;
 };
 
-interface IProps {
+interface IProperties {
   nodes: Node[];
   rendererMap: Readonly<INodeRendererMap>;
 }
 
-class NodesRendererInner extends React.Component<IProps> {
-  public override shouldComponentUpdate(nextProps: Readonly<IProps>): boolean {
-    const props = this.props;
-    return !isEqual(props.nodes, nextProps.nodes) || props.rendererMap !== nextProps.rendererMap;
+class NodesRendererInner extends React.Component<IProperties> {
+  public override shouldComponentUpdate(nextProperties: Readonly<IProperties>): boolean {
+    const properties = this.props;
+    return !isEqual(properties.nodes, nextProperties.nodes) || properties.rendererMap !== nextProperties.rendererMap;
   }
 
   public override render(): React.ReactElement {

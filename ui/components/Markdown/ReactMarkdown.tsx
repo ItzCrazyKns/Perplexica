@@ -14,7 +14,7 @@ import { NodesRenderer } from "./NodesRenderer";
 import { parser } from "./parser";
 import { buildNodeRendererMap } from "./renderer";
 
-export interface IMarkdownProps {
+export interface IMarkdownProperties {
   /**
    * Text content of markdown.
    */
@@ -52,7 +52,7 @@ export interface IMarkdownProps {
   style?: React.CSSProperties;
 }
 
-export const ReactMarkdown: React.FC<IMarkdownProps> = props => {
+export const ReactMarkdown: React.FC<IMarkdownProperties> = properties => {
   const {
     presetDefinitionMap,
     customizedRendererMap,
@@ -62,15 +62,15 @@ export const ReactMarkdown: React.FC<IMarkdownProps> = props => {
     themeScheme = "lighten",
     className,
     style,
-  } = props;
+  } = properties;
   const ast: Root = React.useMemo(() => {
     const asts: Root[] = Array.isArray(text) ? text.map(t => parser.parse(t)) : [parser.parse(text)];
     if (asts.length === 0) {
       return parser.parse("");
     }
     const root: Root = asts[0];
-    for (let i = 1; i < asts.length; ++i) {
-      root.children.push(...asts[i].children);
+    for (let index = 1; index < asts.length; ++index) {
+      root.children.push(...asts[index].children);
     }
     return root;
   }, [text]);

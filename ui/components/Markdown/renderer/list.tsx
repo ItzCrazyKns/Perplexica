@@ -11,13 +11,13 @@ import { NodesRenderer } from "../NodesRenderer";
  * @see https://www.npmjs.com/package/@yozora/tokenizer-list
  */
 export class ListRenderer extends React.Component<List> {
-  public override shouldComponentUpdate(nextProps: Readonly<List>): boolean {
-    const props = this.props;
+  public override shouldComponentUpdate(nextProperties: Readonly<List>): boolean {
+    const properties = this.props;
     return (
-      props.ordered !== nextProps.ordered ||
-      props.orderType !== nextProps.orderType ||
-      props.start !== nextProps.start ||
-      props.children !== nextProps.children
+      properties.ordered !== nextProperties.ordered ||
+      properties.orderType !== nextProperties.orderType ||
+      properties.start !== nextProperties.start ||
+      properties.children !== nextProperties.children
     );
   }
 

@@ -10,19 +10,19 @@ import { ImageRendererInner } from "./inner/ImageRendererInner";
  * @see https://www.npmjs.com/package/@yozora/ast#imageReference
  * @see https://www.npmjs.com/package/@yozora/tokenizer-image-reference
  */
-export const ImageReferenceRenderer: INodeRenderer<ImageReference> = props => {
+export const ImageReferenceRenderer: INodeRenderer<ImageReference> = properties => {
   const { viewmodel } = useNodeRendererContext();
   const definitionMap: Readonly<Record<string, Definition>> = useStateValue(viewmodel.definitionMap$);
-  const { alt, srcSet, sizes, loading } = props as ImageReference & React.ImgHTMLAttributes<HTMLElement>;
+  const { alt, srcSet, sizes, loading } = properties as ImageReference & React.ImgHTMLAttributes<HTMLElement>;
 
-  const definition = definitionMap[props.identifier];
-  const src: string = definition?.url ?? "";
+  const definition = definitionMap[properties.identifier];
+  const source: string = definition?.url ?? "";
   const title: string | undefined = definition?.title;
 
   return (
     <ImageRendererInner
       alt={alt}
-      src={src}
+      src={source}
       title={title}
       srcSet={srcSet}
       sizes={sizes}

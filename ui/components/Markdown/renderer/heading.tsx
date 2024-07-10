@@ -6,7 +6,7 @@ import { NodesRenderer } from "../NodesRenderer";
 
 type IHeading = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
 
-interface IProps extends Heading {
+interface IProperties extends Heading {
   linkIcon?: React.ReactNode;
 }
 
@@ -16,14 +16,14 @@ interface IProps extends Heading {
  * @see https://www.npmjs.com/package/@yozora/ast#heading
  * @see https://www.npmjs.com/package/@yozora/tokenizer-heading
  */
-export class HeadingRenderer extends React.Component<IProps> {
-  public override shouldComponentUpdate(nextProps: Readonly<IProps>): boolean {
-    const props = this.props;
+export class HeadingRenderer extends React.Component<IProperties> {
+  public override shouldComponentUpdate(nextProperties: Readonly<IProperties>): boolean {
+    const properties = this.props;
     return (
-      props.depth !== nextProps.depth ||
-      props.identifier !== nextProps.identifier ||
-      props.children !== nextProps.children ||
-      props.linkIcon !== nextProps.linkIcon
+      properties.depth !== nextProperties.depth ||
+      properties.identifier !== nextProperties.identifier ||
+      properties.children !== nextProperties.children ||
+      properties.linkIcon !== nextProperties.linkIcon
     );
   }
 

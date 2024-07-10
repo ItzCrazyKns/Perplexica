@@ -4,7 +4,7 @@ import type { INodeRendererMap } from "./types";
 
 export type IReactMarkdownThemeScheme = "lighten" | "darken" | string;
 
-export interface IReactMarkdownViewModelProps {
+export interface IReactMarkdownViewModelProperties {
   /**
    * Link / Image reference definitions.
    */
@@ -37,10 +37,10 @@ export class ReactMarkdownViewModel extends ViewModel {
   public readonly showCodeLineno$: State<boolean>;
   public readonly themeScheme$: State<IReactMarkdownThemeScheme>;
 
-  constructor(props: IReactMarkdownViewModelProps) {
+  constructor(properties: IReactMarkdownViewModelProperties) {
     super();
 
-    const { definitionMap, rendererMap, showCodeLineno, themeScheme } = props;
+    const { definitionMap, rendererMap, showCodeLineno, themeScheme } = properties;
     this.definitionMap$ = new State(definitionMap);
     this.rendererMap$ = new State(rendererMap);
     this.showCodeLineno$ = new State<boolean>(showCodeLineno);

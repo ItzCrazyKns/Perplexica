@@ -4,7 +4,7 @@ import React from "react";
 import { astClasses } from "../../context";
 import { CopyButton } from "./CopyButton";
 
-interface IProps {
+interface IProperties {
   darken: boolean;
   lang: string;
   value: string;
@@ -16,7 +16,7 @@ interface IProps {
   failedText?: string;
 }
 
-export class CodeRendererInner extends React.PureComponent<IProps> {
+export class CodeRendererInner extends React.PureComponent<IProperties> {
   public override render(): React.ReactElement {
     const { calcContentForCopy } = this;
     const { darken, lang, value, preferCodeWrap, showCodeLineno } = this.props;
@@ -30,7 +30,7 @@ export class CodeRendererInner extends React.PureComponent<IProps> {
           showLineNo={showCodeLineno && !preferCodeWrap}
           darken={darken}
         />
-        <div className={copyBtnCls}>
+        <div className={copyButtonCls}>
           <CopyButton calcContentForCopy={calcContentForCopy} />
         </div>
       </code>
@@ -42,7 +42,7 @@ export class CodeRendererInner extends React.PureComponent<IProps> {
   };
 }
 
-const copyBtnCls = css({
+const copyButtonCls = css({
   position: "absolute",
   right: "4px",
   top: "4px",
@@ -58,7 +58,7 @@ const codeCls = cx(
     borderRadius: "4px",
     margin: "0px 0px 1.25em 0px",
     backgroundColor: "var(--colorBgCode)",
-    [`&:hover > .${copyBtnCls}`]: {
+    [`&:hover > .${copyButtonCls}`]: {
       display: "inline-block",
     },
     [`&&[data-wrap="true"] > div`]: {

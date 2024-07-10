@@ -11,9 +11,9 @@ import { NodesRenderer } from "../NodesRenderer";
  * @see https://www.npmjs.com/package/@yozora/tokenizer-blockquote
  */
 export class BlockquoteRenderer extends React.Component<Blockquote> {
-  public override shouldComponentUpdate(nextProps: Readonly<Blockquote>): boolean {
-    const props = this.props;
-    return props.children !== nextProps.children;
+  public override shouldComponentUpdate(nextProperties: Readonly<Blockquote>): boolean {
+    const properties = this.props;
+    return properties.children !== nextProperties.children;
   }
 
   public override render(): React.ReactElement {

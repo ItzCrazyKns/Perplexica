@@ -1,7 +1,7 @@
 import { css } from "@emotion/css";
 import React from "react";
 
-interface IProps {
+interface IProperties {
   src: string;
   alt: string;
   title: string | undefined;
@@ -11,17 +11,17 @@ interface IProps {
   className: string;
 }
 
-export class ImageRendererInner extends React.Component<IProps> {
-  public override shouldComponentUpdate(nextProps: IProps): boolean {
-    const props = this.props;
+export class ImageRendererInner extends React.Component<IProperties> {
+  public override shouldComponentUpdate(nextProperties: IProperties): boolean {
+    const properties = this.props;
     return (
-      props.src !== nextProps.src ||
-      props.alt !== nextProps.alt ||
-      props.title !== nextProps.title ||
-      props.srcSet !== nextProps.srcSet ||
-      props.sizes !== nextProps.sizes ||
-      props.loading !== nextProps.loading ||
-      props.className !== nextProps.className
+      properties.src !== nextProperties.src ||
+      properties.alt !== nextProperties.alt ||
+      properties.title !== nextProperties.title ||
+      properties.srcSet !== nextProperties.srcSet ||
+      properties.sizes !== nextProperties.sizes ||
+      properties.loading !== nextProperties.loading ||
+      properties.className !== nextProperties.className
     );
   }
 

@@ -47,10 +47,10 @@ export function buildNodeRendererMap(
 
   let hasChanged = false;
   const result: INodeRendererMap = {} as unknown as INodeRendererMap;
-  for (const [key, val] of Object.entries(customizedRendererMap)) {
-    if (val && val !== defaultNodeRendererMap[key]) {
+  for (const [key, value] of Object.entries(customizedRendererMap)) {
+    if (value && value !== defaultNodeRendererMap[key]) {
       hasChanged = true;
-      result[key] = val;
+      result[key] = value;
     }
   }
 

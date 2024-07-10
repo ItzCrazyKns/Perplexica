@@ -10,9 +10,9 @@ import { astClasses } from "../context";
  * @see https://www.npmjs.com/package/@yozora/tokenizer-inline-code
  */
 export class InlineCodeRenderer extends React.Component<InlineCode> {
-  public override shouldComponentUpdate(nextProps: Readonly<InlineCode>): boolean {
-    const props = this.props;
-    return props.value !== nextProps.value;
+  public override shouldComponentUpdate(nextProperties: Readonly<InlineCode>): boolean {
+    const properties = this.props;
+    return properties.value !== nextProperties.value;
   }
 
   public override render(): React.ReactElement {
