@@ -39,14 +39,14 @@ interface NewsDetailProps {
 
 const NewsDetail: React.FC<NewsDetailProps> = ({ news }) => {
   return (
-    <article className="prose lg:prose-xl">
-      <h1>{news.title}</h1>
+    <article className="prose lg:prose-xl dark:prose-invert">
+      <h1 className="text-black dark:text-white">{news.title}</h1>
       {news.sections.map((section, index) => (
         <section key={index}>
-          <h2>{section.title}</h2>
-          <p>{section.content}</p>
+          <h2 className="text-black dark:text-white">{section.title}</h2>
+          <p className="text-black dark:text-white">{section.content}</p>
           <div className="mt-4">
-            <h3>Related Context:</h3>
+            <h3 className="text-black dark:text-white">Related Context:</h3>
             {section.context.map((item, i) => (
               <ContextItem key={i} item={item} />
             ))}
