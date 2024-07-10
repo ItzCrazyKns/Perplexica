@@ -12,11 +12,8 @@ import { ImageRendererInner } from "./inner/ImageRendererInner";
  */
 export const ImageReferenceRenderer: INodeRenderer<ImageReference> = props => {
   const { viewmodel } = useNodeRendererContext();
-  const definitionMap: Readonly<Record<string, Definition>> = useStateValue(
-    viewmodel.definitionMap$,
-  );
-  const { alt, srcSet, sizes, loading } = props as ImageReference &
-    React.ImgHTMLAttributes<HTMLElement>;
+  const definitionMap: Readonly<Record<string, Definition>> = useStateValue(viewmodel.definitionMap$);
+  const { alt, srcSet, sizes, loading } = props as ImageReference & React.ImgHTMLAttributes<HTMLElement>;
 
   const definition = definitionMap[props.identifier];
   const src: string = definition?.url ?? "";

@@ -12,7 +12,7 @@ import { CodeRendererInner } from "./inner/CodeRendererInner";
  */
 export const CodeRenderer: INodeRenderer<Code> = props => {
   const { lang } = props;
-  const value: string = props.value.replace(/[\r\n]+$/, ""); // Remove trailing line endings.
+  const value: string = props.value.replace(/[\n\r]+$/, ""); // Remove trailing line endings.
 
   const { viewmodel } = useNodeRendererContext();
   const preferCodeWrap: boolean = useStateValue(viewmodel.preferCodeWrap$);

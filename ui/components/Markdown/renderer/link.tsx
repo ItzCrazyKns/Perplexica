@@ -12,12 +12,5 @@ import { LinkRendererInner } from "./inner/LinkRendererInner";
  */
 export const LinkRenderer: INodeRenderer<Link> = props => {
   const { url, title, children: childNodes } = props;
-  return (
-    <LinkRendererInner
-      url={url}
-      title={title}
-      childNodes={childNodes}
-      className={astClasses.link}
-    />
-  );
+  return <LinkRendererInner url={url} title={title} childNodes={childNodes} className={astClasses.link} />;
 };

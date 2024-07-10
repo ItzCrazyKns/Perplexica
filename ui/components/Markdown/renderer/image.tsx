@@ -11,14 +11,7 @@ import { ImageRendererInner } from "./inner/ImageRendererInner";
  * @see https://www.npmjs.com/package/@yozora/tokenizer-image
  */
 export const ImageRenderer: INodeRenderer<Image> = props => {
-  const {
-    url: src,
-    alt,
-    title,
-    srcSet,
-    sizes,
-    loading,
-  } = props as Image & React.ImgHTMLAttributes<HTMLElement>;
+  const { url: src, alt, title, srcSet, sizes, loading } = props as Image & React.ImgHTMLAttributes<HTMLElement>;
 
   return (
     <ImageRendererInner

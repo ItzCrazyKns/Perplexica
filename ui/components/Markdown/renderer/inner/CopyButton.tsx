@@ -28,7 +28,7 @@ export const CopyButton: React.FC<ICopyButtonProps> = props => {
         const contentForCopy: string = calcContentForCopy();
         copy(contentForCopy);
         setStatus(CopyStatus.COPIED);
-      } catch (_error) {
+      } catch () {
         setStatus(CopyStatus.FAILED);
       }
     }
