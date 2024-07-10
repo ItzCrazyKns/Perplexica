@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import { ReactMarkdown } from "@/components/Markdown";
 
 interface ContextItemProps {
   item: {
@@ -28,7 +29,9 @@ const ContextItem: React.FC<ContextItemProps> = ({ item }) => {
           className="my-2 rounded"
         />
       )}
-      <p className="text-black dark:text-white">{item.description}</p>
+      <div className="text-black dark:text-white">
+        <ReactMarkdown text={item.description} />
+      </div>
       <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
         Read more
       </a>
