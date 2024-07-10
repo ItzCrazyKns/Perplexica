@@ -26,7 +26,7 @@ interface ContextItemType {
   score?: number;
 }
 
-interface NewsDetailProps {
+interface NewsDetailProperties {
   news: {
     title: string;
     sections: {
@@ -37,7 +37,7 @@ interface NewsDetailProps {
   };
 }
 
-const NewsDetail: React.FC<NewsDetailProps> = ({ news }) => {
+const NewsDetail: React.FC<NewsDetailProperties> = ({ news }) => {
   return (
     <article className="prose lg:prose-xl dark:prose-invert">
       <h1 className="text-black dark:text-white">{news.title}</h1>
@@ -47,8 +47,8 @@ const NewsDetail: React.FC<NewsDetailProps> = ({ news }) => {
           <p className="text-black dark:text-white">{section.content}</p>
           <div className="mt-4">
             <h3 className="text-black dark:text-white">Related Context:</h3>
-            {section.context.map((item, i) => (
-              <ContextItem key={i} item={item} />
+            {section.context.map((item, index_) => (
+              <ContextItem key={index_} item={item} />
             ))}
           </div>
         </section>

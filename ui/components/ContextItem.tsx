@@ -1,7 +1,8 @@
 import React from "react";
 import Image from "next/image";
+import { ReactMarkdown } from "@/components/Markdown";
 
-interface ContextItemProps {
+interface ContextItemProperties {
   item: {
     name: string;
     url: string;
@@ -15,7 +16,7 @@ interface ContextItemProps {
   };
 }
 
-const ContextItem: React.FC<ContextItemProps> = ({ item }) => {
+const ContextItem: React.FC<ContextItemProperties> = ({ item }) => {
   return (
     <div className="border p-4 rounded-lg mb-4 dark:border-gray-700">
       <h4 className="font-bold text-black dark:text-white">{item.name}</h4>
@@ -28,7 +29,9 @@ const ContextItem: React.FC<ContextItemProps> = ({ item }) => {
           className="my-2 rounded"
         />
       )}
-      <p className="text-black dark:text-white">{item.description}</p>
+      <div className="text-black dark:text-white">
+        <ReactMarkdown text={item.description} />
+      </div>
       <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
         Read more
       </a>
