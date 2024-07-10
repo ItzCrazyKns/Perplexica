@@ -40,6 +40,49 @@ const NewsPage = () => {
     fetchNews();
   }, []);
 
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex flex-row items-center justify-center min-h-screen">
+          <p className="text-black/70 dark:text-white/70 text-sm">Loading news...</p>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <p className="text-red-500 text-sm mb-2">Failed to load news.</p>
+          <p className="text-red-500 text-xs">{error}</p>
+        </div>
+      );
+    }
+
+    if (news.length === 0) {
+      return (
+        <p className="text-black/70 dark:text-white/70 text-sm text-center">No news available.</p>
+      );
+    }
+
+    return (
+      <div className="flex flex-col pt-16 lg:pt-24">
+        {news.map(item => (
+          <div
+            key={item.id}
+            className="flex flex-col space-y-4 border-b border-white-200 dark:border-dark-200 py-6 lg:mx-4"
+          >
+            <Link href={`/news/${item.id}`}>
+              <h3 className="text-black dark:text-white lg:text-xl font-medium hover:underline cursor-pointer">
+                {item.title}
+              </h3>
+            </Link>
+            <p className="text-black/70 dark:text-white/70 text-sm">{item.summary}</p>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div>
       <div className="fixed z-40 top-0 left-0 right-0 lg:pl-[104px] lg:pr-6 lg:px-8 px-4 py-4 lg:py-6 border-b border-light-200 dark:border-dark-200">
@@ -48,36 +91,7 @@ const NewsPage = () => {
           <h2 className="text-black dark:text-white lg:text-3xl lg:font-medium">News</h2>
         </div>
       </div>
-      {loading ? (
-        <div className="flex flex-row items-center justify-center min-h-screen">
-          <p className="text-black/70 dark:text-white/70 text-sm">Loading news...</p>
-        </div>
-      ) : error ? (
-        <div className="flex flex-col items-center justify-center min-h-screen">
-          <p className="text-red-500 text-sm mb-2">Failed to load news.</p>
-          <p className="text-red-500 text-xs">{error}</p>
-        </div>
-      ) : (
-        <div className="flex flex-col pt-16 lg:pt-24">
-          {news.length === 0 ? (
-            <p className="text-black/70 dark:text-white/70 text-sm text-center">No news available.</p>
-          ) : (
-            news.map(item => (
-              <div
-                key={item.id}
-                className="flex flex-col space-y-4 border-b border-white-200 dark:border-dark-200 py-6 lg:mx-4"
-              >
-                <Link href={`/news/${item.id}`}>
-                  <h3 className="text-black dark:text-white lg:text-xl font-medium hover:underline cursor-pointer">
-                    {item.title}
-                  </h3>
-                </Link>
-                <p className="text-black/70 dark:text-white/70 text-sm">{item.summary}</p>
-              </div>
-            ))
-          )}
-        </div>
-      )}
+      {renderContent()}
     </div>
   );
 };
