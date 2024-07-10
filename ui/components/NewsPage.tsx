@@ -59,9 +59,7 @@ const NewsPage = () => {
     }
 
     if (news.length === 0) {
-      return (
-        <p className="text-black/70 dark:text-white/70 text-sm text-center">No news available.</p>
-      );
+      return <p className="text-black/70 dark:text-white/70 text-sm text-center">No news available.</p>;
     }
 
     return (
