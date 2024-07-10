@@ -1,13 +1,38 @@
 import React from "react";
 import ContextItem from "./ContextItem";
 
+interface ContextItemType {
+  name: string;
+  url: string;
+  description: string;
+  provider: {
+    name: string;
+    image?: {
+      thumbnail: {
+        contentUrl: string;
+      };
+    };
+  }[];
+  datePublished: string;
+  image?: {
+    contentUrl: string;
+    thumbnail: {
+      contentUrl: string;
+      width: number;
+      height: number;
+    };
+  };
+  article?: string;
+  score?: number;
+}
+
 interface NewsDetailProps {
   news: {
     title: string;
     sections: {
       title: string;
       content: string;
-      context: any[];
+      context: ContextItemType[];
     }[];
   };
 }

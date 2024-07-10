@@ -52,7 +52,7 @@ const NewsPage = () => {
         <div className="flex flex-row items-center justify-center min-h-screen">
           <p className="text-black/70 dark:text-white/70 text-sm">Loading news...</p>
         </div>
-      ) : error ? (
+      ) : (error ? (
         <div className="flex flex-col items-center justify-center min-h-screen">
           <p className="text-red-500 text-sm mb-2">Failed to load news.</p>
           <p className="text-red-500 text-xs">{error}</p>
@@ -77,7 +77,7 @@ const NewsPage = () => {
             ))
           )}
         </div>
-      )}
+      ))}
     </div>
   );
 };
