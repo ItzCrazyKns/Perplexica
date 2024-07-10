@@ -10,14 +10,14 @@ export enum CopyStatus {
   FAILED = 3,
 }
 
-export interface ICopyButtonProps {
+export interface ICopyButtonProperties {
   delay?: number;
   className?: string;
   calcContentForCopy: () => string;
 }
 
-export const CopyButton: React.FC<ICopyButtonProps> = props => {
-  const { className, delay = 1500, calcContentForCopy } = props;
+export const CopyButton: React.FC<ICopyButtonProperties> = properties => {
+  const { className, delay = 1500, calcContentForCopy } = properties;
   const [status, setStatus] = React.useState<CopyStatus>(CopyStatus.PENDING);
   const disabled: boolean = status !== CopyStatus.PENDING;
 
@@ -28,7 +28,7 @@ export const CopyButton: React.FC<ICopyButtonProps> = props => {
         const contentForCopy: string = calcContentForCopy();
         copy(contentForCopy);
         setStatus(CopyStatus.COPIED);
-      } catch () {
+      } catch {
         setStatus(CopyStatus.FAILED);
       }
     }
