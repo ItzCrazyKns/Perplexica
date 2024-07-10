@@ -29,12 +29,12 @@ const ContextItem: React.FC<ContextItemProps> = ({ item }) => {
         />
       )}
       <p className="text-black dark:text-white">{item.description}</p>
-      <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-        {item.provider[0].name} | {new Date(item.datePublished).toLocaleDateString()}
-      </div>
       <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
         Read more
       </a>
+      <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+        {item.provider[0].name} | {new Date(item.datePublished).toLocaleDateString()}
+      </div>
     </div>
   );
 };

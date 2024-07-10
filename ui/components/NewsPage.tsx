@@ -69,12 +69,12 @@ const NewsPage = () => {
             key={item.id}
             className="flex flex-col space-y-4 border-b border-white-200 dark:border-dark-200 py-6 lg:mx-4"
           >
-            <Link href={`/news/${item.id}`}>
-              <h3 className="text-black dark:text-white lg:text-xl font-medium hover:underline cursor-pointer">
-                {item.title}
-              </h3>
+            <Link href={`/news/${item.id}`} className="cursor-pointer">
+              <h3 className="text-black dark:text-white lg:text-xl font-medium hover:underline">{item.title}</h3>
+              <p className="text-black/70 dark:text-white/70 text-sm hover:text-black dark:hover:text-white">
+                {item.summary}
+              </p>
             </Link>
-            <p className="text-black/70 dark:text-white/70 text-sm">{item.summary}</p>
           </div>
         ))}
       </div>
