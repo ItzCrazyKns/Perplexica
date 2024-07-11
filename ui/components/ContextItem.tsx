@@ -7,7 +7,14 @@ interface ContextItemProperties {
     name: string;
     url: string;
     description: string;
-    provider: { name: string; image?: { thumbnail: { contentUrl: string } } }[];
+    provider: {
+      name: string;
+      image?: {
+        thumbnail: {
+          contentUrl: string;
+        };
+      };
+    }[];
     datePublished: string;
     image?: {
       contentUrl: string;
@@ -32,11 +39,30 @@ const ContextItem: React.FC<ContextItemProperties> = ({ item }) => {
       <div className="text-black dark:text-white">
         <ReactMarkdown text={item.description} />
       </div>
-      <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+      <a
+        href={item.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-black dark:text-white hover:underline inline-block mt-2"
+      >
         Read more
       </a>
-      <div className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-        {item.provider[0].name} | {new Date(item.datePublished).toLocaleDateString()}
+      <div className="mt-2">
+        <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
+          {item.provider[0].image && (
+            <Image
+              src={item.provider[0].image.thumbnail.contentUrl}
+              alt={`${item.provider[0].name} logo`}
+              width={16}
+              height={16}
+              className="mr-2"
+            />
+          )}
+          {item.provider[0].name}
+        </div>
+        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          {new Date(item.datePublished).toLocaleDateString()}
+        </div>
       </div>
     </div>
   );
