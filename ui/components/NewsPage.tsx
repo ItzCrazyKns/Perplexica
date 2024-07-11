@@ -19,9 +19,7 @@ const NewsPage = () => {
     const fetchNews = async () => {
       try {
         console.log("Fetching news...");
-        const response = await fetch(
-          "https://raw.githubusercontent.com/newspedia-crew/newspedia-web/intern-change/public/data/index.json",
-        );
+        const response = await fetch("/api/news");
         console.log("Response status:", response.status);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
