@@ -13,8 +13,6 @@ export function assertEnvVariables(ENV: ENV): asserts ENV is Required<ENV> {
   }
 }
 
-// Call this function early in your app's initialization
 assertEnvVariables(ENV);
 
-// After assertion, we can safely use ENV
 export const VALIDATED_ENV: Required<ENV> = ENV as Required<ENV>;
