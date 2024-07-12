@@ -13,8 +13,6 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const fileContents = await fs.readFile(filePath, "utf8");
     const newsData = JSON.parse(fileContents);
 
-    // You could use VALIDATED_ENV.API_URL here if you needed to make any external API calls
-
     return NextResponse.json(newsData);
   } catch (error) {
     console.error("Error reading news data:", error);
