@@ -8,6 +8,7 @@ interface NewsItem {
   id: string;
   title: string;
   summary: string;
+  image: string;
 }
 
 const NewsPage = () => {
@@ -60,6 +61,23 @@ const NewsPage = () => {
       return <p className="text-black/70 dark:text-white/70 text-sm text-center">No news available.</p>;
     }
 
+    // return (
+    //   <div className="flex flex-col pt-16 lg:pt-24">
+    //     {news.map(item => (
+    //       <div
+    //         key={item.id}
+    //         className="flex flex-col space-y-4 border-b border-white-200 dark:border-dark-200 py-6 lg:mx-4"
+    //       >
+    //         <Link href={`/news/${item.id}`} className="cursor-pointer">
+    //           <h3 className="text-black dark:text-white lg:text-xl font-medium hover:underline">{item.title}</h3>
+    //           <p className="text-black/70 dark:text-white/70 text-sm hover:text-black dark:hover:text-white">
+    //             {item.summary}
+    //           </p>
+    //         </Link>
+    //       </div>
+    //     ))}
+    //   </div>
+    // );
     return (
       <div className="flex flex-col pt-16 lg:pt-24">
         {news.map(item => (
@@ -67,12 +85,27 @@ const NewsPage = () => {
             key={item.id}
             className="flex flex-col space-y-4 border-b border-white-200 dark:border-dark-200 py-6 lg:mx-4"
           >
-            <Link href={`/news/${item.id}`} className="cursor-pointer">
-              <h3 className="text-black dark:text-white lg:text-xl font-medium hover:underline">{item.title}</h3>
-              <p className="text-black/70 dark:text-white/70 text-sm hover:text-black dark:hover:text-white">
-                {item.summary}
-              </p>
+            {/* Large Screen Layout */}
+            <Link href={`/news/${item.id}`} className="cursor-pointer hidden lg:flex flex-row">
+              <img src={item.image} alt={item.title} className="w-32 h-32 object-cover rounded-lg" />
+              <div className="flex flex-col space-y-5 ml-4">
+                <h3 className="text-black dark:text-white lg:text-xl font-medium hover:underline">{item.title}</h3>
+                <p className="text-black/70 dark:text-white/70 text-sm hover:text-black dark:hover:text-white">
+                  {item.summary}
+                </p>
+              </div>
             </Link>
+
+            {/* Small Screen Layout */}
+            <div className="lg:hidden">
+              <img src={item.image} className="w-full h-48 object-cover rounded-lg" alt={item.title} />
+              <Link href={`/news/${item.id}`} className="cursor-pointer">
+                <h3 className="text-black dark:text-white lg:text-xl font-medium hover:underline">{item.title}</h3>
+                <p className="text-black/70 dark:text-white/70 text-sm hover:text-black dark:hover:text-white">
+                  {item.summary}
+                </p>
+              </Link>
+            </div>
           </div>
         ))}
       </div>
