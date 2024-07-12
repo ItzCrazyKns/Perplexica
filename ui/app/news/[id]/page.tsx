@@ -1,7 +1,8 @@
 import NewsDetail from "../../../components/NewsDetail";
+import { VALIDATED_ENV } from "../../../lib/constants";
 
 async function getNewsData(id: string) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/news/${id}`, { next: { revalidate: 60 } });
+  const res = await fetch(`${VALIDATED_ENV.API_URL}/news/${id}`, { next: { revalidate: 60 } });
   if (!res.ok) {
     throw new Error("Failed to fetch news");
   }

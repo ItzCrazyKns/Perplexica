@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { VALIDATED_ENV } from "../../../../lib/constants";
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
   try {
