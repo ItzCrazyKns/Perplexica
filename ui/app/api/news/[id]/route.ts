@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
-import { fetchNewsData } from "../../../../lib/fetchNewsData";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 export async function GET(request: Request, { params }: { params: { id: string } }) {
-  const newsData = await fetchNewsData(params.id);
+  try {
+    const dataDirectory = path.join(process.cwd(), "public", "data");
+    const filePath = path.join(dataDirectory, `${params.id}.json`);
+    const fileContents = await fs.readFile(filePath, "utf8");
+    const newsData = JSON.parse(fileContents);
 
-  if (!newsData) {
+    return NextResponse.json(newsData);
+  } catch (error) {
+    console.error("Error reading news data:", error);
     return NextResponse.json({ error: "News not found" }, { status: 404 });
   }
-
-  return NextResponse.json(newsData);
 }
