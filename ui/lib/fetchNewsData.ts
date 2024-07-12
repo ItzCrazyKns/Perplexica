@@ -1,4 +1,4 @@
-import fs from "node:fs/promises";
+mport fs from "node:fs/promises";
 import path from "node:path";
 
 export async function fetchNewsData(id: string) {
