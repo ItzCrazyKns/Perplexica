@@ -1,6 +1,6 @@
 export const ENV = {
-  WS_URL: process.env.NEXT_PUBLIC_WS_URL,
-  API_URL: process.env.NEXT_PUBLIC_API_URL,
+  WS_URL: process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3001",
+  API_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api",
 } as const;
 
 export type ENV = typeof ENV;
@@ -9,7 +9,8 @@ export type ENV = typeof ENV;
 export function assertEnvVariables(ENV: ENV): asserts ENV is Required<ENV> {
   const missingVariables = Object.entries(ENV).filter(([_, value]) => value === undefined);
   if (missingVariables.length > 0) {
-    throw new Error(`Missing environment variables: ${missingVariables.map(([key]) => key).join(", ")}`);
+    console.warn(`Warning: Missing environment variables: ${missingVariables.map(([key]) => key).join(", ")}`);
+    console.warn("Using default values for missing variables.");
   }
 }
 
