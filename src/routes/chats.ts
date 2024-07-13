@@ -6,13 +6,20 @@ import { chats, messages } from '../db/schema';
 
 const router = express.Router();
 
-router.get('/', async (_, res) => {
+router.get('/', async (req, res) => {
   try {
-    let chats = await db.query.chats.findMany();
+    let userSessionId = req.headers['user-session-id'] ? req.headers['user-session-id'].toString() : '';
+    if (userSessionId == '') {
+      return res.status(200).json({ chats: {}});
+    }
+    
+    let chatRecords = await db.query.chats.findMany({
+      where: eq(chats.userSessionId, userSessionId),
+    });
 
-    chats = chats.reverse();
+    chatRecords = chatRecords.reverse();
 
-    return res.status(200).json({ chats: chats });
+    return res.status(200).json({ chats: chatRecords });
   } catch (err) {
     res.status(500).json({ message: 'An error has occurred.' });
     logger.error(`Error in getting chats: ${err.message}`);

@@ -18,6 +18,7 @@ type Message = {
   messageId: string;
   chatId: string;
   content: string;
+  userSessionId: string;
 };
 
 type WSMessage = {
@@ -154,6 +155,7 @@ export const handleMessage = async (
               title: parsedMessage.content,
               createdAt: new Date().toString(),
               focusMode: parsedWSMessage.focusMode,
+              userSessionId: parsedMessage.userSessionId,
             })
             .execute();
         }

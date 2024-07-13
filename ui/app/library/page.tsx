@@ -1,5 +1,6 @@
 'use client';
 
+import crypto from 'crypto';
 import DeleteChat from '@/components/DeleteChat';
 import { formatTimeDifference } from '@/lib/utils';
 import { BookOpenText, ClockIcon, Delete, ScanEye } from 'lucide-react';
@@ -21,10 +22,17 @@ const Page = () => {
     const fetchChats = async () => {
       setLoading(true);
 
+      let userSessionId = localStorage.getItem('userSessionId');
+      if (!userSessionId) {
+        userSessionId = crypto.randomBytes(20).toString('hex');
+        localStorage.setItem('userSessionId', userSessionId)
+      }
+
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chats`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          'user-session-id': userSessionId!,
         },
       });
 
