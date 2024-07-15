@@ -83,11 +83,11 @@ const NewsPage = () => {
         {news.map(item => (
           <div
             key={item.id}
-            className="flex flex-col space-y-4 border-b border-white-200 dark:border-dark-200 py-6 lg:mx-4"
+            className="flex flex-col space-y-4 border-b border-white-200 dark:border-dark-200 py-6 md:mx-4"
           >
-            {/* Large Screen Layout */}
-            <Link href={`/news/${item.id}`} className="cursor-pointer hidden lg:flex flex-row">
-              <img src={item.image} alt={item.title} className="w-32 h-32 object-cover rounded-lg" />
+            {/* Large and Small Responsive Screen Layout */}
+            <Link href={`/news/${item.id}`} className="cursor-pointer md:flex flex-row">
+              <img src={item.image} alt={item.title} className="w-full h-48 md:h-32 object-cover rounded-lg md:w-32" />
               <div className="flex flex-col space-y-5 ml-4">
                 <h3 className="text-black dark:text-white lg:text-xl font-medium hover:underline">{item.title}</h3>
                 <p className="text-black/70 dark:text-white/70 text-sm hover:text-black dark:hover:text-white">
@@ -95,17 +95,6 @@ const NewsPage = () => {
                 </p>
               </div>
             </Link>
-
-            {/* Small Screen Layout */}
-            <div className="lg:hidden">
-              <img src={item.image} className="w-full h-48 object-cover rounded-lg" alt={item.title} />
-              <Link href={`/news/${item.id}`} className="cursor-pointer">
-                <h3 className="text-black dark:text-white lg:text-xl font-medium hover:underline">{item.title}</h3>
-                <p className="text-black/70 dark:text-white/70 text-sm hover:text-black dark:hover:text-white">
-                  {item.summary}
-                </p>
-              </Link>
-            </div>
           </div>
         ))}
       </div>
