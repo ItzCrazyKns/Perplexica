@@ -17,3 +17,14 @@ export const chats = sqliteTable('chats', {
   createdAt: text('createdAt').notNull(),
   focusMode: text('focusMode').notNull(),
 });
+
+export const settings = sqliteTable('settings', {
+  id: integer('id').primaryKey(),
+  chatModelProvider: text('chatModelProvider'),
+  chatModel: text('chatModel'),
+  embeddingModelProvider: text('embeddingModelProvider'),
+  embeddingModel: text('embeddingModel'),
+  openAIApiKey: text('openAIApiKey'),
+  openAIBaseURL: text('openAIBaseURL'),
+  // TODO: add user auth
+});

@@ -146,31 +146,35 @@ const SettingsDialog = ({
 
   const handleSubmit = async () => {
     setIsUpdating(true);
-
+  
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/settings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(config),
+        body: JSON.stringify({
+          chatModelProvider: selectedChatModelProvider,
+          chatModel: selectedChatModel,
+          embeddingModelProvider: selectedEmbeddingModelProvider,
+          embeddingModel: selectedEmbeddingModel,
+          openAIApiKey: customOpenAIApiKey,
+          openAIBaseURL: customOpenAIBaseURL,
+        }),
       });
-
+  
+      // Still keep localStorage for quick access on the client-side
       localStorage.setItem('chatModelProvider', selectedChatModelProvider!);
       localStorage.setItem('chatModel', selectedChatModel!);
-      localStorage.setItem(
-        'embeddingModelProvider',
-        selectedEmbeddingModelProvider!,
-      );
+      localStorage.setItem('embeddingModelProvider', selectedEmbeddingModelProvider!);
       localStorage.setItem('embeddingModel', selectedEmbeddingModel!);
       localStorage.setItem('openAIApiKey', customOpenAIApiKey!);
       localStorage.setItem('openAIBaseURL', customOpenAIBaseURL!);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     } finally {
       setIsUpdating(false);
       setIsOpen(false);
-
       window.location.reload();
     }
   };

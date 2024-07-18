@@ -21,6 +21,25 @@ export type Message = {
   sources?: Document[];
 };
 
+
+const fetchSettings = async () => {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/settings`);
+    const settings = await res.json();
+    
+    if (settings) {
+      localStorage.setItem('chatModelProvider', settings.chatModelProvider);
+      localStorage.setItem('chatModel', settings.chatModel);
+      localStorage.setItem('embeddingModelProvider', settings.embeddingModelProvider);
+      localStorage.setItem('embeddingModel', settings.embeddingModel);
+      localStorage.setItem('openAIApiKey', settings.openAIApiKey);
+      localStorage.setItem('openAIBaseURL', settings.openAIBaseURL);
+    }
+  } catch (err) {
+    console.error('Failed to fetch settings:', err);
+  }
+};
+
 const useSocket = (
   url: string,
   setIsWSReady: (ready: boolean) => void,
@@ -31,6 +50,8 @@ const useSocket = (
   useEffect(() => {
     if (!ws) {
       const connectWs = async () => {
+        await fetchSettings();
+
         let chatModel = localStorage.getItem('chatModel');
         let chatModelProvider = localStorage.getItem('chatModelProvider');
         let embeddingModel = localStorage.getItem('embeddingModel');
@@ -306,6 +327,9 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const messagesRef = useRef<Message[]>([]);
 
+  useEffect(() => {
+    fetchSettings();
+  }, []);
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
