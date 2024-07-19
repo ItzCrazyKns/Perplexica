@@ -58,7 +58,6 @@ const ContextItem: React.FC<ContextItemProperties> = ({ item }) => {
           {/* Absolute positioned provider info */}
           <div className="absolute bottom-3 right-0 text-sm text-gray-700 dark:text-gray-300 flex items-end">
             <div className="absolute right-40 top-0 bottom-0 w-40 bg-gradient-to-r from-transparent to-slate-900 pointer-events-none"></div>
-            {/* <div className="ml-auto text-sm text-gray-700 dark:text-gray-300 flex items-end"> */}
             {item.provider[0].image && (
               <Image
                 src={item.provider[0].image.thumbnail.contentUrl}
