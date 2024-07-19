@@ -18,7 +18,7 @@
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "@typescript-eslint/parser": "^7.15.0",
     "drizzle-kit": "^0.22.7",
-    "eslint": "^9.7.0",
+    "eslint": "^8",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",
     "eslint-plugin-react": "^7.34.3",
@@ -43,7 +43,6 @@
     "drizzle-orm": "^0.31.2",
     "express": "^4.19.2",
     "langchain": "^0.1.30",
-    "react-transition-group": "^4.4.5",
     "winston": "^3.13.0",
     "ws": "^8.17.1",
     "zod": "^3.22.4"
