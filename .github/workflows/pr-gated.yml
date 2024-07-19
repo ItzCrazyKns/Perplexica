@@ -16,7 +16,8 @@ jobs:
       matrix:
         node_version:
           - 20.x
-        os: [ubuntu-latest]
+          - 22.x
+        os: [ubuntu-latest, macOS-latest]
 
     steps:
       - uses: actions/checkout@v3
