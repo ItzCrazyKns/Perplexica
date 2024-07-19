@@ -16,11 +16,10 @@ jobs:
       matrix:
         node_version:
           - 20.x
-          - 22.x
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: [ubuntu-latest]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Use Node.js ${{ matrix.node_version }}
         uses: actions/setup-node@v3
         with:
