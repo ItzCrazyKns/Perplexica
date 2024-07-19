@@ -51,25 +51,23 @@ const ContextItem: React.FC<ContextItemProperties> = ({ item }) => {
           </div>
 
           {/* Content container with controlled overflow */}
-          <div className="max-32">
+          <div className="max-32 overflow-hidden">
             <ReactMarkdown text={item.description} className="text-slate-500 dark:text-slate-40 line-clamp-3" />
           </div>
 
           {/* Absolute positioned provider info */}
-          <div className="absolute bottom-3 right-0 text-sm text-gray-700 dark:text-gray-300 flex items-end">
-            <div className="absolute right-40 top-0 bottom-0 w-40 bg-gradient-to-r from-transparent to-slate-900 pointer-events-none"></div>
-            {item.provider[0].image && (
-              <Image
-                src={item.provider[0].image.thumbnail.contentUrl}
-                alt={`${item.provider[0].name} logo`}
-                width={16}
-                height={16}
-              />
-            )}
-            <span className="dark:bg-slate-900">{item.provider[0].name}</span>
-            <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 dark:bg-slate-900">
-              {new Date(item.datePublished).toLocaleDateString()}
-            </span>
+          <div className="relative">
+            <div className="absolute bottom-3 right-0 text-sm text-gray-700 dark:text-gray-300 flex items-end z-50">
+              <div className="absolute z-50 right-60 top-0 bottom-0 w-40 h-10 bg-gradient-to-r from-transparent to-slate-900 pointer-events-none"></div>
+              <div className="absolute z-50 right-0 top-0 bottom-0 w-60  h-10 bg-slate-900 pointer-events-none"></div>
+              <div className="relative z-50 dark:bg-slate-900 flex items-center">
+                <span className="truncate max-w-xs">{item.provider[0].name}</span>
+                <span className="truncate max-w-xs text-xs text-gray-500 dark:text-gray-400 pl-3">
+                  {new Date(item.datePublished).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
+            <div className="absolute bottom-0 right-0 left-0 top-0 bg-white dark:bg-slate-900 opacity-80 z-40 pointer-events-none"></div>
           </div>
         </div>
       </div>
