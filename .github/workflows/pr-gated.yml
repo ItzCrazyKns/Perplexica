@@ -16,6 +16,7 @@ jobs:
       matrix:
         node_version:
           - 20.x
+          - 22.4.x
         os: [ubuntu-latest, windows-latest, macOS-latest]
 
     steps:
