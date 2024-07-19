@@ -43,6 +43,7 @@
     "drizzle-orm": "^0.31.2",
     "express": "^4.19.2",
     "langchain": "^0.1.30",
+    "react-transition-group": "^4.4.5",
     "winston": "^3.13.0",
     "ws": "^8.17.1",
     "zod": "^3.22.4"
