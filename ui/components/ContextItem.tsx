@@ -1,7 +1,6 @@
 import React from "react";
 import Image from "next/image";
 import { ReactMarkdown } from "@/components/Markdown";
-
 interface ContextItemProperties {
   item: {
     name: string;
@@ -24,9 +23,9 @@ interface ContextItemProperties {
 }
 
 const ProviderInfo: React.FC<{ name: string; date: string }> = ({ name, date }) => (
-  <div className="absolute bottom-3 right-0 text-sm text-gray-700 dark:text-gray-300 flex items-end z-50">
-    <div className="absolute z-50 right-60 top-0 bottom-0 w-40 h-10 bg-gradient-to-r from-transparent to-slate-900 pointer-events-none"></div>
-    <div className="absolute z-50 right-0 top-0 bottom-0 w-60 h-10 bg-slate-900 pointer-events-none"></div>
+  <div className="absolute -bottom-3 right-0 text-sm text-gray-700 dark:text-gray-300 flex items-end z-50">
+    {/* <div className="absolute z-50 right-60 top-0 bottom-0 w-40 h-10 bg-gradient-to-r from-transparent to-slate-900 pointer-events-none"></div>
+    <div className="absolute z-50 right-0 top-0 bottom-0 w-60 h-10 bg-slate-900 pointer-events-none"></div> */}
     <div className="relative z-50 dark:bg-slate-900 flex items-center">
       <span className="truncate max-w-xs">{name}</span>
       <span className="truncate max-w-xs text-xs text-gray-500 dark:text-gray-400 pl-3">{date}</span>
