@@ -13,6 +13,7 @@ interface Config {
     OPENAI: string;
     GROQ: string;
     ANTHROPIC: string;
+    Gemini: string;
   };
   API_ENDPOINTS: {
     SEARXNG: string;
