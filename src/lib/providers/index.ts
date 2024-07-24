@@ -9,12 +9,14 @@ const chatModelProviders = {
   groq: loadGroqChatModels,
   ollama: loadOllamaChatModels,
   anthropic: loadAnthropicChatModels,
+  gemini : loadGeminiChatModels
 };
 
 const embeddingModelProviders = {
   openai: loadOpenAIEmbeddingsModels,
   local: loadTransformersEmbeddingsModels,
   ollama: loadOllamaEmbeddingsModels,
+  gemini : loadGeminiEmbeddingsModels
 };
 
 export const getAvailableChatModelProviders = async () => {
