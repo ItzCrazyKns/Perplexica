@@ -1,4 +1,4 @@
-import NewsDetail from "../../../components/NewsDetail";
+import NewsDetail from "../../../components/NewsDetailPage/NewsDetail";
 import { VALIDATED_ENV } from "../../../lib/constants";
 
 async function getNewsData(id: string) {
