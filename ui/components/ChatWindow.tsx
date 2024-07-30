@@ -25,6 +25,7 @@ const useSocket = (
   url: string,
   setIsWSReady: (ready: boolean) => void,
   setError: (error: boolean) => void,
+  hasError: boolean
 ) => {
   const [ws, setWs] = useState<WebSocket | null>(null);
 
@@ -183,7 +184,9 @@ const useSocket = (
 
         ws.onclose = () => {
           clearTimeout(timeoutId);
-          setWs(null);
+          if (!hasError) {
+            setWs(null); // forces websocket to reopen when needed.
+          }
           console.log('[DEBUG] closed');
         };
 
@@ -274,6 +277,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     process.env.NEXT_PUBLIC_WS_URL!,
     setIsWSReady,
     setHasError,
+    hasError
   );
 
   const [loading, setLoading] = useState(false);
