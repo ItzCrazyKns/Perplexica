@@ -183,7 +183,7 @@ const useSocket = (
 
         ws.onclose = () => {
           clearTimeout(timeoutId);
-          setError(true);
+          setWs(null);
           console.log('[DEBUG] closed');
         };
 
