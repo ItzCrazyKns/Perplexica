@@ -9,4 +9,4 @@ ANTHROPIC = "" # Anthropic API key - sk-ant-1234567890abcdef1234567890abcdef
 
 [API_ENDPOINTS]
 SEARXNG = "http://SearxNG:8080" # SearxNG API URL
-OLLAMA = "" # Ollama API URL - http://host.docker.internal:11434
+OLLAMA = "http://host.docker.internal:11434"
