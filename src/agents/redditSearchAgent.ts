@@ -113,7 +113,7 @@ const createBasicRedditSearchRetrieverChain = (llm: BaseChatModel) => {
       }
 
       const res = await searchSearxng(input, {
-        language: 'en',
+        lang: 'en',
         engines: ['reddit'],
       });
 

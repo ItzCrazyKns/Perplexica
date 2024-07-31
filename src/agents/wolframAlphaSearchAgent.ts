@@ -51,8 +51,8 @@ const basicWolframAlphaSearchResponsePrompt = `
     Place these citations at the end of that particular sentence. You can cite the same sentence multiple times if it is relevant to the user's query like [number1][number2].
     However you do not need to cite it using the same number. You can use different numbers to cite the same sentence multiple times. The number refers to the number of the search result (passed in the context) used to generate that part of the answer.
 
-    Anything inside the following \`context\` HTML block provided below is for your knowledge returned by Wolfram Alpha and is not shared by the user. You have to answer question on the basis of it and cite the relevant information from it but you do not have to 
-    talk about the context in your response. 
+    Anything inside the following \`context\` HTML block provided below is for your knowledge returned by Wolfram Alpha and is not shared by the user. You have to answer question on the basis of it and cite the relevant information from it but you do not have to
+    talk about the context in your response.
 
     <context>
     {context}
@@ -112,8 +112,8 @@ const createBasicWolframAlphaSearchRetrieverChain = (llm: BaseChatModel) => {
       }
 
       const res = await searchSearxng(input, {
-        language: 'en',
-        engines: ['wolframalpha'],
+        lang: 'en',
+        engines: ['wolframalpha_api'],
       });
 
       const documents = res.results.map(
