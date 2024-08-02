@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { Switch } from '@headlessui/react';
+import { useEffect } from 'react';
 
 const CopilotToggle = ({
   copilotEnabled,
@@ -8,11 +9,33 @@ const CopilotToggle = ({
   copilotEnabled: boolean;
   setCopilotEnabled: (enabled: boolean) => void;
 }) => {
+  const fetchAndSetCopilotEnabled = async () => {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/config/preferences`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    const preferences = await res.json();
+
+    setCopilotEnabled(preferences.isCopilotEnabled);
+  };
+
+  useEffect(() => {
+    fetchAndSetCopilotEnabled();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="group flex flex-row items-center space-x-1 active:scale-95 duration-200 transition cursor-pointer">
       <Switch
         checked={copilotEnabled}
         onChange={setCopilotEnabled}
+        disabled={true}
         className="bg-light-secondary dark:bg-dark-secondary border border-light-200/70 dark:border-dark-200 relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full"
       >
         <span className="sr-only">Copilot</span>
