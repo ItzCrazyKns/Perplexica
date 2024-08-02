@@ -13,6 +13,7 @@ import db from '../db';
 import { chats, messages } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
+import { isLibraryEnabled } from '../config';
 
 type Message = {
   messageId: string;
@@ -46,6 +47,8 @@ const handleEmitterEvents = (
   let recievedMessage = '';
   let sources = [];
 
+  const libraryEnabled = isLibraryEnabled();
+
   emitter.on('data', (data) => {
     const parsedData = JSON.parse(data);
     if (parsedData.type === 'response') {
@@ -71,18 +74,20 @@ const handleEmitterEvents = (
   emitter.on('end', () => {
     ws.send(JSON.stringify({ type: 'messageEnd', messageId: messageId }));
 
-    db.insert(messages)
-      .values({
-        content: recievedMessage,
-        chatId: chatId,
-        messageId: messageId,
-        role: 'assistant',
-        metadata: JSON.stringify({
-          createdAt: new Date(),
-          ...(sources && sources.length > 0 && { sources }),
-        }),
-      })
-      .execute();
+    if (libraryEnabled) {
+      db.insert(messages)
+        .values({
+          content: recievedMessage,
+          chatId: chatId,
+          messageId: messageId,
+          role: 'assistant',
+          metadata: JSON.stringify({
+            createdAt: new Date(),
+            ...(sources && sources.length > 0 && { sources }),
+          }),
+        })
+        .execute();
+    }
   });
   emitter.on('error', (data) => {
     const parsedData = JSON.parse(data);
@@ -132,6 +137,8 @@ export const handleMessage = async (
     if (parsedWSMessage.type === 'message') {
       const handler = searchHandlers[parsedWSMessage.focusMode];
 
+      const libraryEnabled = isLibraryEnabled();
+
       if (handler) {
         const emitter = handler(
           parsedMessage.content,
@@ -142,34 +149,36 @@ export const handleMessage = async (
 
         handleEmitterEvents(emitter, ws, id, parsedMessage.chatId);
 
-        const chat = await db.query.chats.findFirst({
-          where: eq(chats.id, parsedMessage.chatId),
-        });
+        if (libraryEnabled) {
+          const chat = await db.query.chats.findFirst({
+            where: eq(chats.id, parsedMessage.chatId),
+          });
 
-        if (!chat) {
+          if (!chat) {
+            await db
+              .insert(chats)
+              .values({
+                id: parsedMessage.chatId,
+                title: parsedMessage.content,
+                createdAt: new Date().toString(),
+                focusMode: parsedWSMessage.focusMode,
+              })
+              .execute();
+          }
+
           await db
-            .insert(chats)
+            .insert(messages)
             .values({
-              id: parsedMessage.chatId,
-              title: parsedMessage.content,
-              createdAt: new Date().toString(),
-              focusMode: parsedWSMessage.focusMode,
+              content: parsedMessage.content,
+              chatId: parsedMessage.chatId,
+              messageId: id,
+              role: 'user',
+              metadata: JSON.stringify({
+                createdAt: new Date(),
+              }),
             })
             .execute();
         }
-
-        await db
-          .insert(messages)
-          .values({
-            content: parsedMessage.content,
-            chatId: parsedMessage.chatId,
-            messageId: id,
-            role: 'user',
-            metadata: JSON.stringify({
-              createdAt: new Date(),
-            }),
-          })
-          .execute();
       } else {
         ws.send(
           JSON.stringify({

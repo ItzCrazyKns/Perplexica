@@ -8,6 +8,10 @@ interface Config {
   GENERAL: {
     PORT: number;
     SIMILARITY_MEASURE: string;
+    CONFIG_PASSWORD: string;
+    DISCOVER_ENABLED: boolean;
+    LIBRARY_ENABLED: boolean;
+    COPILOT_ENABLED: boolean;
   };
   API_KEYS: {
     OPENAI: string;
@@ -34,6 +38,14 @@ export const getPort = () => loadConfig().GENERAL.PORT;
 export const getSimilarityMeasure = () =>
   loadConfig().GENERAL.SIMILARITY_MEASURE;
 
+export const getConfigPassword = () => loadConfig().GENERAL.CONFIG_PASSWORD;
+
+export const isDiscoverEnabled = () => loadConfig().GENERAL.DISCOVER_ENABLED;
+
+export const isLibraryEnabled = () => loadConfig().GENERAL.LIBRARY_ENABLED;
+
+export const isCopilotEnabled = () => loadConfig().GENERAL.COPILOT_ENABLED;
+
 export const getOpenaiApiKey = () => loadConfig().API_KEYS.OPENAI;
 
 export const getGroqApiKey = () => loadConfig().API_KEYS.GROQ;
@@ -53,6 +65,7 @@ export const updateConfig = (config: RecursivePartial<Config>) => {
     if (typeof currentConfig[key] === 'object' && currentConfig[key] !== null) {
       for (const nestedKey in currentConfig[key]) {
         if (
+          typeof config[key][nestedKey] !== 'boolean' &&
           !config[key][nestedKey] &&
           currentConfig[key][nestedKey] &&
           config[key][nestedKey] !== ''
