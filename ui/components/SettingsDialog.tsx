@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import { Dialog, Transition } from '@headlessui/react';
+import { Dialog, Switch, Transition } from '@headlessui/react';
 import { CloudUpload, RefreshCcw, RefreshCw } from 'lucide-react';
 import React, {
   Fragment,
@@ -8,6 +8,7 @@ import React, {
   type SelectHTMLAttributes,
 } from 'react';
 import ThemeSwitcher from './theme/Switcher';
+import { toast } from 'sonner';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
@@ -58,6 +59,9 @@ interface SettingsType {
   groqApiKey: string;
   anthropicApiKey: string;
   ollamaApiUrl: string;
+  isCopilotEnabled: boolean;
+  isDiscoverEnabled: boolean;
+  isLibraryEnabled: boolean;
 }
 
 const SettingsDialog = ({
@@ -84,77 +88,90 @@ const SettingsDialog = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      const fetchConfig = async () => {
-        setIsLoading(true);
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+  const [password, setPassword] = useState('');
+  const [passwordSubmitted, setPasswordSubmitted] = useState(false);
+  const [isPasswordValid, setIsPasswordValid] = useState(true);
 
-        const data = (await res.json()) as SettingsType;
-        setConfig(data);
+  const handlePasswordSubmit = async () => {
+    setIsLoading(true);
+    setPasswordSubmitted(true);
 
-        const chatModelProvidersKeys = Object.keys(
-          data.chatModelProviders || {},
-        );
-        const embeddingModelProvidersKeys = Object.keys(
-          data.embeddingModelProviders || {},
-        );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${password}`,
+      },
+    });
 
-        const defaultChatModelProvider =
-          chatModelProvidersKeys.length > 0 ? chatModelProvidersKeys[0] : '';
-        const defaultEmbeddingModelProvider =
-          embeddingModelProvidersKeys.length > 0
-            ? embeddingModelProvidersKeys[0]
-            : '';
-
-        const chatModelProvider =
-          localStorage.getItem('chatModelProvider') ||
-          defaultChatModelProvider ||
-          '';
-        const chatModel =
-          localStorage.getItem('chatModel') ||
-          (data.chatModelProviders &&
-            data.chatModelProviders[chatModelProvider]?.[0]) ||
-          '';
-        const embeddingModelProvider =
-          localStorage.getItem('embeddingModelProvider') ||
-          defaultEmbeddingModelProvider ||
-          '';
-        const embeddingModel =
-          localStorage.getItem('embeddingModel') ||
-          (data.embeddingModelProviders &&
-            data.embeddingModelProviders[embeddingModelProvider]?.[0]) ||
-          '';
-
-        setSelectedChatModelProvider(chatModelProvider);
-        setSelectedChatModel(chatModel);
-        setSelectedEmbeddingModelProvider(embeddingModelProvider);
-        setSelectedEmbeddingModel(embeddingModel);
-        setCustomOpenAIApiKey(localStorage.getItem('openAIApiKey') || '');
-        setCustomOpenAIBaseURL(localStorage.getItem('openAIBaseURL') || '');
-        setIsLoading(false);
-      };
-
-      fetchConfig();
+    if (res.status === 401) {
+      setIsPasswordValid(false);
+      setPasswordSubmitted(false);
+      setIsLoading(false);
+      return;
+    } else {
+      setIsPasswordValid(true);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+
+    const data = (await res.json()) as SettingsType;
+    setConfig(data);
+
+    const chatModelProvidersKeys = Object.keys(data.chatModelProviders || {});
+    const embeddingModelProvidersKeys = Object.keys(
+      data.embeddingModelProviders || {},
+    );
+
+    const defaultChatModelProvider =
+      chatModelProvidersKeys.length > 0 ? chatModelProvidersKeys[0] : '';
+    const defaultEmbeddingModelProvider =
+      embeddingModelProvidersKeys.length > 0
+        ? embeddingModelProvidersKeys[0]
+        : '';
+
+    const chatModelProvider =
+      localStorage.getItem('chatModelProvider') ||
+      defaultChatModelProvider ||
+      '';
+    const chatModel =
+      localStorage.getItem('chatModel') ||
+      (data.chatModelProviders &&
+        data.chatModelProviders[chatModelProvider]?.[0]) ||
+      '';
+    const embeddingModelProvider =
+      localStorage.getItem('embeddingModelProvider') ||
+      defaultEmbeddingModelProvider ||
+      '';
+    const embeddingModel =
+      localStorage.getItem('embeddingModel') ||
+      (data.embeddingModelProviders &&
+        data.embeddingModelProviders[embeddingModelProvider]?.[0]) ||
+      '';
+
+    setSelectedChatModelProvider(chatModelProvider);
+    setSelectedChatModel(chatModel);
+    setSelectedEmbeddingModelProvider(embeddingModelProvider);
+    setSelectedEmbeddingModel(embeddingModel);
+    setCustomOpenAIApiKey(localStorage.getItem('openAIApiKey') || '');
+    setCustomOpenAIBaseURL(localStorage.getItem('openAIBaseURL') || '');
+    setIsLoading(false);
+  };
 
   const handleSubmit = async () => {
     setIsUpdating(true);
 
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${password}`,
         },
         body: JSON.stringify(config),
       });
+
+      if (res.status === 401) {
+        toast.error('Unauthorized');
+        return;
+      }
 
       localStorage.setItem('chatModelProvider', selectedChatModelProvider!);
       localStorage.setItem('chatModel', selectedChatModel!);
@@ -205,284 +222,400 @@ const SettingsDialog = ({
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200 p-6 text-left align-middle shadow-xl transition-all">
-                <Dialog.Title className="text-xl font-medium leading-6 dark:text-white">
-                  Settings
-                </Dialog.Title>
-                {config && !isLoading && (
-                  <div className="flex flex-col space-y-4 mt-6">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-black/70 dark:text-white/70 text-sm">
-                        Theme
-                      </p>
-                      <ThemeSwitcher />
-                    </div>
-                    {config.chatModelProviders && (
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-black/70 dark:text-white/70 text-sm">
-                          Chat model Provider
-                        </p>
-                        <Select
-                          value={selectedChatModelProvider ?? undefined}
-                          onChange={(e) => {
-                            setSelectedChatModelProvider(e.target.value);
-                            if (e.target.value === 'custom_openai') {
-                              setSelectedChatModel('');
-                            } else {
-                              setSelectedChatModel(
-                                config.chatModelProviders[e.target.value][0],
-                              );
-                            }
-                          }}
-                          options={Object.keys(config.chatModelProviders).map(
-                            (provider) => ({
-                              value: provider,
-                              label:
-                                provider.charAt(0).toUpperCase() +
-                                provider.slice(1),
-                            }),
-                          )}
-                        />
-                      </div>
-                    )}
-                    {selectedChatModelProvider &&
-                      selectedChatModelProvider != 'custom_openai' && (
+                {isPasswordValid && passwordSubmitted && (
+                  <>
+                    <Dialog.Title className="text-xl font-medium leading-6 dark:text-white">
+                      Settings
+                    </Dialog.Title>
+                    {config && !isLoading && (
+                      <div className="flex flex-col space-y-4 mt-6">
                         <div className="flex flex-col space-y-1">
                           <p className="text-black/70 dark:text-white/70 text-sm">
-                            Chat Model
+                            Theme
                           </p>
-                          <Select
-                            value={selectedChatModel ?? undefined}
-                            onChange={(e) =>
-                              setSelectedChatModel(e.target.value)
-                            }
-                            options={(() => {
-                              const chatModelProvider =
-                                config.chatModelProviders[
-                                  selectedChatModelProvider
-                                ];
+                          <ThemeSwitcher />
+                        </div>
+                        <div className="flex flex-col items-start space-y-2">
+                          <p className="text-black/70 dark:text-white/70 text-sm">
+                            Copilot enabled
+                          </p>
+                          <Switch
+                            checked={config.isCopilotEnabled}
+                            onChange={(checked) => {
+                              setConfig({
+                                ...config,
+                                isCopilotEnabled: checked,
+                              });
+                            }}
+                            className="bg-light-secondary dark:bg-dark-secondary border border-light-200/70 dark:border-dark-200 relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full active:scale-95 duration-200 transition cursor-pointer"
+                          >
+                            <span className="sr-only">Copilot</span>
+                            <span
+                              className={cn(
+                                config.isCopilotEnabled
+                                  ? 'translate-x-6 bg-[#24A0ED]'
+                                  : 'translate-x-1 bg-black/50 dark:bg-white/50',
+                                'inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full transition-all duration-200',
+                              )}
+                            />
+                          </Switch>
+                        </div>
+                        <div className="flex flex-col items-start space-y-2">
+                          <p className="text-black/70 dark:text-white/70 text-sm">
+                            Discover enabled
+                          </p>
+                          <Switch
+                            checked={config.isDiscoverEnabled}
+                            onChange={(checked) => {
+                              setConfig({
+                                ...config,
+                                isDiscoverEnabled: checked,
+                              });
+                            }}
+                            className="bg-light-secondary dark:bg-dark-secondary border border-light-200/70 dark:border-dark-200 relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full active:scale-95 duration-200 transition cursor-pointer"
+                          >
+                            <span className="sr-only">Discover</span>
+                            <span
+                              className={cn(
+                                config.isDiscoverEnabled
+                                  ? 'translate-x-6 bg-[#24A0ED]'
+                                  : 'translate-x-1 bg-black/50 dark:bg-white/50',
+                                'inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full transition-all duration-200',
+                              )}
+                            />
+                          </Switch>
+                        </div>
+                        <div className="flex flex-col items-start space-y-2">
+                          <p className="text-black/70 dark:text-white/70 text-sm">
+                            Library enabled
+                          </p>
+                          <Switch
+                            checked={config.isLibraryEnabled}
+                            onChange={(checked) => {
+                              setConfig({
+                                ...config,
+                                isLibraryEnabled: checked,
+                              });
+                            }}
+                            className="bg-light-secondary dark:bg-dark-secondary border border-light-200/70 dark:border-dark-200 relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full active:scale-95 duration-200 transition cursor-pointer"
+                          >
+                            <span className="sr-only">Library</span>
+                            <span
+                              className={cn(
+                                config.isLibraryEnabled
+                                  ? 'translate-x-6 bg-[#24A0ED]'
+                                  : 'translate-x-1 bg-black/50 dark:bg-white/50',
+                                'inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full transition-all duration-200',
+                              )}
+                            />
+                          </Switch>
+                        </div>
+                        {config.chatModelProviders && (
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-black/70 dark:text-white/70 text-sm">
+                              Chat model Provider
+                            </p>
+                            <Select
+                              value={selectedChatModelProvider ?? undefined}
+                              onChange={(e) => {
+                                setSelectedChatModelProvider(e.target.value);
+                                if (e.target.value === 'custom_openai') {
+                                  setSelectedChatModel('');
+                                } else {
+                                  setSelectedChatModel(
+                                    config.chatModelProviders[
+                                      e.target.value
+                                    ][0],
+                                  );
+                                }
+                              }}
+                              options={Object.keys(
+                                config.chatModelProviders,
+                              ).map((provider) => ({
+                                value: provider,
+                                label:
+                                  provider.charAt(0).toUpperCase() +
+                                  provider.slice(1),
+                              }))}
+                            />
+                          </div>
+                        )}
+                        {selectedChatModelProvider &&
+                          selectedChatModelProvider != 'custom_openai' && (
+                            <div className="flex flex-col space-y-1">
+                              <p className="text-black/70 dark:text-white/70 text-sm">
+                                Chat Model
+                              </p>
+                              <Select
+                                value={selectedChatModel ?? undefined}
+                                onChange={(e) =>
+                                  setSelectedChatModel(e.target.value)
+                                }
+                                options={(() => {
+                                  const chatModelProvider =
+                                    config.chatModelProviders[
+                                      selectedChatModelProvider
+                                    ];
 
-                              return chatModelProvider
-                                ? chatModelProvider.length > 0
-                                  ? chatModelProvider.map((model) => ({
-                                      value: model,
-                                      label: model,
-                                    }))
+                                  return chatModelProvider
+                                    ? chatModelProvider.length > 0
+                                      ? chatModelProvider.map((model) => ({
+                                          value: model,
+                                          label: model,
+                                        }))
+                                      : [
+                                          {
+                                            value: '',
+                                            label: 'No models available',
+                                            disabled: true,
+                                          },
+                                        ]
+                                    : [
+                                        {
+                                          value: '',
+                                          label:
+                                            'Invalid provider, please check backend logs',
+                                          disabled: true,
+                                        },
+                                      ];
+                                })()}
+                              />
+                            </div>
+                          )}
+                        {selectedChatModelProvider &&
+                          selectedChatModelProvider === 'custom_openai' && (
+                            <>
+                              <div className="flex flex-col space-y-1">
+                                <p className="text-black/70 dark:text-white/70 text-sm">
+                                  Model name
+                                </p>
+                                <Input
+                                  type="text"
+                                  placeholder="Model name"
+                                  defaultValue={selectedChatModel!}
+                                  onChange={(e) =>
+                                    setSelectedChatModel(e.target.value)
+                                  }
+                                />
+                              </div>
+                              <div className="flex flex-col space-y-1">
+                                <p className="text-black/70 dark:text-white/70 text-sm">
+                                  Custom OpenAI API Key
+                                </p>
+                                <Input
+                                  type="text"
+                                  placeholder="Custom OpenAI API Key"
+                                  defaultValue={customOpenAIApiKey!}
+                                  onChange={(e) =>
+                                    setCustomOpenAIApiKey(e.target.value)
+                                  }
+                                />
+                              </div>
+                              <div className="flex flex-col space-y-1">
+                                <p className="text-black/70 dark:text-white/70 text-sm">
+                                  Custom OpenAI Base URL
+                                </p>
+                                <Input
+                                  type="text"
+                                  placeholder="Custom OpenAI Base URL"
+                                  defaultValue={customOpenAIBaseURL!}
+                                  onChange={(e) =>
+                                    setCustomOpenAIBaseURL(e.target.value)
+                                  }
+                                />
+                              </div>
+                            </>
+                          )}
+                        {/* Embedding models */}
+                        {config.embeddingModelProviders && (
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-black/70 dark:text-white/70 text-sm">
+                              Embedding model Provider
+                            </p>
+                            <Select
+                              value={
+                                selectedEmbeddingModelProvider ?? undefined
+                              }
+                              onChange={(e) => {
+                                setSelectedEmbeddingModelProvider(
+                                  e.target.value,
+                                );
+                                setSelectedEmbeddingModel(
+                                  config.embeddingModelProviders[
+                                    e.target.value
+                                  ][0],
+                                );
+                              }}
+                              options={Object.keys(
+                                config.embeddingModelProviders,
+                              ).map((provider) => ({
+                                label:
+                                  provider.charAt(0).toUpperCase() +
+                                  provider.slice(1),
+                                value: provider,
+                              }))}
+                            />
+                          </div>
+                        )}
+                        {selectedEmbeddingModelProvider && (
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-black/70 dark:text-white/70 text-sm">
+                              Embedding Model
+                            </p>
+                            <Select
+                              value={selectedEmbeddingModel ?? undefined}
+                              onChange={(e) =>
+                                setSelectedEmbeddingModel(e.target.value)
+                              }
+                              options={(() => {
+                                const embeddingModelProvider =
+                                  config.embeddingModelProviders[
+                                    selectedEmbeddingModelProvider
+                                  ];
+
+                                return embeddingModelProvider
+                                  ? embeddingModelProvider.length > 0
+                                    ? embeddingModelProvider.map((model) => ({
+                                        label: model,
+                                        value: model,
+                                      }))
+                                    : [
+                                        {
+                                          label:
+                                            'No embedding models available',
+                                          value: '',
+                                          disabled: true,
+                                        },
+                                      ]
                                   : [
                                       {
+                                        label:
+                                          'Invalid provider, please check backend logs',
                                         value: '',
-                                        label: 'No models available',
                                         disabled: true,
                                       },
-                                    ]
-                                : [
-                                    {
-                                      value: '',
-                                      label:
-                                        'Invalid provider, please check backend logs',
-                                      disabled: true,
-                                    },
-                                  ];
-                            })()}
+                                    ];
+                              })()}
+                            />
+                          </div>
+                        )}
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-black/70 dark:text-white/70 text-sm">
+                            OpenAI API Key
+                          </p>
+                          <Input
+                            type="text"
+                            placeholder="OpenAI API Key"
+                            defaultValue={config.openaiApiKey}
+                            onChange={(e) =>
+                              setConfig({
+                                ...config,
+                                openaiApiKey: e.target.value,
+                              })
+                            }
                           />
                         </div>
-                      )}
-                    {selectedChatModelProvider &&
-                      selectedChatModelProvider === 'custom_openai' && (
-                        <>
-                          <div className="flex flex-col space-y-1">
-                            <p className="text-black/70 dark:text-white/70 text-sm">
-                              Model name
-                            </p>
-                            <Input
-                              type="text"
-                              placeholder="Model name"
-                              defaultValue={selectedChatModel!}
-                              onChange={(e) =>
-                                setSelectedChatModel(e.target.value)
-                              }
-                            />
-                          </div>
-                          <div className="flex flex-col space-y-1">
-                            <p className="text-black/70 dark:text-white/70 text-sm">
-                              Custom OpenAI API Key
-                            </p>
-                            <Input
-                              type="text"
-                              placeholder="Custom OpenAI API Key"
-                              defaultValue={customOpenAIApiKey!}
-                              onChange={(e) =>
-                                setCustomOpenAIApiKey(e.target.value)
-                              }
-                            />
-                          </div>
-                          <div className="flex flex-col space-y-1">
-                            <p className="text-black/70 dark:text-white/70 text-sm">
-                              Custom OpenAI Base URL
-                            </p>
-                            <Input
-                              type="text"
-                              placeholder="Custom OpenAI Base URL"
-                              defaultValue={customOpenAIBaseURL!}
-                              onChange={(e) =>
-                                setCustomOpenAIBaseURL(e.target.value)
-                              }
-                            />
-                          </div>
-                        </>
-                      )}
-                    {/* Embedding models */}
-                    {config.embeddingModelProviders && (
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-black/70 dark:text-white/70 text-sm">
-                          Embedding model Provider
-                        </p>
-                        <Select
-                          value={selectedEmbeddingModelProvider ?? undefined}
-                          onChange={(e) => {
-                            setSelectedEmbeddingModelProvider(e.target.value);
-                            setSelectedEmbeddingModel(
-                              config.embeddingModelProviders[e.target.value][0],
-                            );
-                          }}
-                          options={Object.keys(
-                            config.embeddingModelProviders,
-                          ).map((provider) => ({
-                            label:
-                              provider.charAt(0).toUpperCase() +
-                              provider.slice(1),
-                            value: provider,
-                          }))}
-                        />
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-black/70 dark:text-white/70 text-sm">
+                            Ollama API URL
+                          </p>
+                          <Input
+                            type="text"
+                            placeholder="Ollama API URL"
+                            defaultValue={config.ollamaApiUrl}
+                            onChange={(e) =>
+                              setConfig({
+                                ...config,
+                                ollamaApiUrl: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-black/70 dark:text-white/70 text-sm">
+                            GROQ API Key
+                          </p>
+                          <Input
+                            type="text"
+                            placeholder="GROQ API Key"
+                            defaultValue={config.groqApiKey}
+                            onChange={(e) =>
+                              setConfig({
+                                ...config,
+                                groqApiKey: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-black/70 dark:text-white/70 text-sm">
+                            Anthropic API Key
+                          </p>
+                          <Input
+                            type="text"
+                            placeholder="Anthropic API key"
+                            defaultValue={config.anthropicApiKey}
+                            onChange={(e) =>
+                              setConfig({
+                                ...config,
+                                anthropicApiKey: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
                       </div>
                     )}
-                    {selectedEmbeddingModelProvider && (
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-black/70 dark:text-white/70 text-sm">
-                          Embedding Model
-                        </p>
-                        <Select
-                          value={selectedEmbeddingModel ?? undefined}
-                          onChange={(e) =>
-                            setSelectedEmbeddingModel(e.target.value)
-                          }
-                          options={(() => {
-                            const embeddingModelProvider =
-                              config.embeddingModelProviders[
-                                selectedEmbeddingModelProvider
-                              ];
-
-                            return embeddingModelProvider
-                              ? embeddingModelProvider.length > 0
-                                ? embeddingModelProvider.map((model) => ({
-                                    label: model,
-                                    value: model,
-                                  }))
-                                : [
-                                    {
-                                      label: 'No embedding models available',
-                                      value: '',
-                                      disabled: true,
-                                    },
-                                  ]
-                              : [
-                                  {
-                                    label:
-                                      'Invalid provider, please check backend logs',
-                                    value: '',
-                                    disabled: true,
-                                  },
-                                ];
-                          })()}
-                        />
+                    {isLoading && (
+                      <div className="w-full flex items-center justify-center mt-6 text-black/70 dark:text-white/70 py-6">
+                        <RefreshCcw className="animate-spin" />
                       </div>
                     )}
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-black/70 dark:text-white/70 text-sm">
-                        OpenAI API Key
+                    <div className="w-full mt-6 space-y-2">
+                      <p className="text-xs text-black/50 dark:text-white/50">
+                        We&apos;ll refresh the page after updating the settings.
                       </p>
-                      <Input
-                        type="text"
-                        placeholder="OpenAI API Key"
-                        defaultValue={config.openaiApiKey}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            openaiApiKey: e.target.value,
-                          })
-                        }
-                      />
+                      <button
+                        onClick={handleSubmit}
+                        className="bg-[#24A0ED] flex flex-row items-center space-x-2 text-white disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#ececec21] rounded-full px-4 py-2"
+                        disabled={isLoading || isUpdating}
+                      >
+                        {isUpdating ? (
+                          <RefreshCw size={20} className="animate-spin" />
+                        ) : (
+                          <CloudUpload size={20} />
+                        )}
+                      </button>
                     </div>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-black/70 dark:text-white/70 text-sm">
-                        Ollama API URL
-                      </p>
-                      <Input
-                        type="text"
-                        placeholder="Ollama API URL"
-                        defaultValue={config.ollamaApiUrl}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            ollamaApiUrl: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-black/70 dark:text-white/70 text-sm">
-                        GROQ API Key
-                      </p>
-                      <Input
-                        type="text"
-                        placeholder="GROQ API Key"
-                        defaultValue={config.groqApiKey}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            groqApiKey: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-black/70 dark:text-white/70 text-sm">
-                        Anthropic API Key
-                      </p>
-                      <Input
-                        type="text"
-                        placeholder="Anthropic API key"
-                        defaultValue={config.anthropicApiKey}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            anthropicApiKey: e.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
+                  </>
                 )}
-                {isLoading && (
-                  <div className="w-full flex items-center justify-center mt-6 text-black/70 dark:text-white/70 py-6">
-                    <RefreshCcw className="animate-spin" />
-                  </div>
-                )}
-                <div className="w-full mt-6 space-y-2">
-                  <p className="text-xs text-black/50 dark:text-white/50">
-                    We&apos;ll refresh the page after updating the settings.
-                  </p>
-                  <button
-                    onClick={handleSubmit}
-                    className="bg-[#24A0ED] flex flex-row items-center space-x-2 text-white disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#ececec21] rounded-full px-4 py-2"
-                    disabled={isLoading || isUpdating}
-                  >
-                    {isUpdating ? (
-                      <RefreshCw size={20} className="animate-spin" />
-                    ) : (
-                      <CloudUpload size={20} />
+                {!passwordSubmitted && (
+                  <>
+                    <Dialog.Title className="text-sm dark:font-white/80 font-black/80">
+                      Enter the password to access the settings
+                    </Dialog.Title>
+                    <div className="flex flex-col">
+                      <Input
+                        type="password"
+                        placeholder="Password"
+                        className="mt-4"
+                        disabled={isLoading}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </div>
+                    {!isPasswordValid && (
+                      <p className="text-xs text-red-500 mt-2">
+                        Password is incorrect
+                      </p>
                     )}
-                  </button>
-                </div>
+                    <button
+                      onClick={handlePasswordSubmit}
+                      disabled={isLoading}
+                      className="bg-[#24A0ED] flex flex-row items-center text-xs mt-4 text-white disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#ececec21] rounded-full px-4 py-2"
+                    >
+                      Submit
+                    </button>
+                  </>
+                )}
               </Dialog.Panel>
             </Transition.Child>
           </div>
