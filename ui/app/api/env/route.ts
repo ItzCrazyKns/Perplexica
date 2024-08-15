@@ -1,4 +1,3 @@
-import { Response } from 'next/server';
 import process from 'process';
 
 async function requestHandler(_request: Request): Response {
