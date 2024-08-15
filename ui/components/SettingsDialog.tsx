@@ -8,6 +8,7 @@ import React, {
   type SelectHTMLAttributes,
 } from 'react';
 import ThemeSwitcher from './theme/Switcher';
+import process from 'process';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
