@@ -4,9 +4,8 @@ import DeleteChat from '@/components/DeleteChat';
 import { formatTimeDifference } from '@/lib/utils';
 import { BookOpenText, ClockIcon, Delete, ScanEye } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState, FC } from 'react';
+import { useEffect, useState } from 'react';
 import process from 'process';
-import { GetServerSideProps } from 'next';
 
 export interface Chat {
   id: string;
@@ -15,21 +14,7 @@ export interface Chat {
   focusMode: string;
 }
 
-interface PageProps {
-  backendApiUrl: string;
-}
-
-export async function getServerSideProps(): GetServerSideProps<PageProps> {
-  const backendApiUrl = process.env.BACKEND_API_URL;
-
-  return {
-    props: {
-      backendApiUrl,
-    },
-  };
-}
-
-const Page: FC<PageProps> = ({ backendApiUrl }) => {
+const Page = () => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +22,7 @@ const Page: FC<PageProps> = ({ backendApiUrl }) => {
     const fetchChats = async () => {
       setLoading(true);
 
-      const res = await fetch(`${backendApiUrl}/chats`, {
+      const res = await fetch(`${process.env.BACKEND_API_URL}/chats`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -113,7 +98,6 @@ const Page: FC<PageProps> = ({ backendApiUrl }) => {
                   chatId={chat.id}
                   chats={chats}
                   setChats={setChats}
-                  backendApiUrl={backendApiUrl}
                 />
               </div>
             </div>
