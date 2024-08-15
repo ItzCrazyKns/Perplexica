@@ -3,7 +3,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useState } from 'react';
 import { toast } from 'sonner';
 import { Chat } from '@/app/library/page';
-import process from 'process';
+import { getServerEnv } from '@/lib/serverEnvironment';
 
 const DeleteChat = ({
   chatId,
@@ -21,7 +21,7 @@ const DeleteChat = ({
     setLoading(true);
     try {
       const res = await fetch(
-        `${process.env.BACKEND_API_URL}/chats/${chatId}`,
+        `${getServerEnv("BACKEND_API_URL")}/chats/${chatId}`,
         {
           method: 'DELETE',
           headers: {

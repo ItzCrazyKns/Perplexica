@@ -8,7 +8,7 @@ import React, {
   type SelectHTMLAttributes,
 } from 'react';
 import ThemeSwitcher from './theme/Switcher';
-import process from 'process';
+import { getServerEnv } from '@/lib/serverEnvironment';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
@@ -89,7 +89,7 @@ const SettingsDialog = ({
     if (isOpen) {
       const fetchConfig = async () => {
         setIsLoading(true);
-        const res = await fetch(`${process.env.BACKEND_API_URL}/config`, {
+        const res = await fetch(`${getServerEnv("BACKEND_API_URL")}/config`, {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -149,7 +149,7 @@ const SettingsDialog = ({
     setIsUpdating(true);
 
     try {
-      await fetch(`${process.env.BACKEND_API_URL}/config`, {
+      await fetch(`${getServerEnv("BACKEND_API_URL")}/config`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

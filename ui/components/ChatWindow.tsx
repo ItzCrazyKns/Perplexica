@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import { getSuggestions } from '@/lib/actions';
 import Error from 'next/error';
-import process from 'process';
+import { getServerEnv } from '@/lib/serverEnvironment';
 
 export type Message = {
   messageId: string;
@@ -40,7 +40,7 @@ const useSocket = (
         );
 
         const providers = await fetch(
-          `${process.env.BACKEND_API_URL}/models`,
+          `${getServerEnv("BACKEND_API_URL")}/models`,
           {
             headers: {
               'Content-Type': 'application/json',
@@ -221,7 +221,7 @@ const loadMessages = async (
   setNotFound: (notFound: boolean) => void,
 ) => {
   const res = await fetch(
-    `${process.env.BACKEND_API_URL}/chats/${chatId}`,
+    `${getServerEnv("BACKEND_API_URL")}/chats/${chatId}`,
     {
       method: 'GET',
       headers: {
