@@ -9,7 +9,7 @@ const CACHE_DURATION_MS = 5 * 60 * 1000; // Cache duration: 5 minutes
 
 async function fetchConfig() {
   try {
-    const response = await fetch('/api/config');
+    const response = await fetch('/api/env');
     if (response.ok) {
       const data = await response.json();
       cachedConfig = data;
