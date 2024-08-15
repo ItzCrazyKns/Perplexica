@@ -9,10 +9,12 @@ const DeleteChat = ({
   chatId,
   chats,
   setChats,
+  backendApiUrl
 }: {
   chatId: string;
   chats: Chat[];
   setChats: (chats: Chat[]) => void;
+  backendApiUrl: string
 }) => {
   const [confirmationDialogOpen, setConfirmationDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -21,7 +23,7 @@ const DeleteChat = ({
     setLoading(true);
     try {
       const res = await fetch(
-        `${process.env.BACKEND_API_URL}/chats/${chatId}`,
+        `${backendApiUrl}/chats/${chatId}`,
         {
           method: 'DELETE',
           headers: {

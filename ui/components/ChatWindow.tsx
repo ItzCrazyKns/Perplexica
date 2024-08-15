@@ -260,7 +260,7 @@ const loadMessages = async (
   setIsMessagesLoaded(true);
 };
 
-const ChatWindow = ({ id }: { id?: string }) => {
+const ChatWindow = ({ id, backendApiUrl }: { id?: string, backendApiUrl: string }) => {
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
 
@@ -434,7 +434,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
           lastMsg.sources.length > 0 &&
           !lastMsg.suggestions
         ) {
-          const suggestions = await getSuggestions(messagesRef.current);
+          const suggestions = await getSuggestions(messagesRef.current, backendApiUrl);
           setMessages((prev) =>
             prev.map((msg) => {
               if (msg.messageId === lastMsg.messageId) {
