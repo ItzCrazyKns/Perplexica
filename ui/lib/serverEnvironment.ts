@@ -23,7 +23,7 @@ async function fetchConfig() {
   }
 }
 
-export async function await getServerEnv(envVar: string): Promise<string> {
+export async function getServerEnv(envVar: string): Promise<string> {
   // Check if the cache is still valid
   if (cachedConfig && cacheTimestamp && Date.now() - cacheTimestamp < CACHE_DURATION_MS) {
     return cachedConfig[envVar] || process.env[envVar];
