@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { Request, Response } from 'next/server';
 import process from 'process';
 
-async function requestHandler(_request: NextRequest): NextResponse {
+async function requestHandler(_request: Request): Response {
   // Access environment variables
   const envVars = {
     BACKEND_API_URL: process.env.BACKEND_API_URL,
@@ -9,7 +9,7 @@ async function requestHandler(_request: NextRequest): NextResponse {
   }
 
   // Return the environment variables as a JSON response
-  return NextResponse.json(envVars);
+  return Response.json(envVars);
 }
 
 export { requestHandler as GET };
