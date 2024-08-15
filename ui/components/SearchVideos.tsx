@@ -48,7 +48,7 @@ const Searchvideos = ({
             const chatModel = localStorage.getItem('chatModel');
 
             const res = await fetch(
-              `${getServerEnv("BACKEND_API_URL")}/videos`,
+              `${await getServerEnv("BACKEND_API_URL")}/videos`,
               {
                 method: 'POST',
                 headers: {

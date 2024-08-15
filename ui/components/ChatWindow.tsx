@@ -40,7 +40,7 @@ const useSocket = (
         );
 
         const providers = await fetch(
-          `${getServerEnv("BACKEND_API_URL")}/models`,
+          `${await getServerEnv("BACKEND_API_URL")}/models`,
           {
             headers: {
               'Content-Type': 'application/json',
@@ -221,7 +221,7 @@ const loadMessages = async (
   setNotFound: (notFound: boolean) => void,
 ) => {
   const res = await fetch(
-    `${getServerEnv("BACKEND_API_URL")}/chats/${chatId}`,
+    `${await getServerEnv("BACKEND_API_URL")}/chats/${chatId}`,
     {
       method: 'GET',
       headers: {

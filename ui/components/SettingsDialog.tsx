@@ -89,7 +89,7 @@ const SettingsDialog = ({
     if (isOpen) {
       const fetchConfig = async () => {
         setIsLoading(true);
-        const res = await fetch(`${getServerEnv("BACKEND_API_URL")}/config`, {
+        const res = await fetch(`${await getServerEnv("BACKEND_API_URL")}/config`, {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -149,7 +149,7 @@ const SettingsDialog = ({
     setIsUpdating(true);
 
     try {
-      await fetch(`${getServerEnv("BACKEND_API_URL")}/config`, {
+      await fetch(`${await getServerEnv("BACKEND_API_URL")}/config`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -22,7 +22,7 @@ const Page = () => {
     const fetchChats = async () => {
       setLoading(true);
 
-      const res = await fetch(`${getServerEnv("BACKEND_API_URL")}/chats`, {
+      const res = await fetch(`${await getServerEnv("BACKEND_API_URL")}/chats`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
