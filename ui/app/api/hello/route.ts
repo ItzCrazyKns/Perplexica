@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
 
-async function requestHandler(_request: Request): NextResponse {
+export async function GET(_request: Request) {
   return NextResponse.json({ 'response': 'Hello World' });
 }
-
-export { requestHandler as GET };
