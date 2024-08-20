@@ -59,7 +59,7 @@ export const loadAnthropicChatModels = async () => {
   for (const config of modelConfigs) {
     try {
       chatModels[config.name] = new RetryingChatAnthropic({
-        temperature: 0.7,
+        temperature: 0.5,
         anthropicApiKey,
         model: config.model,
         maxRetries: 3,
