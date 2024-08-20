@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Lightbox, { GenericSlide, VideoSlide } from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 import { Message } from './ChatWindow';
+import { getServerEnv } from '@/lib/serverEnvironment';
 
 type Video = {
   url: string;
@@ -47,7 +48,7 @@ const Searchvideos = ({
             const chatModel = localStorage.getItem('chatModel');
 
             const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/videos`,
+              `${await getServerEnv("BACKEND_API_URL")}/videos`,
               {
                 method: 'POST',
                 headers: {

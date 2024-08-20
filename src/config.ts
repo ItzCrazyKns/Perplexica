@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import toml from '@iarna/toml';
+import process from 'process';
 
 const configFileName = 'config.toml';
 
@@ -24,25 +25,52 @@ type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>;
 };
 
-const loadConfig = () =>
-  toml.parse(
-    fs.readFileSync(path.join(__dirname, `../${configFileName}`), 'utf-8'),
-  ) as any as Config;
+const configFilePath = path.join(__dirname, `../${configFileName}`);
 
-export const getPort = () => loadConfig().GENERAL.PORT;
+const defaultConfig: Config = {
+  GENERAL: {
+    PORT: 3001,
+    SIMILARITY_MEASURE: "cosine"
+  },
+  API_KEYS: {
+    OPENAI: "",
+    GROQ: "",
+    ANTHROPIC: ""
+  },
+  API_ENDPOINTS: {
+    SEARXNG: "http://localhost:32768",
+    OLLAMA: ""
+  }
+}
+
+const loadConfig = () => {
+    if (fs.existsSync(configFilePath)) {
+      return toml.parse(fs.readFileSync(configFilePath, 'utf-8')) as any as Config;
+    } else {
+      return defaultConfig;
+    }
+}
+
+export const getPort = () => 
+  process.env.PORT ?? loadConfig().GENERAL.PORT;
 
 export const getSimilarityMeasure = () =>
-  loadConfig().GENERAL.SIMILARITY_MEASURE;
+  process.env.SIMILARITY_MEASURE ?? loadConfig().GENERAL.SIMILARITY_MEASURE;
 
-export const getOpenaiApiKey = () => loadConfig().API_KEYS.OPENAI;
+export const getOpenaiApiKey = () =>
+  process.env.OPENAI_API_KEY ?? loadConfig().API_KEYS.OPENAI;
 
-export const getGroqApiKey = () => loadConfig().API_KEYS.GROQ;
+export const getGroqApiKey = () =>
+  process.env.GROQ_API_KEY ?? loadConfig().API_KEYS.GROQ;
 
-export const getAnthropicApiKey = () => loadConfig().API_KEYS.ANTHROPIC;
+export const getAnthropicApiKey = () =>
+  process.env.ANTHROPIC_API_KEY ?? loadConfig().API_KEYS.ANTHROPIC;
 
-export const getSearxngApiEndpoint = () => loadConfig().API_ENDPOINTS.SEARXNG;
+export const getSearxngApiEndpoint = () =>
+  process.env.SEARXNG_API_ENDPOINT ?? loadConfig().API_ENDPOINTS.SEARXNG;
 
-export const getOllamaApiEndpoint = () => loadConfig().API_ENDPOINTS.OLLAMA;
+export const getOllamaApiEndpoint = () =>
+  process.env.OLLAMA_API_ENDPOINT ?? loadConfig().API_ENDPOINTS.OLLAMA;
 
 export const updateConfig = (config: RecursivePartial<Config>) => {
   const currentConfig = loadConfig();
@@ -65,8 +93,5 @@ export const updateConfig = (config: RecursivePartial<Config>) => {
     }
   }
 
-  fs.writeFileSync(
-    path.join(__dirname, `../${configFileName}`),
-    toml.stringify(config),
-  );
+  fs.writeFileSync(configFilePath, toml.stringify(config));
 };

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 import { Message } from './ChatWindow';
+import { getServerEnv } from '@/lib/serverEnvironment';
 
 type Image = {
   url: string;
@@ -34,7 +35,7 @@ const SearchImages = ({
             const chatModel = localStorage.getItem('chatModel');
 
             const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/images`,
+              `${await getServerEnv("BACKEND_API_URL")}/images`,
               {
                 method: 'POST',
                 headers: {
