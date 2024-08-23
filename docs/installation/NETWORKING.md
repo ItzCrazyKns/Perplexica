@@ -19,9 +19,9 @@ docker compose down --rmi all
 5. Replace `127.0.0.1` with the IP address of the server Perplexica is running on in these two lines:
 
 ```
-args:
-  - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
-  - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
+environment:
+  - BACKEND_API_URL=http://127.0.0.1:3001/api
+  - BACKEND_WS_URL=ws://127.0.0.1:3001
 ```
 
 6. Save and close the `docker-compose.yaml` file
@@ -57,9 +57,9 @@ nano docker-compose.yaml
 5. Replace `127.0.0.1` with the server IP in these lines:
 
 ```
-args:
-  - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
-  - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
+environment:
+  - BACKEND_API_URL=http://127.0.0.1:3001/api
+  - BACKEND_WS_URL=ws://127.0.0.1:3001
 ```
 
 6. Save and exit the editor
@@ -95,9 +95,9 @@ nano docker-compose.yaml
 5. Replace `127.0.0.1` with the server IP:
 
 ```
-args:
-  - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
-  - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
+environment:
+  - BACKEND_API_URL=http://127.0.0.1:3001/api
+  - BACKEND_WS_URL=ws://127.0.0.1:3001
 ```
 
 6. Save and exit the editor

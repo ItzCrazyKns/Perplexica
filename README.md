@@ -97,6 +97,23 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 See the [installation documentation](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/installation) for more information like exposing it your network, etc.
 
+### Environment Variables
+
+You can use environment variables to override the settings provided in your `config.toml` file.
+
+##### Frontend Environment Variables
+- `BACKEND_API_URL`
+- `BACKEND_WS_URL`
+
+##### Backend Environment Variables
+- `PORT`
+- `SIMILARITY_MEASURE`
+- `OPENAI_API_KEY`
+- `GROQ_API_KEY`
+- `ANTHROPIC_API_KEY`
+- `SEARXNG_API_ENDPOINT`
+- `OLLAMA_API_ENDPOINT`
+
 ### Ollama Connection Errors
 
 If you're encountering an Ollama connection error, it is likely due to the backend being unable to connect to Ollama's API. To fix this issue you can:

@@ -1,29 +1,19 @@
-async function fetchConfig() {
-  try {
-    const response = await fetch('/api/env');
-    if (response.ok) {
-      const data = await response.json();
-      sessionStorage.setItem('cachedConfig', JSON.stringify(data));
-      return data;
-    } else {
-      throw new Error('Failed to fetch config');
-    }
-  } catch (error) {
-    return null;
-  }
-}
+'use server';
+
+import process from 'process';
 
 export async function getServerEnv(envVar: string): Promise<string> {
-  const cachedConfig = JSON.parse(sessionStorage.getItem('cachedConfig') || 'null');
-
-  if (cachedConfig) {
-    return cachedConfig[envVar];
+  let result: string | undefined;
+  switch (envVar) {
+      case "BACKEND_API_URL":
+          result = process.env.BACKEND_API_URL ?? process.env.NEXT_PUBLIC_API_URL;
+          break;
+      case "BACKEND_WS_URL":
+          result = process.env.BACKEND_WS_URL ?? process.env.NEXT_PUBLIC_WS_URL;
+          break;
+      default:
+          result = process.env[envVar];
+          break;
   }
-
-  const data = await fetchConfig();
-  if (!data) {
-    return "";
-  }
-
-  return data[envVar];
+  return result ?? "";
 }
