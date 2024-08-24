@@ -18,6 +18,9 @@ interface Config {
     SEARXNG: string;
     OLLAMA: string;
   };
+  BASE_URL: {
+    OPENAI: string;
+  };
 }
 
 type RecursivePartial<T> = {
@@ -35,6 +38,8 @@ export const getSimilarityMeasure = () =>
   loadConfig().GENERAL.SIMILARITY_MEASURE;
 
 export const getOpenaiApiKey = () => loadConfig().API_KEYS.OPENAI;
+
+export const getOpenaiBaseUrl = () => loadConfig().BASE_URL.OPENAI;
 
 export const getGroqApiKey = () => loadConfig().API_KEYS.GROQ;
 
