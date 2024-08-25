@@ -10,7 +10,7 @@ services:
     restart: unless-stopped
 
   perplexica-backend:
-    image: docker.io/andypenno/perplexica-backend:latest
+    image: docker.io/itzcrazykns1337/perplexica-backend:latest
     depends_on:
       - searxng
     ports:
@@ -27,7 +27,7 @@ services:
     restart: unless-stopped
 
   perplexica-frontend:
-    image: docker.io/andypenno/perplexica-frontend:latest
+    image: docker.io/itzcrazykns1337/perplexica-frontend:latest
     depends_on:
       - perplexica-backend
     ports:
