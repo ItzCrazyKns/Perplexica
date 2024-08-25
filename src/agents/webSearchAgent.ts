@@ -194,12 +194,13 @@ const createBasicWebSearchRetrieverChain = (llm: BaseChatModel) => {
         await Promise.all(
           docGroups.map(async (doc) => {
             const res = await llm.invoke(`
-            You are a text summarizer. You need to summarize the text provided inside the \`text\` XML block. 
-            You need to summarize the text into 1 or 2 sentences capturing the main idea of the text.
-            You need to make sure that you don't miss any point while summarizing the text.
-            You will also be given a \`query\` XML block which will contain the query of the user. Try to answer the query in the summary from the text provided.
-            If the query says Summarize then you just need to summarize the text without answering the query.
-            Only return the summarized text without any other messages, text or XML block.
+            You are a text summarizer. Summarize the text provided inside the \`text\` XML block into a single paragraph made up of five sentences.
+            Capture the main idea and include key supporting details to provide a more comprehensive summary.
+            Ensure you don't miss any significant points while summarizing.
+            If any specific legislation or regulations are mentioned, explicitly note them in your summary.
+            You will also be given a \`query\` XML block containing the user's query. Address this query in your summary if possible.
+            If the query says "Summarize", focus on providing a general summary without specifically answering a query.
+            Return only the summarized text without any additional messages, text, or XML blocks.
 
             <query>
             ${question}
@@ -209,7 +210,7 @@ const createBasicWebSearchRetrieverChain = (llm: BaseChatModel) => {
             ${doc.pageContent}
             </text>
 
-            Make sure to answer the query in the summary.
+            Ensure your summary addresses the query (if applicable) and mentions any specific legislation or regulations.
           `);
 
             const document = new Document({
