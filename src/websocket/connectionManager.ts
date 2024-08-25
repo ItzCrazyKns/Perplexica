@@ -8,7 +8,7 @@ import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { Embeddings } from '@langchain/core/embeddings';
 import type { IncomingMessage } from 'http';
 import logger from '../utils/logger';
-import { ChatOpenAI } from '@langchain/openai';
+import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 
 export const handleConnection = async (
   ws: WebSocket,
@@ -61,11 +61,20 @@ export const handleConnection = async (
 
     if (
       embeddingModelProviders[embeddingModelProvider] &&
-      embeddingModelProviders[embeddingModelProvider][embeddingModel]
+      embeddingModelProviders[embeddingModelProvider][embeddingModel] &&
+      embeddingModelProvider != 'custom_openai'
     ) {
       embeddings = embeddingModelProviders[embeddingModelProvider][
         embeddingModel
       ] as Embeddings | undefined;
+    } else if (embeddingModelProvider == 'custom_openai') {
+      embeddings = new OpenAIEmbeddings({
+        modelName: embeddingModel,
+        openAIApiKey: searchParams.get('openAIApiKey'),
+        configuration: {
+          baseURL: searchParams.get('openAIBaseURL'),
+        },
+      }) as unknown as Embeddings
     }
 
     if (!llm || !embeddings) {

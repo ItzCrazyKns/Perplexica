@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import ThemeSwitcher from './theme/Switcher';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> { }
 
 const Input = ({ className, ...restProps }: InputProps) => {
   return (
@@ -258,30 +258,30 @@ const SettingsDialog = ({
                             options={(() => {
                               const chatModelProvider =
                                 config.chatModelProviders[
-                                  selectedChatModelProvider
+                                selectedChatModelProvider
                                 ];
 
                               return chatModelProvider
                                 ? chatModelProvider.length > 0
                                   ? chatModelProvider.map((model) => ({
-                                      value: model,
-                                      label: model,
-                                    }))
+                                    value: model,
+                                    label: model,
+                                  }))
                                   : [
-                                      {
-                                        value: '',
-                                        label: 'No models available',
-                                        disabled: true,
-                                      },
-                                    ]
-                                : [
                                     {
                                       value: '',
-                                      label:
-                                        'Invalid provider, please check backend logs',
+                                      label: 'No models available',
                                       disabled: true,
                                     },
-                                  ];
+                                  ]
+                                : [
+                                  {
+                                    value: '',
+                                    label:
+                                      'Invalid provider, please check backend logs',
+                                    disabled: true,
+                                  },
+                                ];
                             })()}
                           />
                         </div>
@@ -355,7 +355,7 @@ const SettingsDialog = ({
                         />
                       </div>
                     )}
-                    {selectedEmbeddingModelProvider && (
+                    {selectedEmbeddingModelProvider && selectedEmbeddingModelProvider != 'custom_openai' && (
                       <div className="flex flex-col space-y-1">
                         <p className="text-black/70 dark:text-white/70 text-sm">
                           Embedding Model
@@ -368,31 +368,46 @@ const SettingsDialog = ({
                           options={(() => {
                             const embeddingModelProvider =
                               config.embeddingModelProviders[
-                                selectedEmbeddingModelProvider
+                              selectedEmbeddingModelProvider
                               ];
 
                             return embeddingModelProvider
                               ? embeddingModelProvider.length > 0
                                 ? embeddingModelProvider.map((model) => ({
-                                    label: model,
-                                    value: model,
-                                  }))
+                                  label: model,
+                                  value: model,
+                                }))
                                 : [
-                                    {
-                                      label: 'No embedding models available',
-                                      value: '',
-                                      disabled: true,
-                                    },
-                                  ]
-                              : [
                                   {
-                                    label:
-                                      'Invalid provider, please check backend logs',
+                                    label: 'No embedding models available',
                                     value: '',
                                     disabled: true,
                                   },
-                                ];
+                                ]
+                              : [
+                                {
+                                  label:
+                                    'Invalid provider, please check backend logs',
+                                  value: '',
+                                  disabled: true,
+                                },
+                              ];
                           })()}
+                        />
+                      </div>
+                    )}
+                    {selectedEmbeddingModelProvider && selectedEmbeddingModelProvider === 'custom_openai' && (
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-black/70 dark:text-white/70 text-sm">
+                          Embedding Model
+                        </p>
+                        <Input
+                          type="text"
+                          placeholder="Embedding Model name"
+                          defaultValue={selectedEmbeddingModel!}
+                          onChange={(e) =>
+                            setSelectedEmbeddingModel(e.target.value)
+                          }
                         />
                       </div>
                     )}

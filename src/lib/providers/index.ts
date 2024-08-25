@@ -42,5 +42,7 @@ export const getAvailableEmbeddingModelProviders = async () => {
     }
   }
 
+  models['custom_openai'] = {};
+
   return models;
 };
