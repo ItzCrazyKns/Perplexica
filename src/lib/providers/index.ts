@@ -1,11 +1,13 @@
 import { loadGroqChatModels } from './groq';
 import { loadOllamaChatModels, loadOllamaEmbeddingsModels } from './ollama';
 import { loadOpenAIChatModels, loadOpenAIEmbeddingsModels } from './openai';
+import { loadAzureOpenAIChatModels, loadAzureOpenAIEmbeddings } from './azure';
 import { loadAnthropicChatModels } from './anthropic';
 import { loadTransformersEmbeddingsModels } from './transformers';
 
 const chatModelProviders = {
   openai: loadOpenAIChatModels,
+  azure: loadAzureOpenAIChatModels,
   groq: loadGroqChatModels,
   ollama: loadOllamaChatModels,
   anthropic: loadAnthropicChatModels,
@@ -13,6 +15,7 @@ const chatModelProviders = {
 
 const embeddingModelProviders = {
   openai: loadOpenAIEmbeddingsModels,
+  azure: loadAzureOpenAIEmbeddings,
   local: loadTransformersEmbeddingsModels,
   ollama: loadOllamaEmbeddingsModels,
 };

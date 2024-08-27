@@ -27,6 +27,7 @@
   "dependencies": {
     "@iarna/toml": "^2.2.5",
     "@langchain/anthropic": "^0.2.3",
+    "@langchain/azure-openai": "^0.0.4",
     "@langchain/community": "^0.2.16",
     "@langchain/openai": "^0.0.25",
     "@xenova/transformers": "^2.17.1",
