@@ -59,7 +59,9 @@ const useSocket = (
             chatModelProvider = Object.keys(chatModelProviders)[0];
 
             if (chatModelProvider === 'custom_openai') {
-              toast.error('Seems like you are using the custom OpenAI provider, please open the settings and configure the API key and base URL');
+              toast.error(
+                'Seems like you are using the custom OpenAI provider, please open the settings and configure the API key and base URL',
+              );
               setError(true);
               return;
             } else {
@@ -192,20 +194,13 @@ const useSocket = (
           if (data.type === 'error') {
             toast.error(data.data);
           }
-        })
+        });
 
         setWs(ws);
       };
 
       connectWs();
     }
-
-    return () => {
-      if (ws?.readyState === 1) {
-        ws?.close();
-        console.log('[DEBUG] closed');
-      }
-    };
   }, [ws, url, setIsWSReady, setError]);
 
   return ws;
@@ -309,6 +304,15 @@ const ChatWindow = ({ id }: { id?: string }) => {
       setChatId(crypto.randomBytes(20).toString('hex'));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (ws?.readyState === 1) {
+        ws.close();
+        console.log('[DEBUG] closed');
+      }
+    };
   }, []);
 
   const messagesRef = useRef<Message[]>([]);
