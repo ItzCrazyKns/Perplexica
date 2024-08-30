@@ -340,9 +340,13 @@ const SettingsDialog = ({
                           value={selectedEmbeddingModelProvider ?? undefined}
                           onChange={(e) => {
                             setSelectedEmbeddingModelProvider(e.target.value);
-                            setSelectedEmbeddingModel(
-                              config.embeddingModelProviders[e.target.value][0],
-                            );
+                            if (e.target.value === 'custom_openai') {
+                              setSelectedEmbeddingModel('');
+                            } else {
+                              setSelectedEmbeddingModel(
+                                config.embeddingModelProviders[e.target.value][0],
+                              );
+                            }
                           }}
                           options={Object.keys(
                             config.embeddingModelProviders,
