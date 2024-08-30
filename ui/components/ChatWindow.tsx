@@ -130,6 +130,7 @@ const useSocket = (
 
           if (
             embeddingModelProvider &&
+            embeddingModelProvider != 'custom_openai' &&
             !embeddingModelProviders[embeddingModelProvider][embeddingModel]
           ) {
             embeddingModel = Object.keys(
@@ -158,6 +159,17 @@ const useSocket = (
 
         searchParams.append('embeddingModel', embeddingModel!);
         searchParams.append('embeddingModelProvider', embeddingModelProvider);
+
+        if (embeddingModelProvider === 'custom_openai') {
+          searchParams.append(
+            'openAIApiKey',
+            localStorage.getItem('openAIApiKey')!,
+          );
+          searchParams.append(
+            'openAIBaseURL',
+            localStorage.getItem('openAIBaseURL')!,
+          );
+        }
 
         wsURL.search = searchParams.toString();
 
