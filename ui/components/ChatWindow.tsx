@@ -38,43 +38,56 @@ const useSocket = (
           'embeddingModelProvider',
         );
 
+        const providers = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/models`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        ).then(async (res) => await res.json());
+
         if (
           !chatModel ||
           !chatModelProvider ||
           !embeddingModel ||
           !embeddingModelProvider
         ) {
-          const providers = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/models`,
-            {
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            },
-          ).then(async (res) => await res.json());
+          if (!chatModel || !chatModelProvider) {
+            const chatModelProviders = providers.chatModelProviders;
 
-          const chatModelProviders = providers.chatModelProviders;
-          const embeddingModelProviders = providers.embeddingModelProviders;
+            chatModelProvider = Object.keys(chatModelProviders)[0];
 
-          if (
-            !chatModelProviders ||
-            Object.keys(chatModelProviders).length === 0
-          )
-            return toast.error('No chat models available');
+            if (chatModelProvider === 'custom_openai') {
+              toast.error(
+                'Seems like you are using the custom OpenAI provider, please open the settings and configure the API key and base URL',
+              );
+              setError(true);
+              return;
+            } else {
+              chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
+              if (
+                !chatModelProviders ||
+                Object.keys(chatModelProviders).length === 0
+              )
+                return toast.error('No chat models available');
+            }
+          }
 
-          if (
-            !embeddingModelProviders ||
-            Object.keys(embeddingModelProviders).length === 0
-          )
-            return toast.error('No embedding models available');
+          if (!embeddingModel || !embeddingModelProvider) {
+            const embeddingModelProviders = providers.embeddingModelProviders;
 
-          chatModelProvider = Object.keys(chatModelProviders)[0];
-          chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
+            if (
+              !embeddingModelProviders ||
+              Object.keys(embeddingModelProviders).length === 0
+            )
+              return toast.error('No embedding models available');
 
-          embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
-          embeddingModel = Object.keys(
-            embeddingModelProviders[embeddingModelProvider],
-          )[0];
+            embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
+            embeddingModel = Object.keys(
+              embeddingModelProviders[embeddingModelProvider],
+            )[0];
+          }
 
           localStorage.setItem('chatModel', chatModel!);
           localStorage.setItem('chatModelProvider', chatModelProvider);
@@ -84,15 +97,6 @@ const useSocket = (
             embeddingModelProvider,
           );
         } else {
-          const providers = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/models`,
-            {
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            },
-          ).then(async (res) => await res.json());
-
           const chatModelProviders = providers.chatModelProviders;
           const embeddingModelProviders = providers.embeddingModelProviders;
 
@@ -106,6 +110,7 @@ const useSocket = (
 
           if (
             chatModelProvider &&
+            chatModelProvider != 'custom_openai' &&
             !chatModelProviders[chatModelProvider][chatModel]
           ) {
             chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
@@ -160,8 +165,6 @@ const useSocket = (
 
         const timeoutId = setTimeout(() => {
           if (ws.readyState !== 1) {
-            ws.close();
-            setError(true);
             toast.error(
               'Failed to connect to the server. Please try again later.',
             );
@@ -171,7 +174,6 @@ const useSocket = (
         ws.onopen = () => {
           console.log('[DEBUG] open');
           clearTimeout(timeoutId);
-          setError(false);
           setIsWSReady(true);
         };
 
@@ -187,18 +189,18 @@ const useSocket = (
           console.log('[DEBUG] closed');
         };
 
+        ws.addEventListener('message', (e) => {
+          const data = JSON.parse(e.data);
+          if (data.type === 'error') {
+            toast.error(data.data);
+          }
+        });
+
         setWs(ws);
       };
 
       connectWs();
     }
-
-    return () => {
-      if (ws?.readyState === 1) {
-        ws?.close();
-        console.log('[DEBUG] closed');
-      }
-    };
   }, [ws, url, setIsWSReady, setError]);
 
   return ws;
@@ -302,6 +304,15 @@ const ChatWindow = ({ id }: { id?: string }) => {
       setChatId(crypto.randomBytes(20).toString('hex'));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (ws?.readyState === 1) {
+        ws.close();
+        console.log('[DEBUG] closed');
+      }
+    };
   }, []);
 
   const messagesRef = useRef<Message[]>([]);

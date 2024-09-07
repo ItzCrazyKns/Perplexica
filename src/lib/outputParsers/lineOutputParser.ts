@@ -1,43 +1,41 @@
 import { BaseOutputParser } from '@langchain/core/output_parsers';
 
-interface LineListOutputParserArgs {
+interface LineOutputParserArgs {
   key?: string;
 }
 
-class LineListOutputParser extends BaseOutputParser<string[]> {
+class LineOutputParser extends BaseOutputParser<string> {
   private key = 'questions';
 
-  constructor(args?: LineListOutputParserArgs) {
+  constructor(args?: LineOutputParserArgs) {
     super();
     this.key = args.key ?? this.key;
   }
 
   static lc_name() {
-    return 'LineListOutputParser';
+    return 'LineOutputParser';
   }
 
-  lc_namespace = ['langchain', 'output_parsers', 'line_list_output_parser'];
+  lc_namespace = ['langchain', 'output_parsers', 'line_output_parser'];
 
-  async parse(text: string): Promise<string[]> {
+  async parse(text: string): Promise<string> {
     const regex = /^(\s*(-|\*|\d+\.\s|\d+\)\s|\u2022)\s*)+/;
     const startKeyIndex = text.indexOf(`<${this.key}>`);
     const endKeyIndex = text.indexOf(`</${this.key}>`);
 
     if (startKeyIndex === -1 || endKeyIndex === -1) {
-      return [];
+      return '';
     }
 
     const questionsStartIndex =
       startKeyIndex === -1 ? 0 : startKeyIndex + `<${this.key}>`.length;
     const questionsEndIndex = endKeyIndex === -1 ? text.length : endKeyIndex;
-    const lines = text
+    const line = text
       .slice(questionsStartIndex, questionsEndIndex)
       .trim()
-      .split('\n')
-      .filter((line) => line.trim() !== '')
-      .map((line) => line.replace(regex, ''));
+      .replace(regex, '');
 
-    return lines;
+    return line;
   }
 
   getFormatInstructions(): string {
@@ -45,4 +43,4 @@ class LineListOutputParser extends BaseOutputParser<string[]> {
   }
 }
 
-export default LineListOutputParser;
+export default LineOutputParser;
