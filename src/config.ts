@@ -18,6 +18,10 @@ interface Config {
     SEARXNG: string;
     OLLAMA: string;
   };
+  REDIS: {
+    HOST: string;
+    PORT: number;
+  };
 }
 
 type RecursivePartial<T> = {
@@ -44,7 +48,8 @@ export const getSearxngApiEndpoint = () =>
   process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
 
 export const getOllamaApiEndpoint = () => loadConfig().API_ENDPOINTS.OLLAMA;
-
+export const getRedisHost = () => loadConfig().REDIS.HOST;
+export const getRedisPort = () => loadConfig().REDIS.PORT;
 export const updateConfig = (config: RecursivePartial<Config>) => {
   const currentConfig = loadConfig();
 

@@ -17,6 +17,7 @@ services:
         - SEARXNG_API_URL=http://searxng:8080
     depends_on:
       - searxng
+      - redis
     ports:
       - 3001:3001
     volumes:
@@ -42,9 +43,18 @@ services:
     networks:
       - perplexica-network
     restart: unless-stopped
-
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"  
+    volumes:
+      - redis_data:/data
+    networks:
+      - perplexica-network
+    restart: unless-stopped
 networks:
   perplexica-network:
 
 volumes:
   backend-dbstore:
+  redis_data:
