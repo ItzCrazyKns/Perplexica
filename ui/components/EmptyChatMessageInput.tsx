@@ -18,6 +18,12 @@ const EmptyChatMessageInput = ({
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // Function to extract query parameter from URL
+  const getQueryFromURL = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('query') || '';
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeElement = document.activeElement;
@@ -33,12 +39,19 @@ const EmptyChatMessageInput = ({
       }
     };
 
+    // Handle query parameter on initial load
+    const initialQuery = getQueryFromURL();
+    if (initialQuery) {
+      setMessage(initialQuery); // Set the query to the message input
+      sendMessage(initialQuery); // Automatically send the message
+    }
+
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [sendMessage]);
 
   return (
     <form
@@ -68,7 +81,6 @@ const EmptyChatMessageInput = ({
         <div className="flex flex-row items-center justify-between mt-4">
           <div className="flex flex-row items-center space-x-1 -mx-2">
             <Focus focusMode={focusMode} setFocusMode={setFocusMode} />
-            {/* <Attach /> */}
           </div>
           <div className="flex flex-row items-center space-x-4 -mx-2">
             <CopilotToggle
