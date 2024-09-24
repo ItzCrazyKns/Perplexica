@@ -13,11 +13,13 @@ import db from '../db';
 import { chats, messages } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import crypto from 'crypto';
+import redisClient from '../utils/redisClient';
 
 type Message = {
   messageId: string;
   chatId: string;
   content: string;
+  cache: string;
 };
 
 type WSMessage = {
@@ -42,6 +44,8 @@ const handleEmitterEvents = (
   ws: WebSocket,
   messageId: string,
   chatId: string,
+  cacheKey: string,
+  shouldCache: boolean,
 ) => {
   let recievedMessage = '';
   let sources = [];
@@ -68,10 +72,13 @@ const handleEmitterEvents = (
       sources = parsedData.data;
     }
   });
-  emitter.on('end', () => {
+
+  emitter.on('end', async () => {
     ws.send(JSON.stringify({ type: 'messageEnd', messageId: messageId }));
 
-    db.insert(messages)
+    // Guardar el mensaje recibido en la base de datos
+    await db
+      .insert(messages)
       .values({
         content: recievedMessage,
         chatId: chatId,
@@ -83,7 +90,23 @@ const handleEmitterEvents = (
         }),
       })
       .execute();
+
+    // Almacenar la respuesta en caché si shouldCache es true
+    if (shouldCache) {
+      const responseWithSources = {
+        content: recievedMessage,
+        chatId: chatId,
+        messageId: messageId,
+        role: 'assistant',
+        metadata: JSON.stringify(sources),
+      };
+      await redisClient
+        .setEx(cacheKey, 86400, JSON.stringify(responseWithSources))
+        .then(() => logger.info(`Cache set for ${cacheKey}`))
+        .catch((err) => logger.error(`Redis setEx error: ${err}`));
+    }
   });
+
   emitter.on('error', (data) => {
     const parsedData = JSON.parse(data);
     ws.send(
@@ -105,7 +128,6 @@ export const handleMessage = async (
   try {
     const parsedWSMessage = JSON.parse(message) as WSMessage;
     const parsedMessage = parsedWSMessage.message;
-
     const id = crypto.randomBytes(7).toString('hex');
 
     if (!parsedMessage.content)
@@ -116,6 +138,69 @@ export const handleMessage = async (
           key: 'INVALID_FORMAT',
         }),
       );
+
+    const cacheKey = parsedMessage.content;
+    const shouldCache = parsedMessage.cache === '1';
+
+    if (shouldCache) {
+      const cachedResponse = await redisClient.get(cacheKey);
+
+      if (cachedResponse) {
+        const jsonDatabase = JSON.parse(cachedResponse);
+
+        ws.send(
+          JSON.stringify({
+            type: 'message',
+            data: jsonDatabase.content,
+            messageId: jsonDatabase.messageId,
+          }),
+        );
+        const sources = JSON.parse(jsonDatabase.metadata);
+        ws.send(
+          JSON.stringify({
+            type: 'sources',
+            data: sources,
+            messageId: jsonDatabase.messageId,
+            cache: true,
+          }),
+        );
+        await db
+          .insert(chats)
+          .values({
+            id: parsedMessage.chatId,
+            title: parsedMessage.content,
+            createdAt: new Date().toString(),
+            focusMode: parsedWSMessage.focusMode,
+          })
+          .execute();
+        await db
+          .insert(messages)
+          .values({
+            content: parsedMessage.content,
+            chatId: parsedMessage.chatId,
+            messageId: id,
+            role: 'user',
+            metadata: JSON.stringify({
+              createdAt: new Date(),
+            }),
+          })
+          .execute();
+        await db
+          .insert(messages)
+          .values({
+            content: jsonDatabase.content,
+            chatId: parsedMessage.chatId,
+            messageId: id,
+            role: jsonDatabase.role,
+            metadata: JSON.stringify({
+              createdAt: new Date(),
+              ...(sources && sources.length > 0 && { sources }),
+            }),
+          })
+          .execute();
+        return;
+      }
+    }
 
     const history: BaseMessage[] = parsedWSMessage.history.map((msg) => {
       if (msg[0] === 'human') {
@@ -140,7 +225,14 @@ export const handleMessage = async (
           embeddings,
         );
 
-        handleEmitterEvents(emitter, ws, id, parsedMessage.chatId);
+        handleEmitterEvents(
+          emitter,
+          ws,
+          id,
+          parsedMessage.chatId,
+          cacheKey,
+          shouldCache,
+        );
 
         const chat = await db.query.chats.findFirst({
           where: eq(chats.id, parsedMessage.chatId),

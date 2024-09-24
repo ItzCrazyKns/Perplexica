@@ -215,7 +215,7 @@ const loadMessages = async (
   const chatsIdUrl = new URL(
     `${process.env.NEXT_PUBLIC_API_URL}/chats/${chatId}`,
   );
-  chatsIdUrl.searchParams.append('cache', '1');
+  //chatsIdUrl.searchParams.append('cache', '1');
   const res = await fetch(chatsIdUrl, {
     method: 'GET',
     headers: {
@@ -275,7 +275,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
-
   const [focusMode, setFocusMode] = useState('webSearch');
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
@@ -343,6 +342,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         message: {
           chatId: chatId!,
           content: message,
+          cache: '1',
         },
         focusMode: focusMode,
         history: [...chatHistory, ['human', message]],
@@ -371,6 +371,26 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
       if (data.type === 'sources') {
         sources = data.data;
+        if (typeof sources === 'string') {
+          sources = JSON.parse(data.data);
+          added = false;
+          setLoading(false);
+        }
+        if (data.cache) {
+          {
+            setMessages((prevMessages) => [
+              prevMessages[0],
+              {
+                ...prevMessages[1],
+                sources:
+                  typeof sources === 'string' ? JSON.parse(sources) : sources,
+              },
+            ]);
+            added = true;
+          }
+          setLoading(false);
+        }
+
         if (!added) {
           setMessages((prevMessages) => [
             ...prevMessages,
@@ -379,7 +399,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
               messageId: data.messageId,
               chatId: chatId!,
               role: 'assistant',
-              sources: sources,
+              sources:
+                typeof sources === 'string' ? JSON.parse(sources) : sources,
               createdAt: new Date(),
             },
           ]);
