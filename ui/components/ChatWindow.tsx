@@ -181,11 +181,11 @@ const useSocket = (
           toast.error('WebSocket connection error.');
         };
 
-        ws.onclose = () => {
-          clearTimeout(timeoutId);
-          setError(true);
-          console.log('[DEBUG] closed');
-        };
+        // ws.onclose = () => {
+        //   clearTimeout(timeoutId);
+        //   setError(true);
+        //   console.log('[DEBUG] closed');
+        // };
 
         ws.addEventListener('message', (e) => {
           const data = JSON.parse(e.data);
@@ -529,16 +529,17 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
+  console.log(hasError);
 
-  if (hasError) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="dark:text-white/70 text-black/70 text-sm">
-          Failed to connect to the server. Please try again later.
-        </p>
-      </div>
-    );
-  }
+  // if (hasError) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center min-h-screen">
+  //       <p className="dark:text-white/70 text-black/70 text-sm">
+  //         Failed to connect to the server. Please try again later.
+  //       </p>
+  //     </div>
+  //   );
+  // }
 
   return isReady ? (
     notFound ? (
