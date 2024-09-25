@@ -160,7 +160,11 @@ const useSocket = (
         wsURL.search = searchParams.toString();
 
         const ws = new WebSocket(wsURL.toString());
-
+        const keepAliveInterval = setInterval(() => {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 50000);
         const timeoutId = setTimeout(() => {
           if (ws.readyState !== 1) {
             toast.error(
@@ -176,16 +180,20 @@ const useSocket = (
         };
 
         ws.onerror = () => {
+          clearInterval(keepAliveInterval);
           clearTimeout(timeoutId);
           setError(true);
           toast.error('WebSocket connection error.');
         };
 
-        // ws.onclose = () => {
-        //   clearTimeout(timeoutId);
-        //   setError(true);
-        //   console.log('[DEBUG] closed');
-        // };
+        ws.onclose = () => {
+          clearTimeout(timeoutId);
+          setError(true);
+          console.log('[DEBUG] closed');
+          setTimeout(() => {
+            connectWs();
+          }, 2000);
+        };
 
         ws.addEventListener('message', (e) => {
           const data = JSON.parse(e.data);
@@ -529,7 +537,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
-  console.log(hasError);
 
   // if (hasError) {
   //   return (
