@@ -4,13 +4,19 @@ import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { getAvailableChatModelProviders } from '../lib/providers';
 import { HumanMessage, AIMessage } from '@langchain/core/messages';
 import logger from '../utils/logger';
-
+import redisClient from '../utils/redisClient';
 const router = express.Router();
 
 router.post('/', async (req, res) => {
   try {
     let { chat_history, chat_model, chat_model_provider } = req.body;
+    const messageId = chat_history[1]?.messageId;
+    const cachedResponse = await redisClient.get(messageId);
 
+    if (cachedResponse) {
+      logger.info(`Cache hit for messageId: ${messageId}`);
+      return res.status(200).json(JSON.parse(cachedResponse));
+    }
     chat_history = chat_history.map((msg: any) => {
       if (msg.role === 'user') {
         return new HumanMessage(msg.content);
@@ -36,6 +42,7 @@ router.post('/', async (req, res) => {
 
     const suggestions = await generateSuggestions({ chat_history }, llm);
 
+    await redisClient.setEx(messageId, 86400, JSON.stringify({ suggestions }));
     res.status(200).json({ suggestions: suggestions });
   } catch (err) {
     res.status(500).json({ message: 'An error has occurred.' });

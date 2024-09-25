@@ -39,7 +39,7 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
           const result = originalSend(body);
 
           redisClient
-            .setEx(cacheKey, 3600, JSON.stringify(body))
+            .setEx(cacheKey, 86400, JSON.stringify(body))
             .then(() => logger.info(`Cache set for ${cacheKey}`))
             .catch((err) => logger.error(`Redis setEx error: ${err}`));
 

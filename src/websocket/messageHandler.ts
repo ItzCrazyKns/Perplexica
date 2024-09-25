@@ -178,7 +178,7 @@ export const handleMessage = async (
           .values({
             content: parsedMessage.content,
             chatId: parsedMessage.chatId,
-            messageId: id,
+            messageId: jsonDatabase.messageId,
             role: 'user',
             metadata: JSON.stringify({
               createdAt: new Date(),
@@ -190,7 +190,7 @@ export const handleMessage = async (
           .values({
             content: jsonDatabase.content,
             chatId: parsedMessage.chatId,
-            messageId: id,
+            messageId: jsonDatabase.messageId,
             role: jsonDatabase.role,
             metadata: JSON.stringify({
               createdAt: new Date(),

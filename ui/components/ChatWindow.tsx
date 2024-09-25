@@ -167,7 +167,7 @@ const useSocket = (
               'Failed to connect to the server. Please try again later.',
             );
           }
-        }, 10000);
+        }, 1000);
 
         ws.onopen = () => {
           console.log('[DEBUG] open');
@@ -280,6 +280,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
   const [notFound, setNotFound] = useState(false);
+  const [cache, setCache] = useState(false);
+  const [newRequest, setNewRequest] = useState(false);
 
   useEffect(() => {
     if (
@@ -361,6 +363,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     ]);
 
     const messageHandler = async (e: MessageEvent) => {
+      setNewRequest(true);
       const data = JSON.parse(e.data);
 
       if (data.type === 'error') {
@@ -371,6 +374,9 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
       if (data.type === 'sources') {
         sources = data.data;
+        if (data.cache) {
+          setCache(true);
+        }
         if (typeof sources === 'string') {
           sources = JSON.parse(data.data);
           added = false;
@@ -490,12 +496,39 @@ const ChatWindow = ({ id }: { id?: string }) => {
     sendMessage(message.content);
   };
 
+  const getSuggestionsWithPreviewInfo = async () => {
+    if (
+      messages[1].role === 'assistant' &&
+      messages[1].sources &&
+      messages[1].sources.length > 0 &&
+      !messages[1].suggestions
+    ) {
+      const suggestions = await getSuggestions(messagesRef.current);
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.messageId === messages[1].messageId) {
+            return { ...msg, suggestions: suggestions };
+          }
+          return msg;
+        }),
+      );
+    }
+  };
   useEffect(() => {
     if (isReady && initialMessage) {
       sendMessage(initialMessage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady, initialMessage]);
+  useEffect(() => {
+    if (
+      (messages.length > 1 && cache) ||
+      (messages.length > 1 && !newRequest)
+    ) {
+      getSuggestionsWithPreviewInfo();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages]);
 
   if (hasError) {
     return (
