@@ -195,12 +195,16 @@ const useSocket = (
           }, 2000);
         };
 
-        ws.addEventListener('message', (e) => {
-          const data = JSON.parse(e.data);
-          if (data.type === 'error') {
-            toast.error(data.data);
-          }
-        });
+        // ws.addEventListener('message', (e) => {
+        //   const data = JSON.parse(e.data);
+        //   console.log(data);
+
+        //   if (data.type === 'error') {
+        //     console.log(data.data);
+
+        //     toast.error(data.data);
+        //   }
+        // });
 
         setWs(ws);
       };
@@ -376,6 +380,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
       if (data.type === 'error') {
         toast.error(data.data);
+        console.log(data.data);
+
         setLoading(false);
         return;
       }
@@ -537,6 +543,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
+  console.log(hasError);
 
   // if (hasError) {
   //   return (
