@@ -535,7 +535,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
-  console.log(hasError);
 
   // if (hasError) {
   //   return (
