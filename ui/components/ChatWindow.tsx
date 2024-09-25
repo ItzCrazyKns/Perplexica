@@ -195,16 +195,11 @@ const useSocket = (
           }, 2000);
         };
 
-        // ws.addEventListener('message', (e) => {
-        //   const data = JSON.parse(e.data);
-        //   console.log(data);
-
-        //   if (data.type === 'error') {
-        //     console.log(data.data);
-
-        //     toast.error(data.data);
-        //   }
-        // });
+        ws.addEventListener('message', (e) => {
+          const data = JSON.parse(e.data);
+          if (data.type === 'error') {
+          }
+        });
 
         setWs(ws);
       };
@@ -379,9 +374,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
       const data = JSON.parse(e.data);
 
       if (data.type === 'error') {
-        toast.error(data.data);
-        console.log(data.data);
-
         setLoading(false);
         return;
       }
