@@ -7,9 +7,13 @@ ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
 
 WORKDIR /home/perplexica
 
-COPY ui /home/perplexica/
+COPY ui/package.json /home/perplexica/
+COPY ui/yarn.lock /home/perplexica/
 
 RUN yarn install
+
+COPY ui /home/perplexica/
+
 RUN yarn build
 
 CMD ["yarn", "start"]
