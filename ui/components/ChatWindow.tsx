@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import { getSuggestions } from '@/lib/actions';
 import Error from 'next/error';
+import { useRouter } from 'next/navigation';
 
 export type Message = {
   messageId: string;
@@ -283,6 +284,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const [notFound, setNotFound] = useState(false);
 
+  const router = useRouter();
+
   useEffect(() => {
     if (
       chatId &&
@@ -420,6 +423,11 @@ const ChatWindow = ({ id }: { id?: string }) => {
       }
 
       if (data.type === 'messageEnd') {
+        if (!chatHistory.length) {
+          const url = `/c/${chatId}`;
+          router.replace(url);
+        }
+
         setChatHistory((prevHistory) => [
           ...prevHistory,
           ['human', message],
