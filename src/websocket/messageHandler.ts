@@ -29,7 +29,11 @@ type WSMessage = {
   focusMode: string;
   history: Array<[string, string]>;
 };
-
+const formatString = (str: string) => {
+  let lowerCased = str.toLowerCase();
+  let formatted = lowerCased.trim().replace(/\s+/g, ' ');
+  return formatted;
+};
 const searchHandlers = {
   webSearch: handleWebSearch,
   academicSearch: handleAcademicSearch,
@@ -101,7 +105,11 @@ const handleEmitterEvents = (
         metadata: JSON.stringify(sources),
       };
       await redisClient
-        .setEx(cacheKey, 86400, JSON.stringify(responseWithSources))
+        .setEx(
+          formatString(cacheKey),
+          86400,
+          JSON.stringify(responseWithSources),
+        )
         .then(() => logger.info(`Cache set for ${cacheKey}`))
         .catch((err) => logger.error(`Redis setEx error: ${err}`));
     }
@@ -143,7 +151,7 @@ export const handleMessage = async (
     const shouldCache = parsedMessage.cache === '1';
 
     if (shouldCache) {
-      const cachedResponse = await redisClient.get(cacheKey);
+      const cachedResponse = await redisClient.get(formatString(cacheKey));
 
       if (cachedResponse) {
         const jsonDatabase = JSON.parse(cachedResponse);
