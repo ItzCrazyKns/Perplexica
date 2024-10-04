@@ -9,6 +9,7 @@ import {
   getAnthropicApiKey,
   getOpenaiApiKey,
   updateConfig,
+  getOllamaKeepAliveStrategy,
 } from '../config';
 import logger from '../utils/logger';
 
@@ -50,6 +51,7 @@ router.get('/', async (_, res) => {
 
     config['openaiApiKey'] = getOpenaiApiKey();
     config['ollamaApiUrl'] = getOllamaApiEndpoint();
+    config['ollamaKeepAliveStrategy'] = getOllamaKeepAliveStrategy();
     config['anthropicApiKey'] = getAnthropicApiKey();
     config['groqApiKey'] = getGroqApiKey();
 
@@ -71,6 +73,9 @@ router.post('/', async (req, res) => {
     },
     API_ENDPOINTS: {
       OLLAMA: config.ollamaApiUrl,
+    },
+    OLLAMA: {
+      KEEP_ALIVE: config.ollamaKeepAliveStrategy,
     },
   };
 

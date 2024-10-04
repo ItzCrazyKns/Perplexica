@@ -1,5 +1,5 @@
 import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
-import { getOllamaApiEndpoint } from '../../config';
+import { getOllamaApiEndpoint, getOllamaKeepAliveStrategy } from '../../config';
 import logger from '../../utils/logger';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
 
@@ -24,6 +24,7 @@ export const loadOllamaChatModels = async () => {
           baseUrl: ollamaEndpoint,
           model: model.model,
           temperature: 0.7,
+          keepAlive: getOllamaKeepAliveStrategy(),
         }),
       };
 
@@ -57,6 +58,7 @@ export const loadOllamaEmbeddingsModels = async () => {
         model: new OllamaEmbeddings({
           baseUrl: ollamaEndpoint,
           model: model.model,
+          keepAlive: getOllamaKeepAliveStrategy(),
         }),
       };
 
