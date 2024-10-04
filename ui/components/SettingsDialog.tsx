@@ -54,6 +54,7 @@ interface SettingsType {
   embeddingModelProviders: {
     [key: string]: [Record<string, any>];
   };
+  ollamaKeepAliveStrategy: string;
   openaiApiKey: string;
   groqApiKey: string;
   anthropicApiKey: string;
@@ -78,6 +79,10 @@ const SettingsDialog = ({
   const [selectedChatModel, setSelectedChatModel] = useState<string | null>(
     null,
   );
+
+  const [selectedOllamaKeepAliveStrategy, setSelectedOllamaKeepAliveStrategy] =
+    useState<string | null>(null);
+
   const [selectedEmbeddingModelProvider, setSelectedEmbeddingModelProvider] =
     useState<string | null>(null);
   const [selectedEmbeddingModel, setSelectedEmbeddingModel] = useState<
@@ -124,6 +129,10 @@ const SettingsDialog = ({
           (data.chatModelProviders &&
             data.chatModelProviders[chatModelProvider]?.[0].name) ||
           '';
+        const ollamaKeepAliveStrategy =
+          localStorage.getItem('ollamaKeepAliveStrategy') ||
+          data.ollamaKeepAliveStrategy ||
+          '';
         const embeddingModelProvider =
           localStorage.getItem('embeddingModelProvider') ||
           defaultEmbeddingModelProvider ||
@@ -136,6 +145,7 @@ const SettingsDialog = ({
 
         setSelectedChatModelProvider(chatModelProvider);
         setSelectedChatModel(chatModel);
+        setSelectedOllamaKeepAliveStrategy(ollamaKeepAliveStrategy);
         setSelectedEmbeddingModelProvider(embeddingModelProvider);
         setSelectedEmbeddingModel(embeddingModel);
         setCustomOpenAIApiKey(localStorage.getItem('openAIApiKey') || '');
@@ -164,6 +174,10 @@ const SettingsDialog = ({
 
       localStorage.setItem('chatModelProvider', selectedChatModelProvider!);
       localStorage.setItem('chatModel', selectedChatModel!);
+      localStorage.setItem(
+        'ollamaKeepAliveStrategy',
+        selectedOllamaKeepAliveStrategy!,
+      );
       localStorage.setItem(
         'embeddingModelProvider',
         selectedEmbeddingModelProvider!,
@@ -293,6 +307,42 @@ const SettingsDialog = ({
                           />
                         </div>
                       )}
+
+                    {selectedChatModelProvider &&
+                      selectedChatModelProvider === 'ollama' && (
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-black/70 dark:text-white/70 text-sm">
+                            KeepAlive Strategy
+                          </p>
+                          <Select
+                            value={selectedOllamaKeepAliveStrategy ?? undefined}
+                            onChange={(e) => {
+                              setSelectedOllamaKeepAliveStrategy(
+                                e.target.value,
+                              );
+                              setConfig({
+                                ...config,
+                                ollamaKeepAliveStrategy: e.target.value,
+                              });
+                            }}
+                            options={[
+                              {
+                                value: '5m',
+                                label: '5 Minutes',
+                              },
+                              {
+                                value: '60m',
+                                label: '1 Hour',
+                              },
+                              {
+                                value: '-1m',
+                                label: 'Forever',
+                              },
+                            ]}
+                          />
+                        </div>
+                      )}
+
                     {selectedChatModelProvider &&
                       selectedChatModelProvider === 'custom_openai' && (
                         <>
