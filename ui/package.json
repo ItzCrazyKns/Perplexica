@@ -16,6 +16,7 @@
     "@langchain/openai": "^0.0.25",
     "@tailwindcss/typography": "^0.5.12",
     "clsx": "^2.1.0",
+    "js-cookie": "^3.0.5",
     "langchain": "^0.1.30",
     "lucide-react": "^0.363.0",
     "markdown-to-jsx": "^7.4.5",
@@ -31,6 +32,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

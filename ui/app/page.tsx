@@ -1,4 +1,5 @@
 import ChatWindow from '@/components/ChatWindow';
+import AuthSettingsHandler from '@/components/AuthSettingsHandler';
 import { Metadata } from 'next';
 import { Suspense } from 'react';
 
@@ -7,14 +8,13 @@ export const metadata: Metadata = {
   description: 'Chat with the internet, chat with Perplexica.',
 };
 
-const Home = () => {
+export default function Home() {
   return (
     <div>
+      <AuthSettingsHandler />
       <Suspense>
         <ChatWindow />
       </Suspense>
     </div>
   );
-};
-
-export default Home;
+}

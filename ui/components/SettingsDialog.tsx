@@ -8,6 +8,8 @@ import React, {
   type SelectHTMLAttributes,
 } from 'react';
 import ThemeSwitcher from './theme/Switcher';
+import { Switch } from '@headlessui/react';
+import Cookies from 'js-cookie';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
@@ -36,13 +38,11 @@ export const Select = ({ className, options, ...restProps }: SelectProps) => {
         className,
       )}
     >
-      {options.map(({ label, value, disabled }) => {
-        return (
-          <option key={value} value={value} disabled={disabled}>
-            {label}
-          </option>
-        );
-      })}
+      {options.map((option) => (
+        <option key={option.value} value={option.value} disabled={option.disabled}>
+          {option.label}
+        </option>
+      ))}
     </select>
   );
 };
@@ -58,6 +58,12 @@ interface SettingsType {
   groqApiKey: string;
   anthropicApiKey: string;
   ollamaApiUrl: string;
+}
+
+interface AuthSettings {
+  isEnabled: boolean;
+  username: string;
+  password: string;
 }
 
 const SettingsDialog = ({
@@ -87,6 +93,11 @@ const SettingsDialog = ({
   const [customOpenAIBaseURL, setCustomOpenAIBaseURL] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [authSettings, setAuthSettings] = useState<AuthSettings>({
+    isEnabled: false,
+    username: '',
+    password: '',
+  });
 
   useEffect(() => {
     if (isOpen) {
@@ -150,44 +161,52 @@ const SettingsDialog = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
+  const handleAuthToggle = () => {
+    setAuthSettings((prev) => ({
+      ...prev,
+      isEnabled: !prev.isEnabled,
+      username: '',
+      password: '',
+    }));
+  };
+
   const handleSubmit = async () => {
     setIsUpdating(true);
-
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth-settings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(config),
+        body: JSON.stringify(authSettings),
       });
 
-      localStorage.setItem('chatModelProvider', selectedChatModelProvider!);
-      localStorage.setItem('chatModel', selectedChatModel!);
-      localStorage.setItem(
-        'embeddingModelProvider',
-        selectedEmbeddingModelProvider!,
-      );
-      localStorage.setItem('embeddingModel', selectedEmbeddingModel!);
-      localStorage.setItem('openAIApiKey', customOpenAIApiKey!);
-      localStorage.setItem('openAIBaseURL', customOpenAIBaseURL!);
-    } catch (err) {
-      console.log(err);
+      if (res.ok) {
+        if (authSettings.isEnabled) {
+          Cookies.set('authEnabled', 'true');
+          Cookies.set('authUsername', authSettings.username);
+          Cookies.set('authPassword', authSettings.password);
+        } else {
+          Cookies.remove('authEnabled');
+          Cookies.remove('authUsername');
+          Cookies.remove('authPassword');
+        }
+        window.location.reload();
+      } else {
+        const errorData = await res.json();
+        alert(errorData.message || 'Failed to update settings.');
+      }
+    } catch (error) {
+      console.error('Error updating auth settings:', error);
+      alert('An error occurred while updating settings.');
     } finally {
       setIsUpdating(false);
-      setIsOpen(false);
-
-      window.location.reload();
     }
   };
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog
-        as="div"
-        className="relative z-50"
-        onClose={() => setIsOpen(false)}
-      >
+      <Dialog as="div" className="relative z-10" onClose={() => setIsOpen(false)}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -197,21 +216,25 @@ const SettingsDialog = ({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-white/50 dark:bg-black/50" />
+          <div className="fixed inset-0 bg-black bg-opacity-25" />
         </Transition.Child>
+
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4 text-center">
             <Transition.Child
               as={Fragment}
-              enter="ease-out duration-200"
+              enter="ease-out duration-300"
               enterFrom="opacity-0 scale-95"
               enterTo="opacity-100 scale-100"
-              leave="ease-in duration-100"
-              leaveFrom="opacity-100 scale-200"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200 p-6 text-left align-middle shadow-xl transition-all">
-                <Dialog.Title className="text-xl font-medium leading-6 dark:text-white">
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-gray-800 p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Title
+                  as="h3"
+                  className="text-lg font-medium leading-6 text-gray-900 dark:text-white"
+                >
                   Settings
                 </Dialog.Title>
                 {config && !isLoading && (
@@ -468,6 +491,63 @@ const SettingsDialog = ({
                         }
                       />
                     </div>
+                    {/* Authentication Toggle */}
+                    <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+                      <h4 className="text-md font-semibold text-gray-700 dark:text-gray-200 mb-4">
+                        HTTP Basic Authentication
+                      </h4>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700 dark:text-gray-200">Enable Authentication</span>
+                        <Switch
+                          checked={authSettings.isEnabled}
+                          onChange={handleAuthToggle}
+                          className={`${
+                            authSettings.isEnabled ? 'bg-blue-600' : 'bg-gray-200'
+                          } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2`}
+                        >
+                          <span
+                            className={`${
+                              authSettings.isEnabled ? 'translate-x-6' : 'translate-x-1'
+                            } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                          />
+                        </Switch>
+                      </div>
+
+                      {authSettings.isEnabled && (
+                        <div className="mt-4 space-y-4">
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-black/70 dark:text-white/70 text-sm">Username</p>
+                            <Input
+                              type="text"
+                              placeholder="Username"
+                              value={authSettings.username}
+                              onChange={(e) =>
+                                setAuthSettings({
+                                  ...authSettings,
+                                  username: e.target.value,
+                                })
+                              }
+                              required={authSettings.isEnabled}
+                            />
+                          </div>
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-black/70 dark:text-white/70 text-sm">Password</p>
+                            <Input
+                              type="password"
+                              placeholder="Password"
+                              value={authSettings.password}
+                              onChange={(e) =>
+                                setAuthSettings({
+                                  ...authSettings,
+                                  password: e.target.value,
+                                })
+                              }
+                              required={authSettings.isEnabled}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 {isLoading && (
@@ -489,6 +569,7 @@ const SettingsDialog = ({
                     ) : (
                       <CloudUpload size={20} />
                     )}
+                    <span>Confirm</span>
                   </button>
                 </div>
               </Dialog.Panel>

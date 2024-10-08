@@ -5,6 +5,7 @@ import http from 'http';
 import routes from './routes';
 import { getPort } from './config';
 import logger from './utils/logger';
+import authSettingsRouter from './routes/auth-settings';
 
 const port = getPort();
 
@@ -19,6 +20,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use('/api', routes);
+app.use('/api/auth-settings', authSettingsRouter);
 app.get('/api', (_, res) => {
   res.status(200).json({ status: 'ok' });
 });
