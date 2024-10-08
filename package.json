@@ -39,6 +39,7 @@
     "drizzle-orm": "^0.31.2",
     "express": "^4.19.2",
     "html-to-text": "^9.0.5",
+    "js-cookie": "^3.0.5",
     "langchain": "^0.1.30",
     "pdf-parse": "^1.1.1",
     "winston": "^3.13.0",

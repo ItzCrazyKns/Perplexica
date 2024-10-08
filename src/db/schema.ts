@@ -1,3 +1,4 @@
+import { timestamp } from 'drizzle-orm/pg-core';
 import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
 
 export const messages = sqliteTable('messages', {
@@ -16,4 +17,11 @@ export const chats = sqliteTable('chats', {
   title: text('title').notNull(),
   createdAt: text('createdAt').notNull(),
   focusMode: text('focusMode').notNull(),
+});
+
+export const authSettings = sqliteTable('auth_settings', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  isEnabled: integer('is_enabled', { mode: 'boolean' }).notNull().default(false),
+  username: text('username'),
+  password: text('password'),
 });
