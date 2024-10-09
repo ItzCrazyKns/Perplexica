@@ -6,7 +6,21 @@ SIMILARITY_MEASURE = "cosine" # "cosine" or "dot"
 OPENAI = "" # OpenAI API key - sk-1234567890abcdef1234567890abcdef
 GROQ = "" # Groq API key - gsk_1234567890abcdef1234567890abcdef
 ANTHROPIC = "" # Anthropic API key - sk-ant-1234567890abcdef1234567890abcdef
+AZURE = "" # Azure OpenAI API key
 
 [API_ENDPOINTS]
 SEARXNG = "http://localhost:32768" # SearxNG API URL
 OLLAMA = "" # Ollama API URL - http://host.docker.internal:11434
+AZURE = "" # Azure OpenAI Endpoint URL - https://endpointhere.openai.azure.com/
+
+[AZURE_OPENAI]
+DEPLOYMENT_NAME_GPT35_TURBO = "gpt-35-turbo" # Deployment name for GPT-3.5 turbo
+DEPLOYMENT_NAME_GPT35_TURBO_16K = "gpt-35-turbo-16k" # Deployment name for GPT-3.5-turbo 16k
+DEPLOYMENT_NAME_GPT35_TURBO_INSTRUCT = "gpt-35-turbo-instruct" # Deployment name for GPT-3.5 turbo instruct
+DEPLOYMENT_NAME_GPT4 = "gpt4" # Deployment name for GPT-4
+DEPLOYMENT_NAME_GPT4_32K = "gpt432k" # Deployment name for GPT-4 32K
+DEPLOYMENT_NAME_GPT4_OMNI = "gpt-4o" # Deployment name for GPT-4 omni
+DEPLOYMENT_NAME_GPT4_OMNI_MINI = "gpt-4o-mini" # Deployment name for GPT-4 omni mini
+DEPLOYMENT_NAME_EMBEDDINGS_ADA = "text-embeddings-ada-002" # Deployment name for text embeddings ada 002
+DEPLOYMENT_NAME_EMBEDDINGS_SMALL = "text-embedding-3-small" # Deployment name for text embedding 3 small
+DEPLOYMENT_NAME_EMBEDDINGS_LARGE = "text-embedding-3-large" # Deployment name for text embedding 3 large
