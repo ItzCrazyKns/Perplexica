@@ -201,13 +201,6 @@ const useSocket = (
 
       connectWs();
     }
-
-    return () => {
-      if (ws?.readyState === 1) {
-        ws?.close();
-        console.log('[DEBUG] closed');
-      }
-    };
   }, [ws, url, setIsWSReady, setError]);
 
   return ws;
@@ -311,6 +304,15 @@ const ChatWindow = ({ id }: { id?: string }) => {
       setChatId(crypto.randomBytes(20).toString('hex'));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (ws?.readyState === 1) {
+        ws.close();
+        console.log('[DEBUG] closed');
+      }
+    };
   }, []);
 
   const messagesRef = useRef<Message[]>([]);
