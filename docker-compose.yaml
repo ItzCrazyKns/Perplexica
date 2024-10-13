@@ -8,6 +8,8 @@ services:
     networks:
       - perplexica-network
     restart: unless-stopped
+    profiles:
+      - bundled
 
   perplexica-backend:
     build:
@@ -16,8 +18,6 @@ services:
     image: itzcrazykns1337/perplexica-backend:main
     environment:
       - SEARXNG_API_URL=http://searxng:8080
-    depends_on:
-      - searxng
     ports:
       - 3001:3001
     volumes:
