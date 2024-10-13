@@ -79,7 +79,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 5. Ensure you are in the directory containing the `docker-compose.yaml` file and execute:
 
    ```bash
-   docker-compose --profile bundled up -d
+   docker compose --profile bundled up -d
    ```
 
 **Note**: `--profile bundled` installs SearXNG locally. If you are using an externally managed SearXNG instance omit this profile.
