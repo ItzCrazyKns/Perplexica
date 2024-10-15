@@ -115,11 +115,7 @@ const createBasicAcademicSearchRetrieverChain = (llm: BaseChatModel) => {
 
       const res = await searchSearxng(input, {
         language: 'en',
-        engines: [
-          'arxiv',
-          'google scholar',
-          'pubmed',
-        ],
+        engines: ['arxiv', 'google scholar', 'pubmed'],
       });
 
       const documents = res.results.map(
@@ -171,7 +167,6 @@ const createBasicAcademicSearchAnsweringChain = (
     if (optimizationMode === 'speed') {
       return docsWithContent.slice(0, 15);
     } else if (optimizationMode === 'balanced') {
-      console.log('Balanced mode');
       const [docEmbeddings, queryEmbedding] = await Promise.all([
         embeddings.embedDocuments(
           docsWithContent.map((doc) => doc.pageContent),
