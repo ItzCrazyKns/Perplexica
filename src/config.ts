@@ -14,6 +14,9 @@ interface Config {
     GROQ: string;
     ANTHROPIC: string;
   };
+  OLLAMA: {
+    KEEP_ALIVE: string;
+  };
   API_ENDPOINTS: {
     SEARXNG: string;
     OLLAMA: string;
@@ -44,6 +47,8 @@ export const getSearxngApiEndpoint = () =>
   process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
 
 export const getOllamaApiEndpoint = () => loadConfig().API_ENDPOINTS.OLLAMA;
+
+export const getOllamaKeepAliveStrategy = () => loadConfig().OLLAMA.KEEP_ALIVE;
 
 export const updateConfig = (config: RecursivePartial<Config>) => {
   const currentConfig = loadConfig();
