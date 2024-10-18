@@ -11,24 +11,25 @@ import { searchSearxng } from '../lib/searxng';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const VideoSearchChainPrompt = `
-  You will be given a conversation below and a follow up question. You need to rephrase the follow-up question so it is a standalone question that can be used by the LLM to search Youtube for videos.
-  You need to make sure the rephrased question agrees with the conversation and is relevant to the conversation.
+  - You will be given a conversation below and a follow up question.
+  - You need to rephrase the follow-up question so it is a standalone question that can be used by the LLM to search Youtube for videos.
+  - You need to make sure the rephrased question agrees with the conversation and is relevant to the conversation.
   
-  Example:
-  1. Follow up question: How does a car work?
+  ### Example:
+  1. **Follow up question:** How does a car work?
   Rephrased: How does a car work?
   
-  2. Follow up question: What is the theory of relativity?
+  2. **Follow up question:** What is the theory of relativity?
   Rephrased: What is theory of relativity
   
-  3. Follow up question: How does an AC work?
+  3. **Follow up question:** How does an AC work?
   Rephrased: How does an AC work
   
-  Conversation:
+  ### Conversation:
   {chat_history}
   
-  Follow up question: {query}
-  Rephrased question:
+  **Follow up question:** {query}  
+  **Rephrased question:**
   `;
 
 type VideoSearchChainInput = {
