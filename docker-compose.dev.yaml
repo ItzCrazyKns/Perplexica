@@ -1,0 +1,66 @@
+services:
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    ports:
+      - 4000:8080
+    networks:
+      - perplexica-network
+
+  perplexica-backend:
+    build:
+      context: .
+      dockerfile: backend.dev.dockerfile
+    depends_on:
+      - searxng
+    ports:
+      - 3001:3001
+    volumes:
+      - ./src:/home/perplexica/src
+      - ./package.json:/home/perplexica/package.json
+      - ./yarn.lock:/home/perplexica/yarn.lock
+      - backend-dbstore:/home/perplexica/data
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    networks:
+      - perplexica-network
+    environment:
+      - SEARXNG_API_URL=http://searxng:8080
+    develop:
+      watch:
+        - path: ./package.json
+          action: rebuild
+        - path: ./src
+          target: /home/perplexica/src
+          action: sync
+
+  perplexica-frontend:
+    build:
+      context: .
+      dockerfile: app.dev.dockerfile
+    depends_on:
+      - perplexica-backend
+    ports:
+      - 3000:3000
+    volumes:
+      - ./ui:/home/perplexica
+      - /home/perplexica/node_modules
+    networks:
+      - perplexica-network
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001/api
+      - NEXT_PUBLIC_WS_URL=ws://localhost:3001
+    develop:
+      watch:
+        - path: ./ui/package.json
+          action: rebuild
+        - path: ./ui
+          target: /home/perplexica
+          action: sync
+
+networks:
+  perplexica-network:
+
+volumes:
+  backend-dbstore:
