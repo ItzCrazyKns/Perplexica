@@ -19,6 +19,7 @@ import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
 import computeSimilarity from '../utils/computeSimilarity';
 import logger from '../utils/logger';
+import { IterableReadableStream } from '@langchain/core/utils/stream';
 
 const basicRedditSearchRetrieverPrompt = `
 You will be given a conversation below and a follow up question. You need to rephrase the follow-up question if needed so it is a standalone question that can be used by the LLM to search the web for information.
@@ -52,8 +53,8 @@ const basicRedditSearchResponsePrompt = `
     Place these citations at the end of that particular sentence. You can cite the same sentence multiple times if it is relevant to the user's query like [number1][number2].
     However you do not need to cite it using the same number. You can use different numbers to cite the same sentence multiple times. The number refers to the number of the search result (passed in the context) used to generate that part of the answer.
 
-    Anything inside the following \`context\` HTML block provided below is for your knowledge returned by Reddit and is not shared by the user. You have to answer question on the basis of it and cite the relevant information from it but you do not have to 
-    talk about the context in your response. 
+    Anything inside the following \`context\` HTML block provided below is for your knowledge returned by Reddit and is not shared by the user. You have to answer question on the basis of it and cite the relevant information from it but you do not have to
+    talk about the context in your response.
 
     <context>
     {context}
@@ -66,7 +67,7 @@ const basicRedditSearchResponsePrompt = `
 const strParser = new StringOutputParser();
 
 const handleStream = async (
-  stream: AsyncGenerator<StreamEvent, any, unknown>,
+  stream: IterableReadableStream<StreamEvent>,
   emitter: eventEmitter,
 ) => {
   for await (const event of stream) {
@@ -137,6 +138,7 @@ const createBasicRedditSearchRetrieverChain = (llm: BaseChatModel) => {
 const createBasicRedditSearchAnsweringChain = (
   llm: BaseChatModel,
   embeddings: Embeddings,
+  optimizationMode: 'speed' | 'balanced' | 'quality',
 ) => {
   const basicRedditSearchRetrieverChain =
     createBasicRedditSearchRetrieverChain(llm);
@@ -162,27 +164,33 @@ const createBasicRedditSearchAnsweringChain = (
       (doc) => doc.pageContent && doc.pageContent.length > 0,
     );
 
-    const [docEmbeddings, queryEmbedding] = await Promise.all([
-      embeddings.embedDocuments(docsWithContent.map((doc) => doc.pageContent)),
-      embeddings.embedQuery(query),
-    ]);
+    if (optimizationMode === 'speed') {
+      return docsWithContent.slice(0, 15);
+    } else if (optimizationMode === 'balanced') {
+      const [docEmbeddings, queryEmbedding] = await Promise.all([
+        embeddings.embedDocuments(
+          docsWithContent.map((doc) => doc.pageContent),
+        ),
+        embeddings.embedQuery(query),
+      ]);
 
-    const similarity = docEmbeddings.map((docEmbedding, i) => {
-      const sim = computeSimilarity(queryEmbedding, docEmbedding);
+      const similarity = docEmbeddings.map((docEmbedding, i) => {
+        const sim = computeSimilarity(queryEmbedding, docEmbedding);
 
-      return {
-        index: i,
-        similarity: sim,
-      };
-    });
+        return {
+          index: i,
+          similarity: sim,
+        };
+      });
 
-    const sortedDocs = similarity
-      .sort((a, b) => b.similarity - a.similarity)
-      .slice(0, 15)
-      .filter((sim) => sim.similarity > 0.3)
-      .map((sim) => docsWithContent[sim.index]);
+      const sortedDocs = similarity
+        .filter((sim) => sim.similarity > 0.3)
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, 15)
+        .map((sim) => docsWithContent[sim.index]);
 
-    return sortedDocs;
+      return sortedDocs;
+    }
   };
 
   return RunnableSequence.from([
@@ -219,12 +227,13 @@ const basicRedditSearch = (
   history: BaseMessage[],
   llm: BaseChatModel,
   embeddings: Embeddings,
+  optimizationMode: 'speed' | 'balanced' | 'quality',
 ) => {
   const emitter = new eventEmitter();
 
   try {
     const basicRedditSearchAnsweringChain =
-      createBasicRedditSearchAnsweringChain(llm, embeddings);
+      createBasicRedditSearchAnsweringChain(llm, embeddings, optimizationMode);
     const stream = basicRedditSearchAnsweringChain.streamEvents(
       {
         chat_history: history,
@@ -252,8 +261,15 @@ const handleRedditSearch = (
   history: BaseMessage[],
   llm: BaseChatModel,
   embeddings: Embeddings,
+  optimizationMode: 'speed' | 'balanced' | 'quality',
 ) => {
-  const emitter = basicRedditSearch(message, history, llm, embeddings);
+  const emitter = basicRedditSearch(
+    message,
+    history,
+    llm,
+    embeddings,
+    optimizationMode,
+  );
   return emitter;
 };
 

@@ -38,43 +38,56 @@ const useSocket = (
           'embeddingModelProvider',
         );
 
+        const providers = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/models`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          },
+        ).then(async (res) => await res.json());
+
         if (
           !chatModel ||
           !chatModelProvider ||
           !embeddingModel ||
           !embeddingModelProvider
         ) {
-          const providers = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/models`,
-            {
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            },
-          ).then(async (res) => await res.json());
+          if (!chatModel || !chatModelProvider) {
+            const chatModelProviders = providers.chatModelProviders;
 
-          const chatModelProviders = providers.chatModelProviders;
-          const embeddingModelProviders = providers.embeddingModelProviders;
+            chatModelProvider = Object.keys(chatModelProviders)[0];
 
-          if (
-            !chatModelProviders ||
-            Object.keys(chatModelProviders).length === 0
-          )
-            return toast.error('No chat models available');
+            if (chatModelProvider === 'custom_openai') {
+              toast.error(
+                'Seems like you are using the custom OpenAI provider, please open the settings and configure the API key and base URL',
+              );
+              setError(true);
+              return;
+            } else {
+              chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
+              if (
+                !chatModelProviders ||
+                Object.keys(chatModelProviders).length === 0
+              )
+                return toast.error('No chat models available');
+            }
+          }
 
-          if (
-            !embeddingModelProviders ||
-            Object.keys(embeddingModelProviders).length === 0
-          )
-            return toast.error('No embedding models available');
+          if (!embeddingModel || !embeddingModelProvider) {
+            const embeddingModelProviders = providers.embeddingModelProviders;
 
-          chatModelProvider = Object.keys(chatModelProviders)[0];
-          chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
+            if (
+              !embeddingModelProviders ||
+              Object.keys(embeddingModelProviders).length === 0
+            )
+              return toast.error('No embedding models available');
 
-          embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
-          embeddingModel = Object.keys(
-            embeddingModelProviders[embeddingModelProvider],
-          )[0];
+            embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
+            embeddingModel = Object.keys(
+              embeddingModelProviders[embeddingModelProvider],
+            )[0];
+          }
 
           localStorage.setItem('chatModel', chatModel!);
           localStorage.setItem('chatModelProvider', chatModelProvider);
@@ -84,15 +97,6 @@ const useSocket = (
             embeddingModelProvider,
           );
         } else {
-          const providers = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/models`,
-            {
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            },
-          ).then(async (res) => await res.json());
-
           const chatModelProviders = providers.chatModelProviders;
           const embeddingModelProviders = providers.embeddingModelProviders;
 
@@ -106,6 +110,7 @@ const useSocket = (
 
           if (
             chatModelProvider &&
+            chatModelProvider != 'custom_openai' &&
             !chatModelProviders[chatModelProvider][chatModel]
           ) {
             chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
@@ -160,20 +165,28 @@ const useSocket = (
 
         const timeoutId = setTimeout(() => {
           if (ws.readyState !== 1) {
-            ws.close();
-            setError(true);
             toast.error(
               'Failed to connect to the server. Please try again later.',
             );
           }
         }, 10000);
 
-        ws.onopen = () => {
-          console.log('[DEBUG] open');
-          clearTimeout(timeoutId);
-          setError(false);
-          setIsWSReady(true);
-        };
+        ws.addEventListener('message', (e) => {
+          const data = JSON.parse(e.data);
+          if (data.type === 'signal' && data.data === 'open') {
+            const interval = setInterval(() => {
+              if (ws.readyState === 1) {
+                setIsWSReady(true);
+                clearInterval(interval);
+              }
+            }, 5);
+            clearTimeout(timeoutId);
+            console.log('[DEBUG] opened');
+          }
+          if (data.type === 'error') {
+            toast.error(data.data);
+          }
+        });
 
         ws.onerror = () => {
           clearTimeout(timeoutId);
@@ -192,13 +205,6 @@ const useSocket = (
 
       connectWs();
     }
-
-    return () => {
-      if (ws?.readyState === 1) {
-        ws?.close();
-        console.log('[DEBUG] closed');
-      }
-    };
   }, [ws, url, setIsWSReady, setError]);
 
   return ws;
@@ -276,6 +282,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
   const [messages, setMessages] = useState<Message[]>([]);
 
   const [focusMode, setFocusMode] = useState('webSearch');
+  const [optimizationMode, setOptimizationMode] = useState('speed');
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
@@ -304,6 +311,15 @@ const ChatWindow = ({ id }: { id?: string }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (ws?.readyState === 1) {
+        ws.close();
+        console.log('[DEBUG] closed');
+      }
+    };
+  }, []);
+
   const messagesRef = useRef<Message[]>([]);
 
   useEffect(() => {
@@ -313,11 +329,13 @@ const ChatWindow = ({ id }: { id?: string }) => {
   useEffect(() => {
     if (isMessagesLoaded && isWSReady) {
       setIsReady(true);
+      console.log('[DEBUG] ready');
     }
   }, [isMessagesLoaded, isWSReady]);
 
-  const sendMessage = async (message: string) => {
+  const sendMessage = async (message: string, messageId?: string) => {
     if (loading) return;
+
     setLoading(true);
     setMessageAppeared(false);
 
@@ -325,16 +343,18 @@ const ChatWindow = ({ id }: { id?: string }) => {
     let recievedMessage = '';
     let added = false;
 
-    const messageId = crypto.randomBytes(7).toString('hex');
+    messageId = messageId ?? crypto.randomBytes(7).toString('hex');
 
     ws?.send(
       JSON.stringify({
         type: 'message',
         message: {
+          messageId: messageId,
           chatId: chatId!,
           content: message,
         },
         focusMode: focusMode,
+        optimizationMode: optimizationMode,
         history: [...chatHistory, ['human', message]],
       }),
     );
@@ -456,15 +476,15 @@ const ChatWindow = ({ id }: { id?: string }) => {
       return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
     });
 
-    sendMessage(message.content);
+    sendMessage(message.content, message.messageId);
   };
 
   useEffect(() => {
-    if (isReady && initialMessage) {
+    if (isReady && initialMessage && ws?.readyState === 1) {
       sendMessage(initialMessage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady, initialMessage]);
+  }, [ws?.readyState, isReady, initialMessage, isWSReady]);
 
   if (hasError) {
     return (
@@ -497,6 +517,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
             sendMessage={sendMessage}
             focusMode={focusMode}
             setFocusMode={setFocusMode}
+            optimizationMode={optimizationMode}
+            setOptimizationMode={setOptimizationMode}
           />
         )}
       </div>

@@ -10,6 +10,7 @@ import eventEmitter from 'events';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { Embeddings } from '@langchain/core/embeddings';
 import logger from '../utils/logger';
+import { IterableReadableStream } from '@langchain/core/utils/stream';
 
 const writingAssistantPrompt = `
 You are Perplexica, an AI model who is expert at searching the web and answering user's queries. You are currently set on focus mode 'Writing Assistant', this means you will be helping the user write a response to a given query. 
@@ -19,7 +20,7 @@ Since you are a writing assistant, you would not perform web searches. If you th
 const strParser = new StringOutputParser();
 
 const handleStream = async (
-  stream: AsyncGenerator<StreamEvent, any, unknown>,
+  stream: IterableReadableStream<StreamEvent>,
   emitter: eventEmitter,
 ) => {
   for await (const event of stream) {

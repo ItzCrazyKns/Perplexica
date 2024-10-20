@@ -14,6 +14,18 @@ router.get('/', async (req, res) => {
       getAvailableEmbeddingModelProviders(),
     ]);
 
+    Object.keys(chatModelProviders).forEach((provider) => {
+      Object.keys(chatModelProviders[provider]).forEach((model) => {
+        delete chatModelProviders[provider][model].model;
+      });
+    });
+
+    Object.keys(embeddingModelProviders).forEach((provider) => {
+      Object.keys(embeddingModelProviders[provider]).forEach((model) => {
+        delete embeddingModelProviders[provider][model].model;
+      });
+    });
+
     res.status(200).json({ chatModelProviders, embeddingModelProviders });
   } catch (err) {
     res.status(500).json({ message: 'An error has occurred.' });

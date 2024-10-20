@@ -12,6 +12,8 @@
   - [Non-Docker Installation](#non-docker-installation)
   - [Ollama Connection Errors](#ollama-connection-errors)
 - [Using as a Search Engine](#using-as-a-search-engine)
+- [Using Perplexica's API](#using-perplexicas-api)
+- [Expose Perplexica to a network](#expose-perplexica-to-network)
 - [One-Click Deployment](#one-click-deployment)
 - [Upcoming Features](#upcoming-features)
 - [Support Us](#support-us)
@@ -45,6 +47,7 @@ Want to know more about its architecture and how it works? You can read it [here
   - **Wolfram Alpha Search Mode:** Answers queries that need calculations or data analysis using Wolfram Alpha.
   - **Reddit Search Mode:** Searches Reddit for discussions and opinions related to the query.
 - **Current Information:** Some search tools might give you outdated info because they use data from crawling bots and convert them into embeddings and store them in a index. Unlike them, Perplexica uses SearxNG, a metasearch engine to get the results and rerank and get the most relevant source out of it, ensuring you always get the latest information without the overhead of daily data updates.
+- **API**: Integrate Perplexica into your existing applications and make use of its capibilities.
 
 It has many more features like image and video search. Some of the planned features are mentioned in [upcoming features](#upcoming-features).
 
@@ -125,6 +128,16 @@ If you wish to use Perplexica as an alternative to traditional search engines li
 3. Add a new site search with the following URL: `http://localhost:3000/?q=%s`. Replace `localhost` with your IP address or domain name, and `3000` with the port number if Perplexica is not hosted locally.
 4. Click the add button. Now, you can use Perplexica directly from your browser's search bar.
 
+## Using Perplexica's API
+
+Perplexica also provides an API for developers looking to integrate its powerful search engine into their own applications. You can run searches, use multiple models and get answers to your queries.
+
+For more details, check out the full documentation [here](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/API/SEARCH.md).
+
+## Expose Perplexica to network
+
+You can access Perplexica over your home network by following our networking guide [here](https://github.com/ItzCrazyKns/Perplexica/blob/master/docs/installation/NETWORKING.md).
+
 ## One-Click Deployment
 
 [![Deploy to RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/?app_id=267)
@@ -135,8 +148,9 @@ If you wish to use Perplexica as an alternative to traditional search engines li
 - [x] Adding support for local LLMs
 - [x] History Saving features
 - [x] Introducing various Focus Modes
+- [x] Adding API support
+- [x] Adding Discover
 - [ ] Finalizing Copilot Mode
-- [ ] Adding Discover
 
 ## Support Us
 
@@ -146,9 +160,9 @@ If you find Perplexica useful, consider giving us a star on GitHub. This helps m
 
 We also accept donations to help sustain our project. If you would like to contribute, you can use the following options to donate. Thank you for your support!
 
-| Cards                               | Ethereum                                              |
-| ----------------------------------- | ----------------------------------------------------- |
-| https://www.patreon.com/itzcrazykns | Address: `0xB025a84b2F269570Eb8D4b05DEdaA41D8525B6DD` |
+| Ethereum                                              |
+| ----------------------------------------------------- |
+| Address: `0xB025a84b2F269570Eb8D4b05DEdaA41D8525B6DD` |
 
 ## Contribution
 
