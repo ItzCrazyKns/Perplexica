@@ -7,19 +7,19 @@ services:
     devices:
       - /dev/net/tun:/dev/net/tun
     volumes:
-      - /home/user/Perplexica/gluetun:/gluetun  # in gluetun folder have servers.json
+      - /home/Perplexica/gluetun:/gluetun
     environment:
-      - VPN_SERVICE_PROVIDER=vpnprovidername
-      - OPENVPN_USER=
-      - OPENVPN_PASSWORD=
+      - VPN_SERVICE_PROVIDER=protonvpn
+      - OPENVPN_USER=Cvvvvvvvvvvvvv
+      - OPENVPN_PASSWORD=Jcccccccccccccc
       - SERVER_COUNTRIES=United States
-      - SERVER_HOSTNAMES=
-      - TZ=America/Phoenix
+      - SERVER_HOSTNAMES=node-us-CUSTOMIZE
+      - TZ=America/Los_Angels
       - BLOCK_MALICIOUS=on 
       - BLOCK_SURVEILLANCE=on 
       - BLOCK_ADS=on
       - DOT=on
-      - FIREWALL_OUTBOUND_SUBNETS=192.168.1.0/24
+      - FIREWALL_OUTBOUND_SUBNETS=CUSTOMIZE
     networks:
       - perplexica-network
     ports:
@@ -41,8 +41,10 @@ services:
     build:
       context: .
       dockerfile: backend.dockerfile
-      args:
-        - SEARXNG_API_URL=http://localhost:8080  # localhost is important as it's in gluetun's network for DNS
+    image: itzcrazykns1337/perplexica-backend:main
+    volumes:
+      - backend-dbstore:/home/perplexica/data
+      - ./config.toml:/home/perplexica/config.toml
     depends_on:
       - gluetun
       - searxng
@@ -54,8 +56,9 @@ services:
       context: .
       dockerfile: app.dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://localhost:3001/api  # if running on server and accessing from another machine add host ip of server, 192.168.x.x
-        - NEXT_PUBLIC_WS_URL=ws://localhost:3001  # # if running on server and accessing from another machine add host ip of server
+        - NEXT_PUBLIC_API_URL=http://192.168.70.54:3001/api
+        - NEXT_PUBLIC_WS_URL=ws://192.168.70.54:3001
+    image: itzcrazykns1337/perplexica-frontend:main
     depends_on:
       - gluetun
       - perplexica-backend
@@ -64,3 +67,6 @@ services:
 
 networks:
   perplexica-network:
+
+volumes:
+  backend-dbstore:
