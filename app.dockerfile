@@ -1,15 +1,36 @@
-FROM node:alpine
+#############################
+# Build stage
+#############################
 
-ARG NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
-ARG NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
-ENV NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL}
-ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+FROM node:22-alpine AS builder
 
-WORKDIR /home/perplexica
+WORKDIR /app
 
-COPY ui /home/perplexica/
+# Copy package.json and yarn.lock
+COPY ui/package.json ui/yarn.lock ./
 
-RUN yarn install --frozen-lockfile
-RUN yarn build
+# Copy the rest of the application code
+COPY ui .
 
+# Install dependencies & build the application
+RUN yarn install --frozen-lockfile && yarn build
+
+#############################
+# Production stage
+#############################
+
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Copy built assets from the builder stage
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/public ./public
+
+# Run the Docker image as node instead of root
+USER node
+
+# Start the application
 CMD ["yarn", "start"]
