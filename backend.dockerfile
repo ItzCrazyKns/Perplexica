@@ -2,7 +2,7 @@
 # Build stage
 #############################
 
-FROM node:18-slim AS builder
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
@@ -20,7 +20,7 @@ RUN yarn install --frozen-lockfile --network-timeout 600000 && yarn build
 # Production stage
 #############################
 
-FROM node:18-slim
+FROM node:18-alpine
 
 WORKDIR /app
 
@@ -29,10 +29,10 @@ COPY --chown=node:node --from=builder /app/dist ./dist
 COPY --chown=node:node --from=builder /app/node_modules ./node_modules
 
 # Copy the rest of the application code
-COPY --chown=node:node ./drizzle.config.ts ./
-COPY --chown=node:node ./tsconfig.json ./
-COPY --chown=node:node ./src/db/schema.ts ./src/db/schema.ts
-COPY --chown=node:node ./package.json ./package.json
+COPY --chown=node:node drizzle.config.ts ./
+COPY --chown=node:node tsconfig.json ./
+COPY --chown=node:node src/db/schema.ts ./src/db/schema.ts
+COPY --chown=node:node package.json ./package.json
 
 # Create data directory & set permissions to node user
 RUN mkdir /app/data && \
