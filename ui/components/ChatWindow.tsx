@@ -16,6 +16,8 @@ export type Message = {
   chatId: string;
   createdAt: Date;
   content: string;
+  llmName: string;
+  llmProvider: string;
   role: 'user' | 'assistant';
   suggestions?: string[];
   sources?: Document[];
@@ -353,6 +355,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
           messageId: messageId,
           chatId: chatId!,
           content: message,
+          llmName:  localStorage.getItem('chatModel') || 'NOT_SET',
+          llmProvider: localStorage.getItem('chatModelProvider') || 'NOT_SET',
         },
         focusMode: focusMode,
         optimizationMode: optimizationMode,
@@ -368,6 +372,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
         chatId: chatId!,
         role: 'user',
         createdAt: new Date(),
+        llmName:  localStorage.getItem('chatModel') || 'NOT_SET',
+        llmProvider: localStorage.getItem('chatModelProvider') || 'NOT_SET',
       },
     ]);
 
@@ -392,6 +398,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
               role: 'assistant',
               sources: sources,
               createdAt: new Date(),
+              llmName:  localStorage.getItem('chatModel') || 'NOT_SET',
+           llmProvider: localStorage.getItem('chatModelProvider') || 'NOT_SET',
             },
           ]);
           added = true;
@@ -410,6 +418,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
               role: 'assistant',
               sources: sources,
               createdAt: new Date(),
+              llmName:  localStorage.getItem('chatModel') || 'NOT_SET',
+              llmProvider: localStorage.getItem('chatModelProvider') || 'NOT_SET',
             },
           ]);
           added = true;

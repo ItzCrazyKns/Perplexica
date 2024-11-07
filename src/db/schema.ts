@@ -5,6 +5,8 @@ export const messages = sqliteTable('messages', {
   content: text('content').notNull(),
   chatId: text('chatId').notNull(),
   messageId: text('messageId').notNull(),
+  llmName: text('llmName').default(""),
+  llmProvider: text('llmProvider').default(""),
   role: text('type', { enum: ['assistant', 'user'] }),
   metadata: text('metadata', {
     mode: 'json',

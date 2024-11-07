@@ -77,10 +77,15 @@ const MessageBox = ({
 
       {message.role === 'assistant' && (
         <div className="flex flex-col space-y-9 lg:space-y-0 lg:flex-row lg:justify-between lg:space-x-9">
+         
           <div
             ref={dividerRef}
             className="flex flex-col space-y-6 w-full lg:w-9/12"
           >
+              <div className="flex flex-col space-y-2">
+                <h3 className="text-black dark:text-white font-medium text-xl">{message.llmName}</h3>
+              </div>
+             
             {message.sources && message.sources.length > 0 && (
               <div className="flex flex-col space-y-2">
                 <div className="flex flex-row items-center space-x-2">

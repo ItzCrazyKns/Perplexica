@@ -18,6 +18,8 @@ type Message = {
   messageId: string;
   chatId: string;
   content: string;
+  llmName: string;
+  llmProvider: string;
 };
 
 type WSMessage = {
@@ -42,6 +44,8 @@ const handleEmitterEvents = (
   ws: WebSocket,
   messageId: string,
   chatId: string,
+  llmName: string,
+  llmProvider: string,
 ) => {
   let recievedMessage = '';
   let sources = [];
@@ -76,6 +80,8 @@ const handleEmitterEvents = (
         content: recievedMessage,
         chatId: chatId,
         messageId: messageId,
+        llmName: llmName,
+        llmProvider: llmProvider,
         role: 'assistant',
         metadata: JSON.stringify({
           createdAt: new Date(),
@@ -143,7 +149,7 @@ export const handleMessage = async (
           parsedWSMessage.optimizationMode,
         );
 
-        handleEmitterEvents(emitter, ws, aiMessageId, parsedMessage.chatId);
+        handleEmitterEvents(emitter, ws, aiMessageId, parsedMessage.chatId, parsedMessage.llmName, parsedMessage.llmProvider);
 
         const chat = await db.query.chats.findFirst({
           where: eq(chats.id, parsedMessage.chatId),
@@ -172,6 +178,8 @@ export const handleMessage = async (
               content: parsedMessage.content,
               chatId: parsedMessage.chatId,
               messageId: humanMessageId,
+              llmName: parsedMessage.llmName,
+              llmProvider: parsedMessage.llmProvider,
               role: 'user',
               metadata: JSON.stringify({
                 createdAt: new Date(),
