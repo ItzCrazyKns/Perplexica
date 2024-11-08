@@ -281,7 +281,7 @@ const SettingsDialog = ({
                                   ? chatModelProvider.map((model) => ({
                                       value: model.name,
                                       label: model.displayName,
-                                    }))
+                                    })).sort((a, b) => a.label.localeCompare(b.label))
                                   : [
                                       {
                                         value: '',
@@ -392,7 +392,7 @@ const SettingsDialog = ({
                                 ? embeddingModelProvider.map((model) => ({
                                     label: model.displayName,
                                     value: model.name,
-                                  }))
+                                  })).sort((a, b) => a.label.localeCompare(b.label))
                                 : [
                                     {
                                       label: 'No embedding models available',
