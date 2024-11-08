@@ -18,6 +18,10 @@ interface Config {
     SEARXNG: string;
     OLLAMA: string;
   };
+  OLLAMA_PARAMS: {
+    TEMPERATURE: number;
+    NUM_CTX: number;
+  }
 }
 
 type RecursivePartial<T> = {
@@ -44,6 +48,10 @@ export const getSearxngApiEndpoint = () =>
   process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
 
 export const getOllamaApiEndpoint = () => loadConfig().API_ENDPOINTS.OLLAMA;
+
+export const getModelTemperature = () => loadConfig().OLLAMA_PARAMS.TEMPERATURE;
+
+export const getModelNumCtx = () => loadConfig().OLLAMA_PARAMS.NUM_CTX;
 
 export const updateConfig = (config: RecursivePartial<Config>) => {
   const currentConfig = loadConfig();
