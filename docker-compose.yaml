@@ -12,6 +12,8 @@ services:
   perplexica-backend:
     build:
       context: .
+      args:
+        - USER=root
       dockerfile: backend.dockerfile
     image: itzcrazykns1337/perplexica-backend:main
     depends_on:
