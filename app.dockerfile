@@ -21,6 +21,9 @@ RUN yarn install --frozen-lockfile && yarn build
 
 FROM node:22-alpine
 
+ENV NEXT_PUBLIC_WS_URL=ws://localhost:3001
+ENV NEXT_PUBLIC_API_URL=http://localhost:3001/api
+
 WORKDIR /app
 
 # Copy built assets from the builder stage
