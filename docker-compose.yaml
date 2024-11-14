@@ -14,8 +14,6 @@ services:
       context: .
       dockerfile: backend.dockerfile
     image: itzcrazykns1337/perplexica-backend:main
-    environment:
-      - SEARXNG_API_URL=http://searxng:8080
     depends_on:
       - searxng
     ports:
@@ -27,15 +25,14 @@ services:
       - 'host.docker.internal:host-gateway'
     networks:
       - perplexica-network
+    env_file: 
+      - ./.env
     restart: unless-stopped
 
   perplexica-frontend:
     build:
       context: .
       dockerfile: app.dockerfile
-      args:
-        - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
-        - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
     image: itzcrazykns1337/perplexica-frontend:main
     depends_on:
       - perplexica-backend
@@ -43,6 +40,8 @@ services:
       - 3000:3000
     networks:
       - perplexica-network
+    env_file: 
+      - ./.env
     restart: unless-stopped
 
 networks:
