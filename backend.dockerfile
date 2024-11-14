@@ -29,9 +29,9 @@ COPY --chown=node:node --from=builder /app/dist ./dist
 COPY --chown=node:node --from=builder /app/node_modules ./node_modules
 
 # Copy the rest of the application code
+COPY --chown=node:node src ./src
 COPY --chown=node:node drizzle.config.ts ./
 COPY --chown=node:node tsconfig.json ./
-COPY --chown=node:node src/db/schema.ts ./src/db/schema.ts
 COPY --chown=node:node package.json ./package.json
 
 # Create data directory & set permissions to node user
