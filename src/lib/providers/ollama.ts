@@ -1,10 +1,11 @@
 import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
-import { getOllamaApiEndpoint } from '../../config';
+import { getModelNumCtx, getModelTemperature, getOllamaApiEndpoint } from '../../config';
 import logger from '../../utils/logger';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
 
 export const loadOllamaChatModels = async () => {
   const ollamaEndpoint = getOllamaApiEndpoint();
+  
 
   if (!ollamaEndpoint) return {};
 
@@ -16,20 +17,24 @@ export const loadOllamaChatModels = async () => {
     });
 
     const { models: ollamaModels } = (await response.json()) as any;
-
+    
     const chatModels = ollamaModels.reduce((acc, model) => {
+      const modelTemperature = getModelTemperature();
+      const modelNumCtx = getModelNumCtx();
       acc[model.model] = {
         displayName: model.name,
         model: new ChatOllama({
           baseUrl: ollamaEndpoint,
           model: model.model,
-          temperature: 0.7,
+          temperature: modelTemperature,
+          numCtx: modelNumCtx,
         }),
       };
 
       return acc;
     }, {});
-
+    
+    
     return chatModels;
   } catch (err) {
     logger.error(`Error loading Ollama models: ${err}`);
