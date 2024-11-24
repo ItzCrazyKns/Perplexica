@@ -77,13 +77,25 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
    - `SIMILARITY_MEASURE`: The similarity measure to use (This is filled by default; you can leave it as is if you are unsure about it.)
 
-5. Ensure you are in the directory containing the `docker-compose.yaml` file and execute:
+5. Rename the `.env.example` file to `.env` and fill in all necessary fields.
 
-   ```bash
-   docker compose up -d
-   ```
+    ```bash
+    mv .env.example .env
+    ```
 
-6. Wait a few minutes for the setup to complete. You can access Perplexica at http://localhost:3000 in your web browser.
+6. Rename the `./ui/.env.example` file to `./ui/.env` and fill in all necessary fields.
+
+    ```bash
+    mv ./ui/.env.example ./ui/.env
+    ```
+
+7. Ensure you are in the directory containing the `docker-compose.yaml` file and execute:
+
+    ```bash
+    docker compose up -d
+    ```
+
+8. Wait a few minutes for the setup to complete. You can access Perplexica at http://localhost:3000 in your web browser.
 
 **Note**: After the containers are built, you can start Perplexica directly from Docker without having to open a terminal.
 
