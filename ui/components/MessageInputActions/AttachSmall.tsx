@@ -9,16 +9,14 @@ import { CopyPlus, File, LoaderCircle, Plus, Trash } from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
 import { File as FileType } from '../ChatWindow';
 
-const Attach = ({
+const AttachSmall = ({
   fileIds,
   setFileIds,
-  showText,
   files,
   setFiles,
 }: {
   fileIds: string[];
   setFileIds: (fileIds: string[]) => void;
-  showText?: boolean;
   files: FileType[];
   setFiles: (files: FileType[]) => void;
 }) => {
@@ -54,42 +52,16 @@ const Attach = ({
   };
 
   return loading ? (
-    <div className="flex flex-row items-center justify-between space-x-1">
-      <LoaderCircle size={18} className="text-sky-400 animate-spin" />
-      <p className="text-sky-400 inline whitespace-nowrap text-xs font-medium">
-        Uploading..
-      </p>
+    <div className="flex flex-row items-center justify-between space-x-1 p-1">
+      <LoaderCircle size={20} className="text-sky-400 animate-spin" />
     </div>
   ) : files.length > 0 ? (
-    <Popover className="relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
+    <Popover className="max-w-[15rem] md:max-w-md lg:max-w-lg">
       <PopoverButton
         type="button"
-        className={cn(
-          'flex flex-row items-center justify-between space-x-1 p-2 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white',
-          files.length > 0 ? '-ml-2 lg:-ml-3' : '',
-        )}
+        className="flex flex-row items-center justify-between space-x-1 p-1 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
       >
-        {files.length > 1 && (
-          <>
-            <File size={19} className="text-sky-400" />
-            <p className="text-sky-400 inline whitespace-nowrap text-xs font-medium">
-              {files.length} files
-            </p>
-          </>
-        )}
-
-        {files.length === 1 && (
-          <>
-            <File size={18} className="text-sky-400" />
-            <p className="text-sky-400 text-xs font-medium">
-              {files[0].fileName.length > 10
-                ? files[0].fileName.replace(/\.\w+$/, '').substring(0, 3) +
-                  '...' +
-                  files[0].fileExtension
-                : files[0].fileName}
-            </p>
-          </>
-        )}
+        <File size={20} className="text-sky-400" />
       </PopoverButton>
       <Transition
         as={Fragment}
@@ -100,7 +72,7 @@ const Attach = ({
         leaveFrom="opacity-100 translate-y-0"
         leaveTo="opacity-0 translate-y-1"
       >
-        <PopoverPanel className="absolute z-10 w-64 md:w-[350px] right-0">
+        <PopoverPanel className="absolute z-10 w-64 md:w-[350px] bottom-14 -ml-3">
           <div className="bg-light-primary dark:bg-dark-primary border rounded-md border-light-200 dark:border-dark-200 w-full max-h-[200px] md:max-h-none overflow-y-auto flex flex-col">
             <div className="flex flex-row items-center justify-between px-3 py-2">
               <h4 className="text-black dark:text-white font-medium text-sm">
@@ -163,10 +135,7 @@ const Attach = ({
     <button
       type="button"
       onClick={() => fileInputRef.current.click()}
-      className={cn(
-        'flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white',
-        showText ? '' : 'p-2',
-      )}
+      className="flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white p-1"
     >
       <input
         type="file"
@@ -176,10 +145,9 @@ const Attach = ({
         multiple
         hidden
       />
-      <CopyPlus size={showText ? 18 : undefined} />
-      {showText && <p className="text-xs font-medium pl-[1px]">Attach</p>}
+      <CopyPlus size={20} />
     </button>
   );
 };
 
-export default Attach;
+export default AttachSmall;

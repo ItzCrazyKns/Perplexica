@@ -13,6 +13,7 @@ import db from '../db';
 import { chats, messages as messagesSchema } from '../db/schema';
 import { eq, asc, gt } from 'drizzle-orm';
 import crypto from 'crypto';
+import { getFileDetails } from '../utils/files';
 
 type Message = {
   messageId: string;
@@ -26,6 +27,7 @@ type WSMessage = {
   type: string;
   focusMode: string;
   history: Array<[string, string]>;
+  files: Array<string>;
 };
 
 export const searchHandlers = {
@@ -106,6 +108,11 @@ export const handleMessage = async (
     const parsedWSMessage = JSON.parse(message) as WSMessage;
     const parsedMessage = parsedWSMessage.message;
 
+    if (parsedWSMessage.files.length > 0) {
+      /* TODO: Implement uploads in other classes/single meta class system*/
+      parsedWSMessage.focusMode = 'webSearch';
+    }
+
     const humanMessageId =
       parsedMessage.messageId ?? crypto.randomBytes(7).toString('hex');
     const aiMessageId = crypto.randomBytes(7).toString('hex');
@@ -141,6 +148,7 @@ export const handleMessage = async (
           llm,
           embeddings,
           parsedWSMessage.optimizationMode,
+          parsedWSMessage.files,
         );
 
         handleEmitterEvents(emitter, ws, aiMessageId, parsedMessage.chatId);
@@ -157,6 +165,7 @@ export const handleMessage = async (
               title: parsedMessage.content,
               createdAt: new Date().toString(),
               focusMode: parsedWSMessage.focusMode,
+              files: parsedWSMessage.files.map(getFileDetails),
             })
             .execute();
         }
