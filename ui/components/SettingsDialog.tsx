@@ -64,6 +64,7 @@ interface SettingsType {
   groqApiKey: string;
   anthropicApiKey: string;
   geminiApiKey: string;
+  deepinfraApiKey: string;
   ollamaApiUrl: string;
 }
 
@@ -489,6 +490,22 @@ const SettingsDialog = ({
                           setConfig({
                             ...config,
                             geminiApiKey: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-black/70 dark:text-white/70 text-sm">
+                        DeepInfra API Key
+                      </p>
+                      <Input
+                        type="text"
+                        placeholder="DeepInfta API key"
+                        defaultValue={config.geminiApiKey}
+                        onChange={(e) =>
+                          setConfig({
+                            ...config,
+                            deepinfraApiKey: e.target.value,
                           })
                         }
                       />

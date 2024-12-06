@@ -15,6 +15,7 @@ interface Config {
     GROQ: string;
     ANTHROPIC: string;
     GEMINI: string;
+    DEEPINFRA: string;
   };
   API_ENDPOINTS: {
     SEARXNG: string;
@@ -45,6 +46,8 @@ export const getGroqApiKey = () => loadConfig().API_KEYS.GROQ;
 export const getAnthropicApiKey = () => loadConfig().API_KEYS.ANTHROPIC;
 
 export const getGeminiApiKey = () => loadConfig().API_KEYS.GEMINI;
+
+export const getDeepInftaApiKeys = () => loadConfig().API_KEYS.DEEPINFRA;
 
 export const getSearxngApiEndpoint = () =>
   process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;

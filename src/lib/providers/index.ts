@@ -4,6 +4,7 @@ import { loadOpenAIChatModels, loadOpenAIEmbeddingsModels } from './openai';
 import { loadAnthropicChatModels } from './anthropic';
 import { loadTransformersEmbeddingsModels } from './transformers';
 import { loadGeminiChatModels, loadGeminiEmbeddingsModels } from './gemini';
+import { loadDeepInfraChatModels, loadDeepInfraEmbeddingsModels } from './deepinfra';
 
 const chatModelProviders = {
   openai: loadOpenAIChatModels,
@@ -11,6 +12,7 @@ const chatModelProviders = {
   ollama: loadOllamaChatModels,
   anthropic: loadAnthropicChatModels,
   gemini: loadGeminiChatModels,
+  deepinfra: loadDeepInfraChatModels,
 };
 
 const embeddingModelProviders = {
@@ -18,6 +20,7 @@ const embeddingModelProviders = {
   local: loadTransformersEmbeddingsModels,
   ollama: loadOllamaEmbeddingsModels,
   gemini: loadGeminiEmbeddingsModels,
+  deepinfra: loadDeepInfraEmbeddingsModels,
 };
 
 export const getAvailableChatModelProviders = async () => {

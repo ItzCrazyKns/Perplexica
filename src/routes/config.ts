@@ -71,6 +71,7 @@ router.post('/', async (req, res) => {
       GROQ: config.groqApiKey,
       ANTHROPIC: config.anthropicApiKey,
       GEMINI: config.geminiApiKey,
+      DEEPINFRA: config.deepInfraApiKey,
     },
     API_ENDPOINTS: {
       OLLAMA: config.ollamaApiUrl,
