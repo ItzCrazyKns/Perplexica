@@ -51,11 +51,15 @@ const MessageBox = ({
       message.sources.length > 0
     ) {
       return setParsedMessage(
-        message.content.replace(
-          regex,
-          (_, number) =>
-            `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
-        ),
+        message.content
+          .replace(
+            regex,
+            (_, number) =>
+              `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
+          )
+          .replace(/(\*\*.*?\*\*\s*)(\s*```[\s\S]*?```)/g, (match, p1, p2) => {
+            return `${p1}\n${p2.trim()}`;
+          }),
       );
     }
 
