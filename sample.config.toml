@@ -8,6 +8,7 @@ OPENAI = "" # OpenAI API key - sk-1234567890abcdef1234567890abcdef
 GROQ = "" # Groq API key - gsk_1234567890abcdef1234567890abcdef
 ANTHROPIC = "" # Anthropic API key - sk-ant-1234567890abcdef1234567890abcdef
 GEMINI = "" # Gemini API key - sk-1234567890abcdef1234567890abcdef
+DEEPINFRA = "" # DeepInfra API key - 1234567890abcdef1234567890abcdef
 
 [API_ENDPOINTS]
 SEARXNG = "http://localhost:32768" # SearxNG API URL
