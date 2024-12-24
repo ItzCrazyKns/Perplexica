@@ -37,10 +37,10 @@ const useSocket = (
   useEffect(() => {
     if (!ws) {
       const connectWs = async () => {
-        let chatModel = localStorage.getItem('chatModel');
-        let chatModelProvider = localStorage.getItem('chatModelProvider');
-        let embeddingModel = localStorage.getItem('embeddingModel');
-        let embeddingModelProvider = localStorage.getItem(
+        let chatModel = sessionStorage.getItem('chatModel');
+        let chatModelProvider = sessionStorage.getItem('chatModelProvider');
+        let embeddingModel = sessionStorage.getItem('embeddingModel');
+        let embeddingModelProvider = sessionStorage.getItem(
           'embeddingModelProvider',
         );
 
@@ -95,10 +95,10 @@ const useSocket = (
             )[0];
           }
 
-          localStorage.setItem('chatModel', chatModel!);
-          localStorage.setItem('chatModelProvider', chatModelProvider);
-          localStorage.setItem('embeddingModel', embeddingModel!);
-          localStorage.setItem(
+          sessionStorage.setItem('chatModel', chatModel!);
+          sessionStorage.setItem('chatModelProvider', chatModelProvider);
+          sessionStorage.setItem('embeddingModel', embeddingModel!);
+          sessionStorage.setItem(
             'embeddingModelProvider',
             embeddingModelProvider,
           );
@@ -111,7 +111,7 @@ const useSocket = (
             !chatModelProviders[chatModelProvider]
           ) {
             chatModelProvider = Object.keys(chatModelProviders)[0];
-            localStorage.setItem('chatModelProvider', chatModelProvider);
+            sessionStorage.setItem('chatModelProvider', chatModelProvider);
           }
 
           if (
@@ -120,7 +120,7 @@ const useSocket = (
             !chatModelProviders[chatModelProvider][chatModel]
           ) {
             chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
-            localStorage.setItem('chatModel', chatModel);
+            sessionStorage.setItem('chatModel', chatModel);
           }
 
           if (
@@ -128,7 +128,7 @@ const useSocket = (
             !embeddingModelProviders[embeddingModelProvider]
           ) {
             embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
-            localStorage.setItem(
+            sessionStorage.setItem(
               'embeddingModelProvider',
               embeddingModelProvider,
             );
@@ -141,7 +141,7 @@ const useSocket = (
             embeddingModel = Object.keys(
               embeddingModelProviders[embeddingModelProvider],
             )[0];
-            localStorage.setItem('embeddingModel', embeddingModel);
+            sessionStorage.setItem('embeddingModel', embeddingModel);
           }
         }
 
@@ -154,11 +154,11 @@ const useSocket = (
         if (chatModelProvider === 'custom_openai') {
           searchParams.append(
             'openAIApiKey',
-            localStorage.getItem('openAIApiKey')!,
+            sessionStorage.getItem('openAIApiKey')!,
           );
           searchParams.append(
             'openAIBaseURL',
-            localStorage.getItem('openAIBaseURL')!,
+            sessionStorage.getItem('openAIBaseURL')!,
           );
         }
 

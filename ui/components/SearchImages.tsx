@@ -30,11 +30,11 @@ const SearchImages = ({
           onClick={async () => {
             setLoading(true);
 
-            const chatModelProvider = localStorage.getItem('chatModelProvider');
-            const chatModel = localStorage.getItem('chatModel');
+            const chatModelProvider = sessionStorage.getItem('chatModelProvider');
+            const chatModel = sessionStorage.getItem('chatModel');
 
-            const customOpenAIBaseURL = localStorage.getItem('openAIBaseURL');
-            const customOpenAIKey = localStorage.getItem('openAIApiKey');
+            const customOpenAIBaseURL = sessionStorage.getItem('openAIBaseURL');
+            const customOpenAIKey = sessionStorage.getItem('openAIApiKey');
 
             const res = await fetch(
               `${process.env.NEXT_PUBLIC_API_URL}/images`,

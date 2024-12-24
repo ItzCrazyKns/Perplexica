@@ -33,10 +33,10 @@ const Attach = ({
       data.append('files', e.target.files![i]);
     }
 
-    const embeddingModelProvider = localStorage.getItem(
+    const embeddingModelProvider = sessionStorage.getItem(
       'embeddingModelProvider',
     );
-    const embeddingModel = localStorage.getItem('embeddingModel');
+    const embeddingModel = sessionStorage.getItem('embeddingModel');
 
     data.append('embedding_model_provider', embeddingModelProvider!);
     data.append('embedding_model', embeddingModel!);

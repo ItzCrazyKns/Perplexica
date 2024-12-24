@@ -123,22 +123,22 @@ const SettingsDialog = ({
             : '';
 
         const chatModelProvider =
-          localStorage.getItem('chatModelProvider') ||
+          sessionStorage.getItem('chatModelProvider') ||
           defaultChatModelProvider ||
           '';
         const chatModel =
-          localStorage.getItem('chatModel') ||
+          sessionStorage.getItem('chatModel') ||
           (data.chatModelProviders &&
           data.chatModelProviders[chatModelProvider]?.length > 0
             ? data.chatModelProviders[chatModelProvider][0].name
             : undefined) ||
           '';
         const embeddingModelProvider =
-          localStorage.getItem('embeddingModelProvider') ||
+          sessionStorage.getItem('embeddingModelProvider') ||
           defaultEmbeddingModelProvider ||
           '';
         const embeddingModel =
-          localStorage.getItem('embeddingModel') ||
+          sessionStorage.getItem('embeddingModel') ||
           (data.embeddingModelProviders &&
             data.embeddingModelProviders[embeddingModelProvider]?.[0].name) ||
           '';
@@ -147,8 +147,8 @@ const SettingsDialog = ({
         setSelectedChatModel(chatModel);
         setSelectedEmbeddingModelProvider(embeddingModelProvider);
         setSelectedEmbeddingModel(embeddingModel);
-        setCustomOpenAIApiKey(localStorage.getItem('openAIApiKey') || '');
-        setCustomOpenAIBaseURL(localStorage.getItem('openAIBaseURL') || '');
+        setCustomOpenAIApiKey(sessionStorage.getItem('openAIApiKey') || '');
+        setCustomOpenAIBaseURL(sessionStorage.getItem('openAIBaseURL') || '');
         setChatModels(data.chatModelProviders || {});
         setEmbeddingModels(data.embeddingModelProviders || {});
         setIsLoading(false);
@@ -171,15 +171,15 @@ const SettingsDialog = ({
         body: JSON.stringify(config),
       });
 
-      localStorage.setItem('chatModelProvider', selectedChatModelProvider!);
-      localStorage.setItem('chatModel', selectedChatModel!);
-      localStorage.setItem(
+      sessionStorage.setItem('chatModelProvider', selectedChatModelProvider!);
+      sessionStorage.setItem('chatModel', selectedChatModel!);
+      sessionStorage.setItem(
         'embeddingModelProvider',
         selectedEmbeddingModelProvider!,
       );
-      localStorage.setItem('embeddingModel', selectedEmbeddingModel!);
-      localStorage.setItem('openAIApiKey', customOpenAIApiKey!);
-      localStorage.setItem('openAIBaseURL', customOpenAIBaseURL!);
+      sessionStorage.setItem('embeddingModel', selectedEmbeddingModel!);
+      sessionStorage.setItem('openAIApiKey', customOpenAIApiKey!);
+      sessionStorage.setItem('openAIBaseURL', customOpenAIBaseURL!);
     } catch (err) {
       console.log(err);
     } finally {
