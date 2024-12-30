@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import { getSuggestions } from '@/lib/actions';
 import Error from 'next/error';
+import axios from 'axios';
 
 export type Message = {
   messageId: string;
@@ -52,14 +53,17 @@ const useSocket = (
             ? localStorage.getItem('openAIApiKey')
             : null;
 
-        const providers = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/models`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          },
-        ).then(async (res) => await res.json());
+        let providers;
+
+        try {
+          providers = await axios.get(
+            `${process.env.NEXT_PUBLIC_API_URL}/models`,
+          );
+          providers = providers.data;
+        } catch (e) {
+          setError(true);
+          return;
+        }
 
         if (
           !chatModel ||
@@ -113,10 +117,11 @@ const useSocket = (
             embeddingModelProvider,
           );
         } else {
-          const chatModelProviders = providers.chatModelProviders;
-          const embeddingModelProviders = providers.embeddingModelProviders;
+          const chatModelProviders = providers?.chatModelProviders;
+          const embeddingModelProviders = providers?.embeddingModelProviders;
 
           if (
+            chatModelProviders &&
             Object.keys(chatModelProviders).length > 0 &&
             (((!openAIBaseURL || !openAIPIKey) &&
               chatModelProvider === 'custom_openai') ||
@@ -144,6 +149,7 @@ const useSocket = (
 
           if (
             chatModelProvider &&
+            chatModelProviders &&
             (!openAIBaseURL || !openAIPIKey) &&
             !chatModelProviders[chatModelProvider][chatModel]
           ) {
@@ -158,6 +164,7 @@ const useSocket = (
           }
 
           if (
+            embeddingModelProviders &&
             Object.keys(embeddingModelProviders).length > 0 &&
             !embeddingModelProviders[embeddingModelProvider]
           ) {
@@ -170,6 +177,7 @@ const useSocket = (
 
           if (
             embeddingModelProvider &&
+            embeddingModelProviders &&
             !embeddingModelProviders[embeddingModelProvider][embeddingModel]
           ) {
             embeddingModel = Object.keys(
