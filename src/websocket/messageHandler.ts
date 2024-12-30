@@ -37,6 +37,7 @@ export const searchHandlers = {
     rerankThreshold: 0.3,
     searchWeb: true,
     summarizer: true,
+    searchDatabase: true,
   }),
   academicSearch: new MetaSearchAgent({
     activeEngines: ['arxiv', 'google scholar', 'pubmed'],
@@ -46,6 +47,7 @@ export const searchHandlers = {
     rerankThreshold: 0,
     searchWeb: true,
     summarizer: false,
+    searchDatabase: true,
   }),
   writingAssistant: new MetaSearchAgent({
     activeEngines: [],
@@ -55,6 +57,7 @@ export const searchHandlers = {
     rerankThreshold: 0,
     searchWeb: false,
     summarizer: false,
+    searchDatabase: true,
   }),
   wolframAlphaSearch: new MetaSearchAgent({
     activeEngines: ['wolframalpha'],
@@ -64,6 +67,7 @@ export const searchHandlers = {
     rerankThreshold: 0,
     searchWeb: true,
     summarizer: false,
+    searchDatabase: true,
   }),
   youtubeSearch: new MetaSearchAgent({
     activeEngines: ['youtube'],
@@ -73,6 +77,7 @@ export const searchHandlers = {
     rerankThreshold: 0.3,
     searchWeb: true,
     summarizer: false,
+    searchDatabase: true,
   }),
   redditSearch: new MetaSearchAgent({
     activeEngines: ['reddit'],
@@ -82,6 +87,7 @@ export const searchHandlers = {
     rerankThreshold: 0.3,
     searchWeb: true,
     summarizer: false,
+    searchDatabase: true,
   }),
 };
 

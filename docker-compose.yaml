@@ -6,49 +6,68 @@ services:
     ports:
       - 4000:8080
     networks:
-      - perplexica-network
+      - xme-network
     restart: unless-stopped
 
-  perplexica-backend:
+  chroma:
+    image: chromadb/chroma:latest
+    environment:
+      - ALLOW_RESET=true
+      - CHROMA_SERVER_CORS_ALLOW_ORIGINS=["*"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    networks:
+      - xme-network
+    restart: unless-stopped
+
+  xme-backend:
     build:
       context: .
       dockerfile: backend.dockerfile
-    image: itzcrazykns1337/perplexica-backend:main
+    image: itzcrazykns1337/xme-backend:main
     environment:
+      - SUPABASE_URL=https://qytbxgzxsywnfhlwcyqa.supabase.co
+      - SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5dGJ4Z3p4c3l3bmZobHdjeXFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzEwNTc3MTAsImV4cCI6MjA0NjYzMzcxMH0.XLRq-4CFL2MWxvCLzCv5ZdaF5VSi58cocx9FOyv37jU
       - SEARXNG_API_URL=http://searxng:8080
+      - DATABASE_URL=postgresql://postgres.ineclpmaolnshsnekjad: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@aws-0-us-east-1.pooler.supabase.com:6543/postgres
     depends_on:
       - searxng
     ports:
       - 3001:3001
     volumes:
-      - backend-dbstore:/home/perplexica/data
-      - uploads:/home/perplexica/uploads
+      - backend-dbstore:/home/xme/data
+      - uploads:/home/xme/uploads
       - ./config.toml:/home/perplexica/config.toml
     extra_hosts:
-      - 'host.docker.internal:host-gateway'
+      - host.docker.internal:host-gateway
     networks:
-      - perplexica-network
+      - xme-network
     restart: unless-stopped
 
-  perplexica-frontend:
+  xme-frontend:
     build:
       context: .
       dockerfile: app.dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
-        - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
-    image: itzcrazykns1337/perplexica-frontend:main
+        NEXT_PUBLIC_WS_URL: ws://localhost:3001
+        NEXT_PUBLIC_API_URL: http://localhost:3001/api
+        NEXT_PUBLIC_SUPABASE_URL: https://qytbxgzxsywnfhlwcyqa.supabase.co
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF5dGJ4Z3p4c3l3bmZobHdjeXFhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzEwNTc3MTAsImV4cCI6MjA0NjYzMzcxMH0.XLRq-4CFL2MWxvCLzCv5ZdaF5VSi58cocx9FOyv37jU
+    image: itzcrazykns1337/xme-frontend:main
     depends_on:
-      - perplexica-backend
+      - xme-backend
     ports:
       - 3000:3000
     networks:
-      - perplexica-network
+      - xme-network
     restart: unless-stopped
 
 networks:
-  perplexica-network:
+  xme-network:
 
 volumes:
   backend-dbstore:
   uploads:
+  chroma_data:

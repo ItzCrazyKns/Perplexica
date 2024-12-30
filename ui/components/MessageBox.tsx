@@ -16,7 +16,7 @@ import Markdown from 'markdown-to-jsx';
 import Copy from './MessageActions/Copy';
 import Rewrite from './MessageActions/Rewrite';
 import MessageSources from './MessageSources';
-import SearchImages from './SearchImages';
+import LegalSearch from './LegalSearch';
 import SearchVideos from './SearchVideos';
 import { useSpeech } from 'react-text-to-speech';
 
@@ -53,8 +53,12 @@ const MessageBox = ({
       return setParsedMessage(
         message.content.replace(
           regex,
-          (_, number) =>
-            `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
+          (_, number) => {
+            const url = message.sources?.[number - 1]?.metadata?.url || '';
+            // Extraire le nom de domaine sans l'extension
+            const sourceName = url.replace(/^(?:https?:\/\/)?(?:www\.)?([^./]+).*$/, '$1');
+            return `<a href="${url}" target="_blank" class="ml-2 px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 no-underline inline-flex items-center">${sourceName}</a>`;
+          }
         ),
       );
     }
@@ -63,15 +67,18 @@ const MessageBox = ({
     setParsedMessage(message.content);
   }, [message.content, message.sources, message.role]);
 
+  useEffect(() => {
+  }, [message.sources]);
+
   const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
 
   return (
     <div>
       {message.role === 'user' && (
         <div className={cn('w-full', messageIndex === 0 ? 'pt-16' : 'pt-8')}>
-          <h2 className="text-black dark:text-white font-medium text-3xl lg:w-9/12">
+          <h3 className="text-black dark:text-white font-medium text-3xl lg:w-9/12">
             {message.content}
-          </h2>
+          </h3>
         </div>
       )}
 
@@ -81,6 +88,24 @@ const MessageBox = ({
             ref={dividerRef}
             className="flex flex-col space-y-6 w-full lg:w-9/12"
           >
+            {message.sources && message.sources[0]?.metadata?.illustrationImage && (
+              <div className="flex flex-col space-y-2 mb-6">
+                <div className="w-full aspect-[21/9] relative overflow-hidden rounded-xl shadow-lg">
+                  <img 
+                    src={message.sources[0].metadata.illustrationImage}
+                    alt="Illustration"
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    onError={(e) => {
+                      console.error("Erreur de chargement de l'image:", e);
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 italic mt-2">
+                  {message.sources[0].metadata.title || 'Illustration du sujet'}
+                </p>
+              </div>
+            )}
             {message.sources && message.sources.length > 0 && (
               <div className="flex flex-col space-y-2">
                 <div className="flex flex-row items-center space-x-2">
@@ -102,7 +127,7 @@ const MessageBox = ({
                   size={20}
                 />
                 <h3 className="text-black dark:text-white font-medium text-xl">
-                  Answer
+                  Question
                 </h3>
               </div>
               <Markdown
@@ -110,6 +135,13 @@ const MessageBox = ({
                   'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
                   'max-w-none break-words text-black dark:text-white',
                 )}
+                options={{
+                  overrides: {
+                    p: ({ children }) => {
+                      return <p>{children}</p>;
+                    },
+                  },
+                }}
               >
                 {parsedMessage}
               </Markdown>
@@ -152,7 +184,7 @@ const MessageBox = ({
                     <div className="flex flex-col space-y-3 text-black dark:text-white">
                       <div className="flex flex-row items-center space-x-2 mt-4">
                         <Layers3 />
-                        <h3 className="text-xl font-medium">Related</h3>
+                        <h3 className="text-xl font-medium">Suggestions</h3>
                       </div>
                       <div className="flex flex-col space-y-3">
                         {message.suggestions.map((suggestion, i) => (
@@ -184,7 +216,7 @@ const MessageBox = ({
             </div>
           </div>
           <div className="lg:sticky lg:top-20 flex flex-col items-center space-y-3 w-full lg:w-3/12 z-30 h-full pb-4">
-            <SearchImages
+            <LegalSearch
               query={history[messageIndex - 1].content}
               chatHistory={history.slice(0, messageIndex - 1)}
             />

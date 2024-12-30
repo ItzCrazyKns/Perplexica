@@ -1,50 +1,231 @@
 'use client';
 
-import { Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Search, Filter, X } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
+import { Button } from "@/components/ui/button";
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FilterModal } from "@/components/FilterModal";
 
-interface Discover {
-  title: string;
-  content: string;
-  url: string;
-  thumbnail: string;
+interface Expert {
+  id: number;
+  id_expert: string;
+  nom: string;
+  prenom: string;
+  adresse: string;
+  pays: string;
+  ville: string;
+  expertises: string;
+  biographie: string;
+  tarif: number;
+  services: any;
+  created_at: string;
+  image_url: string;
 }
 
+interface Location {
+  pays: string;
+  villes: string[];
+}
+
+interface Expertise {
+  id: string;
+  name: string;
+}
+
+const ExpertCard = ({ expert }: { expert: Expert }) => {
+  const router = useRouter();
+
+  const handleContact = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Empêche la navigation vers la page expert
+    
+    try {
+      // Vérifier si une conversation existe déjà
+      const { data: existingMessages } = await supabase
+        .from('messages')
+        .select('*')
+        .or(`sender_id.eq.user_id,receiver_id.eq.${expert.id_expert}`)
+        .limit(1);
+
+      if (!existingMessages || existingMessages.length === 0) {
+        // Si pas de conversation existante, créer le premier message
+        const { error: messageError } = await supabase
+          .from('messages')
+          .insert({
+            content: `Bonjour ${expert.prenom}, je souhaiterais échanger avec vous.`,
+            sender_id: 'user_id', // À remplacer par l'ID de l'utilisateur connecté
+            receiver_id: expert.id_expert,
+            read: false
+          });
+
+        if (messageError) {
+          throw messageError;
+        }
+      }
+
+      // Rediriger vers la conversation
+      router.push(`/chatroom/${expert.id_expert}`);
+      toast.success(`Conversation ouverte avec ${expert.prenom} ${expert.nom}`);
+    } catch (error) {
+      console.error('Error starting conversation:', error);
+      toast.error("Erreur lors de l'ouverture de la conversation");
+    }
+  };
+
+  return (
+    <Link
+      href={`/expert/${expert.id_expert}`}
+      key={expert.id}
+      className="max-w-sm w-full rounded-lg overflow-hidden bg-light-secondary dark:bg-dark-secondary hover:-translate-y-[1px] transition duration-200"
+    >
+      <div className="relative w-full h-48">
+        {expert.image_url ? (
+          <Image
+            src={expert.image_url}
+            alt={`${expert.prenom} ${expert.nom}`}
+            fill
+            className="object-cover"
+            onError={(e) => {
+              // Fallback en cas d'erreur de chargement de l'image
+              const target = e.target as HTMLImageElement;
+              target.onerror = null;
+              target.src = '/placeholder-image.jpg';
+            }}
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+            <span className="text-gray-400">Pas d&apos;image</span>
+          </div>
+        )}
+      </div>
+
+      <div className="px-6 py-4">
+        <div className="font-bold text-lg mb-2">
+          {expert.prenom} {expert.nom}
+        </div>
+        <div className="flex flex-col space-y-2">
+          <p className="text-black/70 dark:text-white/70 text-sm">
+            {expert.ville}, {expert.pays}
+          </p>
+          <p className="text-black/70 dark:text-white/70 text-sm">
+            {expert.expertises}
+          </p>
+          {expert.tarif && (
+            <p className="text-black/90 dark:text-white/90 font-medium">
+              {expert.tarif}€ /heure
+            </p>
+          )}
+          <Button 
+            onClick={handleContact}
+            className="mt-4"
+            variant="outline"
+          >
+            Contacter
+          </Button>
+        </div>
+      </div>
+    </Link>
+  );
+};
+
 const Page = () => {
-  const [discover, setDiscover] = useState<Discover[] | null>(null);
+  const [experts, setExperts] = useState<Expert[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedPays, setSelectedPays] = useState('');
+  const [selectedVille, setSelectedVille] = useState('');
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [selectedExpertises, setSelectedExpertises] = useState<string[]>([]);
+  const [open, setOpen] = useState(false);
+
+  // Calcul du nombre de filtres actifs
+  const activeFiltersCount = [
+    ...(selectedExpertises.length > 0 ? [1] : []),
+    selectedPays,
+    selectedVille
+  ].filter(Boolean).length;
+
+  // Récupérer les experts avec filtres
+  const fetchExperts = useCallback(async () => {
+    try {
+      let query = supabase
+        .from('experts')
+        .select('*');
+
+      if (selectedExpertises.length > 0) {
+        // Adaptez cette partie selon la structure de votre base de données
+        query = query.contains('expertises', selectedExpertises);
+      }
+
+      // Filtre par pays
+      if (selectedPays) {
+        query = query.eq('pays', selectedPays);
+      }
+
+      // Filtre par ville
+      if (selectedVille) {
+        query = query.eq('ville', selectedVille);
+      }
+
+      const { data, error } = await query;
+          
+      if (error) throw error;
+      setExperts(data);
+    } catch (err: any) {
+      console.error('Error fetching experts:', err.message);
+      toast.error('Erreur lors du chargement des experts');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedPays, selectedVille, selectedExpertises]);
+
+  // Récupérer la liste des pays et villes uniques
+  const fetchLocations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('experts')
+        .select('pays, ville');
+      
+      if (error) throw error;
+
+      // Créer un objet avec pays et villes uniques
+      const locationMap = new Map<string, Set<string>>();
+      
+      data.forEach(expert => {
+        if (expert.pays) {
+          if (!locationMap.has(expert.pays)) {
+            locationMap.set(expert.pays, new Set());
+          }
+          if (expert.ville) {
+            locationMap.get(expert.pays)?.add(expert.ville);
+          }
+        }
+      });
+
+      // Convertir en tableau trié
+      const sortedLocations = Array.from(locationMap).map(([pays, villes]) => ({
+        pays,
+        villes: Array.from(villes).sort()
+      })).sort((a, b) => a.pays.localeCompare(b.pays));
+
+      setLocations(sortedLocations);
+    } catch (err: any) {
+      console.error('Error fetching locations:', err.message);
+    }
+  };
+
+  // Reset ville quand le pays change
+  useEffect(() => {
+    setSelectedVille('');
+  }, [selectedPays]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/discover`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.message);
-        }
-
-        data.blogs = data.blogs.filter((blog: Discover) => blog.thumbnail);
-
-        setDiscover(data.blogs);
-      } catch (err: any) {
-        console.error('Error fetching data:', err.message);
-        toast.error('Error fetching data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+    fetchExperts();
+    fetchLocations();
+  }, [fetchExperts]);
 
   return loading ? (
     <div className="flex flex-row items-center justify-center min-h-screen">
@@ -66,47 +247,64 @@ const Page = () => {
       </svg>
     </div>
   ) : (
-    <>
-      <div>
-        <div className="flex flex-col pt-4">
-          <div className="flex items-center">
-            <Search />
-            <h1 className="text-3xl font-medium p-2">Discover</h1>
+    <div className="pb-24 lg:pb-0">
+      <div className="flex flex-col pt-4">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            <div className="flex items-center">
+              <Search />
+              <h1 className="text-3xl font-medium p-2">Nos Experts</h1>
+            </div>
+            <div className="text-gray-500 ml-10">
+              Plus de 300 experts à votre écoute
+            </div>
           </div>
-          <hr className="border-t border-[#2B2C2C] my-4 w-full" />
-        </div>
-
-        <div className="grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-4 pb-28 lg:pb-8 w-full justify-items-center lg:justify-items-start">
-          {discover &&
-            discover?.map((item, i) => (
-              <Link
-                href={`/?q=Summary: ${item.url}`}
-                key={i}
-                className="max-w-sm rounded-lg overflow-hidden bg-light-secondary dark:bg-dark-secondary hover:-translate-y-[1px] transition duration-200"
-                target="_blank"
-              >
-                <img
-                  className="object-cover w-full aspect-video"
-                  src={
-                    new URL(item.thumbnail).origin +
-                    new URL(item.thumbnail).pathname +
-                    `?id=${new URL(item.thumbnail).searchParams.get('id')}`
-                  }
-                  alt={item.title}
-                />
-                <div className="px-6 py-4">
-                  <div className="font-bold text-lg mb-2">
-                    {item.title.slice(0, 100)}...
-                  </div>
-                  <p className="text-black-70 dark:text-white/70 text-sm">
-                    {item.content.slice(0, 100)}...
-                  </p>
-                </div>
-              </Link>
-            ))}
+          
+          {/* CTA Filtres unifié */}
+          <Button 
+            onClick={() => setOpen(true)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Filter size={18} />
+            <span>Filtrer</span>
+            {activeFiltersCount > 0 && (
+              <span className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">
+                {activeFiltersCount}
+              </span>
+            )}
+          </Button>
         </div>
       </div>
-    </>
+
+      {/* Modale de filtres */}
+      <FilterModal
+        open={open}
+        setOpen={setOpen}
+        selectedPays={selectedPays}
+        setSelectedPays={setSelectedPays}
+        selectedVille={selectedVille}
+        setSelectedVille={setSelectedVille}
+        selectedExpertises={selectedExpertises}
+        setSelectedExpertises={setSelectedExpertises}
+        locations={locations}
+        experts={experts}
+      />
+
+      <hr className="border-t border-[#2B2C2C] my-4 w-full" />
+
+      <div className="grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-4 pb-28 lg:pb-8 w-full justify-items-center lg:justify-items-start">
+        {experts && experts.length > 0 ? (
+          experts.map((expert) => (
+            <ExpertCard key={expert.id} expert={expert} />
+          ))
+        ) : (
+          <p className="col-span-full text-center text-gray-500">
+            Aucun expert trouvé
+          </p>
+        )}
+      </div>
+    </div>
   );
 };
 

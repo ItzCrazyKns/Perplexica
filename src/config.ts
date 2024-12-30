@@ -15,10 +15,12 @@ interface Config {
     GROQ: string;
     ANTHROPIC: string;
     GEMINI: string;
+    SUPABASE: string;
   };
   API_ENDPOINTS: {
     SEARXNG: string;
     OLLAMA: string;
+    SUPABASE_URL: string;
   };
 }
 
@@ -46,8 +48,14 @@ export const getAnthropicApiKey = () => loadConfig().API_KEYS.ANTHROPIC;
 
 export const getGeminiApiKey = () => loadConfig().API_KEYS.GEMINI;
 
+export const getSupabaseKey = () => 
+  process.env.SUPABASE_KEY || loadConfig().API_KEYS.SUPABASE;
+
 export const getSearxngApiEndpoint = () =>
   process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
+
+export const getSupabaseUrl = () => 
+  process.env.SUPABASE_URL || loadConfig().API_ENDPOINTS.SUPABASE_URL;
 
 export const getOllamaApiEndpoint = () => loadConfig().API_ENDPOINTS.OLLAMA;
 

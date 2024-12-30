@@ -1,0 +1,152 @@
+import express from 'express';
+import { RAGDocumentChain, handleLegiFranceSearch } from '../chains/rag_document_upload';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { getAvailableChatModelProviders } from '../lib/providers';
+import { HumanMessage, AIMessage } from '@langchain/core/messages';
+import logger from '../utils/logger';
+import { ChatOpenAI } from '@langchain/openai';
+import crypto from 'crypto';
+import { Document } from '@langchain/core/schema/document';
+import { OpenAIEmbeddings } from '@langchain/openai';
+
+const router = express.Router();
+const ragChain = new RAGDocumentChain();
+
+interface ChatModel {
+  provider: string;
+  model: string;
+  customOpenAIBaseURL?: string;
+  customOpenAIKey?: string;
+}
+
+interface LegiFranceSearchBody {
+  query: string;
+  chatHistory: any[];
+  chatModel?: ChatModel;
+  urls?: string[];
+}
+
+interface LegiFranceRequest {
+  query: string;
+  // autres propriétés si nécessaires
+}
+
+router.post('/initialize', async (req, res) => {
+  try {
+    const { urls } = req.body;
+    if (!Array.isArray(urls)) {
+      return res.status(400).json({ error: "URLs must be an array" });
+    }
+
+    // Créer des documents à partir des URLs
+    const docs = urls.map(url => new Document({
+      pageContent: "",  // À remplir avec le contenu réel
+      metadata: { source: url }
+    }));
+
+    // Initialiser les embeddings (à ajuster selon votre configuration)
+    const embeddings = new OpenAIEmbeddings({
+      openAIApiKey: process.env.OPENAI_API_KEY,
+    });
+
+    await ragChain.initializeVectorStore(docs, embeddings);
+    res.json({ success: true });
+  } catch (err) {
+    logger.error("Error initializing LegiFrance search:", err);
+    res.status(500).json({ error: "Failed to initialize LegiFrance search" });
+  }
+});
+
+router.post('/search', async (req, res) => {
+  try {
+    const body: LegiFranceSearchBody = req.body;
+    console.log("📚 [LegiFrance] Début de la recherche avec query:", body.query);
+
+    // Configuration du modèle LLM
+    const chatModelProviders = await getAvailableChatModelProviders();
+    const chatModelProvider = body.chatModel?.provider || Object.keys(chatModelProviders)[0];
+    const chatModel = body.chatModel?.model || Object.keys(chatModelProviders[chatModelProvider])[0];
+    console.log("🤖 [LegiFrance] Modèle sélectionné:", { provider: chatModelProvider, model: chatModel });
+
+    let llm: BaseChatModel | undefined;
+
+    if (body.chatModel?.provider === 'custom_openai') {
+      if (!body.chatModel?.customOpenAIBaseURL || !body.chatModel?.customOpenAIKey) {
+        return res.status(400).json({ message: 'Missing custom OpenAI base URL or key' });
+      }
+
+      llm = new ChatOpenAI({
+        modelName: body.chatModel.model,
+        openAIApiKey: body.chatModel.customOpenAIKey,
+        temperature: 0.7,
+        configuration: {
+          baseURL: body.chatModel.customOpenAIBaseURL,
+        },
+      }) as unknown as BaseChatModel;
+    } else if (chatModelProviders[chatModelProvider] && 
+               chatModelProviders[chatModelProvider][chatModel]) {
+      llm = chatModelProviders[chatModelProvider][chatModel].model as unknown as BaseChatModel;
+    }
+
+    if (!llm) {
+      return res.status(400).json({ message: 'Invalid model selected' });
+    }
+
+    // Génération des IDs uniques
+    const messageId = crypto.randomBytes(7).toString('hex');
+    const chatId = crypto.randomBytes(7).toString('hex');
+
+    // Conversion de l'historique du chat
+    const chatHistory = body.chatHistory.map((msg: any) => {
+      if (msg.role === 'user') {
+        return new HumanMessage(msg.content);
+      } else if (msg.role === 'assistant') {
+        return new AIMessage(msg.content);
+      }
+    });
+    console.log("💬 [LegiFrance] Historique du chat converti:", chatHistory);
+
+    console.log("🔍 [LegiFrance] Début de handleLegiFranceSearch avec:", {
+      query: body.query,
+      llmType: llm?.constructor.name,
+      chainStatus: ragChain ? "initialisé" : "non initialisé"
+    });
+
+    // Ajouter la recherche avec handleLegiFranceSearch
+    const result = await handleLegiFranceSearch(
+      {
+        query: body.query,
+        chat_history: chatHistory
+      },
+      llm,
+      ragChain
+    );
+
+    console.log("✅ [LegiFrance] Résultat obtenu:", {
+      textLength: result.text?.length,
+      sourcesCount: result.sources?.length
+    });
+
+    // Format unifié de la réponse
+    res.status(200).json({
+      type: 'legifrance_results',
+      messageId,
+      data: {
+        text: result.text,
+        sources: result.sources,
+        query: body.query
+      }
+    });
+
+  } catch (err) {
+    console.error("❌ [LegiFrance] Erreur détaillée:", {
+      message: err.message,
+      stack: err.stack,
+      name: err.name
+    });
+    res.status(500).json({ message: 'Une erreur est survenue.' });
+    logger.error(`Erreur dans la recherche LegiFrance: ${err.message}`);
+  }
+});
+
+export default router; 

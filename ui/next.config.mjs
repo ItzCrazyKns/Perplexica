@@ -5,6 +5,9 @@ const nextConfig = {
       {
         hostname: 's2.googleusercontent.com',
       },
+      {
+        hostname: 'dam.malt.com',
+      },
     ],
   },
 };

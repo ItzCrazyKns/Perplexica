@@ -1,5 +1,5 @@
 import express from 'express';
-import handleImageSearch from '../chains/imageSearchAgent';
+import handleLegalSearch from '../chains/legalSearchAgent';  // Nouveau nom
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { getAvailableChatModelProviders } from '../lib/providers';
 import { HumanMessage, AIMessage } from '@langchain/core/messages';
@@ -15,7 +15,7 @@ interface ChatModel {
   customOpenAIKey?: string;
 }
 
-interface ImageSearchBody {
+interface LegalSearchBody {  // Renommé
   query: string;
   chatHistory: any[];
   chatModel?: ChatModel;
@@ -23,8 +23,7 @@ interface ImageSearchBody {
 
 router.post('/', async (req, res) => {
   try {
-    let body: ImageSearchBody = req.body;
-    console.log("📸 Requête de recherche d'images reçue:", body.query);
+    let body: LegalSearchBody = req.body;
 
     const chatHistory = body.chatHistory.map((msg: any) => {
       if (msg.role === 'user') {
@@ -74,17 +73,16 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Invalid model selected' });
     }
 
-    
-    const images = await handleImageSearch(
+    const legalDocuments = await handleLegalSearch(  // Renommé
       { query: body.query, chat_history: chatHistory },
       llm,
     );
 
-    res.status(200).json({ images });
+    res.status(200).json({ documents: legalDocuments });  // Modifié la réponse
   } catch (err) {
     res.status(500).json({ message: 'An error has occurred.' });
-    logger.error(`Error in image search: ${err.message}`);
+    logger.error(`Error in legal search: ${err.message}`);  // Mis à jour le message d'erreur
   }
 });
 
-export default router;
+export default router; 

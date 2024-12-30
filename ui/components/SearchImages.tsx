@@ -23,54 +23,60 @@ const SearchImages = ({
   const [open, setOpen] = useState(false);
   const [slides, setSlides] = useState<any[]>([]);
 
+  const handleSearch = async () => {
+    setLoading(true);
+    try {
+      console.log("🖼️ Démarrage de la recherche d'images pour:", query);
+      
+      const chatModelProvider = localStorage.getItem('chatModelProvider');
+      const chatModel = localStorage.getItem('chatModel');
+      console.log("🖼️ Modèle configuré:", chatModelProvider, chatModel);
+
+      const response = await fetch('/api/images', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: query,
+          chatHistory: chatHistory,
+          chatModel: {
+            provider: chatModelProvider,
+            model: chatModel,
+          },
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('🖼️ Résultats de la recherche:', data);
+      
+      if (data.images && data.images.length > 0) {
+        setImages(data.images);
+        setSlides(
+          data.images.map((image: Image) => ({
+            src: image.img_src,
+          }))
+        );
+        console.log('🖼️ Images et slides mis à jour:', data.images.length);
+      } else {
+        console.log('🖼️ Aucune image trouvée');
+      }
+    } catch (error) {
+      console.error('🖼️ Erreur lors de la recherche:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       {!loading && images === null && (
         <button
-          onClick={async () => {
-            setLoading(true);
-
-            const chatModelProvider = localStorage.getItem('chatModelProvider');
-            const chatModel = localStorage.getItem('chatModel');
-
-            const customOpenAIBaseURL = localStorage.getItem('openAIBaseURL');
-            const customOpenAIKey = localStorage.getItem('openAIApiKey');
-
-            const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/images`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  query: query,
-                  chatHistory: chatHistory,
-                  chatModel: {
-                    provider: chatModelProvider,
-                    model: chatModel,
-                    ...(chatModelProvider === 'custom_openai' && {
-                      customOpenAIBaseURL: customOpenAIBaseURL,
-                      customOpenAIKey: customOpenAIKey,
-                    }),
-                  },
-                }),
-              },
-            );
-
-            const data = await res.json();
-
-            const images = data.images ?? [];
-            setImages(images);
-            setSlides(
-              images.map((image: Image) => {
-                return {
-                  src: image.img_src,
-                };
-              }),
-            );
-            setLoading(false);
-          }}
+          onClick={handleSearch}
           className="border border-dashed border-light-200 dark:border-dark-200 hover:bg-light-200 dark:hover:bg-dark-200 active:scale-95 duration-200 transition px-4 py-2 flex flex-row items-center justify-between rounded-lg dark:text-white text-sm w-full"
         >
           <div className="flex flex-row items-center space-x-2">

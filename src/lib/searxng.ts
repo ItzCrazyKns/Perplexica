@@ -1,10 +1,11 @@
 import axios from 'axios';
 import { getSearxngApiEndpoint } from '../config';
 
-interface SearxngSearchOptions {
-  categories?: string[];
-  engines?: string[];
+export interface SearxngSearchOptions {
   language?: string;
+  engines?: string[];
+  categories?: string[];
+  limit?: number;
   pageno?: number;
 }
 
@@ -19,10 +20,10 @@ interface SearxngSearchResult {
   iframe_src?: string;
 }
 
-export const searchSearxng = async (
+export async function searchSearxng(
   query: string,
-  opts?: SearxngSearchOptions,
-) => {
+  opts: SearxngSearchOptions = {}
+) {
   const searxngURL = getSearxngApiEndpoint();
 
   const url = new URL(`${searxngURL}/search?format=json`);
@@ -44,4 +45,4 @@ export const searchSearxng = async (
   const suggestions: string[] = res.data.suggestions;
 
   return { results, suggestions };
-};
+}

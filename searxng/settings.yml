@@ -4,14 +4,79 @@ general:
   instance_name: 'searxng'
 
 search:
+  # Sources de recherche spécialisées
+  engines:
+    - name: legifrance
+      enabled: true
+      weight: 3
+    - name: service_public
+      enabled: true
+      weight: 3
+    - name: journal_officiel
+      enabled: true
+      weight: 2
+    - name: urssaf
+      enabled: true
+      weight: 2
+    - name: cci
+      enabled: true
+      weight: 1
+    - name: conseil_etat
+      enabled: true
+      weight: 1
+    - name: google_images
+      enabled: true
+      weight: 2
+    - name: bing_images
+      enabled: true
+      weight: 2
+    - name: wolframalpha
+      enabled: true
+      weight: 1
+
+  # Paramètres de recherche
   autocomplete: 'google'
+  language: 'fr'  # ou 'en' selon votre marché cible
   formats:
     - html
     - json
+    - csv
+    - pdf   
+
+  # Filtres spécialisés
+  filters:
+    - type: 'time_range'
+      default: 'year'  # Garder car pertinent pour la législation récente
+    - type: 'legal_type'
+      options:
+      - 'loi'
+      - 'decret'
+      - 'arrete'
+      - 'circulaire'
+    - type: 'jurisdiction'
+      options:
+      - 'national'
+      - 'regional'
+      - 'european'
+    - type: 'source'
+      options:
+      - 'legifrance'
+      - 'service_public'
+      - 'urssaf'
+      - 'cci'
+
+  # Paramètres de résultats
+  results:
+    max_pages: 10
+    safe_search: 0
+    categories:
+      - jurisprudence
+      - professional
+      - business
+      - legal
+      - entreprise
+      - sociéte
+      - images
 
 server:
   secret_key: 'a2fb23f1b02e6ee83875b09826990de0f6bd908b6638e8c10277d415f6ab852b' # Is overwritten by ${SEARXNG_SECRET}
-
-engines:
-  - name: wolframalpha
-    disabled: false

@@ -11,25 +11,35 @@ import { searchSearxng } from '../lib/searxng';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const imageSearchChainPrompt = `
-You will be given a conversation below and a follow up question. You need to rephrase the follow-up question so it is a standalone question that can be used by the LLM to search the web for images.
-You need to make sure the rephrased question agrees with the conversation and is relevant to the conversation.
+Vous êtes un expert en recherche d'images pour illustrer des contenus business. Votre objectif est de trouver des images élégantes et modernes qui illustrent le sujet de manière indirecte et esthétique.
 
-Example:
-1. Follow up question: What is a cat?
-Rephrased: A cat
+Principes à suivre :
+- Privilégier des images lifestyle et esthétiques
+- Éviter les schémas, graphiques et images trop techniques
+- Favoriser des images avec des personnes dans des situations naturelles
+- Choisir des images lumineuses et positives
+- Préférer des compositions simples et épurées
 
-2. Follow up question: What is a car? How does it works?
-Rephrased: Car working
+Format de la requête :
+- 2-3 mots-clés maximum
+- Ajouter "lifestyle" ou "modern" pour améliorer la qualité
+- Toujours ajouter "professional" pour le contexte business
 
-3. Follow up question: How does an AC work?
-Rephrased: AC working
+Exemples :
+1. Question : "Comment créer une entreprise ?"
+Requête : "entrepreneur lifestyle modern"
 
-Conversation:
+2. Question : "Qu'est-ce qu'un business plan ?"
+Requête : "business meeting professional"
+
+3. Question : "Comment faire sa comptabilité ?"
+Requête : "office work lifestyle"
+
+Conversation :
 {chat_history}
 
-Follow up question: {query}
-Rephrased question:
-`;
+Question : {query}
+Requête de recherche d'image :`;
 
 type ImageSearchChainInput = {
   chat_history: BaseMessage[];
@@ -53,11 +63,12 @@ const createImageSearchChain = (llm: BaseChatModel) => {
     strParser,
     RunnableLambda.from(async (input: string) => {
       const res = await searchSearxng(input, {
-        engines: ['bing images', 'google images'],
+        engines: ['google_images', 'bing_images'],
+        language: 'fr',
+        categories: ['images'],
       });
-
+      
       const images = [];
-
       res.results.forEach((result) => {
         if (result.img_src && result.url && result.title) {
           images.push({
@@ -67,7 +78,7 @@ const createImageSearchChain = (llm: BaseChatModel) => {
           });
         }
       });
-
+      
       return images.slice(0, 10);
     }),
   ]);
