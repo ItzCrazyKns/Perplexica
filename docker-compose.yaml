@@ -29,6 +29,15 @@ services:
     networks:
       - perplexica-network
     restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /home/perplexica
+          ignore:
+            - node_modules/
+        - action: rebuild
+          path: backend.dockerfile
 
   perplexica-frontend:
     build:
@@ -45,6 +54,16 @@ services:
     networks:
       - perplexica-network
     restart: unless-stopped
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+        - action: rebuild
+          path: app.dockerfile
 
 networks:
   perplexica-network:
