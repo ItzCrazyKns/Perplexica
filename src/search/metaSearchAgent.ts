@@ -33,6 +33,7 @@ import { SearxngSearchOptions } from '../lib/searxng';
 import { ChromaClient } from 'chromadb';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { EventEmitter } from 'events';
+import { MemoryVectorStore } from "langchain/vectorstores/memory";
 
 export interface MetaSearchAgentType {
   searchAndAnswer: (
@@ -97,10 +98,32 @@ export class MetaSearchAgent implements MetaSearchAgentType {
   private config: Config;
   private strParser = new StringOutputParser();
   private fileIds: string[];
+  private memoryStore: MemoryVectorStore;
 
   constructor(config: Config) {
     this.config = config;
     this.fileIds = [];
+  }
+
+  async initialize(embeddings: Embeddings) {
+    this.memoryStore = new MemoryVectorStore(embeddings);
+  }
+
+  private async enrichWithMemory(message: string, embeddings: Embeddings): Promise<string> {
+    try {
+      if (!this.memoryStore) {
+        await this.initialize(embeddings);
+      }
+      await this.memoryStore.addDocuments([{
+        pageContent: message,
+        metadata: { timestamp: Date.now() }
+      }]);
+      const results = await this.memoryStore.similaritySearch(message, 2);
+      return results.map(doc => doc.pageContent).join('\n');
+    } catch (error) {
+      console.error("Erreur mémoire:", error);
+      return '';
+    }
   }
 
   private async createSearchRetrieverChain(llm: BaseChatModel) {
@@ -645,6 +668,96 @@ export class MetaSearchAgent implements MetaSearchAgentType {
     return docs.slice(0, 15);
   }
 
+  private async updateMemoryStore(message: string, history: BaseMessage[]) {
+    try {
+      if (!this.memoryStore) {
+        throw new Error("Memory store not initialized");
+      }
+      // Créer un document avec le contexte actuel
+      const contextDoc = {
+        pageContent: `Question: ${message}\nContext: ${history.map(m => 
+          `${m._getType()}: ${m.content}`).join('\n')}`,
+        metadata: { timestamp: Date.now() }
+      };
+
+      console.log("💾 Ajout à la mémoire:", contextDoc);
+      await this.memoryStore.addDocuments([contextDoc]);
+      console.log("✅ Mémoire mise à jour avec succès");
+    } catch (error) {
+      console.error("❌ Erreur lors de la mise à jour de la mémoire:", error);
+    }
+  }
+
+  private async getRelevantContext(message: string): Promise<string> {
+    try {
+      if (!this.memoryStore) {
+        throw new Error("Memory store not initialized");
+      }
+      console.log("🔍 Recherche dans la mémoire pour:", message);
+      const results = await this.memoryStore.similaritySearch(message, 2);
+      console.log("📚 Contexte trouvé dans la mémoire:", results);
+      return results.map(doc => doc.pageContent).join('\n');
+    } catch (error) {
+      console.error("❌ Erreur lors de la récupération du contexte:", error);
+      return '';
+    }
+  }
+
+  private async analyzeConversationContext(
+    message: string,
+    history: BaseMessage[],
+    llm: BaseChatModel
+  ): Promise<{ context: string; relevance: number }> {
+    try {
+      const formattedHistory = formatChatHistoryAsString(history);
+      
+      const analysis = await llm.invoke(`
+        Analysez cette conversation en profondeur pour établir les liens entre les différents sujets et leur impact mutuel.
+        
+        Historique de la conversation:
+        ${formattedHistory}
+
+        Nouvelle question: "${message}"
+
+        Répondez au format JSON:
+        {
+          "mainTopic": "sujet principal actuel",
+          "relatedTopics": ["sujets connexes"],
+          "contextualFactors": {
+            "financial": ["facteurs financiers"],
+            "legal": ["aspects juridiques"],
+            "administrative": ["aspects administratifs"]
+          },
+          "impactAnalysis": {
+            "primary": "impact principal",
+            "secondary": ["impacts secondaires"],
+            "constraints": ["contraintes identifiées"]
+          },
+          "relevanceScore": <0.0 à 1.0>
+        }
+      `);
+
+      const result = JSON.parse(String(analysis.content));
+      
+      // Construire un contexte enrichi qui prend en compte les relations et impacts
+      const enrichedContext = `
+        Contexte principal: ${result.mainTopic}
+        Facteurs impactants: ${result.contextualFactors.financial.join(', ')}
+        Implications légales: ${result.contextualFactors.legal.join(', ')}
+        Impact global: ${result.impactAnalysis.primary}
+        Contraintes à considérer: ${result.impactAnalysis.constraints.join(', ')}
+      `.trim();
+
+      return {
+        context: enrichedContext,
+        relevance: result.relevanceScore
+      };
+    } catch (error) {
+      console.error("Erreur lors de l'analyse du contexte:", error);
+      return { context: '', relevance: 0 };
+    }
+  }
+
   async searchAndAnswer(
     message: string,
     history: BaseMessage[],
@@ -654,14 +767,25 @@ export class MetaSearchAgent implements MetaSearchAgentType {
     fileIds: string[],
   ) {
     const effectiveMode = 'balanced';
-    
-    const emitter = new eventEmitter();
+    const emitter = new EventEmitter();
 
     try {
+      // Analyser le contexte de la conversation
+      const conversationContext = await this.analyzeConversationContext(message, history, llm);
+      console.log("🧠 Analyse du contexte:", conversationContext);
+
+      // Mettre à jour la mémoire avec le contexte actuel
+      await this.updateMemoryStore(message, history);
+
+      // Récupérer le contexte pertinent de la mémoire
+      const memoryContext = await this.getRelevantContext(message);
+
       // Analyse sophistiquée de la requête avec LLM
       const queryAnalysis = await llm.invoke(`En tant qu'expert en analyse de requêtes, examine cette demande et détermine la stratégie de recherche optimale.
 
 Question/Requête: "${message}"
+${memoryContext ? `\nContexte mémorisé:\n${memoryContext}` : ''}
+${conversationContext.context ? `\nContexte de la conversation:\n${conversationContext.context}` : ''}
 
 Documents disponibles: ${fileIds.length > 0 ? "Oui" : "Non"}
 
@@ -672,20 +796,9 @@ Analyse et réponds au format JSON:
   "requiresWebSearch": <boolean>,
   "requiresExpertSearch": <boolean>,
   "documentRelevance": <0.0 à 1.0>,
+  "contextRelevance": ${conversationContext.relevance},
   "reasoning": "<courte explication>"
-}
-
-Critères d'analyse:
-- DOCUMENT_QUERY: La question porte spécifiquement sur le contenu des documents
-- WEB_SEARCH: Recherche d'informations générales ou actuelles
-- EXPERT_ADVICE: Demande nécessitant une expertise spécifique
-- HYBRID: Combinaison de plusieurs sources
-
-Prends en compte:
-- La présence ou non de documents uploadés
-- La spécificité de la question
-- Le besoin d'expertise externe
-- L'actualité du sujet`);
+}`);
 
       const analysis = JSON.parse(String(queryAnalysis.content));
       console.log("🎯 Analyse de la requête:", analysis);
@@ -1115,4 +1228,3 @@ export const searchHandlers: Record<string, MetaSearchAgentType> = {
 };
 
 export default MetaSearchAgent;
-
