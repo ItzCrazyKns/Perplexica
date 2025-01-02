@@ -36,6 +36,7 @@ import { EventEmitter } from 'events';
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 
 export interface MetaSearchAgentType {
+  initialize: (embeddings: Embeddings) => Promise<void>;
   searchAndAnswer: (
     message: string,
     history: BaseMessage[],
@@ -106,7 +107,20 @@ export class MetaSearchAgent implements MetaSearchAgentType {
   }
 
   async initialize(embeddings: Embeddings) {
-    this.memoryStore = new MemoryVectorStore(embeddings);
+    try {
+      if (!this.memoryStore) {
+        console.log("🔄 Initialisation du memory store...");
+        this.memoryStore = new MemoryVectorStore(embeddings);
+        await this.memoryStore.addDocuments([{
+          pageContent: "Initialisation du memory store",
+          metadata: { timestamp: Date.now() }
+        }]);
+        console.log("✅ Memory store initialisé avec succès");
+      }
+    } catch (error) {
+      console.error("❌ Erreur lors de l'initialisation du memory store:", error);
+      throw error;
+    }
   }
 
   private async enrichWithMemory(message: string, embeddings: Embeddings): Promise<string> {
@@ -296,33 +310,43 @@ export class MetaSearchAgent implements MetaSearchAgentType {
         query: (input: BasicChainInput) => input.query,
         chat_history: (input: BasicChainInput) => input.chat_history,
         docs: RunnableLambda.from(async (input: BasicChainInput) => {
-          console.log("Début de la recherche...");
+          console.log("Début de la recherche avec contexte enrichi...");
           let docs: Document[] = [];
 
-          // 1. D'abord chercher dans les documents uploadés
+          // Récupérer le contexte historique
+          const memoryContext = await this.getRelevantContext(input.query);
+          console.log("💭 Contexte historique pour la recherche:", memoryContext);
+
+          // Enrichir la requête avec le contexte
+          const enrichedQuery = `
+            Contexte précédent:
+            ${memoryContext}
+            
+            Question actuelle:
+            ${input.query}
+          `;
+
+          // 1. D'abord chercher dans les documents uploadés avec le contexte enrichi
           if (fileIds.length > 0) {
             try {
               const uploadedDocs = await this.loadUploadedDocuments(fileIds);
               console.log("📚 Documents uploadés chargés:", uploadedDocs.length);
 
-              // Utiliser RAGDocumentChain pour la recherche dans les documents
               const ragChain = new RAGDocumentChain();
               await ragChain.initializeVectorStoreFromDocuments(uploadedDocs, embeddings);
               
-              // Utiliser le type 'specific' pour une recherche précise
               const searchChain = ragChain.createSearchChain(llm);
               const relevantDocs = await searchChain.invoke({
-                query: input.query,
+                query: enrichedQuery,
                 chat_history: input.chat_history,
                 type: 'specific'
               });
 
-              // Ajouter les documents pertinents avec un score élevé
               docs = uploadedDocs.map(doc => ({
                 ...doc,
                 metadata: {
                   ...doc.metadata,
-                  score: 0.8 // Score élevé pour les documents uploadés
+                  score: 0.8
                 }
               }));
 
@@ -367,7 +391,7 @@ export class MetaSearchAgent implements MetaSearchAgentType {
 
           console.log("🔍 DEBUG - Avant appel rerankDocs - Mode:", optimizationMode, "Query:", input.query);
           return this.rerankDocs(
-            input.query,
+            enrichedQuery,
             docs,
             fileIds,
             embeddings,
@@ -673,11 +697,16 @@ export class MetaSearchAgent implements MetaSearchAgentType {
       if (!this.memoryStore) {
         throw new Error("Memory store not initialized");
       }
-      // Créer un document avec le contexte actuel
+      
+      // Créer un document avec le contexte actuel et sa structure
       const contextDoc = {
         pageContent: `Question: ${message}\nContext: ${history.map(m => 
           `${m._getType()}: ${m.content}`).join('\n')}`,
-        metadata: { timestamp: Date.now() }
+        metadata: { 
+          timestamp: Date.now(),
+          themes: this.extractThemes(message + ' ' + history.map(m => m.content).join(' ')),
+          type: 'conversation'
+        }
       };
 
       console.log("💾 Ajout à la mémoire:", contextDoc);
@@ -694,13 +723,21 @@ export class MetaSearchAgent implements MetaSearchAgentType {
         throw new Error("Memory store not initialized");
       }
       console.log("🔍 Recherche dans la mémoire pour:", message);
-      const results = await this.memoryStore.similaritySearch(message, 2);
+      
+      const results = await this.memoryStore.similaritySearch(message, 3);
       console.log("📚 Contexte trouvé dans la mémoire:", results);
       return results.map(doc => doc.pageContent).join('\n');
     } catch (error) {
       console.error("❌ Erreur lors de la récupération du contexte:", error);
       return '';
     }
+  }
+
+  private extractThemes(context: string): string[] {
+    const commonThemes = ['sas', 'entreprise', 'création', 'chomage', 'juridique', 'financement'];
+    return commonThemes.filter(theme => 
+      context.toLowerCase().includes(theme.toLowerCase())
+    );
   }
 
   private async analyzeConversationContext(
@@ -712,17 +749,27 @@ export class MetaSearchAgent implements MetaSearchAgentType {
       const formattedHistory = formatChatHistoryAsString(history);
       
       const analysis = await llm.invoke(`
-        Analysez cette conversation en profondeur pour établir les liens entre les différents sujets et leur impact mutuel.
+        Analysez cette conversation en profondeur en donnant une importance particulière aux 3 derniers échanges.
+        Assurez-vous de maintenir la cohérence du contexte entre les questions.
         
         Historique de la conversation:
         ${formattedHistory}
 
         Nouvelle question: "${message}"
 
+        Instructions spécifiques:
+        1. Identifiez les thèmes récurrents des 3 derniers échanges
+        2. Notez les contraintes ou conditions mentionnées précédemment qui restent pertinentes
+        3. Évaluez comment la nouvelle question s'inscrit dans la continuité des échanges
+
         Répondez au format JSON:
         {
           "mainTopic": "sujet principal actuel",
-          "relatedTopics": ["sujets connexes"],
+          "recentContext": {
+            "lastThemes": ["thèmes des 3 derniers échanges"],
+            "activeConstraints": ["contraintes toujours actives"],
+            "continuityScore": <0.0 à 1.0>
+          },
           "contextualFactors": {
             "financial": ["facteurs financiers"],
             "legal": ["aspects juridiques"],
@@ -739,18 +786,23 @@ export class MetaSearchAgent implements MetaSearchAgentType {
 
       const result = JSON.parse(String(analysis.content));
       
-      // Construire un contexte enrichi qui prend en compte les relations et impacts
+      // Construction d'un contexte enrichi qui met l'accent sur la continuité
       const enrichedContext = `
         Contexte principal: ${result.mainTopic}
+        Thèmes récents: ${result.recentContext.lastThemes.join(', ')}
+        Contraintes actives: ${result.recentContext.activeConstraints.join(', ')}
         Facteurs impactants: ${result.contextualFactors.financial.join(', ')}
         Implications légales: ${result.contextualFactors.legal.join(', ')}
         Impact global: ${result.impactAnalysis.primary}
         Contraintes à considérer: ${result.impactAnalysis.constraints.join(', ')}
       `.trim();
 
+      // Ajuster le score de pertinence en fonction de la continuité
+      const adjustedRelevance = (result.relevanceScore + result.recentContext.continuityScore) / 2;
+
       return {
         context: enrichedContext,
-        relevance: result.relevanceScore
+        relevance: adjustedRelevance
       };
     } catch (error) {
       console.error("Erreur lors de l'analyse du contexte:", error);
@@ -770,6 +822,20 @@ export class MetaSearchAgent implements MetaSearchAgentType {
     const emitter = new EventEmitter();
 
     try {
+      // S'assurer que le memoryStore est initialisé
+      if (!this.memoryStore) {
+        console.log("🔄 Initialisation du memory store dans searchAndAnswer...");
+        try {
+          await this.initialize(embeddings);
+          if (!this.memoryStore) {
+            throw new Error("Memory store initialization failed");
+          }
+        } catch (error) {
+          console.error("❌ Erreur lors de l'initialisation du memory store:", error);
+          throw error;
+        }
+      }
+
       // Analyser le contexte de la conversation
       const conversationContext = await this.analyzeConversationContext(message, history, llm);
       console.log("🧠 Analyse du contexte:", conversationContext);
@@ -779,29 +845,41 @@ export class MetaSearchAgent implements MetaSearchAgentType {
 
       // Récupérer le contexte pertinent de la mémoire
       const memoryContext = await this.getRelevantContext(message);
+      console.log("💭 Contexte mémoire récupéré:", memoryContext);
+
+      // Enrichir le message avec le contexte historique
+      const enrichedMessage = `
+        Contexte précédent:
+        ${memoryContext}
+        
+        Contexte actuel:
+        ${conversationContext.context}
+        
+        Question actuelle:
+        ${message}
+      `;
 
       // Analyse sophistiquée de la requête avec LLM
-      const queryAnalysis = await llm.invoke(`En tant qu'expert en analyse de requêtes, examine cette demande et détermine la stratégie de recherche optimale.
+      const queryAnalysis = await llm.invoke(`
+        En tant qu'expert en analyse de requêtes, examine cette demande dans son contexte complet.
+        
+        ${enrichedMessage}
 
-Question/Requête: "${message}"
-${memoryContext ? `\nContexte mémorisé:\n${memoryContext}` : ''}
-${conversationContext.context ? `\nContexte de la conversation:\n${conversationContext.context}` : ''}
+        Documents disponibles: ${fileIds.length > 0 ? "Oui" : "Non"}
 
-Documents disponibles: ${fileIds.length > 0 ? "Oui" : "Non"}
-
-Analyse et réponds au format JSON:
-{
-  "primaryIntent": "DOCUMENT_QUERY" | "WEB_SEARCH" | "EXPERT_ADVICE" | "HYBRID",
-  "requiresDocumentSearch": <boolean>,
-  "requiresWebSearch": <boolean>,
-  "requiresExpertSearch": <boolean>,
-  "documentRelevance": <0.0 à 1.0>,
-  "contextRelevance": ${conversationContext.relevance},
-  "reasoning": "<courte explication>"
-}`);
+        Analyse et réponds au format JSON:
+        {
+          "primaryIntent": "DOCUMENT_QUERY" | "WEB_SEARCH" | "EXPERT_ADVICE" | "HYBRID",
+          "requiresDocumentSearch": <boolean>,
+          "requiresWebSearch": <boolean>,
+          "requiresExpertSearch": <boolean>,
+          "documentRelevance": <0.0 à 1.0>,
+          "contextRelevance": ${conversationContext.relevance},
+          "reasoning": "<courte explication>"
+        }`);
 
       const analysis = JSON.parse(String(queryAnalysis.content));
-      console.log("🎯 Analyse de la requête:", analysis);
+      console.log("🎯 Analyse de la requête enrichie:", analysis);
 
       // 1. Analyse des documents uploadés avec RAG
       const uploadedDocs = await this.loadUploadedDocuments(fileIds);
@@ -940,6 +1018,9 @@ Analyse et réponds au format JSON:
 export const searchHandlers: Record<string, MetaSearchAgentType> = {
   // ... existing handlers ...
   legal: {
+    initialize: async (embeddings: Embeddings) => {
+      // Pas besoin d'initialisation spécifique pour le handler legal
+    },
     searchAndAnswer: async (
       message,
       history,
@@ -994,6 +1075,9 @@ export const searchHandlers: Record<string, MetaSearchAgentType> = {
     },
   },
   documents: {
+    initialize: async (embeddings: Embeddings) => {
+      // Pas besoin d'initialisation spécifique pour le handler documents
+    },
     searchAndAnswer: async (
       message,
       history,
@@ -1059,6 +1143,9 @@ export const searchHandlers: Record<string, MetaSearchAgentType> = {
     }
   },
   uploads: {
+    initialize: async (embeddings: Embeddings) => {
+      // Pas besoin d'initialisation spécifique pour le handler uploads
+    },
     searchAndAnswer: async (
       message,
       history,
