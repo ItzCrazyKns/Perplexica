@@ -1,38 +1,48 @@
-import { startWebSocketServer } from './websocket';
 import express from 'express';
 import cors from 'cors';
-import http from 'http';
-import routes from './routes';
-import { getPort } from './config';
-import logger from './utils/logger';
-
-const port = getPort();
+import path from 'path';
+import './config/env'; // Load environment variables first
+import apiRoutes from './routes/api';
+import { HealthCheckService } from './lib/services/healthCheck';
 
 const app = express();
-const server = http.createServer(app);
+const port = process.env.PORT || 3000;
 
-const corsOptions = {
-  origin: '*',
-};
-
-app.use(cors(corsOptions));
+// Middleware
+app.use(cors());
 app.use(express.json());
 
-app.use('/api', routes);
-app.get('/api', (_, res) => {
-  res.status(200).json({ status: 'ok' });
+// API routes first
+app.use('/api', apiRoutes);
+
+// Then static files
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Finally, catch-all route for SPA
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-server.listen(port, () => {
-  logger.info(`Server is running on port ${port}`);
-});
+// Start server with health checks
+async function startServer() {
+  console.log('\n🔍 Checking required services...');
+  
+  const ollamaStatus = await HealthCheckService.checkOllama();
+  const searxngStatus = await HealthCheckService.checkSearxNG();
+  const supabaseStatus = await HealthCheckService.checkSupabase();
 
-startWebSocketServer(server);
+  console.log('\n📊 Service Status:');
+  console.log('- Ollama:', ollamaStatus ? '✅ Running' : '❌ Not Running');
+  console.log('- SearxNG:', searxngStatus ? '✅ Running' : '❌ Not Running');
+  console.log('- Supabase:', supabaseStatus ? '✅ Connected' : '❌ Not Connected');
 
-process.on('uncaughtException', (err, origin) => {
-  logger.error(`Uncaught Exception at ${origin}: ${err}`);
-});
+  app.listen(port, () => {
+    console.log(`\n🚀 Server running at http://localhost:${port}`);
+    console.log('-------------------------------------------');
+  });
+}
 
-process.on('unhandledRejection', (reason, promise) => {
-  logger.error(`Unhandled Rejection at: ${promise}, reason: ${reason}`);
+startServer().catch(error => {
+  console.error('Failed to start server:', error);
+  process.exit(1);
 });

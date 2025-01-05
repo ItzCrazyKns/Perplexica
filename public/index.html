@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OffMarket Pro - Find Off-Market Property Services</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --background-color: #f8f9fa;
+            --text-color: #2c3e50;
+            --border-radius: 8px;
+            --card-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: var(--background-color);
+            color: var(--text-color);
+        }
+
+        .header {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1rem;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .search-container {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 1rem;
+            max-width: 800px;
+            margin: 2rem auto;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+
+        .search-button {
+            padding: 1rem 2rem;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .search-button:hover {
+            background: #2980b9;
+        }
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem auto;
+            max-width: 1200px;
+            padding: 0 1rem;
+        }
+
+        .category-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+
+        .category-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .category-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .subcategories {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .subcategory {
+            color: var(--secondary-color);
+            cursor: pointer;
+            margin: 0.25rem 0;
+        }
+
+        .subcategory:hover {
+            text-decoration: underline;
+        }
+
+        .results-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .business-card {
+            background: white;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        .business-logo {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: var(--border-radius);
+        }
+
+        .business-info h3 {
+            margin: 0 0 0.5rem 0;
+            color: var(--primary-color);
+        }
+
+        .business-contact {
+            text-align: right;
+        }
+
+        .rating-stars {
+            color: #f1c40f;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .search-box {
+                flex-direction: column;
+            }
+            
+            .business-card {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .business-contact {
+                text-align: center;
+            }
+
+            .business-logo {
+                margin: 0 auto;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-color);
+        }
+
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .no-results {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .no-results ul {
+            text-align: left;
+            display: inline-block;
+            margin: 1rem auto;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+            background: white;
+            box-shadow: var(--card-shadow);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .results-table th {
+            background: #f8f9fa;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--primary-color);
+            border-bottom: 2px solid #eee;
+        }
+
+        .results-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+
+        .business-icon {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f0f0f0;
+            border-radius: var(--border-radius);
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .business-info {
+            display: flex;
+            gap: 1rem;
+            align-items: start;
+        }
+
+        .business-details h3 {
+            margin: 0 0 0.5rem 0;
+            color: var(--primary-color);
+        }
+
+        .business-meta {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: #f39c12;
+        }
+
+        .contact-info {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .phone {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .address {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .action-button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .primary-button {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .secondary-button {
+            background: #eee;
+            color: var(--text-color);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <a href="/" class="logo">OffMarket Pro</a>
+    </header>
+
+    <div class="search-container">
+        <h1>Find Off-Market Property Services</h1>
+        <div class="search-box">
+            <input type="text" id="searchQuery" placeholder="What service are you looking for?">
+            <input type="text" id="searchLocation" placeholder="Location">
+            <button onclick="performSearch()">Search</button>
+        </div>
+    </div>
+
+    <div class="categories-grid">
+        <!-- Categories will be dynamically inserted here -->
+    </div>
+
+    <div class="container">
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th style="width: 50%">Business</th>
+                    <th style="width: 30%">Contact</th>
+                    <th style="width: 20%">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody">
+                <!-- Results will be populated here -->
+            </tbody>
+        </table>
+        <div id="searchProgress" class="search-progress"></div>
+    </div>
+
+    <script>
+        // Load categories
+        fetch('/api/categories')
+            .then(response => response.json())
+            .then(categories => {
+                const grid = document.querySelector('.categories-grid');
+                grid.innerHTML = categories.map(category => `
+                    <div class="category-card" onclick="searchCategory('${category.name}')">
+                        <div class="category-icon">${category.icon}</div>
+                        <h3>${category.name}</h3>
+                        <div class="subcategories">
+                            ${category.subcategories.map(sub => 
+                                `<div class="subcategory" onclick="event.stopPropagation(); searchSubcategory('${sub.name}')">${sub.name}</div>`
+                            ).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            });
+
+        async function performSearch() {
+            const query = document.getElementById('searchQuery').value;
+            const location = document.getElementById('searchLocation').value;
+            
+            if (!query || !location) {
+                alert('Please enter both search query and location');
+                return;
+            }
+
+            await doSearch(query, location);
+        }
+
+        function searchCategory(category) {
+            const location = document.getElementById('searchLocation').value;
+            if (!location) {
+                alert('Please enter a location first');
+                return;
+            }
+            document.getElementById('searchQuery').value = category;
+            performSearch();
+        }
+
+        // Add searchSubcategory function
+        function searchSubcategory(subcategory) {
+            const location = document.getElementById('searchLocation').value;
+            if (!location) {
+                alert('Please enter a location first');
+                return;
+            }
+            document.getElementById('searchQuery').value = subcategory;
+            performSearch();
+        }
+
+        // Update doSearch function
+        async function doSearch(query, location) {
+            const searchTerm = `${query} in ${location}`;
+            const resultsBody = document.getElementById('resultsBody');
+            const progressDiv = document.getElementById('searchProgress');
+            
+            try {
+                resultsBody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="loading">
+                            <p>Searching for ${query} in ${location}...</p>
+                        </td>
+                    </tr>
+                `;
+
+                const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let allResults = new Set(); // Use Set to avoid duplicates
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    
+                    // Process complete chunks
+                    const chunks = buffer.split('\n');
+                    buffer = chunks.pop() || ''; // Keep the incomplete chunk
+
+                    for (const chunk of chunks) {
+                        if (!chunk.trim()) continue;
+                        
+                        try {
+                            const data = JSON.parse(chunk);
+                            console.log('Received chunk:', data);
+
+                            if (data.source === 'database' || (data.source === 'search' && data.results)) {
+                                // Add new results to our set
+                                data.results.forEach(result => {
+                                    allResults.add(JSON.stringify(result)); // Convert to string for Set storage
+                                });
+                                
+                                // Display all current results
+                                displayResults(Array.from(allResults).map(str => JSON.parse(str)));
+                            } else if (data.status && data.progress) {
+                                // Update progress
+                                progressDiv.innerHTML = `
+                                    <p>${data.status} (${data.progress}% complete)</p>
+                                `;
+                            }
+                        } catch (e) {
+                            console.error('Error parsing chunk:', e);
+                        }
+                    }
+                }
+
+                // Clear progress when done
+                progressDiv.innerHTML = '';
+
+            } catch (error) {
+                console.error('Search error:', error);
+                resultsBody.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="error-message">
+                            <h3>Search Error</h3>
+                            <p>Sorry, we encountered an error while searching. Please try again.</p>
+                            <p>Error details: ${error.message}</p>
+                            <button onclick="performSearch()" class="search-button">Try Again</button>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function displayResults(businesses) {
+            const resultsBody = document.getElementById('resultsBody');
+            
+            if (!businesses || businesses.length === 0) {
+                resultsBody.innerHTML = `
+                    <tr>
+                        <td colspan="3" style="text-align: center; padding: 2rem;">
+                            <h3>No Results Found</h3>
+                            <p>We couldn't find any businesses matching your search.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            resultsBody.innerHTML = businesses.map(business => {
+                const icon = getBusinessIcon(business.name);
+                const rating = business.rating ? (business.rating / 20).toFixed(1) : 0; // Convert to 5-star scale
+                
+                return `
+                    <tr>
+                        <td>
+                            <div class="business-info">
+                                <div class="business-icon">${icon}</div>
+                                <div class="business-details">
+                                    <h3>${business.name}</h3>
+                                    <div class="business-meta">
+                                        <div class="rating">
+                                            ${getRatingStars(rating)}
+                                            <span>(${rating})</span>
+                                        </div>
+                                        <div class="description">${business.description || ''}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="contact-info">
+                                <div class="phone">${business.phone || 'No phone available'}</div>
+                                <div class="address">${business.address || 'Address not available'}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                ${business.website ? 
+                                    `<a href="${business.website}" target="_blank" class="action-button primary-button">Visit Website</a>` :
+                                    '<button class="action-button secondary-button" disabled>No Website</button>'
+                                }
+                                <button onclick="contactBusiness('${business.id}')" class="action-button secondary-button">Contact</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Helper function to get business icon
+        function getBusinessIcon(businessName) {
+            // Map of business types to icons
+            const icons = {
+                'real estate': '🏢',
+                'legal': '⚖️',
+                'financial': '💰',
+                'contractor': '🔨',
+                'property': '🏠',
+                'marketing': '📢',
+                'tech': '💻',
+                'default': '🏢'
+            };
+
+            // Determine business type from name
+            const businessType = Object.keys(icons).find(type => 
+                businessName.toLowerCase().includes(type)
+            ) || 'default';
+
+            return icons[businessType];
+        }
+
+        // Helper function to generate rating stars
+        function getRatingStars(rating) {
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+            const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+            return `
+                ${'★'.repeat(fullStars)}
+                ${hasHalfStar ? '½' : ''}
+                ${'☆'.repeat(emptyStars)}
+            `;
+        }
+    </script>
+</body>
+</html> 

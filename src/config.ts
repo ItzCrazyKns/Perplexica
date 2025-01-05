@@ -77,3 +77,16 @@ export const updateConfig = (config: RecursivePartial<Config>) => {
     toml.stringify(config),
   );
 };
+
+export const config = {
+  ollama: {
+    url: process.env.OLLAMA_URL || 'http://localhost:11434',
+    model: process.env.OLLAMA_MODEL || 'mistral',
+    options: {
+      temperature: 0.1,
+      top_p: 0.9,
+      timeout: 30000 // 30 seconds timeout
+    }
+  },
+  // ... other config
+};
