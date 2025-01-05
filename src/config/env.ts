@@ -15,7 +15,10 @@ const envSchema = z.object({
   SEARXNG_INSTANCES: z.string().default('["http://localhost:4000"]'),
   MAX_RESULTS_PER_QUERY: z.string().default('50'),
   CACHE_DURATION_HOURS: z.string().default('24'),
-  CACHE_DURATION_DAYS: z.string().default('7')
+  CACHE_DURATION_DAYS: z.string().default('7'),
+  HUGGING_FACE_API_KEY: z.string({
+    required_error: "HUGGING_FACE_API_KEY is required in .env"
+  })
 });
 
 // Define the final environment type
@@ -38,6 +41,15 @@ export interface EnvConfig {
     maxResultsPerQuery: number;
     durationHours: number;
     durationDays: number;
+  };
+  ai: {
+    model: string;
+    temperature: number;
+    maxTokens: number;
+    batchSize: number;
+  };
+  huggingface: {
+    apiKey: string;
   };
 }
 
@@ -64,5 +76,14 @@ export const env: EnvConfig = {
     maxResultsPerQuery: parseInt(rawEnv.MAX_RESULTS_PER_QUERY),
     durationHours: parseInt(rawEnv.CACHE_DURATION_HOURS),
     durationDays: parseInt(rawEnv.CACHE_DURATION_DAYS)
+  },
+  ai: {
+    model: 'deepseek-ai/deepseek-coder-6.7b-instruct',
+    temperature: 0.7,
+    maxTokens: 512,
+    batchSize: 3
+  },
+  huggingface: {
+    apiKey: rawEnv.HUGGING_FACE_API_KEY
   }
 }; 

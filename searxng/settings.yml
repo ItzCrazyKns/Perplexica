@@ -11,7 +11,49 @@ search:
 
 server:
   secret_key: 'a2fb23f1b02e6ee83875b09826990de0f6bd908b6638e8c10277d415f6ab852b' # Is overwritten by ${SEARXNG_SECRET}
+  port: 8080
+  bind_address: "0.0.0.0"
+  base_url: http://localhost:8080/
 
 engines:
   - name: wolframalpha
     disabled: false
+
+  - name: google
+    engine: google
+    shortcut: g
+    disabled: false
+
+  - name: bing
+    engine: bing
+    shortcut: b
+    disabled: false
+
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: d
+    disabled: false
+
+  - name: yelp
+    engine: yelp
+    shortcut: y
+    disabled: false
+
+ui:
+  static_path: ""
+  templates_path: ""
+  default_theme: simple
+  default_locale: en
+  results_on_new_tab: false
+
+outgoing:
+  request_timeout: 6.0
+  max_request_timeout: 10.0
+  pool_connections: 100
+  pool_maxsize: 10
+  enable_http2: true
+
+server:
+  limiter: false
+  image_proxy: false
+  http_protocol_version: "1.0"

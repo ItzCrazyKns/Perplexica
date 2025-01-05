@@ -20,20 +20,29 @@ export class DatabaseService {
     }
 
     async searchBusinesses(query: string, location: string): Promise<BusinessData[]> {
-        const { data, error } = await this.supabase
-            .from('businesses')
-            .select('*')
-            .textSearch('name', query)
-            .textSearch('address', location)
-            .order('search_count', { ascending: false })
-            .limit(env.cache.maxResultsPerQuery);
+        try {
+            const { data, error } = await this.supabase
+                .from('businesses')
+                .select('*')
+                .or(
+                    `name.ilike.%${query}%,` +
+                    `description.ilike.%${query}%`
+                )
+                .ilike('address', `%${location}%`)
+                .order('search_count', { ascending: false })
+                .limit(env.cache.maxResultsPerQuery);
 
-        if (error) {
+            if (error) {
+                console.error('Error searching businesses:', error);
+                throw error;
+            }
+
+            console.log(`Found ${data?.length || 0} businesses in database`);
+            return data || [];
+        } catch (error) {
             console.error('Error searching businesses:', error);
-            throw error;
+            return [];
         }
-
-        return data || [];
     }
 
     async saveBusiness(business: Partial<BusinessData>): Promise<void> {
@@ -133,6 +142,21 @@ export class DatabaseService {
         if (error) {
             console.error('Error saving to cache:', error);
             throw error;
+        }
+    }
+
+    async clearCache(pattern?: string): Promise<void> {
+        try {
+            const query = pattern ? 
+                'DELETE FROM cache WHERE key LIKE $1' :
+                'DELETE FROM cache';
+            
+            await this.supabase
+                .from('cache')
+                .delete()
+                .or(pattern ? `key LIKE $1` : '');
+        } catch (error) {
+            console.error('Error clearing cache:', error);
         }
     }
 }

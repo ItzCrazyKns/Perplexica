@@ -1,36 +1,45 @@
 import axios from 'axios';
 import { env } from '../../config/env';
 
-interface OllamaResponse {
-  response: string;
-  context?: number[];
-}
-
 export class OllamaService {
-  private url: string;
-  private model: string;
+    private static readonly baseUrl = env.ollama.url;
+    private static readonly model = env.ollama.model;
 
-  constructor() {
-    this.url = env.ollama.url;
-    this.model = env.ollama.model;
-  }
+    static async complete(prompt: string): Promise<string> {
+        try {
+            const response = await axios.post(`${this.baseUrl}/api/generate`, {
+                model: this.model,
+                prompt: prompt,
+                stream: false
+            });
 
-  async complete(prompt: string): Promise<string> {
-    try {
-      const response = await axios.post(`${this.url}/api/generate`, {
-        model: this.model,
-        prompt: prompt,
-        stream: false,
-        options: {
-          temperature: 0.7,
-          top_p: 0.9
+            if (response.data?.response) {
+                return response.data.response;
+            }
+
+            throw new Error('No response from Ollama');
+        } catch (error) {
+            console.error('Ollama error:', error);
+            throw error;
         }
-      });
-
-      return response.data.response;
-    } catch (error) {
-      console.error('Ollama completion failed:', error);
-      throw error;
     }
-  }
+
+    static async chat(messages: { role: 'user' | 'assistant'; content: string }[]): Promise<string> {
+        try {
+            const response = await axios.post(`${this.baseUrl}/api/chat`, {
+                model: this.model,
+                messages: messages,
+                stream: false
+            });
+
+            if (response.data?.message?.content) {
+                return response.data.message.content;
+            }
+
+            throw new Error('No response from Ollama chat');
+        } catch (error) {
+            console.error('Ollama chat error:', error);
+            throw error;
+        }
+    }
 } 

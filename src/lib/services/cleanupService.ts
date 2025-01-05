@@ -1,4 +1,4 @@
-import { OllamaService } from './ollamaService';
+import { DeepSeekService } from './deepseekService';
 import { Business } from '../types';
 import { db } from './databaseService';
 
@@ -21,7 +21,7 @@ export class CleanupService {
                 setTimeout(() => reject(new Error('LLM timeout')), LLM_TIMEOUT);
             });
 
-            const llmPromise = OllamaService.chat([{
+            const llmPromise = DeepSeekService.chat([{
                 role: 'user',
                 content: prompt
             }]);
@@ -205,58 +205,17 @@ export class CleanupService {
             return cached;
         }
 
-        const combinedPrompt = `
-        Clean and format the following business information. For each field, follow the format shown in the examples.
-        The business type appears to be: ${business.name.toLowerCase().includes('restaurant') ? 'restaurant' : 
-            business.name.toLowerCase().includes('plumb') ? 'plumber' :
-            business.name.toLowerCase().includes('electric') ? 'electrician' : 'business'}
-
-        Return each field on a new line with the field name followed by a colon.
-        Only return valid data - if something looks wrong or invalid, return an empty string.
-
-        Examples for address:
-        Input: "Sure! Here is the business address in Denver, CO:\\n\\n14100 W 7th Ave, Golden CO 80401"
-        Output: 14100 W 7th Ave, Golden, CO 80401
-
-        Examples for phone:
-        Input: "7203796281"
-        Output: (720) 379-6281
-        Input: "N/A" or "none"
-        Output: 
-
-        Examples for email:
-        Input: "379-6281info@brutalpoodledenver.com"
-        Output: info@brutalpoodledenver.com
-        Input: "top-seo-img@2x.jpg" or "Union Office" or "[email]" or "None"
-        Output: 
-
-        Examples for description:
-        Input: "The Brutal Noodle $14.00 Beef bone broth, smoked brisket, rice noodles, all the fixins. (GF) Vegan available with tofu & veggie broth $11"
-        Output: Asian fusion restaurant serving bone broth noodles with brisket and vegan options.
-        Input: "Our Denver-based expert plumbers can repair or install any fixture. Commercial services: We're ready to keep your plumbing system operating safely."
-        Output: Professional plumbing services for residential and commercial properties in Denver.
-
-        Business name for context: "${business.name}"
-        Website for context: "${business.website}"
-
-        Now clean these fields:
-        Address: "${business.address}"
-        Phone: "${business.phone}"
-        Email: "${business.email}"
-        Description: "${business.description}"
-        `;
-
-        const response = await this.cleanWithLLM(combinedPrompt, business);
-        const parsed = this.parseResponse(response);
-        const cleaned = this.validateAndClean({ ...business, ...parsed });
+        // Clean using DeepSeek
+        const cleaned = await DeepSeekService.cleanBusinessData(business);
+        const validated = this.validateAndClean({ ...business, ...cleaned });
         
         // Only cache if confidence score is high enough
-        const confidence = this.calculateConfidenceScore(cleaned);
+        const confidence = this.calculateConfidenceScore(validated);
         if (confidence >= MIN_CONFIDENCE_SCORE) {
-            await db.saveToCache(cacheKey, cleaned, 24 * 60 * 60 * 1000);
+            await db.saveToCache(cacheKey, validated, 24 * 60 * 60 * 1000);
         }
 
-        return cleaned;
+        return validated;
     }
 
     static async cleanBusinessRecords(businesses: Business[]): Promise<Business[]> {
