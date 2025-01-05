@@ -11,5 +11,6 @@ COPY ui /home/perplexica/
 
 RUN yarn install --frozen-lockfile
 RUN yarn build
+RUN chmod +x start.sh
 
-CMD ["yarn", "start"]
+CMD ["./start.sh"]
