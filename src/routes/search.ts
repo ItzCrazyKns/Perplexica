@@ -1,160 +1,310 @@
-import express from 'express';
-import logger from '../utils/logger';
-import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import type { Embeddings } from '@langchain/core/embeddings';
-import { ChatOpenAI } from '@langchain/openai';
-import {
-  getAvailableChatModelProviders,
-  getAvailableEmbeddingModelProviders,
-} from '../lib/providers';
-import { searchHandlers } from '../websocket/messageHandler';
-import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
-import { MetaSearchAgentType } from '../search/metaSearchAgent';
+import { Router, Response as ExpressResponse } from 'express';
+import { z } from 'zod';
+import fetch from 'node-fetch';
+import { Response as FetchResponse } from 'node-fetch';
+import { supabase } from '../lib/supabase';
+import { env } from '../config/env';
 
-const router = express.Router();
+const router = Router();
 
-interface chatModel {
-  provider: string;
-  model: string;
-  customOpenAIBaseURL?: string;
-  customOpenAIKey?: string;
+const searchSchema = z.object({
+  query: z.string().min(1),
+});
+
+interface Business {
+  id: string;
+  name: string;
+  description: string;
+  website: string;
+  phone: string | null;
+  address: string | null;
 }
 
-interface embeddingModel {
-  provider: string;
-  model: string;
+interface SearxResult {
+  url: string;
+  title: string;
+  content: string;
+  engine: string;
+  score: number;
 }
 
-interface ChatRequestBody {
-  optimizationMode: 'speed' | 'balanced';
-  focusMode: string;
-  chatModel?: chatModel;
-  embeddingModel?: embeddingModel;
+interface SearxResponse {
   query: string;
-  history: Array<[string, string]>;
+  results: SearxResult[];
 }
 
-router.post('/', async (req, res) => {
+async function getCachedResults(query: string): Promise<Business[]> {
+  console.log('Fetching cached results for query:', query);
+  const normalizedQuery = query.toLowerCase()
+    .trim()
+    .replace(/,/g, '') // Remove commas
+    .replace(/\s+/g, ' '); // Normalize whitespace
+  
+  const searchTerms = normalizedQuery.split(' ').filter(term => term.length > 0);
+  console.log('Normalized search terms:', searchTerms);
+  
+  // First try exact match
+  const { data: exactMatch } = await supabase
+    .from('search_cache')
+    .select('*')
+    .eq('query', normalizedQuery)
+    .single();
+
+  if (exactMatch) {
+    console.log('Found exact match in cache');
+    return exactMatch.results as Business[];
+  }
+
+  // Then try fuzzy search
+  console.log('Trying fuzzy search with terms:', searchTerms);
+  const searchConditions = searchTerms.map(term => `query.ilike.%${term}%`);
+  const { data: cachedResults, error } = await supabase
+    .from('search_cache')
+    .select('*')
+    .or(searchConditions.join(','));
+
+  if (error) {
+    console.error('Error fetching cached results:', error);
+    return [];
+  }
+
+  if (!cachedResults || cachedResults.length === 0) {
+    console.log('No cached results found');
+    return [];
+  }
+
+  console.log(`Found ${cachedResults.length} cached searches`);
+
+  // Combine and deduplicate results from all matching searches
+  const allResults = cachedResults.flatMap(cache => cache.results as Business[]);
+  const uniqueResults = Array.from(new Map(allResults.map(item => [item.id, item])).values());
+
+  console.log(`Combined into ${uniqueResults.length} unique businesses`);
+
+  // Sort by relevance to search terms
+  const sortedResults = uniqueResults.sort((a, b) => {
+    const aScore = searchTerms.filter(term => 
+      a.name.toLowerCase().includes(term) || 
+      a.description.toLowerCase().includes(term)
+    ).length;
+    const bScore = searchTerms.filter(term => 
+      b.name.toLowerCase().includes(term) || 
+      b.description.toLowerCase().includes(term)
+      ).length;
+    return bScore - aScore;
+  });
+
+  return sortedResults;
+}
+
+async function searchSearxNG(query: string): Promise<Business[]> {
+  console.log('Starting SearxNG search for query:', query);
   try {
-    const body: ChatRequestBody = req.body;
+    const params = new URLSearchParams({
+      q: `${query} denver business`,
+      format: 'json',
+      language: 'en',
+      time_range: '',
+      safesearch: '1',
+      engines: 'google,bing,duckduckgo'
+    });
 
-    if (!body.focusMode || !body.query) {
-      return res.status(400).json({ message: 'Missing focus mode or query' });
-    }
+    const searchUrl = `${env.SEARXNG_URL}/search?${params.toString()}`;
+    console.log('Searching SearxNG at URL:', searchUrl);
 
-    body.history = body.history || [];
-    body.optimizationMode = body.optimizationMode || 'balanced';
-
-    const history: BaseMessage[] = body.history.map((msg) => {
-      if (msg[0] === 'human') {
-        return new HumanMessage({
-          content: msg[1],
-        });
-      } else {
-        return new AIMessage({
-          content: msg[1],
-        });
+    const response: FetchResponse = await fetch(searchUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
       }
     });
 
-    const [chatModelProviders, embeddingModelProviders] = await Promise.all([
-      getAvailableChatModelProviders(),
-      getAvailableEmbeddingModelProviders(),
-    ]);
-
-    const chatModelProvider =
-      body.chatModel?.provider || Object.keys(chatModelProviders)[0];
-    const chatModel =
-      body.chatModel?.model ||
-      Object.keys(chatModelProviders[chatModelProvider])[0];
-
-    const embeddingModelProvider =
-      body.embeddingModel?.provider || Object.keys(embeddingModelProviders)[0];
-    const embeddingModel =
-      body.embeddingModel?.model ||
-      Object.keys(embeddingModelProviders[embeddingModelProvider])[0];
-
-    let llm: BaseChatModel | undefined;
-    let embeddings: Embeddings | undefined;
-
-    if (body.chatModel?.provider === 'custom_openai') {
-      if (
-        !body.chatModel?.customOpenAIBaseURL ||
-        !body.chatModel?.customOpenAIKey
-      ) {
-        return res
-          .status(400)
-          .json({ message: 'Missing custom OpenAI base URL or key' });
-      }
-
-      llm = new ChatOpenAI({
-        modelName: body.chatModel.model,
-        openAIApiKey: body.chatModel.customOpenAIKey,
-        temperature: 0.7,
-        configuration: {
-          baseURL: body.chatModel.customOpenAIBaseURL,
-        },
-      }) as unknown as BaseChatModel;
-    } else if (
-      chatModelProviders[chatModelProvider] &&
-      chatModelProviders[chatModelProvider][chatModel]
-    ) {
-      llm = chatModelProviders[chatModelProvider][chatModel]
-        .model as unknown as BaseChatModel | undefined;
+    if (!response.ok) {
+      throw new Error(`SearxNG search failed: ${response.statusText} (${response.status})`);
     }
 
-    if (
-      embeddingModelProviders[embeddingModelProvider] &&
-      embeddingModelProviders[embeddingModelProvider][embeddingModel]
-    ) {
-      embeddings = embeddingModelProviders[embeddingModelProvider][
-        embeddingModel
-      ].model as Embeddings | undefined;
+    const data = await response.json() as SearxResponse;
+    console.log(`Got ${data.results?.length || 0} raw results from SearxNG`);
+    console.log('Sample result:', data.results?.[0]);
+    
+    if (!data.results || data.results.length === 0) {
+      return [];
     }
 
-    if (!llm || !embeddings) {
-      return res.status(400).json({ message: 'Invalid model selected' });
-    }
+    const filteredResults = data.results
+      .filter(result => 
+        result.title && 
+        result.url && 
+        !result.url.includes('yelp.com/search') &&
+        !result.url.includes('google.com/search') &&
+        !result.url.includes('bbb.org/search') &&
+        !result.url.includes('thumbtack.com/search') &&
+        !result.url.includes('angi.com/search') &&
+        !result.url.includes('yellowpages.com/search')
+      );
 
-    const searchHandler: MetaSearchAgentType = searchHandlers[body.focusMode];
+    console.log(`Filtered to ${filteredResults.length} relevant results`);
+    console.log('Sample filtered result:', filteredResults[0]);
 
-    if (!searchHandler) {
-      return res.status(400).json({ message: 'Invalid focus mode' });
-    }
+    const searchTerms = query.toLowerCase().split(' ');
+    const businesses = filteredResults
+      .map(result => {
+        const business = {
+          id: result.url,
+          name: cleanBusinessName(result.title),
+          description: result.content || '',
+          website: result.url,
+          phone: extractPhone(result.content || '') || extractPhone(result.title),
+          address: extractAddress(result.content || '') || extractAddress(result.title),
+          score: result.score || 0
+        };
+        console.log('Processed business:', business);
+        return business;
+      })
+      .filter(business => {
+        // Check if business name contains any of the search terms
+        const nameMatches = searchTerms.some(term => 
+          business.name.toLowerCase().includes(term)
+        );
+        
+        // Check if description contains any of the search terms
+        const descriptionMatches = searchTerms.some(term => 
+          business.description.toLowerCase().includes(term)
+        );
+        
+        return business.name.length > 2 && (nameMatches || descriptionMatches);
+      })
+      .sort((a, b) => {
+        // Score based on how many search terms match the name and description
+        const aScore = searchTerms.filter(term => 
+          a.name.toLowerCase().includes(term) || 
+          a.description.toLowerCase().includes(term)
+        ).length;
+        const bScore = searchTerms.filter(term => 
+          b.name.toLowerCase().includes(term) || 
+          b.description.toLowerCase().includes(term)
+        ).length;
+        return bScore - aScore;
+      })
+      .slice(0, 10);
 
-    const emitter = await searchHandler.searchAndAnswer(
-      body.query,
-      history,
-      llm,
-      embeddings,
-      body.optimizationMode,
-      [],
-    );
+    console.log(`Transformed into ${businesses.length} business entries`);
+    return businesses;
+  } catch (error) {
+    console.error('SearxNG search error:', error);
+    return [];
+  }
+}
 
-    let message = '';
-    let sources = [];
+async function cacheResults(query: string, results: Business[]): Promise<void> {
+  if (!results.length) return;
 
-    emitter.on('data', (data) => {
-      const parsedData = JSON.parse(data);
-      if (parsedData.type === 'response') {
-        message += parsedData.data;
-      } else if (parsedData.type === 'sources') {
-        sources = parsedData.data;
-      }
-    });
+  console.log(`Caching ${results.length} results for query:`, query);
+  const normalizedQuery = query.toLowerCase().trim();
+  
+  const { data: existing } = await supabase
+    .from('search_cache')
+    .select('id, results')
+    .eq('query', normalizedQuery)
+    .single();
 
-    emitter.on('end', () => {
-      res.status(200).json({ message, sources });
-    });
+  if (existing) {
+    console.log('Updating existing cache entry');
+    // Merge new results with existing ones, removing duplicates
+    const allResults = [...existing.results, ...results];
+    const uniqueResults = Array.from(new Map(allResults.map(item => [item.id, item])).values());
 
-    emitter.on('error', (data) => {
-      const parsedData = JSON.parse(data);
-      res.status(500).json({ message: parsedData.data });
-    });
-  } catch (err: any) {
-    logger.error(`Error in getting search results: ${err.message}`);
-    res.status(500).json({ message: 'An error has occurred.' });
+    await supabase
+      .from('search_cache')
+      .update({ 
+        results: uniqueResults,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', existing.id);
+  } else {
+    console.log('Creating new cache entry');
+    await supabase
+      .from('search_cache')
+      .insert({
+        query: normalizedQuery,
+        results,
+        location: 'denver', // Default location
+        category: 'business', // Default category
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days from now
+      });
+  }
+}
+
+function cleanBusinessName(title: string): string {
+  return title
+    .replace(/^(the\s+)?/i, '')
+    .replace(/\s*[-|]\s*.+$/i, '')
+    .replace(/\s*\|.*$/i, '')
+    .replace(/\s*in\s+denver.*$/i, '')
+    .replace(/\s*near\s+denver.*$/i, '')
+    .replace(/\s*-\s*.*denver.*$/i, '')
+    .trim();
+}
+
+function extractPhone(text: string): string | null {
+  const phoneRegex = /(\+?1?\s*\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4})/;
+  const match = text.match(phoneRegex);
+  return match ? match[1] : null;
+}
+
+function extractAddress(text: string): string | null {
+  const addressRegex = /\d+\s+[A-Za-z0-9\s,]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr|Way|Court|Ct|Circle|Cir)[,\s]+(?:[A-Za-z\s]+,\s*)?(?:CO|Colorado)[,\s]+\d{5}(?:-\d{4})?/i;
+  const match = text.match(addressRegex);
+  return match ? match[0] : null;
+}
+
+router.post('/search', async (req, res) => {
+  try {
+    console.log('Received search request:', req.body);
+    const { query } = searchSchema.parse(req.body);
+    await handleSearch(query, res);
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(400).json({ error: 'Search failed. Please try again.' });
   }
 });
+
+// Also support GET requests for easier testing
+router.get('/search', async (req, res) => {
+  try {
+    const query = req.query.q as string;
+    if (!query) {
+      return res.status(400).json({ error: 'Query parameter "q" is required' });
+    }
+    console.log('Received search request:', { query });
+    await handleSearch(query, res);
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(400).json({ error: 'Search failed. Please try again.' });
+  }
+});
+
+// Helper function to handle search logic
+async function handleSearch(query: string, res: ExpressResponse) {
+  // Get cached results immediately
+  const cachedResults = await getCachedResults(query);
+  console.log(`Returning ${cachedResults.length} cached results to client`);
+  
+  // Send cached results to client
+  res.json({ results: cachedResults });
+  
+  // Search for new results in the background
+  console.log('Starting background search');
+  searchSearxNG(query).then(async newResults => {
+    console.log(`Found ${newResults.length} new results from SearxNG`);
+    if (newResults.length > 0) {
+      await cacheResults(query, newResults);
+    }
+  }).catch(error => {
+    console.error('Background search error:', error);
+  });
+}
 
 export default router;

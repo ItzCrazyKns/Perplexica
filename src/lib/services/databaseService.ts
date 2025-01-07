@@ -1,164 +1,80 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { env } from '../../config/env';
-import { BusinessData } from '../types';
-import { generateBusinessId, extractPlaceIdFromUrl } from '../utils';
+import { createClient } from '@supabase/supabase-js';
+import { Business } from '../types';
+import env from '../../config/env';
+
+interface PartialBusiness {
+    name: string;
+    address: string;
+    phone: string;
+    description: string;
+    website?: string;
+    rating?: number;
+    source?: string;
+    location?: {
+        lat: number;
+        lng: number;
+    };
+}
 
 export class DatabaseService {
-    private supabase: SupabaseClient;
-
+    private supabase;
+    
     constructor() {
-        this.supabase = createClient(
-            env.supabase.url,
-            env.supabase.anonKey,
-            {
-                auth: {
-                    autoRefreshToken: true,
-                    persistSession: true
-                }
-            }
-        );
+        this.supabase = createClient(env.SUPABASE_URL, env.SUPABASE_KEY);
     }
 
-    async searchBusinesses(query: string, location: string): Promise<BusinessData[]> {
-        try {
-            const { data, error } = await this.supabase
-                .from('businesses')
-                .select('*')
-                .or(
-                    `name.ilike.%${query}%,` +
-                    `description.ilike.%${query}%`
-                )
-                .ilike('address', `%${location}%`)
-                .order('search_count', { ascending: false })
-                .limit(env.cache.maxResultsPerQuery);
-
-            if (error) {
-                console.error('Error searching businesses:', error);
-                throw error;
-            }
-
-            console.log(`Found ${data?.length || 0} businesses in database`);
-            return data || [];
-        } catch (error) {
-            console.error('Error searching businesses:', error);
-            return [];
-        }
-    }
-
-    async saveBusiness(business: Partial<BusinessData>): Promise<void> {
-        const id = generateBusinessId({
-            title: business.name || '',
-            url: business.website,
-            phone: business.phone,
-            address: business.address
-        });
-
-        const { error } = await this.supabase
+    async saveBusiness(business: PartialBusiness): Promise<Business> {
+        const { data, error } = await this.supabase
             .from('businesses')
             .upsert({
-                id,
                 name: business.name,
-                phone: business.phone,
-                email: business.email,
                 address: business.address,
-                rating: business.rating,
-                website: business.website,
-                logo: business.logo,
-                source: business.source,
+                phone: business.phone,
                 description: business.description,
-                latitude: business.location?.lat,
-                longitude: business.location?.lng,
-                place_id: business.website ? extractPlaceIdFromUrl(business.website) : null,
-                search_count: 1
-            }, {
-                onConflict: 'id',
-                ignoreDuplicates: false
-            });
-
-        if (error) {
-            console.error('Error saving business:', error);
-            throw error;
-        }
-    }
-
-    async incrementSearchCount(id: string): Promise<void> {
-        const { error } = await this.supabase
-            .from('businesses')
-            .update({ 
-                search_count: this.supabase.rpc('increment'),
-                last_updated: new Date().toISOString()
+                website: business.website,
+                source: business.source || 'deepseek',
+                rating: business.rating || 4.5,
+                location: business.location ? `(${business.location.lng},${business.location.lat})` : '(0,0)'
             })
-            .eq('id', id);
-
-        if (error) {
-            console.error('Error incrementing search count:', error);
-            throw error;
-        }
-    }
-
-    async saveSearch(query: string, location: string, resultsCount: number): Promise<void> {
-        const { error } = await this.supabase
-            .from('searches')
-            .insert([{
-                query,
-                location,
-                results_count: resultsCount,
-                timestamp: new Date().toISOString()
-            }]);
-
-        if (error) {
-            console.error('Error saving search:', error);
-            throw error;
-        }
-    }
-
-    async getFromCache(key: string): Promise<any | null> {
-        const { data, error } = await this.supabase
-            .from('cache')
-            .select('value')
-            .eq('key', key)
-            .gt('expires_at', new Date().toISOString())
+            .select()
             .single();
 
         if (error) {
-            if (error.code !== 'PGRST116') { // Not found error
-                console.error('Error getting from cache:', error);
-            }
+            console.error('Error saving business:', error);
+            throw new Error('Failed to save business');
+        }
+
+        return data;
+    }
+
+    async findBusinessesByQuery(query: string, location: string): Promise<Business[]> {
+        const { data, error } = await this.supabase
+            .from('businesses')
+            .select('*')
+            .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+            .ilike('address', `%${location}%`)
+            .order('rating', { ascending: false });
+
+        if (error) {
+            console.error('Error finding businesses:', error);
+            throw new Error('Failed to find businesses');
+        }
+
+        return data || [];
+    }
+
+    async getBusinessById(id: string): Promise<Business | null> {
+        const { data, error } = await this.supabase
+            .from('businesses')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) {
+            console.error('Error getting business:', error);
             return null;
         }
 
-        return data?.value;
+        return data;
     }
-
-    async saveToCache(key: string, value: any, expiresIn: number): Promise<void> {
-        const { error } = await this.supabase
-            .from('cache')
-            .upsert({
-                key,
-                value,
-                expires_at: new Date(Date.now() + expiresIn).toISOString()
-            });
-
-        if (error) {
-            console.error('Error saving to cache:', error);
-            throw error;
-        }
-    }
-
-    async clearCache(pattern?: string): Promise<void> {
-        try {
-            const query = pattern ? 
-                'DELETE FROM cache WHERE key LIKE $1' :
-                'DELETE FROM cache';
-            
-            await this.supabase
-                .from('cache')
-                .delete()
-                .or(pattern ? `key LIKE $1` : '');
-        } catch (error) {
-            console.error('Error clearing cache:', error);
-        }
-    }
-}
-
-export const db = new DatabaseService(); 
+} 

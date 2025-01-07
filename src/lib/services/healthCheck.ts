@@ -1,53 +1,40 @@
 import axios from 'axios';
-import { env } from '../../config/env';
 import { supabase } from '../supabase';
+import { env } from '../../config/env';
 
 export class HealthCheckService {
-  static async checkOllama(): Promise<boolean> {
+  private static async checkSupabase(): Promise<boolean> {
     try {
-      const response = await axios.get(`${env.ollama.url}/api/tags`);
-      return response.status === 200;
+      const { data, error } = await supabase.from('searches').select('count');
+      return !error;
     } catch (error) {
-      console.error('Ollama health check failed:', error);
+      console.error('Supabase health check failed:', error);
       return false;
     }
   }
 
-  static async checkSearxNG(): Promise<boolean> {
+  private static async checkSearx(): Promise<boolean> {
     try {
-      const response = await axios.get(`${env.searxng.currentUrl}/config`);
+      const response = await axios.get(env.SEARXNG_URL);
       return response.status === 200;
     } catch (error) {
-      try {
-        const response = await axios.get(`${env.searxng.instances[0]}/config`);
-        return response.status === 200;
-      } catch (fallbackError) {
-        console.error('SearxNG health check failed:', error);
-        return false;
-      }
+      console.error('SearxNG health check failed:', error);
+      return false;
     }
   }
 
-  static async checkSupabase(): Promise<boolean> {
-    try {
-      console.log('Checking Supabase connection...');
-      console.log('URL:', env.supabase.url);
+  public static async checkHealth(): Promise<{ 
+    supabase: boolean;
+    searx: boolean;
+  }> {
+    const [supabaseHealth, searxHealth] = await Promise.all([
+      this.checkSupabase(),
+      this.checkSearx()
+    ]);
 
-      // Just check if we can connect and query, don't care about results
-      const { error } = await supabase
-        .from('businesses')
-        .select('count', { count: 'planned', head: true });
-
-      if (error) {
-        console.error('Supabase query error:', error);
-        return false;
-      }
-
-      console.log('Supabase connection successful');
-      return true;
-    } catch (error) {
-      console.error('Supabase connection failed:', error);
-      return false;
-    }
+    return {
+      supabase: supabaseHealth,
+      searx: searxHealth
+    };
   }
 } 

@@ -2,41 +2,34 @@ import { createClient } from '@supabase/supabase-js';
 import { env } from '../config/env';
 
 // Validate Supabase configuration
-if (!env.supabase.url || !env.supabase.anonKey) {
+if (!env.SUPABASE_URL || !env.SUPABASE_KEY) {
   throw new Error('Missing Supabase configuration');
 }
 
 // Create Supabase client
 export const supabase = createClient(
-  env.supabase.url,
-  env.supabase.anonKey,
+  env.SUPABASE_URL,
+  env.SUPABASE_KEY,
   {
     auth: {
       autoRefreshToken: true,
-      persistSession: true
+      persistSession: true,
+      detectSessionInUrl: true
     }
   }
 );
 
-// Test the connection on startup
-async function testConnection() {
+// Test connection function
+export async function testConnection() {
   try {
-    console.log('Checking Supabase connection...');
-    console.log('URL:', env.supabase.url);
-    
-    const { error } = await supabase
-      .from('businesses')
-      .select('count', { count: 'planned', head: true });
-
-    if (error) {
-      console.error('❌ Supabase initialization error:', error);
-    } else {
-      console.log('✅ Supabase connection initialized successfully');
-    }
+    console.log('Testing Supabase connection...');
+    console.log('URL:', env.SUPABASE_URL);
+    const { data, error } = await supabase.from('searches').select('count');
+    if (error) throw error;
+    console.log('Supabase connection successful');
+    return true;
   } catch (error) {
-    console.error('❌ Failed to initialize Supabase:', error);
+    console.error('Supabase connection failed:', error);
+    return false;
   }
-}
-
-// Run the test
-testConnection().catch(console.error); 
+} 
