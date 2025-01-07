@@ -43,9 +43,9 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
   return (
     <div>
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-20 lg:flex-col">
-        <div className="flex grow flex-col items-center justify-between gap-y-5 overflow-y-auto bg-light-secondary dark:bg-dark-secondary px-2 py-8">
+        <div className="flex grow flex-col items-center justify-between gap-y-5 overflow-y-auto bg-[#efeaf3] dark:bg-dark-secondary px-2 py-8">
           <a href="/">
-            <SquarePen className="cursor-pointer" />
+            <img src="logo.png" alt="Smartly" />
           </a>
           <VerticalIconContainer>
             {navLinks.map((link, i) => (
