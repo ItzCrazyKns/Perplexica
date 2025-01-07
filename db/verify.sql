@@ -12,4 +12,4 @@ WHERE table_schema = 'public'
 AND table_name = 'businesses';
 
 -- Check row count
-SELECT count(*) FROM businesses; 
+SELECT COUNT(*) as count FROM businesses; 

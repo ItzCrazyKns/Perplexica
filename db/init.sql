@@ -169,3 +169,21 @@ CREATE INDEX IF NOT EXISTS idx_businesses_place_id ON businesses(place_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_businesses_place_id_unique 
 ON businesses(place_id) 
 WHERE place_id IS NOT NULL; 
+
+CREATE TABLE IF NOT EXISTS businesses (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    address TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    description TEXT NOT NULL,
+    website TEXT,
+    source TEXT NOT NULL,
+    rating REAL,
+    lat REAL,
+    lng REAL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_businesses_source ON businesses(source);
+CREATE INDEX IF NOT EXISTS idx_businesses_rating ON businesses(rating); 
