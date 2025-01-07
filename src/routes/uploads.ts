@@ -6,20 +6,24 @@ import crypto from 'crypto';
 import fs from 'fs';
 import { Embeddings } from '@langchain/core/embeddings';
 import { getAvailableEmbeddingModelProviders } from '../lib/providers';
-import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
+import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
-import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
+import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { Document } from '@langchain/core/documents';
 import { RAGDocumentChain } from '../chains/rag_document_upload';
-import { Chroma } from "langchain/vectorstores/chroma";
+import { Chroma } from "@langchain/community/vectorstores/chroma";
 
 const router = express.Router();
 
+// Ajout d'un cache pour les embeddings avec le bon type
+const embeddingsCache = new Map<string, number[]>();
+
+// Configuration optimisée du text splitter
 const splitter = new RecursiveCharacterTextSplitter({
-  chunkSize: 1000,
-  chunkOverlap: 200,
+  chunkSize: 1500,
+  chunkOverlap: 150,
   separators: ["\n\n", "\n", ".", "!", "?", ";", ":", " ", ""],
-  keepSeparator: true,
+  keepSeparator: false,
   lengthFunction: (text) => text.length
 });
 
@@ -62,6 +66,129 @@ const scoreDocument = (doc: Document): number => {
   return wordCount > 10 && sentenceCount > 0 ? 1 : 0;
 };
 
+// Optimisation du traitement des documents
+const processDocumentInBatches = async (
+  docs: Document[],
+  batchSize: number = 50
+): Promise<Document[]> => {
+  const processedDocs: Document[] = [];
+  
+  for (let i = 0; i < docs.length; i += batchSize) {
+    const batch = docs.slice(i, i + batchSize);
+    const processed = await Promise.all(
+      batch.map(async (doc) => preprocessDocument(doc))
+    );
+    processedDocs.push(...processed);
+  }
+  
+  return processedDocs;
+};
+
+// Optimisation de l'extraction du texte avec des loaders natifs
+const extractDocument = async (filePath: string, mimeType: string): Promise<Document[]> => {
+  try {
+    console.log(`📄 Extraction du document: ${filePath} (${mimeType})`);
+    
+    let docs: Document[] = [];
+    
+    if (mimeType === 'application/pdf') {
+      const loader = new PDFLoader(filePath, {
+        splitPages: true,
+        parsedItemSeparator: "\n",
+      });
+      docs = await loader.load();
+    } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      const loader = new DocxLoader(filePath);
+      docs = await loader.load();
+    } else if (mimeType === 'text/plain') {
+      // Traitement direct des fichiers texte
+      const text = fs.readFileSync(filePath, 'utf-8');
+      docs = [new Document({
+        pageContent: text,
+        metadata: {
+          source: filePath,
+          type: 'text',
+          mime_type: mimeType
+        }
+      })];
+    } else {
+      throw new Error(`Type de fichier non supporté: ${mimeType}`);
+    }
+    
+    console.log(`📑 ${docs.length} pages extraites`);
+    
+    // Amélioration du traitement des documents
+    const enhancedDocs = docs.map((doc, index) => {
+      return new Document({
+        pageContent: doc.pageContent,
+        metadata: {
+          ...doc.metadata,
+          source: filePath,
+          page: index + 1,
+          total_pages: docs.length,
+          mime_type: mimeType,
+          extraction_date: new Date().toISOString()
+        }
+      });
+    });
+    
+    return enhancedDocs;
+  } catch (error) {
+    console.error(`❌ Erreur lors de l'extraction: ${error.message}`);
+    throw error;
+  }
+};
+
+// Fonction utilitaire pour normaliser les embeddings
+const normalizeL2 = (vector: number[]): number[] => {
+  const norm = Math.sqrt(vector.reduce((sum, val) => sum + val * val, 0));
+  return norm === 0 ? vector : vector.map(v => v / norm);
+};
+
+// Optimisation de la génération des embeddings
+const generateEmbeddings = async (
+  texts: string[],
+  embeddingsModel: Embeddings,
+  dimensions: number = 1536
+): Promise<number[][]> => {
+  try {
+    // Nettoyage et préparation des textes
+    const cleanedTexts = texts.map(text => 
+      text.replace(/\s+/g, ' ')
+         .trim()
+         .slice(0, 8000)  // Limite OpenAI
+    ).filter(text => text.length > 0);
+
+    if (cleanedTexts.length === 0) {
+      throw new Error("Aucun texte valide à traiter");
+    }
+
+    // Traitement par lots de 100 (limite OpenAI)
+    const batchSize = 100;
+    const embeddings: number[][] = [];
+
+    for (let i = 0; i < cleanedTexts.length; i += batchSize) {
+      const batch = cleanedTexts.slice(i, i + batchSize);
+      console.log(`🔄 Traitement du lot ${Math.floor(i / batchSize) + 1}/${Math.ceil(cleanedTexts.length / batchSize)}`);
+
+      const batchEmbeddings = await embeddingsModel.embedDocuments(batch);
+      
+      // Redimensionnement et normalisation si nécessaire
+      const processedEmbeddings = batchEmbeddings.map(emb => {
+        const resized = (emb as number[]).slice(0, dimensions);
+        return normalizeL2(resized);
+      });
+      
+      embeddings.push(...processedEmbeddings);
+    }
+
+    return embeddings;
+  } catch (error) {
+    console.error("❌ Erreur lors de la génération des embeddings:", error);
+    throw error;
+  }
+};
+
 router.post(
   '/',
   upload.fields([
@@ -85,16 +212,12 @@ router.post(
       }
 
       const embeddingModels = await getAvailableEmbeddingModelProviders();
-      console.log("🔍 [Uploads] Modèles disponibles:", Object.keys(embeddingModels));
-
       const provider = embedding_model_provider ?? Object.keys(embeddingModels)[0];
-      const embeddingModel: Embeddings = embedding_model ?? Object.keys(embeddingModels[provider])[0];
-
-      console.log("🤖 [Uploads] Modèle sélectionné:", { provider, model: embeddingModel });
-
+      const embeddingModel = embedding_model ?? Object.keys(embeddingModels[provider])[0];
+      
       let embeddingsModel: Embeddings | undefined;
       if (embeddingModels[provider] && embeddingModels[provider][embeddingModel]) {
-        embeddingsModel = embeddingModels[provider][embeddingModel].model as Embeddings | undefined;
+        embeddingsModel = embeddingModels[provider][embeddingModel].model as Embeddings;
       }
 
       if (!embeddingsModel) {
@@ -104,138 +227,90 @@ router.post(
       }
 
       const files = req.files['files'] as Express.Multer.File[];
-      console.log("📁 [Uploads] Fichiers reçus:", files?.map(f => ({
-        name: f.originalname,
-        path: f.path,
-        type: f.mimetype
-      })));
-
-      if (!files || files.length === 0) {
+      if (!files?.length) {
         console.warn("⚠️ [Uploads] Aucun fichier reçu");
         res.status(400).json({ message: 'No files uploaded' });
         return;
       }
 
-      const processedDocs: Document[] = [];
-      const ragChain = new RAGDocumentChain();
-      let totalPages = 0;
-
-      await Promise.all(
+      // Traitement parallèle des fichiers
+      const results = await Promise.all(
         files.map(async (file) => {
-          console.log(`📄 [Uploads] Traitement du fichier: ${file.originalname}`);
-          let docs: Document[] = [];
+          try {
+            console.log(`📄 [Uploads] Traitement du fichier: ${file.originalname}`);
+            
+            let docs: Document[] = [];
+            const cacheKey = `${file.path}_${embedding_model}`;
+            
+            if (embeddingsCache.has(cacheKey)) {
+              console.log("🎯 [Uploads] Utilisation du cache pour", file.originalname);
+              return {
+                fileName: file.originalname,
+                fileId: file.filename.replace(/\.\w+$/, ''),
+                cached: true
+              };
+            }
 
-          if (file.mimetype === 'application/pdf') {
-            console.log(`📚 [Uploads] Chargement du PDF: ${file.path}`);
-            const loader = new PDFLoader(file.path, {
-              splitPages: true
-            });
-            docs = await loader.load();
-            totalPages += docs.length;
-          } else if (file.mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-            console.log(`📝 [Uploads] Chargement du DOCX: ${file.path}`);
-            const loader = new DocxLoader(file.path);
-            docs = await loader.load();
-            totalPages += docs.length;
-          } else if (file.mimetype === 'text/plain') {
-            console.log(`📄 [Uploads] Chargement du TXT: ${file.path}`);
-            const text = fs.readFileSync(file.path, 'utf-8');
-            docs = [new Document({ 
-              pageContent: text, 
-              metadata: { 
-                title: file.originalname,
-                source: file.path,
-                type: 'text'
-              } 
-            })];
-            totalPages += 1;
-          }
+            docs = await extractDocument(file.path, file.mimetype);
+            const processedDocs = await processDocumentInBatches(docs);
+            console.log(`✂️ [Uploads] ${processedDocs.length} documents traités`);
 
-          const preprocessedDocs = docs.map(preprocessDocument);
-          const scoredDocs = preprocessedDocs.filter(doc => scoreDocument(doc) > 0);
-          
-          console.log(`✂️ [Uploads] Splitting du document en ${scoredDocs.length} parties valides`);
-          const splitted = await splitter.splitDocuments(scoredDocs);
+            // Utilisation de la nouvelle fonction d'embeddings
+            const embeddings = await generateEmbeddings(
+              processedDocs.map(doc => doc.pageContent),
+              embeddingsModel,
+              1536  // Dimension par défaut pour text-embedding-3-small
+            );
 
-          const enrichedDocs = splitted.map((doc, index) => {
-            const pageNumber = Math.floor(index / (splitted.length / docs.length)) + 1;
-            return new Document({
-              pageContent: doc.pageContent,
-              metadata: {
-                ...doc.metadata,
-                source: file.path,
-                title: file.originalname,
-                page_number: pageNumber,
-                chunk_index: index,
-                total_chunks: splitted.length,
-                file_type: file.mimetype,
-                search_text: doc.pageContent.substring(0, 100).trim()
+            // Mise en cache du premier embedding
+            if (embeddings.length > 0) {
+              embeddingsCache.set(cacheKey, embeddings[0]);
+            }
+
+            // Sauvegarde avec les embeddings normalisés
+            const pathToSave = file.path.replace(/\.\w+$/, '-extracted.json');
+            fs.writeFileSync(pathToSave, JSON.stringify({
+              title: file.originalname,
+              contents: processedDocs.map((doc, index) => ({
+                content: doc.pageContent,
+                metadata: doc.metadata,
+                embedding: embeddings[index]
+              })),
+              pageCount: docs.length,
+              processingDate: new Date().toISOString()
+            }, null, 2));
+
+            return {
+              fileName: file.originalname,
+              fileId: file.filename.replace(/\.\w+$/, ''),
+              stats: {
+                chunks: processedDocs.length,
+                pages: docs.length,
+                embeddingsGenerated: embeddings.length
               }
-            });
-          });
-
-          processedDocs.push(...enrichedDocs);
-
-          const pathToSave = file.path.replace(/\.\w+$/, '-extracted.json');
-          const contentToSave = {
-            title: file.originalname,
-            contents: enrichedDocs.map((doc) => ({
-              content: doc.pageContent,
-              metadata: doc.metadata
-            })),
-            pageCount: docs.length,
-            processingDate: new Date().toISOString()
-          };
-
-          fs.writeFileSync(pathToSave, JSON.stringify(contentToSave, null, 2));
-
-          console.log(`🧮 [Uploads] Génération des embeddings pour ${enrichedDocs.length} chunks`);
-          const embeddings = await embeddingsModel.embedDocuments(
-            enrichedDocs.map((doc) => doc.pageContent)
-          );
-
-          const pathToSaveEmbeddings = file.path.replace(/\.\w+$/, '-embeddings.json');
-          const embeddingsToSave = {
-            title: file.originalname,
-            embeddings: embeddings.map((embedding, index) => ({
-              vector: embedding,
-              metadata: enrichedDocs[index].metadata
-            }))
-          };
-
-          fs.writeFileSync(pathToSaveEmbeddings, JSON.stringify(embeddingsToSave));
+            };
+          } catch (error) {
+            console.error(`❌ Erreur lors du traitement de ${file.originalname}:`, error);
+            return {
+              fileName: file.originalname,
+              fileId: file.filename.replace(/\.\w+$/, ''),
+              error: error.message
+            };
+          }
         })
       );
 
-      console.log("🔄 [Uploads] Initialisation du vectorStore avec", processedDocs.length, "documents");
-      const initResult = await ragChain.initializeVectorStoreFromDocuments(
-        processedDocs,
-        embeddingsModel
-      );
+      res.status(200).json({ files: results });
       
-      console.log("✅ [Uploads] VectorStore initialisé:", initResult);
-
-      res.status(200).json({
-        files: files.map((file) => ({
-          fileName: file.originalname,
-          fileExtension: file.filename.split('.').pop(),
-          fileId: file.filename.replace(/\.\w+$/, ''),
-          stats: {
-            chunks: processedDocs.filter(d => d.metadata.source === file.path).length,
-            pages: totalPages
-          }
-        })),
-      });
     } catch (err: any) {
       console.error("❌ [Uploads] Erreur:", {
         message: err.message,
         stack: err.stack,
         name: err.name
       });
-      logger.error(`Error in uploading file results: ${err.message}`);
       res.status(500).json({ message: 'An error has occurred.' });
     }
-  },
+  }
 );
 
 router.get('/:fileId/view', async (req, res) => {
@@ -284,6 +359,57 @@ router.get('/:fileId/view', async (req, res) => {
   } catch (error) {
     console.error('❌ Erreur lors de la visualisation du document:', error);
     res.status(500).json({ error: 'Erreur lors de la visualisation du document' });
+  }
+});
+
+router.get('/:fileId/content', async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    
+    // Chercher le fichier PDF dans le dossier uploads
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    const files = fs.readdirSync(uploadsDir);
+    const pdfFile = files.find(file => file.startsWith(fileId) && file.endsWith('.pdf'));
+    
+    if (!pdfFile) {
+      console.error(`❌ PDF non trouvé pour l'ID: ${fileId}`);
+      return res.status(404).json({ error: 'Document PDF non trouvé' });
+    }
+
+    const filePath = path.join(uploadsDir, pdfFile);
+    console.log("📄 Envoi du fichier PDF:", filePath);
+
+    // Headers pour le PDF
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${pdfFile}"`);
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache d'une heure
+    
+    // Envoyer le fichier
+    res.sendFile(filePath);
+  } catch (error) {
+    console.error('❌ Erreur lors de l\'accès au PDF:', error);
+    res.status(500).json({ error: 'Erreur lors de l\'accès au document' });
+  }
+});
+
+// Route pour les métadonnées du document
+router.get('/:fileId/metadata', async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    
+    // Chercher le fichier JSON des métadonnées
+    const uploadsDir = path.join(process.cwd(), 'uploads');
+    const metadataPath = path.join(uploadsDir, `${fileId}-extracted.json`);
+    
+    if (!fs.existsSync(metadataPath)) {
+      return res.status(404).json({ error: 'Métadonnées non trouvées' });
+    }
+
+    const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf-8'));
+    res.json(metadata);
+  } catch (error) {
+    console.error('❌ Erreur lors de la lecture des métadonnées:', error);
+    res.status(500).json({ error: 'Erreur lors de la lecture des métadonnées' });
   }
 });
 
