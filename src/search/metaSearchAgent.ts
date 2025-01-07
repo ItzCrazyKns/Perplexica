@@ -297,7 +297,7 @@ export class MetaSearchAgent implements MetaSearchAgentType {
               console.log('📚 Documents uploadés chargés:', uploadedDocs.length);
 
               // Utiliser RAGDocumentChain pour la recherche dans les documents
-              const ragChain = new RAGDocumentChain();
+              const ragChain = RAGDocumentChain.getInstance();
               await ragChain.initializeVectorStoreFromDocuments(uploadedDocs, embeddings);
 
               // Utiliser le type 'specific' pour une recherche précise
@@ -808,87 +808,119 @@ Prends en compte:
       console.log('📚 Documents uploadés chargés:', uploadedDocs.length);
 
       if (uploadedDocs.length > 0) {
-        // Création du vectorStore temporaire pour les documents
-        const vectorStore = await Chroma.fromDocuments(uploadedDocs, embeddings, {
-          collectionName: 'temp_docs',
-          url: 'http://chroma:8000',
-          numDimensions: 1536
-        });
-
-        // Recherche sémantique sans filtre pour l'instant
-        const relevantDocs = await vectorStore.similaritySearch(message, 5);
-
-        console.log('📄 Documents pertinents trouvés:', relevantDocs.length);
-
-        // Extraction du contexte pour enrichir la recherche
-        const documentContext = relevantDocs
-          .map(doc => doc.pageContent)
-          .join('\n')
-          .substring(0, 500);
-
-        const documentTitle = uploadedDocs[0]?.metadata?.title || '';
-        const enrichedQuery = `${message} ${documentTitle} ${documentContext}`;
-
-        // 2. Recherche d'experts en BDD
-        const expertResults = await this.searchExperts(message, embeddings, llm);
-
-        // 3. Recherche web complémentaire avec le contexte enrichi
-        const webResults = await this.searchWeb(enrichedQuery);
-
-        // Combinaison des résultats avec les scores appropriés
-        const combinedResults = [
-          ...relevantDocs.map(doc => ({
-            ...doc,
-            metadata: {
-              ...doc.metadata,
-              score: 0.8 // Score élevé pour les documents uploadés
-            }
-          })),
-          ...expertResults.map(expert => ({
-            ...expert,
-            metadata: {
-              ...expert.metadata,
-              score: 0.6 // Score moyen pour les experts
-            }
-          })),
-          ...webResults.map(web => ({
-            ...web,
-            metadata: {
-              ...web.metadata,
-              score: 0.4 // Score plus faible pour les résultats web
-            }
-          }))
-        ];
-
-        // Tri et sélection des meilleurs résultats
-        const finalResults = await this.rerankDocs(
-          message,
-          combinedResults,
-          fileIds,
-          embeddings,
-          effectiveMode,
-          llm
-        );
-
-        // Création de la chaîne de réponse
-        const answeringChain = await this.createAnsweringChain(
-          llm,
-          fileIds,
-          embeddings,
-          effectiveMode
-        );
-
-        const stream = answeringChain.streamEvents(
-          {
-            chat_history: mergedHistory,
-            query: `${message}\n\nContexte pertinent:\n${finalResults.map(doc => doc.pageContent).join('\n\n')}`
-          },
-          {
-            version: 'v1'
+        try {
+          // Utiliser l'instance unique de RAGDocumentChain
+          const ragChain = RAGDocumentChain.getInstance();
+          
+          // Vérifier si déjà initialisé avec les mêmes documents
+          if (!ragChain.isInitialized()) {
+            console.log('🔄 Initialisation du vector store...');
+            await ragChain.initializeVectorStoreFromDocuments(uploadedDocs, embeddings);
+          } else {
+            console.log('✅ Vector store déjà initialisé');
           }
-        );
 
-        this.handleStreamWithMemory(stream, emitter);
+          // Recherche sémantique
+          const relevantDocs = await ragChain.searchSimilarDocuments(message, 5);
+          console.log('📄 Documents pertinents trouvés:', relevantDocs.length);
+
+          // Extraction du contexte pour enrichir la recherche
+          const documentContext = relevantDocs
+            .map(doc => doc.pageContent)
+            .join('\n')
+            .substring(0, 500);
+
+          const documentTitle = uploadedDocs[0]?.metadata?.title || '';
+          const enrichedQuery = `${message} ${documentTitle} ${documentContext}`;
+
+          // 2. Recherche d'experts si nécessaire
+          let expertResults = [];
+          if (analysis.requiresExpertSearch) {
+            expertResults = await this.searchExperts(message, embeddings, llm);
+          }
+
+          // 3. Recherche web si nécessaire
+          let webResults = [];
+          if (analysis.requiresWebSearch) {
+            webResults = await this.searchWeb(enrichedQuery);
+          }
+
+          // Combinaison des résultats avec les scores appropriés
+          const combinedResults = [
+            ...relevantDocs.map(doc => ({
+              ...doc,
+              metadata: {
+                ...doc.metadata,
+                score: 0.8 // Score élevé pour les documents uploadés
+              }
+            })),
+            ...expertResults.map(expert => ({
+              ...expert,
+              metadata: {
+                ...expert.metadata,
+                score: 0.6 // Score moyen pour les experts
+              }
+            })),
+            ...webResults.map(web => ({
+              ...web,
+              metadata: {
+                ...web.metadata,
+                score: 0.4 // Score plus faible pour les résultats web
+              }
+            }))
+          ];
+
+          // Tri et sélection des meilleurs résultats
+          const finalResults = await this.rerankDocs(
+            message,
+            combinedResults,
+            fileIds,
+            embeddings,
+            effectiveMode,
+            llm
+          );
+
+          // Création de la chaîne de réponse
+          const answeringChain = await this.createAnsweringChain(
+            llm,
+            fileIds,
+            embeddings,
+            effectiveMode
+          );
+
+          const stream = answeringChain.streamEvents(
+            {
+              chat_history: mergedHistory,
+              query: `${message}\n\nContexte pertinent:\n${finalResults.map(doc => doc.pageContent).join('\n\n')}`
+            },
+            {
+              version: 'v1'
+            }
+          );
+
+          this.handleStreamWithMemory(stream, emitter);
+        } catch (error) {
+          console.error('❌ Erreur lors de la gestion des documents:', error);
+          // Fallback en mode standard
+          const answeringChain = await this.createAnsweringChain(
+            llm,
+            fileIds,
+            embeddings,
+            effectiveMode
+          );
+
+          const stream = answeringChain.streamEvents(
+            {
+              chat_history: this.conversationHistory,
+              query: message
+            },
+            {
+              version: 'v1'
+            }
+          );
+
+          this.handleStreamWithMemory(stream, emitter);
+        }
       } else {
         // Fallback sans documents uploadés
         const answeringChain = await this.createAnsweringChain(
@@ -935,6 +967,56 @@ Prends en compte:
 
     return emitter;
   }
+
+  private async handleFallback(
+    llm: BaseChatModel,
+    message: string,
+    history: BaseMessage[],
+    emitter: eventEmitter,
+    fileIds: string[],
+    embeddings: Embeddings,
+    mode: 'speed' | 'balanced' | 'quality'
+  ) {
+    const answeringChain = await this.createAnsweringChain(
+      llm,
+      fileIds,
+      embeddings,
+      mode
+    );
+
+    const stream = answeringChain.streamEvents(
+      {
+        chat_history: history,
+        query: message
+      },
+      {
+        version: 'v1'
+      }
+    );
+
+    this.handleStreamWithMemory(stream, emitter);
+  }
+
+  private async ensureVectorStoreInitialized(documents: Document[], embeddings: Embeddings): Promise<RAGDocumentChain> {
+    const ragChain = RAGDocumentChain.getInstance();
+    
+    try {
+      // Vérifier si le vectorStore est déjà initialisé avec des documents
+      const hasDocuments = ragChain.isInitialized();
+      
+      if (!hasDocuments) {
+        console.log('🔄 Initialisation du vector store avec les documents...');
+        await ragChain.initializeVectorStoreFromDocuments(documents, embeddings);
+      } else {
+        console.log('✅ Vector store déjà initialisé avec des documents');
+      }
+      
+      return ragChain;
+    } catch (error) {
+      console.error('❌ Erreur lors de l\'initialisation du vector store:', error);
+      throw error;
+    }
+  }
 }
 
 export const searchHandlers: Record<string, MetaSearchAgentType> = {
@@ -951,7 +1033,10 @@ export const searchHandlers: Record<string, MetaSearchAgentType> = {
       const emitter = new eventEmitter();
 
       try {
-        const chain = new RAGDocumentChain();
+        // Fusionner l'historique si nécessaire
+        const mergedHistory: BaseMessage[] = history;
+
+        const chain = RAGDocumentChain.getInstance();
         await chain.initializeVectorStoreFromDocuments(
           fileIds.map(fileId => new Document({
             pageContent: '',
@@ -963,7 +1048,7 @@ export const searchHandlers: Record<string, MetaSearchAgentType> = {
         const searchChain = chain.createSearchChain(llm);
         const results = await searchChain.invoke({
           query: message,
-          chat_history: history,
+          chat_history: mergedHistory,
           type: 'legal'
         });
 
@@ -1006,38 +1091,27 @@ export const searchHandlers: Record<string, MetaSearchAgentType> = {
       fileIds
     ) => {
       const emitter = new eventEmitter();
-      const ragChain = new RAGDocumentChain();
 
       try {
-        const docs = fileIds.map(fileId => {
-          const filePath = path.join(process.cwd(), 'uploads', fileId);
-          const contentPath = filePath + '-extracted.json';
-          const content = JSON.parse(fs.readFileSync(contentPath, 'utf8'));
-          return new Document<DocumentMetadata>({
-            pageContent: content.contents.join('\n'),
-            metadata: {
-              title: content.title,
-              source: fileId
-            }
-          });
-        });
+        const chain = RAGDocumentChain.getInstance();
+        await chain.initializeVectorStoreFromDocuments(
+          fileIds.map(fileId => new Document({
+            pageContent: '',
+            metadata: { source: fileId }
+          })),
+          embeddings
+        );
 
-        await ragChain.initializeVectorStoreFromDocuments(docs, embeddings);
-        const chain = ragChain.createSearchChain(llm);
-        const result = await chain.invoke({
+        const searchChain = chain.createSearchChain(llm);
+        const results = await searchChain.invoke({
           query: message,
           chat_history: history,
-          type: 'document_search'
+          type: 'documents'
         });
 
-        // Convertir le résultat en objet SearchResponse
         const response: SearchResponse = {
-          text: result,
-          sources: docs.map(doc => ({
-            title: doc.metadata?.title || '',
-            content: doc.pageContent,
-            source: doc.metadata?.source || 'uploaded_docs'
-          }))
+          text: results,
+          sources: []
         };
 
         emitter.emit(
@@ -1045,14 +1119,6 @@ export const searchHandlers: Record<string, MetaSearchAgentType> = {
           JSON.stringify({
             type: 'response',
             data: response.text
-          })
-        );
-
-        emitter.emit(
-          'data',
-          JSON.stringify({
-            type: 'sources',
-            data: response.sources
           })
         );
 
@@ -1160,7 +1226,7 @@ export const searchHandlers: Record<string, MetaSearchAgentType> = {
         const flatDocs = docs.flat();
         console.log('📚 Nombre total de chunks:', flatDocs.length);
 
-        const ragChain = new RAGDocumentChain();
+        const ragChain = RAGDocumentChain.getInstance();
         await ragChain.initializeVectorStoreFromDocuments(flatDocs, embeddings);
         const chain = ragChain.createSearchChain(llm);
 
