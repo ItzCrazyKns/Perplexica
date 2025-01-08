@@ -54,10 +54,16 @@ const MessageBox = ({
         message.content.replace(
           regex,
           (_, number) => {
-            const url = message.sources?.[number - 1]?.metadata?.url || '';
-            // Extraire le nom de domaine sans l'extension
-            const sourceName = url.replace(/^(?:https?:\/\/)?(?:www\.)?([^./]+).*$/, '$1');
-            return `<a href="${url}" target="_blank" class="ml-2 px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 no-underline inline-flex items-center">${sourceName}</a>`;
+            const source = message.sources?.[number - 1];
+            const url = source?.metadata?.url || '';
+            const isDocument = source?.metadata?.isFile;
+            
+            // Utiliser "Voir la source" pour les documents, sinon le nom de domaine
+            const linkText = isDocument 
+              ? "Voir la source"
+              : url.replace(/^(?:https?:\/\/)?(?:www\.)?([^./]+).*$/, '$1');
+            
+            return `<a href="${url}" target="_blank" class="ml-2 px-3 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 no-underline inline-flex items-center">${linkText}</a>`;
           }
         ),
       );
