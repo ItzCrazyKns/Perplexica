@@ -8,7 +8,7 @@ import EmptyChat from './EmptyChat';
 import crypto from 'crypto';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
-import { getSuggestions } from '@/lib/actions';
+import { getSuggestions, Expert } from '@/lib/actions';
 import Error from 'next/error';
 
 export type Message = {
@@ -18,6 +18,7 @@ export type Message = {
   content: string;
   role: 'user' | 'assistant';
   suggestions?: string[];
+  suggestedExperts?: Expert[];
   sources?: Document[];
 };
 
@@ -277,7 +278,7 @@ const loadMessages = async (
   setIsMessagesLoaded(true);
 };
 
-const ChatWindow = ({ id }: { id?: string }) => {
+const ChatWindow = ({ id, defaultFocusMode }: { id?: string; defaultFocusMode?: string }) => {
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
 
@@ -303,7 +304,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
   const [files, setFiles] = useState<File[]>([]);
   const [fileIds, setFileIds] = useState<string[]>([]);
 
-  const [focusMode, setFocusMode] = useState('webSearch');
+  const [focusMode, setFocusMode] = useState(defaultFocusMode || 'default');
   const [optimizationMode, setOptimizationMode] = useState('speed');
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
@@ -405,8 +406,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         return;
       }
 
-      if (data.type === 'sources') {
-        sources = data.data;
+      if (data.type === 'images') {
         if (!added) {
           setMessages((prevMessages) => [
             ...prevMessages,
@@ -415,11 +415,44 @@ const ChatWindow = ({ id }: { id?: string }) => {
               messageId: data.messageId,
               chatId: chatId!,
               role: 'assistant',
-              sources: sources,
+              sources: [{ 
+                pageContent: '',
+                metadata: { 
+                  illustrationImage: data.data[0]?.src,
+                  title: data.data[0]?.title
+                }
+              }],
               createdAt: new Date(),
             },
           ]);
           added = true;
+        }
+        setMessageAppeared(true);
+      }
+
+      if (data.type === 'sources') {
+        if (!added) {
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              content: '',
+              messageId: data.messageId,
+              chatId: chatId!,
+              role: 'assistant',
+              sources: data.data,
+              createdAt: new Date(),
+            },
+          ]);
+          added = true;
+        } else {
+          setMessages((prev) =>
+            prev.map((message) => {
+              if (message.messageId === data.messageId) {
+                return { ...message, sources: data.data };
+              }
+              return message;
+            }),
+          );
         }
         setMessageAppeared(true);
       }
@@ -472,11 +505,15 @@ const ChatWindow = ({ id }: { id?: string }) => {
           lastMsg.sources.length > 0 &&
           !lastMsg.suggestions
         ) {
-          const suggestions = await getSuggestions(messagesRef.current);
+          const { suggestions, suggestedExperts } = await getSuggestions(messagesRef.current);
           setMessages((prev) =>
             prev.map((msg) => {
               if (msg.messageId === lastMsg.messageId) {
-                return { ...msg, suggestions: suggestions };
+                return { 
+                  ...msg, 
+                  suggestions: suggestions,
+                  suggestedExperts: suggestedExperts
+                };
               }
               return msg;
             }),
