@@ -146,6 +146,7 @@ export class MetaSearchAgent implements MetaSearchAgentType {
 
         // Recherche web si activée
         if (this.config.searchWeb) {
+          console.log('🔍 Démarrage de la recherche web...');
           const res = await searchSearxng(question, {
             language: 'fr',
             engines: this.config.activeEngines,
@@ -159,59 +160,16 @@ export class MetaSearchAgent implements MetaSearchAgentType {
                   title: result.title,
                   url: result.url,
                   type: 'web',
+                  source: 'web',
+                  displayDomain: new URL(result.url).hostname.replace('www.', ''),
+                  favicon: `https://s2.googleusercontent.com/s2/favicons?domain_url=${result.url}`,
+                  linkText: 'Voir la page',
                   ...(result.img_src && { img_src: result.img_src }),
                 },
               }),
           );
+          console.log('🌐 Sources web trouvées:', documents.length);
         }
-
-        // Recherche d'experts si activée
-        if (this.config.searchDatabase) {
-          try {
-            console.log('🔍 Recherche d\'experts...');
-            const expertResults = await handleExpertSearch(
-              {
-                query: question,
-                chat_history: [],
-                messageId: 'search_' + Date.now(),
-                chatId: 'chat_' + Date.now()
-              },
-              llm
-            );
-
-            console.log('🔍 Experts trouvés:', expertResults.experts.length);
-            const expertDocs = expertResults.experts.map(expert =>
-              new Document({
-                pageContent: `Expert: ${expert.prenom} ${expert.nom}
-                Spécialité: ${expert.specialite}
-                Ville: ${expert.ville}
-                Tarif: ${expert.tarif}€
-                Expertises: ${expert.expertises}
-                Services: ${JSON.stringify(expert.services)}
-                ${expert.biographie}`,
-                metadata: {
-                  type: 'expert',
-                  expert: true,
-                  expertData: expert,
-                  title: `${expert.specialite} - ${expert.ville}`,
-                  url: `/expert/${expert.id_expert}`,
-                  image_url: expert.image_url
-                }
-              })
-            );
-
-            documents = [...expertDocs, ...documents];
-          } catch (error) {
-            console.error('Erreur lors de la recherche d\'experts:', error);
-          }
-        }
-
-        // Trier pour mettre les experts en premier
-        documents.sort((a, b) => {
-          if (a.metadata?.type === 'expert' && b.metadata?.type !== 'expert') return -1;
-          if (a.metadata?.type !== 'expert' && b.metadata?.type === 'expert') return 1;
-          return 0;
-        });
 
         return { query: question, docs: documents };
       }),
@@ -347,9 +305,11 @@ export class MetaSearchAgent implements MetaSearchAgentType {
           }
 
           // 3. Enfin, compléter avec la recherche web si nécessaire et si peu de résultats
-          if (this.config.searchWeb && docs.length < 3) {
+          if (this.config.searchWeb) {
             try {
+              console.log('🌐 Démarrage de la recherche web...');
               const webResults = await this.performWebSearch(input.query);
+              console.log(`🌐 ${webResults.length} résultats web trouvés`);
               docs = [...docs, ...webResults];
             } catch (error) {
               console.error('❌ Erreur lors de la recherche web:', error);
@@ -468,23 +428,30 @@ export class MetaSearchAgent implements MetaSearchAgentType {
           sources?.map(source => {
             const isUploadedDoc = source.metadata?.type === 'uploaded';
             const isExpert = source.metadata?.type === 'expert';
-            const pageNumber = source.metadata?.pageNumber || 1;
+            const isWeb = source.metadata?.type === 'web';
             const sourceId = source.metadata?.source;
 
             // Construire l'URL selon le type de source
             let url;
             if (isUploadedDoc && sourceId) {
-              url = `/api/uploads/${sourceId}/content?page=${pageNumber}`;
+              const page = source.metadata?.pageNumber || source.metadata?.page || 1;
+              console.log(`🔍 Construction URL pour source ${sourceId} - Page ${page}`, source.metadata);
+              url = `/api/uploads/${sourceId}/content?page=${page}`;
             } else if (isExpert) {
               url = source.metadata?.url;
-            } else if (source.metadata?.type === 'web') {
+            } else if (isWeb) {
               url = source.metadata?.url;
+              console.log('🌐 Source web trouvée:', {
+                title: source.metadata?.title,
+                url: url
+              });
             }
 
             // Construire un titre descriptif
             let title = source.metadata?.title || '';
             if (isUploadedDoc && title) {
-              title = `${title} - Page ${pageNumber}`;
+              const page = source.metadata?.pageNumber || source.metadata?.page || 1;
+              title = `${title} - Page ${page}`;
             } else if (isExpert) {
               title = source.metadata?.displayTitle || title;
             }
@@ -498,22 +465,28 @@ export class MetaSearchAgent implements MetaSearchAgentType {
                 title: title,
                 type: source.metadata?.type || 'web',
                 url: url,
-                source: sourceId,
-                pageNumber: pageNumber,
+                source: sourceId || (isWeb ? 'web' : undefined),
+                pageNumber: source.metadata?.pageNumber || source.metadata?.page || 1,
+                displayDomain: isUploadedDoc ? 'Document local' : 
+                             isWeb ? new URL(url).hostname.replace('www.', '') : undefined,
                 searchText:
                   source.metadata?.searchText?.substring(0, 200) ||
                   limitedContent.substring(0, 200),
                 expertData: source.metadata?.expertData,
                 illustrationImage: source.metadata?.illustrationImage,
                 imageTitle: source.metadata?.imageTitle,
-                favicon: source.metadata?.favicon,
-                linkText: source.metadata?.linkText,
-                expertName: source.metadata?.expertName
+                favicon: isWeb ? `https://s2.googleusercontent.com/s2/favicons?domain_url=${url}` : source.metadata?.favicon,
+                linkText: isWeb ? 'Voir la page' : 'Voir la source',
+                expertName: source.metadata?.expertName,
+                fileId: sourceId,
+                page: source.metadata?.pageNumber || source.metadata?.page || 1,
+                isFile: isUploadedDoc
               }
             };
           }) || [];
 
         console.log('🔍 Sources normalisées:', normalizedSources.length);
+        console.log('🔍 Types de sources:', normalizedSources.map(s => s.metadata.type));
 
         emitter.emit(
           'data',
@@ -545,10 +518,13 @@ export class MetaSearchAgent implements MetaSearchAgentType {
 
   private async handleStreamWithMemory(
     stream: IterableReadableStream<StreamEvent>,
-    emitter: eventEmitter
+    emitter: eventEmitter,
+    llm: BaseChatModel,
+    originalQuery: string
   ) {
     let fullAssistantResponse = '';
-
+    let hasEmittedSuggestions = false;
+  
     for await (const event of stream) {
       if (event.event === 'on_chain_stream') {
         if (event.name === 'FinalResponseGenerator') {
@@ -559,72 +535,102 @@ export class MetaSearchAgent implements MetaSearchAgentType {
           );
         }
       } else if (event.event === 'on_chain_end') {
-        if (event.name === 'FinalResponseGenerator') {
+        if (event.name === 'FinalResponseGenerator' && !hasEmittedSuggestions) {
+          try {
+            const suggestionsPrompt = `
+            Based on this conversation and response, suggest 3 relevant follow-up questions:
+            "${fullAssistantResponse}"
+            Return only the questions, one per line.`;
+            
+            const suggestionsResponse = await llm.invoke(suggestionsPrompt);
+            const suggestions = String(suggestionsResponse.content)
+              .split('\n')
+              .filter(s => s.trim())
+              .slice(0, 3);
+
+            // Émettre uniquement les suggestions
+            emitter.emit(
+              'data',
+              JSON.stringify({
+                type: 'suggestions',
+                data: {
+                  suggestions: suggestions,
+                  suggestedExperts: []
+                }
+              })
+            );
+
+            hasEmittedSuggestions = true;
+          } catch (error) {
+            console.error('❌ Erreur lors de la génération des suggestions:', error);
+          }
+
           this.updateMemory(new AIMessage(fullAssistantResponse.trim()));
           emitter.emit('end');
         }
         if (event.name === 'FinalSourceRetriever') {
           const sources = event.data.output;
-          const normalizedSources =
-            sources?.map(source => {
-              const isUploadedDoc = source.metadata?.type === 'uploaded';
-              const isExpert = source.metadata?.type === 'expert';
-              const pageNumber = source.metadata?.pageNumber || 1;
-              const sourceId = source.metadata?.source;
-
-              let url;
-              if (isUploadedDoc && sourceId) {
-                url = `/api/uploads/${sourceId}/content?page=${pageNumber}`;
-              } else if (isExpert) {
-                url = source.metadata?.url;
-              } else if (source.metadata?.type === 'web') {
-                url = source.metadata?.url;
+          const normalizedSources = sources?.map(source => {
+            const isUploadedDoc = source.metadata?.type === 'uploaded';
+            const isExpert = source.metadata?.type === 'expert';
+            const pageNumber = source.metadata?.pageNumber || source.metadata?.page || 1;
+            const sourceId = source.metadata?.source;
+            
+            let url;
+            if (isUploadedDoc && sourceId) {
+              url = `/api/uploads/${sourceId}/content?page=${pageNumber}`;
+            } else if (isExpert) {
+              url = source.metadata?.url;
+            } else if (source.metadata?.type === 'web') {
+              url = source.metadata?.url;
+            }
+            
+            let title = source.metadata?.title || '';
+            if (isUploadedDoc && title) {
+              title = `${title} - Page ${pageNumber}`;
+            } else if (isExpert) {
+              title = source.metadata?.displayTitle || title;
+            }
+            
+            const limitedContent = source.pageContent?.substring(0, 1000) || '';
+            
+            return {
+              pageContent: limitedContent,
+              metadata: {
+                title: title,
+                type: source.metadata?.type || 'web',
+                url: url,
+                source: sourceId,
+                pageNumber: pageNumber,
+                displayDomain: isUploadedDoc ? 'Document local' : undefined,
+                searchText: source.metadata?.searchText?.substring(0, 200) || limitedContent.substring(0, 200),
+                expertData: source.metadata?.expertData,
+                illustrationImage: source.metadata?.illustrationImage,
+                imageTitle: source.metadata?.imageTitle,
+                favicon: source.metadata?.favicon,
+                linkText: isUploadedDoc ? 'Voir le document' : 'Voir la source',
+                expertName: source.metadata?.expertName,
+                fileId: sourceId,
+                page: pageNumber,
+                isFile: isUploadedDoc
               }
-
-              let title = source.metadata?.title || '';
-              if (isUploadedDoc && title) {
-                title = `${title} - Page ${pageNumber}`;
-              } else if (isExpert) {
-                title = source.metadata?.displayTitle || title;
-              }
-
-              const limitedContent =
-                source.pageContent?.substring(0, 1000) || '';
-
-              return {
-                pageContent: limitedContent,
-                metadata: {
-                  title: title,
-                  type: source.metadata?.type || 'web',
-                  url: url,
-                  source: sourceId,
-                  pageNumber: pageNumber,
-                  searchText:
-                    source.metadata?.searchText?.substring(0, 200) ||
-                    limitedContent.substring(0, 200),
-                  expertData: source.metadata?.expertData,
-                  illustrationImage: source.metadata?.illustrationImage,
-                  imageTitle: source.metadata?.imageTitle,
-                  favicon: source.metadata?.favicon,
-                  linkText: source.metadata?.linkText,
-                  expertName: source.metadata?.expertName
-                }
-              };
-            }) || [];
+            };
+          }) || [];
 
           console.log('🔍 Sources normalisées:', normalizedSources.length);
-
+          
           emitter.emit(
             'data',
-            JSON.stringify({
-              type: 'sources',
+            JSON.stringify({ 
+              type: 'sources', 
               data: normalizedSources,
               illustrationImage: normalizedSources[0]?.metadata?.illustrationImage || null,
               imageTitle: normalizedSources[0]?.metadata?.imageTitle || null
             })
           );
         }
-      } else {
+        }
+      else {
         emitter.emit(event.event, event.data);
       }
     }
@@ -809,10 +815,8 @@ Prends en compte:
 
       if (uploadedDocs.length > 0) {
         try {
-          // Utiliser l'instance unique de RAGDocumentChain
           const ragChain = RAGDocumentChain.getInstance();
           
-          // Vérifier si déjà initialisé avec les mêmes documents
           if (!ragChain.isInitialized()) {
             console.log('🔄 Initialisation du vector store...');
             await ragChain.initializeVectorStoreFromDocuments(uploadedDocs, embeddings);
@@ -820,11 +824,9 @@ Prends en compte:
             console.log('✅ Vector store déjà initialisé');
           }
 
-          // Recherche sémantique
           const relevantDocs = await ragChain.searchSimilarDocuments(message, 5);
           console.log('📄 Documents pertinents trouvés:', relevantDocs.length);
 
-          // Extraction du contexte pour enrichir la recherche
           const documentContext = relevantDocs
             .map(doc => doc.pageContent)
             .join('\n')
@@ -833,44 +835,49 @@ Prends en compte:
           const documentTitle = uploadedDocs[0]?.metadata?.title || '';
           const enrichedQuery = `${message} ${documentTitle} ${documentContext}`;
 
-          // 2. Recherche d'experts si nécessaire
-          let expertResults = [];
-          if (analysis.requiresExpertSearch) {
-            expertResults = await this.searchExperts(message, embeddings, llm);
-          }
-
-          // 3. Recherche web si nécessaire
+          // Recherche web si nécessaire
           let webResults = [];
           if (analysis.requiresWebSearch) {
-            webResults = await this.searchWeb(enrichedQuery);
+            console.log('🔍 Démarrage de la recherche web...');
+            const res = await searchSearxng(enrichedQuery, {
+              language: 'fr',
+              engines: this.config.activeEngines,
+            });
+
+            webResults = res.results.map(result =>
+              new Document({
+                pageContent: result.content,
+                metadata: {
+                  title: result.title,
+                  url: result.url,
+                  type: 'web',
+                  source: 'web',
+                  ...(result.img_src && { img_src: result.img_src }),
+                },
+              })
+            );
+            console.log('🌐 Résultats web trouvés:', webResults.length);
           }
 
-          // Combinaison des résultats avec les scores appropriés
+          // Combinaison des résultats
           const combinedResults = [
             ...relevantDocs.map(doc => ({
               ...doc,
               metadata: {
                 ...doc.metadata,
-                score: 0.8 // Score élevé pour les documents uploadés
+                type: doc.metadata.type || 'uploaded'
               }
             })),
-            ...expertResults.map(expert => ({
-              ...expert,
-              metadata: {
-                ...expert.metadata,
-                score: 0.6 // Score moyen pour les experts
-              }
-            })),
-            ...webResults.map(web => ({
-              ...web,
-              metadata: {
-                ...web.metadata,
-                score: 0.4 // Score plus faible pour les résultats web
-              }
-            }))
+            ...webResults
           ];
 
-          // Tri et sélection des meilleurs résultats
+          console.log('🔄 Résultats combinés:', {
+            total: combinedResults.length,
+            uploaded: relevantDocs.length,
+            web: webResults.length,
+            types: combinedResults.map(doc => doc.metadata.type)
+          });
+
           const finalResults = await this.rerankDocs(
             message,
             combinedResults,
@@ -880,7 +887,6 @@ Prends en compte:
             llm
           );
 
-          // Création de la chaîne de réponse
           const answeringChain = await this.createAnsweringChain(
             llm,
             fileIds,
@@ -898,71 +904,17 @@ Prends en compte:
             }
           );
 
-          this.handleStreamWithMemory(stream, emitter);
+          this.handleStreamWithMemory(stream, emitter, llm, message);
         } catch (error) {
           console.error('❌ Erreur lors de la gestion des documents:', error);
-          // Fallback en mode standard
-          const answeringChain = await this.createAnsweringChain(
-            llm,
-            fileIds,
-            embeddings,
-            effectiveMode
-          );
-
-          const stream = answeringChain.streamEvents(
-            {
-              chat_history: this.conversationHistory,
-              query: message
-            },
-            {
-              version: 'v1'
-            }
-          );
-
-          this.handleStreamWithMemory(stream, emitter);
+          await this.handleFallback(llm, message, mergedHistory, emitter, fileIds, embeddings, effectiveMode);
         }
       } else {
-        // Fallback sans documents uploadés
-        const answeringChain = await this.createAnsweringChain(
-          llm,
-          fileIds,
-          embeddings,
-          effectiveMode
-        );
-
-        const stream = answeringChain.streamEvents(
-          {
-            chat_history: mergedHistory,
-            query: message
-          },
-          {
-            version: 'v1'
-          }
-        );
-
-        this.handleStreamWithMemory(stream, emitter);
+        await this.handleFallback(llm, message, mergedHistory, emitter, fileIds, embeddings, effectiveMode);
       }
     } catch (error) {
       console.error('❌ Erreur:', error);
-      // Fallback en mode standard
-      const answeringChain = await this.createAnsweringChain(
-        llm,
-        fileIds,
-        embeddings,
-        effectiveMode
-      );
-
-      const stream = answeringChain.streamEvents(
-        {
-          chat_history: this.conversationHistory,
-          query: message
-        },
-        {
-          version: 'v1'
-        }
-      );
-
-      this.handleStreamWithMemory(stream, emitter);
+      await this.handleFallback(llm, message, this.conversationHistory, emitter, fileIds, embeddings, effectiveMode);
     }
 
     return emitter;
@@ -994,7 +946,7 @@ Prends en compte:
       }
     );
 
-    this.handleStreamWithMemory(stream, emitter);
+    this.handleStreamWithMemory(stream, emitter, llm, message);
   }
 
   private async ensureVectorStoreInitialized(documents: Document[], embeddings: Embeddings): Promise<RAGDocumentChain> {
@@ -1209,7 +1161,7 @@ export const searchHandlers: Record<string, MetaSearchAgentType> = {
                   title: content.title || 'Document sans titre',
                   source: fileId,
                   type: 'uploaded',
-                  url: `/api/uploads/${fileId}/view?page=${pageNumber}`,
+                  url: `/viewer/${fileId}?page=${pageNumber}`, // URL vers le viewer Next.js
                   pageNumber: pageNumber,
                   chunkIndex: index,
                   totalChunks: chunks.length,
