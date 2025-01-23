@@ -23,7 +23,7 @@ services:
     volumes:
       - backend-dbstore:/home/perplexica/data
       - uploads:/home/perplexica/uploads
-      - ./config.toml:/home/perplexica/config.toml
+      - config:/home/perplexica/config.toml
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     networks:
@@ -52,3 +52,4 @@ networks:
 volumes:
   backend-dbstore:
   uploads:
+  config:
