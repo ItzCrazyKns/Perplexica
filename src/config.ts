@@ -32,7 +32,9 @@ interface Config {
       MODEL_NAME: string;
     };
   };
-  API_ENDPOINTS: {
+  API_ENDPOINTS: {  
+    OLLAMA: string;
+    LMSTUDIO: string;
     SEARXNG: string;
   };
 }
@@ -64,7 +66,9 @@ export const getGeminiApiKey = () => loadConfig().MODELS.GEMINI.API_KEY;
 export const getSearxngApiEndpoint = () =>
   process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
 
-export const getOllamaApiEndpoint = () => loadConfig().MODELS.OLLAMA.API_URL;
+export const getOllamaApiEndpoint = () => loadConfig().API_ENDPOINTS.OLLAMA;
+
+export const getLMStudioApiEndpoint = () => loadConfig().API_ENDPOINTS.LMSTUDIO;
 
 export const getCustomOpenaiApiKey = () =>
   loadConfig().MODELS.CUSTOM_OPENAI.API_KEY;

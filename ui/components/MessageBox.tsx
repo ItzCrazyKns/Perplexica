@@ -11,6 +11,8 @@ import {
   StopCircle,
   Layers3,
   Plus,
+  Brain,
+  ChevronDown,
 } from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
 import Copy from './MessageActions/Copy';
@@ -41,26 +43,48 @@ const MessageBox = ({
 }) => {
   const [parsedMessage, setParsedMessage] = useState(message.content);
   const [speechMessage, setSpeechMessage] = useState(message.content);
+  const [thinking, setThinking] = useState<string>('');
+  const [answer, setAnswer] = useState<string>('');
+  const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
 
   useEffect(() => {
     const regex = /\[(\d+)\]/g;
 
-    if (
-      message.role === 'assistant' &&
-      message?.sources &&
-      message.sources.length > 0
-    ) {
-      return setParsedMessage(
-        message.content.replace(
-          regex,
-          (_, number) =>
-            `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
-        ),
-      );
-    }
+    // First check for thinking content
+    const match = message.content.match(/<think>(.*?)<\/think>(.*)/s);
+    if (match) {
+      const [_, thinkingContent, answerContent] = match;
+      setThinking(thinkingContent.trim());
+      setAnswer(answerContent.trim());
 
-    setSpeechMessage(message.content.replace(regex, ''));
-    setParsedMessage(message.content);
+      // Process the answer part for sources if needed
+      if (message.role === 'assistant' && message?.sources && message.sources.length > 0) {
+        setParsedMessage(
+          answerContent.trim().replace(
+            regex,
+            (_, number) =>
+              `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
+          ),
+        );
+      } else {
+        setParsedMessage(answerContent.trim());
+      }
+      setSpeechMessage(answerContent.trim().replace(regex, ''));
+    } else {
+      // No thinking content - process as before
+      if (message.role === 'assistant' && message?.sources && message.sources.length > 0) {
+        setParsedMessage(
+          message.content.replace(
+            regex,
+            (_, number) =>
+              `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
+          ),
+        );
+      } else {
+        setParsedMessage(message.content);
+      }
+      setSpeechMessage(message.content.replace(regex, ''));
+    }
   }, [message.content, message.sources, message.role]);
 
   const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
@@ -81,6 +105,37 @@ const MessageBox = ({
             ref={dividerRef}
             className="flex flex-col space-y-6 w-full lg:w-9/12"
           >
+            {thinking && (
+              <div className="flex flex-col space-y-2 mb-4">
+                <button 
+                  onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
+                  className="flex flex-row items-center space-x-2 group text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition duration-200"
+                >
+                  <Brain size={20} />
+                  <h3 className="font-medium text-xl">View Thinking</h3>
+                  <ChevronDown 
+                    size={16}
+                    className={cn(
+                      "transition-transform duration-200",
+                      isThinkingExpanded ? "rotate-180" : ""
+                    )} 
+                  />
+                </button>
+                
+                {isThinkingExpanded && (
+                  <div className="rounded-lg bg-light-secondary/50 dark:bg-dark-secondary/50 p-4">
+                    <Markdown
+                      className={cn(
+                        'prose dark:prose-invert text-sm leading-relaxed',
+                        'max-w-none break-words'
+                      )}
+                    >
+                      {thinking}
+                    </Markdown>
+                  </div>
+                )}
+              </div>
+            )}
             {message.sources && message.sources.length > 0 && (
               <div className="flex flex-col space-y-2">
                 <div className="flex flex-row items-center space-x-2">
@@ -199,4 +254,3 @@ const MessageBox = ({
   );
 };
 
-export default MessageBox;
