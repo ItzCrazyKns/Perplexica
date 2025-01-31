@@ -402,11 +402,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     websocketUrl = `${protocol}${host}${path}`;
   }
 
-  const ws = useSocket(
-    websocketUrl,
-    setIsWSReady,
-    setHasError,
-  );
+  const ws = useSocket(websocketUrl, setIsWSReady, setHasError);
 
   const [loading, setLoading] = useState(false);
   const [messageAppeared, setMessageAppeared] = useState(false);
