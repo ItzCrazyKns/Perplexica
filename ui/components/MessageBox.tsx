@@ -12,7 +12,8 @@ import {
   Layers3,
   Plus,
 } from 'lucide-react';
-import Markdown from 'markdown-to-jsx';
+import Markdown from 'react-markdown';
+import highlight from 'rehype-highlight';
 import Copy from './MessageActions/Copy';
 import Rewrite from './MessageActions/Rewrite';
 import MessageSources from './MessageSources';
@@ -54,7 +55,7 @@ const MessageBox = ({
         message.content.replace(
           regex,
           (_, number) =>
-            `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
+            `[${number}](${message.sources?.[number - 1]?.metadata?.url})`,
         ),
       );
     }
@@ -110,6 +111,18 @@ const MessageBox = ({
                   'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
                   'max-w-none break-words text-black dark:text-white',
                 )}
+                rehypePlugins={[[highlight, { detect: true }]]}
+                components={{
+                  a(props) {
+                    return (
+                      <a
+                        {...props}
+                        target="_blank"
+                        className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative"
+                      />
+                    );
+                  },
+                }}
               >
                 {parsedMessage}
               </Markdown>
