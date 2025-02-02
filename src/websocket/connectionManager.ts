@@ -15,6 +15,8 @@ export const handleConnection = async (
   request: IncomingMessage,
 ) => {
   try {
+    logger.info(`🔗 New WebSocket connection from ${request.socket.remoteAddress}`);
+
     const searchParams = new URL(request.url, `http://${request.headers.host}`)
       .searchParams;
 
@@ -23,9 +25,11 @@ export const handleConnection = async (
       getAvailableEmbeddingModelProviders(),
     ]);
 
+    // Retrieve query parameters
     const chatModelProvider =
       searchParams.get('chatModelProvider') ||
       Object.keys(chatModelProviders)[0];
+
     const chatModel =
       searchParams.get('chatModel') ||
       Object.keys(chatModelProviders[chatModelProvider])[0];
@@ -33,21 +37,32 @@ export const handleConnection = async (
     const embeddingModelProvider =
       searchParams.get('embeddingModelProvider') ||
       Object.keys(embeddingModelProviders)[0];
+
     const embeddingModel =
       searchParams.get('embeddingModel') ||
       Object.keys(embeddingModelProviders[embeddingModelProvider])[0];
 
+    logger.debug(
+      `📜 WebSocket Connection - Model Selection:
+       🔹 Chat Model Provider: ${chatModelProvider}
+       🔹 Chat Model: ${chatModel}
+       🔹 Embedding Model Provider: ${embeddingModelProvider}
+       🔹 Embedding Model: ${embeddingModel}`
+    );
+
     let llm: BaseChatModel | undefined;
     let embeddings: Embeddings | undefined;
 
+    // Handle model selection
     if (
       chatModelProviders[chatModelProvider] &&
       chatModelProviders[chatModelProvider][chatModel] &&
-      chatModelProvider != 'custom_openai'
+      chatModelProvider !== 'custom_openai'
     ) {
       llm = chatModelProviders[chatModelProvider][chatModel]
         .model as unknown as BaseChatModel | undefined;
-    } else if (chatModelProvider == 'custom_openai') {
+    } else if (chatModelProvider === 'custom_openai') {
+      logger.info(`🛠 Using custom OpenAI model: ${chatModel}`);
       llm = new ChatOpenAI({
         modelName: chatModel,
         openAIApiKey: searchParams.get('openAIApiKey'),
@@ -62,12 +77,12 @@ export const handleConnection = async (
       embeddingModelProviders[embeddingModelProvider] &&
       embeddingModelProviders[embeddingModelProvider][embeddingModel]
     ) {
-      embeddings = embeddingModelProviders[embeddingModelProvider][
-        embeddingModel
-      ].model as Embeddings | undefined;
+      embeddings = embeddingModelProviders[embeddingModelProvider][embeddingModel]
+        .model as Embeddings | undefined;
     }
 
     if (!llm || !embeddings) {
+      logger.error(`❌ Invalid LLM or embeddings model selection!`);
       ws.send(
         JSON.stringify({
           type: 'error',
@@ -76,10 +91,15 @@ export const handleConnection = async (
         }),
       );
       ws.close();
+      return;
     }
 
+    logger.info(`✅ WebSocket setup complete - Ready for messages`);
+
+    // Send an initial "open" signal once connection is ready
     const interval = setInterval(() => {
       if (ws.readyState === ws.OPEN) {
+        logger.debug(`📡 Sending initial 'open' signal to client`);
         ws.send(
           JSON.stringify({
             type: 'signal',
@@ -90,14 +110,19 @@ export const handleConnection = async (
       }
     }, 5);
 
-    ws.on(
-      'message',
-      async (message) =>
-        await handleMessage(message.toString(), ws, llm, embeddings),
-    );
+    // Handle incoming messages
+    ws.on('message', async (message) => {
+      logger.info(`📩 Received message from client: ${message.toString()}`);
+      await handleMessage(message.toString(), ws, llm, embeddings);
+    });
 
-    ws.on('close', () => logger.debug('Connection closed'));
+    // Handle WebSocket closure
+    ws.on('close', () => {
+      logger.warn(`❌ WebSocket connection closed for ${request.socket.remoteAddress}`);
+    });
+
   } catch (err) {
+    logger.error(`❌ WebSocket error: ${err.message}`);
     ws.send(
       JSON.stringify({
         type: 'error',
@@ -106,6 +131,5 @@ export const handleConnection = async (
       }),
     );
     ws.close();
-    logger.error(err);
   }
 };

@@ -134,6 +134,8 @@ const handleEmitterEvents = (
   });
   emitter.on('error', (data) => {
     const parsedData = JSON.parse(data);
+    logger.debug(`📡 Emitter received data: ${JSON.stringify(parsedData)}`);
+
     ws.send(
       JSON.stringify({
         type: 'error',
@@ -151,6 +153,7 @@ export const handleMessage = async (
   embeddings: Embeddings,
 ) => {
   try {
+    logger.debug('Handling message...');
     const parsedWSMessage = JSON.parse(message) as WSMessage;
     const parsedMessage = parsedWSMessage.message;
 
