@@ -20,7 +20,7 @@ import DeepSeekIcon from "@/assets/DeepSeekIcon";
 const focusModes = [
   {
     key: 'webSearch',
-    title: 'All',
+    title: 'Search',
     description: 'Searches across all of the internet',
     icon: <Globe size={20} />,
   },
