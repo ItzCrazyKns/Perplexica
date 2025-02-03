@@ -525,7 +525,7 @@ const ChatWindow = ({id}: { id?: string }) => {
         focusMode: focusMode,
         copilotEnabled: copilotEnabled,
         optimizationMode: optimizationMode,
-        history: [...chatHistory, ['human', message]],
+        history: [],
       }),
     );
 
