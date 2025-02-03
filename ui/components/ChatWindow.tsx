@@ -5,7 +5,6 @@ import {Document} from '@langchain/core/documents';
 import Navbar from './Navbar';
 import Chat from './Chat';
 import EmptyChat from './EmptyChat';
-import crypto from 'crypto';
 import {toast} from 'sonner';
 import {useSearchParams} from 'next/navigation';
 import {getSuggestions} from '@/lib/actions';
@@ -481,6 +480,18 @@ const ChatWindow = ({id}: { id?: string }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const savedFocusMode = localStorage.getItem('focusMode');
+    if (savedFocusMode) {
+      setFocusMode(savedFocusMode);
+    }
+  }, [setFocusMode]);
+
+  const handleFocusModeChange = (mode: string) => {
+    localStorage.setItem('focusMode', mode);
+    setFocusMode(mode);
+  };
+
   const messagesRef = useRef<Message[]>([]);
 
   useEffect(() => {
@@ -515,7 +526,7 @@ const ChatWindow = ({id}: { id?: string }) => {
     ws.send(
       JSON.stringify({
         type: 'message',
-        userId:userId,
+        userId: userId,
         message: {
           messageId: messageId,
           chatId: chatId!,
@@ -701,7 +712,7 @@ const ChatWindow = ({id}: { id?: string }) => {
             focusMode={focusMode}
             copilotEnabled={copilotEnabled}
             setCopilotEnabled={setCopilotEnabled}
-            setFocusMode={setFocusMode}
+            setFocusMode={handleFocusModeChange}
             optimizationMode={optimizationMode}
             setOptimizationMode={setOptimizationMode}
             fileIds={fileIds}
