@@ -367,7 +367,7 @@ const loadMessages = async (
 
   document.title = messages[0].content;
 
-  const files = data.chat.files.map((file: any) => {
+  const files = data.chat.files && data.chat.files.map((file: any) => {
     return {
       fileName: file.name,
       fileExtension: file.name.split('.').pop(),
@@ -376,7 +376,7 @@ const loadMessages = async (
   });
 
   setFiles(files);
-  setFileIds(files.map((file: File) => file.fileId));
+  setFileIds(files && files.map((file: File) => file.fileId));
 
   setChatHistory(history);
   setFocusMode(data.chat.focusMode);

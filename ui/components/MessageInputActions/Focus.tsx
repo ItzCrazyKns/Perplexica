@@ -50,7 +50,7 @@ const focusModes = [
   },
   {
     key: 'translator',
-    title: 'Trasnlator',
+    title: 'Translator',
     description: 'Chat without searching the web',
     icon: (
       <SiGoogletranslate
