@@ -411,6 +411,7 @@ const ChatWindow = ({id}: { id?: string }) => {
 
   const [focusMode, setFocusMode] = useState('webSearch');
   const [optimizationMode, setOptimizationMode] = useState('speed');
+  const [copilotEnabled, setCopilotEnabled] = useState(true);
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
@@ -468,7 +469,7 @@ const ChatWindow = ({id}: { id?: string }) => {
     } else if (!chatId) {
       setNewChatCreated(true);
       setIsMessagesLoaded(true);
-      setChatId(crypto.randomBytes(20).toString('hex'));
+      setChatId(new Mcid().generate().toString());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -512,11 +513,12 @@ const ChatWindow = ({id}: { id?: string }) => {
     let recievedMessage = '';
     let added = false;
 
-    messageId = messageId ?? crypto.randomBytes(7).toString('hex');
+    messageId = messageId ?? new Mcid().generate().toString();
 
     ws.send(
       JSON.stringify({
         type: 'message',
+        useerId:userId,
         message: {
           messageId: messageId,
           chatId: chatId!,
@@ -699,6 +701,8 @@ const ChatWindow = ({id}: { id?: string }) => {
           <EmptyChat
             sendMessage={sendMessage}
             focusMode={focusMode}
+            copilotEnabled={copilotEnabled}
+            setCopilotEnabled={setCopilotEnabled}
             setFocusMode={setFocusMode}
             optimizationMode={optimizationMode}
             setOptimizationMode={setOptimizationMode}

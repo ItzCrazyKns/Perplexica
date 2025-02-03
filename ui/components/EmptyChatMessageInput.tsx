@@ -11,6 +11,8 @@ const EmptyChatMessageInput = ({
   sendMessage,
   focusMode,
   setFocusMode,
+                                 copilotEnabled,
+                                 setCopilotEnabled,
   optimizationMode,
   setOptimizationMode,
   fileIds,
@@ -23,12 +25,13 @@ const EmptyChatMessageInput = ({
   setFocusMode: (mode: string) => void;
   optimizationMode: string;
   setOptimizationMode: (mode: string) => void;
+  copilotEnabled:boolean
+  setCopilotEnabled:(mode: boolean) => void;
   fileIds: string[];
   setFileIds: (fileIds: string[]) => void;
   files: File[];
   setFiles: (files: File[]) => void;
 }) => {
-  const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [message, setMessage] = useState('');
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -94,6 +97,7 @@ const EmptyChatMessageInput = ({
             />
           </div>
           <div className="flex flex-row items-center space-x-1 sm:space-x-4">
+            <CopilotToggle setCopilotEnabled={setCopilotEnabled} copilotEnabled={copilotEnabled}/>
             <Optimization
               optimizationMode={optimizationMode}
               setOptimizationMode={setOptimizationMode}
