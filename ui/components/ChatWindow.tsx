@@ -515,7 +515,7 @@ const ChatWindow = ({id}: { id?: string }) => {
     ws.send(
       JSON.stringify({
         type: 'message',
-        useerId:userId,
+        userId:userId,
         message: {
           messageId: messageId,
           chatId: chatId!,
@@ -523,6 +523,7 @@ const ChatWindow = ({id}: { id?: string }) => {
         },
         files: fileIds,
         focusMode: focusMode,
+        copilotEnabled: copilotEnabled,
         optimizationMode: optimizationMode,
         history: [...chatHistory, ['human', message]],
       }),
