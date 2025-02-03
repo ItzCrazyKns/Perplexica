@@ -1,5 +1,5 @@
 import {
-  BadgePercent,
+  BadgePercent, Calculator,
   ChevronDown,
   Globe,
   Pencil,
@@ -13,7 +13,7 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
-import { SiReddit, SiYoutube } from '@icons-pack/react-simple-icons';
+import {SiGoogletranslate, SiReddit, SiYoutube} from '@icons-pack/react-simple-icons';
 import { Fragment } from 'react';
 
 const focusModes = [
@@ -30,17 +30,36 @@ const focusModes = [
     icon: <SwatchBook size={20} />,
   },
   {
+    key: 'wolframAlphaSearch',
+    title: 'Wolfram Alpha',
+    description: 'Computational knowledge engine',
+    icon: <BadgePercent size={20} />,
+  },
+  {
     key: 'writingAssistant',
     title: 'Writing',
     description: 'Chat without searching the web',
     icon: <Pencil size={16} />,
   },
   {
-    key: 'wolframAlphaSearch',
-    title: 'Wolfram Alpha',
-    description: 'Computational knowledge engine',
-    icon: <BadgePercent size={20} />,
+    key: 'mathAssistant',
+    title: 'Math',
+    description: 'Chat without searching the web',
+    icon: <Calculator size={25} />,
   },
+  {
+    key: 'translator',
+    title: 'Trasnlator',
+    description: 'Chat without searching the web',
+    icon: (
+      <SiGoogletranslate
+        className="h-5 w-auto mr-0.5"
+        onPointerEnterCapture={undefined}
+        onPointerLeaveCapture={undefined}
+      />
+    ),
+  },
+
   {
     key: 'youtubeSearch',
     title: 'Youtube',
