@@ -30,9 +30,7 @@ export class Mcid {
     this.lastTimestamp = now;
 
     return (
-      (now * 0x1000) +      // 时间戳左移 12 位
-      (this.machineId * 16) + // 机器 ID 左移 4 位
-      this.sequence          // 序列号
+      (now * 0x1000) + (this.machineId * 16) + this.sequence
     );
   }
 }
