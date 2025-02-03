@@ -429,25 +429,22 @@ const ChatWindow = ({id}: { id?: string }) => {
           setUserId(storedUserId);
           console.debug('Using existing user ID:', storedUserId);
         } else {
-          // 生成新的 MCID
           const newUserId = new Mcid().generate().toString(); // 转换为字符串
 
-          // 存储到 localStorage
           localStorage.setItem('userId', newUserId);
           setUserId(newUserId);
           console.debug('Generated new user ID:', newUserId);
         }
       } catch (error) {
         console.error('Error initializing user ID:', error);
-        // 生成随机 ID 作为 fallback
-        const fallbackId = crypto.randomBytes(20).toString('hex');
+        const fallbackId = "1234567890";
         localStorage.setItem('userId', fallbackId);
         setUserId(fallbackId);
       }
     };
 
     initializeUserId();
-  }, []); // 空依赖数组确保只运行一次
+  }, []);
 
   useEffect(() => {
     if (
