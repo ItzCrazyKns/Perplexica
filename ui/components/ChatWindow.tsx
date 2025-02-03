@@ -429,7 +429,7 @@ const ChatWindow = ({id}: { id?: string }) => {
           setUserId(storedUserId);
           console.debug('Using existing user ID:', storedUserId);
         } else {
-          const newUserId = new Mcid().generate().toString(); // 转换为字符串
+          const newUserId = new Mcid().generate().toString();
 
           localStorage.setItem('userId', newUserId);
           setUserId(newUserId);
