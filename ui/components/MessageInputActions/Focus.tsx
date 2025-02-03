@@ -111,7 +111,7 @@ const Focus = ({
         {focusMode !== 'webSearch' ? (
           <div className="flex flex-row items-center space-x-1">
             {focusModes.find((mode) => mode.key === focusMode)?.icon}
-            <p className="text-xs font-medium hidden lg:block">
+            <p className="text-xs font-medium">
               {focusModes.find((mode) => mode.key === focusMode)?.title}
             </p>
             <ChevronDown size={20} className="-translate-x-1" />
@@ -119,7 +119,7 @@ const Focus = ({
         ) : (
           <div className="flex flex-row items-center space-x-1">
             <ScanEye size={20} />
-            <p className="text-xs font-medium hidden lg:block">Focus</p>
+            <p className="text-xs font-medium">Focus</p>
           </div>
         )}
       </PopoverButton>
