@@ -15,6 +15,7 @@ import {
 } from '@headlessui/react';
 import {SiGoogletranslate, SiReddit, SiYoutube} from '@icons-pack/react-simple-icons';
 import { Fragment } from 'react';
+import DeepSeekIcon from "@/assets/DeepSeekIcon";
 
 const focusModes = [
   {
@@ -82,6 +83,14 @@ const focusModes = [
         onPointerEnterCapture={undefined}
         onPointerLeaveCapture={undefined}
       />
+    ),
+  },
+  {
+    key: 'deepSeek',
+    title: 'DeepSeek',
+    description: 'Chat with DeepSeek',
+    icon: (
+      <DeepSeekIcon className="h-8 w-auto mr-0.5" />
     ),
   },
 ];
