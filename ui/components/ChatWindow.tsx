@@ -1,17 +1,18 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { Document } from '@langchain/core/documents';
+import {useEffect, useRef, useState} from 'react';
+import {Document} from '@langchain/core/documents';
 import Navbar from './Navbar';
 import Chat from './Chat';
 import EmptyChat from './EmptyChat';
 import crypto from 'crypto';
-import { toast } from 'sonner';
-import { useSearchParams } from 'next/navigation';
-import { getSuggestions } from '@/lib/actions';
-import { Settings } from 'lucide-react';
+import {toast} from 'sonner';
+import {useSearchParams} from 'next/navigation';
+import {getSuggestions} from '@/lib/actions';
+import {Settings} from 'lucide-react';
 import SettingsDialog from './SettingsDialog';
 import NextError from 'next/error';
+import {Mcid} from "@/lib/mcid";
 
 export type Message = {
   messageId: string;
@@ -140,7 +141,7 @@ const useSocket = (
           if (
             Object.keys(chatModelProviders).length > 0 &&
             (((!openAIBaseURL || !openAIPIKey) &&
-              chatModelProvider === 'custom_openai') ||
+                chatModelProvider === 'custom_openai') ||
               !chatModelProviders[chatModelProvider])
           ) {
             const chatModelProvidersKeys = Object.keys(chatModelProviders);
@@ -173,7 +174,7 @@ const useSocket = (
                 Object.keys(chatModelProviders[chatModelProvider]).length > 0
                   ? chatModelProvider
                   : Object.keys(chatModelProviders)[0]
-              ],
+                ],
             )[0];
             localStorage.setItem('chatModel', chatModel);
           }
@@ -382,10 +383,10 @@ const loadMessages = async (
   setIsMessagesLoaded(true);
 };
 
-const ChatWindow = ({ id }: { id?: string }) => {
+const ChatWindow = ({id}: { id?: string }) => {
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
-
+  const [userId, setUserId] = useState<string | undefined>();
   const [chatId, setChatId] = useState<string | undefined>(id);
   const [newChatCreated, setNewChatCreated] = useState(false);
 
@@ -416,6 +417,36 @@ const ChatWindow = ({ id }: { id?: string }) => {
   const [notFound, setNotFound] = useState(false);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    const initializeUserId = () => {
+      try {
+        // 从 localStorage 读取现有用户 ID
+        const storedUserId = localStorage.getItem('userId');
+
+        if (storedUserId) {
+          setUserId(storedUserId);
+          console.debug('Using existing user ID:', storedUserId);
+        } else {
+          // 生成新的 MCID
+          const newUserId = new Mcid().generate().toString(); // 转换为字符串
+
+          // 存储到 localStorage
+          localStorage.setItem('userId', newUserId);
+          setUserId(newUserId);
+          console.debug('Generated new user ID:', newUserId);
+        }
+      } catch (error) {
+        console.error('Error initializing user ID:', error);
+        // 生成随机 ID 作为 fallback
+        const fallbackId = crypto.randomBytes(20).toString('hex');
+        localStorage.setItem('userId', fallbackId);
+        setUserId(fallbackId);
+      }
+    };
+
+    initializeUserId();
+  }, []); // 空依赖数组确保只运行一次
 
   useEffect(() => {
     if (
@@ -465,7 +496,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     } else {
       setIsReady(false);
     }
-  }, [isMessagesLoaded, isWSReady]);
+  }, [isMessagesLoaded, isWSReady, userId]);
 
   const sendMessage = async (message: string, messageId?: string) => {
     if (loading) return;
@@ -556,7 +587,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         setMessages((prev) =>
           prev.map((message) => {
             if (message.messageId === data.messageId) {
-              return { ...message, content: message.content + data.data };
+              return {...message, content: message.content + data.data};
             }
 
             return message;
@@ -589,7 +620,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
           setMessages((prev) =>
             prev.map((msg) => {
               if (msg.messageId === lastMsg.messageId) {
-                return { ...msg, suggestions: suggestions };
+                return {...msg, suggestions: suggestions};
               }
               return msg;
             }),
@@ -639,19 +670,19 @@ const ChatWindow = ({ id }: { id?: string }) => {
             Failed to connect to the server. Please try again later.
           </p>
         </div>
-        <SettingsDialog isOpen={isSettingsOpen} setIsOpen={setIsSettingsOpen} />
+        <SettingsDialog isOpen={isSettingsOpen} setIsOpen={setIsSettingsOpen}/>
       </div>
     );
   }
 
   return isReady ? (
     notFound ? (
-      <NextError statusCode={404} />
+      <NextError statusCode={404}/>
     ) : (
       <div>
         {messages.length > 0 ? (
           <>
-            <Navbar chatId={chatId!} messages={messages} />
+            <Navbar chatId={chatId!} messages={messages}/>
             <Chat
               loading={loading}
               messages={messages}
