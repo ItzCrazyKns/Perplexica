@@ -8,6 +8,8 @@ const EmptyChat = ({
   sendMessage,
   focusMode,
   setFocusMode,
+  copilotEnabled,
+  setCopilotEnabled,
   optimizationMode,
   setOptimizationMode,
   fileIds,
@@ -18,6 +20,8 @@ const EmptyChat = ({
   sendMessage: (message: string) => void;
   focusMode: string;
   setFocusMode: (mode: string) => void;
+  copilotEnabled: boolean;
+  setCopilotEnabled: (enabled: boolean) => void;
   optimizationMode: string;
   setOptimizationMode: (mode: string) => void;
   fileIds: string[];
@@ -44,6 +48,8 @@ const EmptyChat = ({
           sendMessage={sendMessage}
           focusMode={focusMode}
           setFocusMode={setFocusMode}
+          copilotEnabled={copilotEnabled}
+          setCopilotEnabled={setCopilotEnabled}
           optimizationMode={optimizationMode}
           setOptimizationMode={setOptimizationMode}
           fileIds={fileIds}
