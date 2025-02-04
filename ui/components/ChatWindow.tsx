@@ -704,6 +704,8 @@ const ChatWindow = ({id}: { id?: string }) => {
               setFileIds={setFileIds}
               files={files}
               setFiles={setFiles}
+              copilotEnabled={copilotEnabled}
+              setCopilotEnabled={setCopilotEnabled}
             />
           </>
         ) : (

@@ -16,6 +16,8 @@ const Chat = ({
   setFileIds,
   files,
   setFiles,
+  copilotEnabled,
+  setCopilotEnabled,
 }: {
   messages: Message[];
   sendMessage: (message: string) => void;
@@ -26,6 +28,8 @@ const Chat = ({
   setFileIds: (fileIds: string[]) => void;
   files: File[];
   setFiles: (files: File[]) => void;
+  copilotEnabled:boolean
+  setCopilotEnabled:(mode: boolean) => void;
 }) => {
   const [dividerWidth, setDividerWidth] = useState(0);
   const dividerRef = useRef<HTMLDivElement | null>(null);
@@ -93,6 +97,8 @@ const Chat = ({
             setFileIds={setFileIds}
             files={files}
             setFiles={setFiles}
+            copilotEnabled={copilotEnabled}
+            setCopilotEnabled={setCopilotEnabled}
           />
         </div>
       )}
