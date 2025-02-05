@@ -12,3 +12,10 @@ GEMINI = "" # Gemini API key - sk-1234567890abcdef1234567890abcdef
 [API_ENDPOINTS]
 SEARXNG = "http://localhost:32768" # SearxNG API URL
 OLLAMA = "" # Ollama API URL - http://host.docker.internal:11434
+
+[OLLAMA_CHAT_OPTIONS]
+# maps to parameters found here: https://v03.api.js.langchain.com/interfaces/_langchain_ollama.ChatOllamaInput.html
+numCtx = 2048 # the default, some models demand more
+
+[OLLAMA_EMBEDDINGS_PARAMS]
+# maps to parameters found here: https://v03.api.js.langchain.com/interfaces/_langchain_ollama.OllamaEmbeddingsParams.html

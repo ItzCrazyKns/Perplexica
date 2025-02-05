@@ -20,6 +20,8 @@ interface Config {
     SEARXNG: string;
     OLLAMA: string;
   };
+  OLLAMA_CHAT_OPTIONS: {};
+  OLLAMA_EMBEDDINGS_PARAMS: {};
 }
 
 type RecursivePartial<T> = {
@@ -50,6 +52,10 @@ export const getSearxngApiEndpoint = () =>
   process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
 
 export const getOllamaApiEndpoint = () => loadConfig().API_ENDPOINTS.OLLAMA;
+
+export const getOllamaChatOptions = () => loadConfig().OLLAMA_CHAT_OPTIONS;
+export const getOllamaEmbeddingsParams = () =>
+  loadConfig().OLLAMA_EMBEDDINGS_PARAMS;
 
 export const updateConfig = (config: RecursivePartial<Config>) => {
   const currentConfig = loadConfig();
