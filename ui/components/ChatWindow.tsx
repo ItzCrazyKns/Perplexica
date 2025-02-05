@@ -492,6 +492,18 @@ const ChatWindow = ({id}: { id?: string }) => {
     setFocusMode(mode);
   };
 
+  useEffect(() => {
+    const mode = localStorage.getItem('optimizationMode');
+    if (mode) {
+      setOptimizationMode(mode);
+    }
+  }, [setOptimizationMode]);
+
+  const handleOptimizationModeChange = (mode: string) => {
+    localStorage.setItem('optimizationMode', mode);
+    setOptimizationMode(mode);
+  };
+
   const messagesRef = useRef<Message[]>([]);
 
   useEffect(() => {
@@ -716,7 +728,7 @@ const ChatWindow = ({id}: { id?: string }) => {
             setCopilotEnabled={setCopilotEnabled}
             setFocusMode={handleFocusModeChange}
             optimizationMode={optimizationMode}
-            setOptimizationMode={setOptimizationMode}
+            setOptimizationMode={handleOptimizationModeChange}
             fileIds={fileIds}
             setFileIds={setFileIds}
             files={files}

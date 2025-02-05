@@ -98,11 +98,8 @@ const EmptyChatMessageInput = ({
               showText
             />
 
-            <CopilotToggle setCopilotEnabled={setCopilotEnabled} copilotEnabled={copilotEnabled}/>
-            {/*<Optimization*/}
-            {/*  optimizationMode={optimizationMode}*/}
-            {/*  setOptimizationMode={setOptimizationMode}*/}
-            {/*/>*/}
+            {/*<CopilotToggle setCopilotEnabled={setCopilotEnabled} copilotEnabled={copilotEnabled}/>*/}
+            <Optimization optimizationMode={optimizationMode} setOptimizationMode={setOptimizationMode}/>
             <button
               disabled={message.trim().length === 0}
               className="bg-[#24A0ED] text-white disabled:text-black/50 dark:disabled:text-white/50 disabled:bg-[#e0e0dc] dark:disabled:bg-[#ececec21] hover:bg-opacity-85 transition duration-100 rounded-full p-2"

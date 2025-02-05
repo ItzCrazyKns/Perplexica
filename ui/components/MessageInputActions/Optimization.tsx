@@ -23,7 +23,7 @@ const OptimizationModes = [
   },
   {
     key: 'quality',
-    title: 'Quality (Soon)',
+    title: 'Quality',
     description: 'Get the most thorough and accurate answer',
     icon: (
       <Star
@@ -49,13 +49,11 @@ const Optimization = ({
       >
         <div className="flex flex-row items-center space-x-1">
           {
-            OptimizationModes.find((mode) => mode.key === optimizationMode)
-              ?.icon
+            OptimizationModes.find((mode) => mode.key === optimizationMode)?.icon
           }
           <p className="text-xs font-medium">
             {
-              OptimizationModes.find((mode) => mode.key === optimizationMode)
-                ?.title
+              OptimizationModes.find((mode) => mode.key === optimizationMode)?.title
             }
           </p>
           <ChevronDown size={20} />
@@ -76,13 +74,13 @@ const Optimization = ({
               <PopoverButton
                 onClick={() => setOptimizationMode(mode.key)}
                 key={i}
-                disabled={mode.key === 'quality'}
+                disabled={mode.key === 'quality1'}
                 className={cn(
                   'p-2 rounded-lg flex flex-col items-start justify-start text-start space-y-1 duration-200 cursor-pointer transition',
                   optimizationMode === mode.key
                     ? 'bg-light-secondary dark:bg-dark-secondary'
                     : 'hover:bg-light-secondary dark:hover:bg-dark-secondary',
-                  mode.key === 'quality' && 'opacity-50 cursor-not-allowed',
+                  mode.key === 'quality1' && 'opacity-50 cursor-not-allowed',
                 )}
               >
                 <div className="flex flex-row items-center space-x-1 text-black dark:text-white">
