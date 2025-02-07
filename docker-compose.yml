@@ -1,0 +1,26 @@
+version: '3'
+services:
+  searxng:
+    image: searxng/searxng
+    ports:
+      - "4000:8080"
+    volumes:
+      - ./searxng:/etc/searxng
+    environment:
+      - INSTANCE_NAME=perplexica-searxng
+      - BASE_URL=http://localhost:4000/
+      - SEARXNG_SECRET=your_secret_key_here
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: backend.dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - SEARXNG_URL=http://searxng:8080
+    volumes:
+      - ./config.toml:/home/perplexica/config.toml
+    depends_on:
+      - searxng 

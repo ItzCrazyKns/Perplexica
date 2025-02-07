@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OffMarket Pro - Business Search</title>
+    <link href="/styles/output.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="min-h-full">
+    <div class="bg-white">
+        <!-- Navigation -->
+        <nav class="bg-white shadow-sm">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 justify-between items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <h1 class="text-xl font-bold text-gray-900">OffMarket Pro</h1>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Search Form -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Find Off-Market Property Services</h2>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="searchQuery" class="block text-sm font-medium text-gray-700">Service Type</label>
+                        <input type="text" id="searchQuery" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" placeholder="e.g. plumber, electrician">
+                    </div>
+                    <div>
+                        <label for="searchLocation" class="block text-sm font-medium text-gray-700">Location</label>
+                        <input type="text" id="searchLocation" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm" placeholder="e.g. Denver, CO">
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button onclick="performSearch()" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                        Search
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Indicator -->
+            <div id="searchProgress" class="hidden mb-8">
+                <div class="bg-white shadow sm:rounded-lg">
+                    <div class="px-4 py-5 sm:p-6">
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Search Progress</h3>
+                        <div class="mt-4">
+                            <div class="relative pt-1">
+                                <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-gray-200">
+                                    <div id="progressBar" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-primary transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                                <div id="progressText" class="text-sm text-gray-600"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Display -->
+            <div id="errorDisplay" class="hidden mb-8">
+                <div class="rounded-md bg-red-50 p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">Error</h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                <p id="errorMessage"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Table -->
+            <div id="resultsContainer" class="hidden">
+                <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                    <div class="px-4 py-5 sm:px-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Search Results</h3>
+                    </div>
+                    <div class="border-t border-gray-200">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Business</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resultsBody" class="bg-white divide-y divide-gray-200">
+                                    <!-- Results will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        class SearchProgress {
+            constructor() {
+                this.progressBar = document.getElementById('progressBar');
+                this.progressText = document.getElementById('progressText');
+                this.container = document.getElementById('searchProgress');
+            }
+
+            show() {
+                this.container.classList.remove('hidden');
+                this.setProgress(0, 'Starting search...');
+            }
+
+            hide() {
+                this.container.classList.add('hidden');
+            }
+
+            setProgress(percent, message) {
+                this.progressBar.style.width = `${percent}%`;
+                this.progressText.textContent = message;
+            }
+
+            showError(message) {
+                this.setProgress(100, `Error: ${message}`);
+                this.progressBar.classList.remove('bg-primary');
+                this.progressBar.classList.add('bg-red-500');
+            }
+        }
+
+        async function performSearch() {
+            const query = document.getElementById('searchQuery').value;
+            const location = document.getElementById('searchLocation').value;
+
+            if (!query || !location) {
+                showError('Please enter both search query and location');
+                return;
+            }
+
+            const progress = new SearchProgress();
+            progress.show();
+
+            try {
+                document.getElementById('errorDisplay').classList.add('hidden');
+                document.getElementById('resultsContainer').classList.add('hidden');
+
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query, location })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Search failed');
+                }
+
+                displayResults(data.results);
+                progress.hide();
+
+            } catch (error) {
+                console.error('Search error:', error);
+                progress.showError(error.message);
+                showError(error.message);
+            }
+        }
+
+        function showError(message) {
+            const errorDisplay = document.getElementById('errorDisplay');
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorDisplay.classList.remove('hidden');
+        }
+
+        function displayResults(results) {
+            const container = document.getElementById('resultsContainer');
+            const tbody = document.getElementById('resultsBody');
+            
+            tbody.innerHTML = results.map(business => `
+                <tr>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-900">${business.name}</div>
+                        <div class="text-sm text-gray-500">${business.description}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900">${business.address}</div>
+                        <div class="text-sm text-gray-500">${business.phone}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        ${business.website ? 
+                            `<a href="${business.website}" target="_blank" 
+                                class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                Visit Website
+                            </a>` : 
+                            '<span class="text-sm text-gray-500">No website available</span>'
+                        }
+                    </td>
+                </tr>
+            `).join('');
+
+            container.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html> 

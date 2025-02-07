@@ -1,38 +1,16 @@
-import { startWebSocketServer } from './websocket';
 import express from 'express';
 import cors from 'cors';
-import http from 'http';
-import routes from './routes';
-import { getPort } from './config';
-import logger from './utils/logger';
-
-const port = getPort();
+import searchRoutes from './routes/search';
+import businessRoutes from './routes/business';
 
 const app = express();
-const server = http.createServer(app);
 
-const corsOptions = {
-  origin: '*',
-};
-
-app.use(cors(corsOptions));
+// Middleware
+app.use(cors());
 app.use(express.json());
 
-app.use('/api', routes);
-app.get('/api', (_, res) => {
-  res.status(200).json({ status: 'ok' });
-});
+// Routes
+app.use('/api/search', searchRoutes);
+app.use('/api/business', businessRoutes);
 
-server.listen(port, () => {
-  logger.info(`Server is running on port ${port}`);
-});
-
-startWebSocketServer(server);
-
-process.on('uncaughtException', (err, origin) => {
-  logger.error(`Uncaught Exception at ${origin}: ${err}`);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  logger.error(`Unhandled Rejection at: ${promise}, reason: ${reason}`);
-});
+export default app;
