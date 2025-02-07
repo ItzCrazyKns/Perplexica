@@ -1,5 +1,5 @@
 import {
-  BadgePercent,
+  BadgePercent, Calculator,
   ChevronDown,
   Globe,
   Pencil,
@@ -13,13 +13,14 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
-import { SiReddit, SiYoutube } from '@icons-pack/react-simple-icons';
+import {SiGoogletranslate, SiReddit, SiYoutube} from '@icons-pack/react-simple-icons';
 import { Fragment } from 'react';
+import DeepSeekIcon from "@/assets/DeepSeekIcon";
 
 const focusModes = [
   {
     key: 'webSearch',
-    title: 'All',
+    title: 'Search',
     description: 'Searches across all of the internet',
     icon: <Globe size={20} />,
   },
@@ -30,17 +31,36 @@ const focusModes = [
     icon: <SwatchBook size={20} />,
   },
   {
+    key: 'wolframAlphaSearch',
+    title: 'Wolfram Alpha',
+    description: 'Computational knowledge engine',
+    icon: <BadgePercent size={20} />,
+  },
+  {
     key: 'writingAssistant',
     title: 'Writing',
     description: 'Chat without searching the web',
     icon: <Pencil size={16} />,
   },
   {
-    key: 'wolframAlphaSearch',
-    title: 'Wolfram Alpha',
-    description: 'Computational knowledge engine',
-    icon: <BadgePercent size={20} />,
+    key: 'mathAssistant',
+    title: 'Math',
+    description: 'Chat without searching the web',
+    icon: <Calculator size={25} />,
   },
+  {
+    key: 'translator',
+    title: 'Translator',
+    description: 'Chat without searching the web',
+    icon: (
+      <SiGoogletranslate
+        className="h-5 w-auto mr-0.5"
+        onPointerEnterCapture={undefined}
+        onPointerLeaveCapture={undefined}
+      />
+    ),
+  },
+
   {
     key: 'youtubeSearch',
     title: 'Youtube',
@@ -65,6 +85,14 @@ const focusModes = [
       />
     ),
   },
+  {
+    key: 'deepSeek',
+    title: 'DeepSeek',
+    description: 'Chat with DeepSeek',
+    icon: (
+      <DeepSeekIcon className="h-8 w-auto mr-0.5" />
+    ),
+  },
 ];
 
 const Focus = ({
@@ -83,7 +111,7 @@ const Focus = ({
         {focusMode !== 'webSearch' ? (
           <div className="flex flex-row items-center space-x-1">
             {focusModes.find((mode) => mode.key === focusMode)?.icon}
-            <p className="text-xs font-medium hidden lg:block">
+            <p className="text-xs font-medium">
               {focusModes.find((mode) => mode.key === focusMode)?.title}
             </p>
             <ChevronDown size={20} className="-translate-x-1" />
@@ -91,7 +119,7 @@ const Focus = ({
         ) : (
           <div className="flex flex-row items-center space-x-1">
             <ScanEye size={20} />
-            <p className="text-xs font-medium hidden lg:block">Focus</p>
+            <p className="text-xs font-medium">Focus</p>
           </div>
         )}
       </PopoverButton>
@@ -105,7 +133,7 @@ const Focus = ({
         leaveTo="opacity-0 translate-y-1"
       >
         <PopoverPanel className="absolute z-10 w-64 md:w-[500px] left-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-full p-4 max-h-[200px] md:max-h-none overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-full p-4 max-h-[calc(100vh-6rem)] md:max-h-none overflow-y-auto pb-20">
             {focusModes.map((mode, i) => (
               <PopoverButton
                 onClick={() => setFocusMode(mode.key)}

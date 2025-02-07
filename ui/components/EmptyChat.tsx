@@ -8,6 +8,8 @@ const EmptyChat = ({
   sendMessage,
   focusMode,
   setFocusMode,
+  copilotEnabled,
+  setCopilotEnabled,
   optimizationMode,
   setOptimizationMode,
   fileIds,
@@ -18,6 +20,8 @@ const EmptyChat = ({
   sendMessage: (message: string) => void;
   focusMode: string;
   setFocusMode: (mode: string) => void;
+  copilotEnabled: boolean;
+  setCopilotEnabled: (enabled: boolean) => void;
   optimizationMode: string;
   setOptimizationMode: (mode: string) => void;
   fileIds: string[];
@@ -36,14 +40,16 @@ const EmptyChat = ({
           onClick={() => setIsSettingsOpen(true)}
         />
       </div>
-      <div className="flex flex-col items-center justify-center min-h-screen max-w-screen-sm mx-auto p-2 space-y-8">
-        <h2 className="text-black/70 dark:text-white/70 text-3xl font-medium -mt-8">
+      <div className="flex flex-col items-center max-w-screen-sm mx-auto p-2 pt-16 mt-16 space-y-8">
+        <h2 className="text-black/70 dark:text-white/70 text-5xl font-medium -mt-8">
           Research begins here.
         </h2>
         <EmptyChatMessageInput
           sendMessage={sendMessage}
           focusMode={focusMode}
           setFocusMode={setFocusMode}
+          copilotEnabled={copilotEnabled}
+          setCopilotEnabled={setCopilotEnabled}
           optimizationMode={optimizationMode}
           setOptimizationMode={setOptimizationMode}
           fileIds={fileIds}

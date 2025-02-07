@@ -55,7 +55,7 @@ const AttachSmall = ({
     <div className="flex flex-row items-center justify-between space-x-1 p-1">
       <LoaderCircle size={20} className="text-sky-400 animate-spin" />
     </div>
-  ) : files.length > 0 ? (
+  ) : files && files.length > 0 ? (
     <Popover className="max-w-[15rem] md:max-w-md lg:max-w-lg">
       <PopoverButton
         type="button"

@@ -14,6 +14,8 @@ const MessageInput = ({
   setFileIds,
   files,
   setFiles,
+  copilotEnabled,
+  setCopilotEnabled,
 }: {
   sendMessage: (message: string) => void;
   loading: boolean;
@@ -21,8 +23,10 @@ const MessageInput = ({
   setFileIds: (fileIds: string[]) => void;
   files: File[];
   setFiles: (files: File[]) => void;
+  copilotEnabled:boolean
+  setCopilotEnabled:(mode: boolean) => void;
+
 }) => {
-  const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [message, setMessage] = useState('');
   const [textareaRows, setTextareaRows] = useState(1);
   const [mode, setMode] = useState<'multi' | 'single'>('single');
