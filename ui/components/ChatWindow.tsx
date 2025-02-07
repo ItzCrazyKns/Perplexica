@@ -1,17 +1,18 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { Document } from '@langchain/core/documents';
+import {useEffect, useRef, useState} from 'react';
+import {Document} from '@langchain/core/documents';
 import Navbar from './Navbar';
 import Chat from './Chat';
 import EmptyChat from './EmptyChat';
 import crypto from 'crypto';
-import { toast } from 'sonner';
-import { useSearchParams } from 'next/navigation';
-import { getSuggestions } from '@/lib/actions';
-import { Settings } from 'lucide-react';
+import {toast} from 'sonner';
+import {useSearchParams} from 'next/navigation';
+import {getSuggestions} from '@/lib/actions';
+import {Settings} from 'lucide-react';
 import SettingsDialog from './SettingsDialog';
 import NextError from 'next/error';
+import {Mcid} from "@/lib/mcid";
 
 export type Message = {
   messageId: string;
@@ -140,7 +141,7 @@ const useSocket = (
           if (
             Object.keys(chatModelProviders).length > 0 &&
             (((!openAIBaseURL || !openAIPIKey) &&
-              chatModelProvider === 'custom_openai') ||
+                chatModelProvider === 'custom_openai') ||
               !chatModelProviders[chatModelProvider])
           ) {
             const chatModelProvidersKeys = Object.keys(chatModelProviders);
@@ -173,7 +174,7 @@ const useSocket = (
                 Object.keys(chatModelProviders[chatModelProvider]).length > 0
                   ? chatModelProvider
                   : Object.keys(chatModelProviders)[0]
-              ],
+                ],
             )[0];
             localStorage.setItem('chatModel', chatModel);
           }
@@ -382,10 +383,10 @@ const loadMessages = async (
   setIsMessagesLoaded(true);
 };
 
-const ChatWindow = ({ id }: { id?: string }) => {
+const ChatWindow = ({id}: { id?: string }) => {
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
-
+  const [userId, setUserId] = useState<string | undefined>();
   const [chatId, setChatId] = useState<string | undefined>(id);
   const [newChatCreated, setNewChatCreated] = useState(false);
 
@@ -410,12 +411,40 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const [focusMode, setFocusMode] = useState('webSearch');
   const [optimizationMode, setOptimizationMode] = useState('speed');
+  const [copilotEnabled, setCopilotEnabled] = useState(true);
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
   const [notFound, setNotFound] = useState(false);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    const initializeUserId = () => {
+      try {
+        // 从 localStorage 读取现有用户 ID
+        const storedUserId = localStorage.getItem('userId');
+
+        if (storedUserId) {
+          setUserId(storedUserId);
+          console.debug('Using existing user ID:', storedUserId);
+        } else {
+          const newUserId = new Mcid().generate().toString();
+
+          localStorage.setItem('userId', newUserId);
+          setUserId(newUserId);
+          console.debug('Generated new user ID:', newUserId);
+        }
+      } catch (error) {
+        console.error('Error initializing user ID:', error);
+        const fallbackId = "1234567890";
+        localStorage.setItem('userId', fallbackId);
+        setUserId(fallbackId);
+      }
+    };
+
+    initializeUserId();
+  }, []);
 
   useEffect(() => {
     if (
@@ -437,7 +466,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     } else if (!chatId) {
       setNewChatCreated(true);
       setIsMessagesLoaded(true);
-      setChatId(crypto.randomBytes(20).toString('hex'));
+      setChatId(new Mcid().generate().toString());
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -465,7 +494,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     } else {
       setIsReady(false);
     }
-  }, [isMessagesLoaded, isWSReady]);
+  }, [isMessagesLoaded, isWSReady, userId]);
 
   const sendMessage = async (message: string, messageId?: string) => {
     if (loading) return;
@@ -481,11 +510,12 @@ const ChatWindow = ({ id }: { id?: string }) => {
     let recievedMessage = '';
     let added = false;
 
-    messageId = messageId ?? crypto.randomBytes(7).toString('hex');
+    messageId = messageId ?? new Mcid().generate().toString();
 
     ws.send(
       JSON.stringify({
         type: 'message',
+        userId:userId,
         message: {
           messageId: messageId,
           chatId: chatId!,
@@ -493,6 +523,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         },
         files: fileIds,
         focusMode: focusMode,
+        copilotEnabled: copilotEnabled,
         optimizationMode: optimizationMode,
         history: [...chatHistory, ['human', message]],
       }),
@@ -556,7 +587,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         setMessages((prev) =>
           prev.map((message) => {
             if (message.messageId === data.messageId) {
-              return { ...message, content: message.content + data.data };
+              return {...message, content: message.content + data.data};
             }
 
             return message;
@@ -589,7 +620,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
           setMessages((prev) =>
             prev.map((msg) => {
               if (msg.messageId === lastMsg.messageId) {
-                return { ...msg, suggestions: suggestions };
+                return {...msg, suggestions: suggestions};
               }
               return msg;
             }),
@@ -639,19 +670,19 @@ const ChatWindow = ({ id }: { id?: string }) => {
             Failed to connect to the server. Please try again later.
           </p>
         </div>
-        <SettingsDialog isOpen={isSettingsOpen} setIsOpen={setIsSettingsOpen} />
+        <SettingsDialog isOpen={isSettingsOpen} setIsOpen={setIsSettingsOpen}/>
       </div>
     );
   }
 
   return isReady ? (
     notFound ? (
-      <NextError statusCode={404} />
+      <NextError statusCode={404}/>
     ) : (
       <div>
         {messages.length > 0 ? (
           <>
-            <Navbar chatId={chatId!} messages={messages} />
+            <Navbar chatId={chatId!} messages={messages}/>
             <Chat
               loading={loading}
               messages={messages}
@@ -668,6 +699,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
           <EmptyChat
             sendMessage={sendMessage}
             focusMode={focusMode}
+            copilotEnabled={copilotEnabled}
+            setCopilotEnabled={setCopilotEnabled}
             setFocusMode={setFocusMode}
             optimizationMode={optimizationMode}
             setOptimizationMode={setOptimizationMode}
