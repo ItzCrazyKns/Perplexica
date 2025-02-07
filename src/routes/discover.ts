@@ -6,29 +6,45 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
+    // Example: Searching UAE-based news sites for "AI" & "Tech"
     const data = (
       await Promise.all([
-        searchSearxng('site:businessinsider.com AI', {
+        // Gulf News
+        searchSearxng('site:gulfnews.com AI', {
           engines: ['bing news'],
           pageno: 1,
         }),
-        searchSearxng('site:www.exchangewire.com AI', {
+        searchSearxng('site:gulfnews.com Tech', {
           engines: ['bing news'],
           pageno: 1,
         }),
-        searchSearxng('site:yahoo.com AI', {
+
+        // Khaleej Times
+        searchSearxng('site:khaleejtimes.com AI', {
           engines: ['bing news'],
           pageno: 1,
         }),
-        searchSearxng('site:businessinsider.com tech', {
+        searchSearxng('site:khaleejtimes.com Tech', {
           engines: ['bing news'],
           pageno: 1,
         }),
-        searchSearxng('site:www.exchangewire.com tech', {
+
+        // The National
+        searchSearxng('site:thenationalnews.com AI', {
           engines: ['bing news'],
           pageno: 1,
         }),
-        searchSearxng('site:yahoo.com tech', {
+        searchSearxng('site:thenationalnews.com Tech', {
+          engines: ['bing news'],
+          pageno: 1,
+        }),
+
+        // Arabian Business
+        searchSearxng('site:arabianbusiness.com AI', {
+          engines: ['bing news'],
+          pageno: 1,
+        }),
+        searchSearxng('site:arabianbusiness.com Tech', {
           engines: ['bing news'],
           pageno: 1,
         }),
@@ -36,6 +52,7 @@ router.get('/', async (req, res) => {
     )
       .map((result) => result.results)
       .flat()
+      // Randomize the order
       .sort(() => Math.random() - 0.5);
 
     return res.json({ blogs: data });

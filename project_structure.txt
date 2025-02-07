@@ -1,0 +1,117 @@
+.
+├── CONTRIBUTING.md
+├── LICENSE
+├── README.md
+├── app.dockerfile
+├── backend.dockerfile
+├── config.toml
+├── data
+├── docker-compose.yaml
+├── docs
+│   ├── API
+│   │   └── SEARCH.md
+│   ├── architecture
+│   │   ├── README.md
+│   │   └── WORKING.md
+│   └── installation
+│       ├── NETWORKING.md
+│       └── UPDATING.md
+├── drizzle.config.ts
+├── package.json
+├── project_structure.txt
+├── searxng
+│   ├── limiter.toml
+│   ├── settings.yml
+│   └── uwsgi.ini
+├── src
+│   ├── app.ts
+│   ├── chains
+│   │   ├── imageSearchAgent.ts
+│   │   ├── suggestionGeneratorAgent.ts
+│   │   └── videoSearchAgent.ts
+│   ├── config.ts
+│   ├── db
+│   │   ├── index.ts
+│   │   └── schema.ts
+│   ├── lib
+│   │   ├── huggingfaceTransformer.ts
+│   │   ├── outputParsers
+│   │   ├── providers
+│   │   └── searxng.ts
+│   ├── prompts
+│   │   ├── academicSearch.ts
+│   │   ├── index.ts
+│   │   ├── redditSearch.ts
+│   │   ├── webSearch.ts
+│   │   ├── wolframAlpha.ts
+│   │   ├── writingAssistant.ts
+│   │   └── youtubeSearch.ts
+│   ├── routes
+│   │   ├── chats.ts
+│   │   ├── config.ts
+│   │   ├── discover.ts
+│   │   ├── images.ts
+│   │   ├── index.ts
+│   │   ├── models.ts
+│   │   ├── search.ts
+│   │   ├── suggestions.ts
+│   │   ├── uploads.ts
+│   │   └── videos.ts
+│   ├── search
+│   │   └── metaSearchAgent.ts
+│   ├── utils
+│   │   ├── computeSimilarity.ts
+│   │   ├── documents.ts
+│   │   ├── files.ts
+│   │   ├── formatHistory.ts
+│   │   └── logger.ts
+│   └── websocket
+│       ├── connectionManager.ts
+│       ├── index.ts
+│       ├── messageHandler.ts
+│       └── websocketServer.ts
+├── tsconfig.json
+├── ui
+│   ├── app
+│   │   ├── c
+│   │   ├── discover
+│   │   ├── favicon.ico
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   ├── library
+│   │   └── page.tsx
+│   ├── components
+│   │   ├── Chat.tsx
+│   │   ├── ChatWindow.tsx
+│   │   ├── DeleteChat.tsx
+│   │   ├── EmptyChat.tsx
+│   │   ├── EmptyChatMessageInput.tsx
+│   │   ├── Layout.tsx
+│   │   ├── MessageActions
+│   │   ├── MessageBox.tsx
+│   │   ├── MessageBoxLoading.tsx
+│   │   ├── MessageInput.tsx
+│   │   ├── MessageInputActions
+│   │   ├── MessageSources.tsx
+│   │   ├── Navbar.tsx
+│   │   ├── SearchImages.tsx
+│   │   ├── SearchVideos.tsx
+│   │   ├── SettingsDialog.tsx
+│   │   ├── Sidebar.tsx
+│   │   └── theme
+│   ├── lib
+│   │   ├── actions.ts
+│   │   └── utils.ts
+│   ├── next.config.mjs
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── public
+│   │   ├── next.svg
+│   │   └── vercel.svg
+│   ├── tailwind.config.ts
+│   ├── tsconfig.json
+│   └── yarn.lock
+├── uploads
+└── yarn.lock
+
+30 directories, 85 files
