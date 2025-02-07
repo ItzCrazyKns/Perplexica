@@ -1,11 +1,17 @@
 import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
-import { getKeepAlive, getOllamaApiEndpoint } from '../../config';
+import {
+  getKeepAlive,
+  getOllamaApiEndpoint,
+  getOllamaChatOptions,
+  getOllamaEmbeddingsParams,
+} from '../../config';
 import logger from '../../utils/logger';
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import axios from 'axios';
 
 export const loadOllamaChatModels = async () => {
   const ollamaEndpoint = getOllamaApiEndpoint();
+  const ollamaChatOptions = getOllamaChatOptions();
   const keepAlive = getKeepAlive();
 
   if (!ollamaEndpoint) return {};
@@ -23,10 +29,14 @@ export const loadOllamaChatModels = async () => {
       acc[model.model] = {
         displayName: model.name,
         model: new ChatOllama({
-          baseUrl: ollamaEndpoint,
-          model: model.model,
-          temperature: 0.7,
-          keepAlive: keepAlive,
+          ...ollamaChatOptions, // merge the options specified via config
+          ...{
+            // things defined in this dictionary will take precendence
+            baseUrl: ollamaEndpoint,
+            model: model.model,
+            temperature: 0.7,
+            keepAlive: keepAlive,
+          },
         }),
       };
 
@@ -42,6 +52,7 @@ export const loadOllamaChatModels = async () => {
 
 export const loadOllamaEmbeddingsModels = async () => {
   const ollamaEndpoint = getOllamaApiEndpoint();
+  const ollamaEmbeddingParams = getOllamaEmbeddingsParams();
 
   if (!ollamaEndpoint) return {};
 
@@ -58,8 +69,12 @@ export const loadOllamaEmbeddingsModels = async () => {
       acc[model.model] = {
         displayName: model.name,
         model: new OllamaEmbeddings({
-          baseUrl: ollamaEndpoint,
-          model: model.model,
+          ...ollamaEmbeddingParams, // merge the options specified via config
+          ...{
+            // things defined in this dictionary will take precendence
+            baseUrl: ollamaEndpoint,
+            model: model.model,
+          },
         }),
       };
 

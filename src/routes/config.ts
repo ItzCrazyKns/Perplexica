@@ -9,6 +9,8 @@ import {
   getAnthropicApiKey,
   getGeminiApiKey,
   getOpenaiApiKey,
+  getOllamaChatOptions,
+  getOllamaEmbeddingsParams,
   updateConfig,
 } from '../config';
 import logger from '../utils/logger';
@@ -54,6 +56,8 @@ router.get('/', async (_, res) => {
     config['anthropicApiKey'] = getAnthropicApiKey();
     config['groqApiKey'] = getGroqApiKey();
     config['geminiApiKey'] = getGeminiApiKey();
+    config['ollamaChatOptions'] = getOllamaChatOptions();
+    config['ollamaEmbeddingsParams'] = getOllamaEmbeddingsParams();
 
     res.status(200).json(config);
   } catch (err: any) {
@@ -75,6 +79,7 @@ router.post('/', async (req, res) => {
     API_ENDPOINTS: {
       OLLAMA: config.ollamaApiUrl,
     },
+    OLLAMA_OPTIONS: config.ollamaOptions,
   };
 
   updateConfig(updatedConfig);
