@@ -631,7 +631,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
       sendMessage(pendingRewrite.content, pendingRewrite.messageId);
       setPendingRewrite(null);
     }
-  }, [chatHistory]);
+  }, [pendingRewrite]);
 
   useEffect(() => {
     if (isReady && initialMessage && ws?.readyState === 1) {
