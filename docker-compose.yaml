@@ -53,7 +53,6 @@ services:
       - "6379:6379"
     volumes:
       - redict_data:/data
-      - ./redict/redict.conf:/redict.conf:rw
     networks:
       - perplexica-network
     restart: unless-stopped
