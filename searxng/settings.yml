@@ -16,5 +16,7 @@ redis:
   url: redis://redict:6379/0
 
 engines:
+  - name: wolframalpha
+    disabled: false
   - name: qwant
     disabled: true
