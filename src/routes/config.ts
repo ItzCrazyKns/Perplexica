@@ -14,9 +14,6 @@ import {
   getCustomOpenaiApiUrl,
   getCustomOpenaiApiKey,
   getCustomOpenaiModelName,
-  getCustomOpenaiApiUrl,
-  getCustomOpenaiApiKey,
-  getCustomOpenaiModelName,
 } from '../config';
 import logger from '../utils/logger';
 
