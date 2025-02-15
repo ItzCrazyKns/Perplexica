@@ -14,6 +14,9 @@ import {
   getCustomOpenaiApiUrl,
   getCustomOpenaiApiKey,
   getCustomOpenaiModelName,
+  getCustomOpenaiApiUrl,
+  getCustomOpenaiApiKey,
+  getCustomOpenaiModelName,
 } from '../config';
 import logger from '../utils/logger';
 
@@ -61,7 +64,7 @@ router.get('/', async (_, res) => {
     config['geminiApiKey'] = getGeminiApiKey();
     config['customOpenaiApiUrl'] = getCustomOpenaiApiUrl();
     config['customOpenaiApiKey'] = getCustomOpenaiApiKey();
-    config['customOpenaiModelName'] = getCustomOpenaiModelName();
+    config['customOpenaiModelName'] = getCustomOpenaiModelName()
 
     res.status(200).json(config);
   } catch (err: any) {
@@ -89,6 +92,9 @@ router.post('/', async (req, res) => {
       },
       OLLAMA: {
         API_URL: config.ollamaApiUrl,
+      },
+      LMSTUDIO: {
+        API_URL: config.lmStudioApiUrl,
       },
       CUSTOM_OPENAI: {
         API_URL: config.customOpenaiApiUrl,

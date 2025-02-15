@@ -26,15 +26,16 @@ interface Config {
     OLLAMA: {
       API_URL: string;
     };
+    LMSTUDIO: { 
+      API_URL: string;
+    };
     CUSTOM_OPENAI: {
       API_URL: string;
       API_KEY: string;
       MODEL_NAME: string;
     };
   };
-  API_ENDPOINTS: {  
-    OLLAMA: string;
-    LMSTUDIO: string;
+  API_ENDPOINTS: {
     SEARXNG: string;
   };
 }
@@ -56,19 +57,23 @@ export const getSimilarityMeasure = () =>
 export const getKeepAlive = () => loadConfig().GENERAL.KEEP_ALIVE;
 
 export const getOpenaiApiKey = () => loadConfig().MODELS.OPENAI.API_KEY;
+export const getOpenaiApiKey = () => loadConfig().MODELS.OPENAI.API_KEY;
 
+export const getGroqApiKey = () => loadConfig().MODELS.GROQ.API_KEY;
 export const getGroqApiKey = () => loadConfig().MODELS.GROQ.API_KEY;
 
 export const getAnthropicApiKey = () => loadConfig().MODELS.ANTHROPIC.API_KEY;
+export const getAnthropicApiKey = () => loadConfig().MODELS.ANTHROPIC.API_KEY;
 
+export const getGeminiApiKey = () => loadConfig().MODELS.GEMINI.API_KEY;
 export const getGeminiApiKey = () => loadConfig().MODELS.GEMINI.API_KEY;
 
 export const getSearxngApiEndpoint = () =>
   process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
 
-export const getOllamaApiEndpoint = () => loadConfig().API_ENDPOINTS.OLLAMA;
+export const getOllamaApiEndpoint = () => loadConfig().MODELS.OLLAMA.API_URL;
 
-export const getLMStudioApiEndpoint = () => loadConfig().API_ENDPOINTS.LMSTUDIO;
+export const getLMStudioApiEndpoint = () => loadConfig().MODELS.LMSTUDIO.API_URL;
 
 export const getCustomOpenaiApiKey = () =>
   loadConfig().MODELS.CUSTOM_OPENAI.API_KEY;
@@ -80,10 +85,6 @@ export const getCustomOpenaiModelName = () =>
   loadConfig().MODELS.CUSTOM_OPENAI.MODEL_NAME;
 
 const mergeConfigs = (current: any, update: any): any => {
-  if (update === null || update === undefined) {
-    return current;
-  }
-
   if (typeof current !== 'object' || current === null) {
     return update;
   }

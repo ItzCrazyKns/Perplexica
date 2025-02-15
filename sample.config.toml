@@ -15,12 +15,16 @@ API_KEY = ""
 [MODELS.GEMINI]
 API_KEY = ""
 
+[MODELS.OLLAMA]
+API_URL = "" # Ollama API URL - http://host.docker.internal:11434
+
+[MODELS.LMSTUDIO]
+API_URL = "" # LM STUDIO API URL - http://host.docker.internal:1234/v1
+
 [MODELS.CUSTOM_OPENAI]
 API_KEY = ""
 API_URL = ""
-
-[MODELS.OLLAMA]
-API_URL = "" # Ollama API URL - http://host.docker.internal:11434
+MODEL_NAME = ""
 
 [API_ENDPOINTS]
 SEARXNG = "http://localhost:32768" # SearxNG API URL
