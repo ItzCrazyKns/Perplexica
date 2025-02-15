@@ -15,12 +15,14 @@ import {
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
 } from '../config';
+import { ChatOllama } from '@langchain/community/chat_models/ollama';
 
 const router = express.Router();
 
 interface chatModel {
   provider: string;
   model: string;
+  ollamaContextWindow?: number;
   customOpenAIKey?: string;
   customOpenAIBaseURL?: string;
 }
@@ -78,6 +80,7 @@ router.post('/', async (req, res) => {
     const embeddingModel =
       body.embeddingModel?.model ||
       Object.keys(embeddingModelProviders[embeddingModelProvider])[0];
+    const ollamaContextWindow = body.chatModel?.ollamaContextWindow || 2048;
 
     let llm: BaseChatModel | undefined;
     let embeddings: Embeddings | undefined;
@@ -99,6 +102,9 @@ router.post('/', async (req, res) => {
     ) {
       llm = chatModelProviders[chatModelProvider][chatModel]
         .model as unknown as BaseChatModel | undefined;
+      if (llm instanceof ChatOllama) {
+        llm.numCtx = ollamaContextWindow;
+      }
     }
 
     if (
