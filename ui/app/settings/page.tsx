@@ -116,7 +116,7 @@ const Page = () => {
   const [contextWindowSize, setContextWindowSize] = useState(2048);
   const [isCustomContextWindow, setIsCustomContextWindow] = useState(false);
   const predefinedContextSizes = [
-    1024, 2048, 3072, 4096, 8192, 16384, 32768, 65536, 131072
+    1024, 2048, 3072, 4096, 8192, 16384, 32768, 65536, 131072,
   ];
 
   useEffect(() => {
@@ -178,9 +178,13 @@ const Page = () => {
       setAutomaticVideoSearch(
         localStorage.getItem('autoVideoSearch') === 'true',
       );
-      const storedContextWindow = parseInt(localStorage.getItem('ollamaContextWindow') ?? '2048');
+      const storedContextWindow = parseInt(
+        localStorage.getItem('ollamaContextWindow') ?? '2048',
+      );
       setContextWindowSize(storedContextWindow);
-      setIsCustomContextWindow(!predefinedContextSizes.includes(storedContextWindow));
+      setIsCustomContextWindow(
+        !predefinedContextSizes.includes(storedContextWindow),
+      );
 
       setIsLoading(false);
     };
@@ -566,7 +570,11 @@ const Page = () => {
                               Chat Context Window Size
                             </p>
                             <Select
-                              value={isCustomContextWindow ? 'custom' : contextWindowSize.toString()}
+                              value={
+                                isCustomContextWindow
+                                  ? 'custom'
+                                  : contextWindowSize.toString()
+                              }
                               onChange={(e) => {
                                 const value = e.target.value;
                                 if (value === 'custom') {
@@ -583,11 +591,11 @@ const Page = () => {
                                 }
                               }}
                               options={[
-                                ...predefinedContextSizes.map(size => ({
+                                ...predefinedContextSizes.map((size) => ({
                                   value: size.toString(),
-                                  label: `${size.toLocaleString()} tokens`
+                                  label: `${size.toLocaleString()} tokens`,
                                 })),
-                                { value: 'custom', label: 'Custom...' }
+                                { value: 'custom', label: 'Custom...' },
                               ]}
                             />
                             {isCustomContextWindow && (
@@ -600,12 +608,17 @@ const Page = () => {
                                   isSaving={savingStates['ollamaContextWindow']}
                                   onChange={(e) => {
                                     // Allow any value to be typed
-                                    const value = parseInt(e.target.value) || contextWindowSize;
+                                    const value =
+                                      parseInt(e.target.value) ||
+                                      contextWindowSize;
                                     setContextWindowSize(value);
                                   }}
                                   onSave={(value) => {
                                     // Validate only when saving
-                                    const numValue = Math.max(512, parseInt(value) || 2048);
+                                    const numValue = Math.max(
+                                      512,
+                                      parseInt(value) || 2048,
+                                    );
                                     setContextWindowSize(numValue);
                                     setConfig((prev) => ({
                                       ...prev!,
@@ -617,9 +630,9 @@ const Page = () => {
                               </div>
                             )}
                             <p className="text-xs text-black/60 dark:text-white/60 mt-0.5">
-                              {isCustomContextWindow 
-                                ? "Adjust the context window size for Ollama models (minimum 512 tokens)" 
-                                : "Adjust the context window size for Ollama models"}
+                              {isCustomContextWindow
+                                ? 'Adjust the context window size for Ollama models (minimum 512 tokens)'
+                                : 'Adjust the context window size for Ollama models'}
                             </p>
                           </div>
                         )}

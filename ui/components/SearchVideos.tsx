@@ -50,7 +50,8 @@ const Searchvideos = ({
             const chatModel = localStorage.getItem('chatModel');
             const customOpenAIBaseURL = localStorage.getItem('openAIBaseURL');
             const customOpenAIKey = localStorage.getItem('openAIApiKey');
-            const ollamaContextWindow = localStorage.getItem('ollamaContextWindow') || '2048';
+            const ollamaContextWindow =
+              localStorage.getItem('ollamaContextWindow') || '2048';
 
             const res = await fetch(
               `${process.env.NEXT_PUBLIC_API_URL}/videos`,

@@ -198,7 +198,10 @@ const useSocket = (
             localStorage.getItem('openAIBaseURL')!,
           );
         } else {
-          searchParams.append('ollamaContextWindow', localStorage.getItem('ollamaContextWindow') || '2048')
+          searchParams.append(
+            'ollamaContextWindow',
+            localStorage.getItem('ollamaContextWindow') || '2048',
+          );
         }
 
         searchParams.append('embeddingModel', embeddingModel!);
