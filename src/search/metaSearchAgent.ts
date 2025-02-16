@@ -34,6 +34,7 @@ export interface MetaSearchAgentType {
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'balanced' | 'quality',
     fileIds: string[],
+    isCompact?: boolean,
   ) => Promise<eventEmitter>;
 }
 
@@ -44,6 +45,7 @@ interface Config {
   rerankThreshold: number;
   queryGeneratorPrompt: string;
   responsePrompt: string;
+  preciseResponsePrompt: string;
   activeEngines: string[];
 }
 
@@ -235,6 +237,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     fileIds: string[],
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'balanced' | 'quality',
+    isCompact?: boolean,
   ) {
     return RunnableSequence.from([
       RunnableMap.from({
@@ -278,7 +281,12 @@ class MetaSearchAgent implements MetaSearchAgentType {
           .pipe(this.processDocs),
       }),
       ChatPromptTemplate.fromMessages([
-        ['system', this.config.responsePrompt],
+        [
+          'system',
+          isCompact
+            ? this.config.preciseResponsePrompt
+            : this.config.responsePrompt,
+        ],
         new MessagesPlaceholder('chat_history'),
         ['user', '{query}'],
       ]),
@@ -465,6 +473,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'balanced' | 'quality',
     fileIds: string[],
+    isCompact?: boolean,
   ) {
     const emitter = new eventEmitter();
 
@@ -473,6 +482,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
       fileIds,
       embeddings,
       optimizationMode,
+      isCompact,
     );
 
     const stream = answeringChain.streamEvents(

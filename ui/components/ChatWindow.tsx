@@ -399,12 +399,28 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const [focusMode, setFocusMode] = useState('webSearch');
   const [optimizationMode, setOptimizationMode] = useState('speed');
+  const [isCompact, setIsCompact] = useState(false);
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
   const [notFound, setNotFound] = useState(false);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    const savedCompactMode = localStorage.getItem('compactMode');
+    const savedOptimizationMode = localStorage.getItem('optimizationMode');
+
+    if (savedCompactMode !== null) {
+      setIsCompact(savedCompactMode === 'true');
+    }
+
+    if (savedOptimizationMode !== null) {
+      setOptimizationMode(savedOptimizationMode);
+    } else {
+      localStorage.setItem('optimizationMode', optimizationMode);
+    }
+  }, []);
 
   useEffect(() => {
     if (
@@ -456,7 +472,11 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
   }, [isMessagesLoaded, isWSReady]);
 
-  const sendMessage = async (message: string, messageId?: string) => {
+  const sendMessage = async (
+    message: string,
+    messageId?: string,
+    options?: { isCompact?: boolean },
+  ) => {
     if (loading) return;
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       toast.error('Cannot send message while disconnected');
@@ -471,21 +491,21 @@ const ChatWindow = ({ id }: { id?: string }) => {
     let added = false;
 
     messageId = messageId ?? crypto.randomBytes(7).toString('hex');
-
-    ws.send(
-      JSON.stringify({
-        type: 'message',
-        message: {
-          messageId: messageId,
-          chatId: chatId!,
-          content: message,
-        },
-        files: fileIds,
-        focusMode: focusMode,
-        optimizationMode: optimizationMode,
-        history: [...chatHistory, ['human', message]],
-      }),
-    );
+    let messageData = {
+      type: 'message',
+      message: {
+        messageId: messageId,
+        chatId: chatId!,
+        content: message,
+      },
+      files: fileIds,
+      focusMode: focusMode,
+      optimizationMode: optimizationMode,
+      history: [...chatHistory, ['human', message]],
+      isCompact: options?.isCompact ?? isCompact,
+    };
+    //console.log('sending:', messageData, JSON.stringify(messageData));
+    ws.send(JSON.stringify(messageData));
 
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -615,12 +635,12 @@ const ChatWindow = ({ id }: { id?: string }) => {
       return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
     });
 
-    sendMessage(message.content, message.messageId);
+    sendMessage(message.content, message.messageId, { isCompact });
   };
 
   useEffect(() => {
     if (isReady && initialMessage && ws?.readyState === 1) {
-      sendMessage(initialMessage);
+      sendMessage(initialMessage, undefined, { isCompact });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ws?.readyState, isReady, initialMessage, isWSReady]);
@@ -660,6 +680,10 @@ const ChatWindow = ({ id }: { id?: string }) => {
               setFileIds={setFileIds}
               files={files}
               setFiles={setFiles}
+              isCompact={isCompact}
+              setIsCompact={setIsCompact}
+              optimizationMode={optimizationMode}
+              setOptimizationMode={setOptimizationMode}
             />
           </>
         ) : (
@@ -673,6 +697,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
             setFileIds={setFileIds}
             files={files}
             setFiles={setFiles}
+            isCompact={isCompact}
+            setIsCompact={setIsCompact}
           />
         )}
       </div>
