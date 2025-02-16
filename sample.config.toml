@@ -19,7 +19,7 @@ API_KEY = ""
 API_URL = "" # Ollama API URL - http://host.docker.internal:11434
 
 [MODELS.LMSTUDIO]
-API_URL = "" # LM STUDIO API URL - http://host.docker.internal:1234/v1
+API_URL = "" # LM STUDIO API URL - http://host.docker.internal:1234
 
 [MODELS.CUSTOM_OPENAI]
 API_KEY = ""

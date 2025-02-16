@@ -4,6 +4,10 @@ import { getKeepAlive, getLMStudioApiEndpoint } from '../../config';
 import logger from '../../utils/logger';
 import axios from 'axios';
 
+const ensureV1Endpoint = (endpoint: string): string => {
+  return endpoint.endsWith('/v1') ? endpoint : `${endpoint}/v1`;
+};
+
 interface LMStudioModel {
   id: string;
   // add other properties if LM Studio API provides them
@@ -14,6 +18,22 @@ interface ChatModelConfig {
   model: ChatOpenAI;
 }
 
+const checkLMStudioAvailability = async (endpoint: string): Promise<boolean> => {
+  const v1Endpoint = ensureV1Endpoint(endpoint);
+  try {
+    await axios.get(`${v1Endpoint}/models`, {
+      timeout: 1000, // 1 second timeout
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return true;
+  } catch (err) {
+    logger.debug(`LM Studio server not available at ${endpoint}`);
+    return false;
+  }
+};
+
 export const loadLMStudioChatModels = async (): Promise<Record<string, ChatModelConfig>> => {
   const lmStudioEndpoint = getLMStudioApiEndpoint();
 
@@ -22,8 +42,16 @@ export const loadLMStudioChatModels = async (): Promise<Record<string, ChatModel
     return {};
   }
 
+  // Check if server is available before attempting to load models
+  const isAvailable = await checkLMStudioAvailability(lmStudioEndpoint);
+  if (!isAvailable) {
+    return {};
+  }
+
   try {
-    const response = await axios.get<{ data: LMStudioModel[] }>(`${lmStudioEndpoint}/models`, {
+    const v1Endpoint = ensureV1Endpoint(lmStudioEndpoint);
+    const response = await axios.get<{ data: LMStudioModel[] }>(`${v1Endpoint}/models`, {
+      timeout: 5000, // 5 second timeout for model loading
       headers: {
         'Content-Type': 'application/json',
       },
@@ -37,7 +65,7 @@ export const loadLMStudioChatModels = async (): Promise<Record<string, ChatModel
         model: new ChatOpenAI({
           openAIApiKey: 'lm-studio',
           configuration: {
-            baseURL: lmStudioEndpoint,
+            baseURL: ensureV1Endpoint(lmStudioEndpoint),
           },
           modelName: model.id,
           temperature: 0.7,
@@ -58,8 +86,16 @@ export const loadLMStudioEmbeddingsModels = async () => {
 
   if (!lmStudioEndpoint) return {};
 
+  // Check if server is available before attempting to load models
+  const isAvailable = await checkLMStudioAvailability(lmStudioEndpoint);
+  if (!isAvailable) {
+    return {};
+  }
+
   try {
-    const response = await axios.get(`${lmStudioEndpoint}/models`, {
+    const v1Endpoint = ensureV1Endpoint(lmStudioEndpoint);
+    const response = await axios.get(`${v1Endpoint}/models`, {
+      timeout: 5000, // 5 second timeout for model loading
       headers: {
         'Content-Type': 'application/json',
       },
@@ -73,7 +109,7 @@ export const loadLMStudioEmbeddingsModels = async () => {
         model: new OpenAIEmbeddings({
           openAIApiKey: 'lm-studio', // Dummy key required by LangChain
           configuration: {
-            baseURL: lmStudioEndpoint,
+            baseURL: ensureV1Endpoint(lmStudioEndpoint),
           },
           modelName: model.id,
         }),
