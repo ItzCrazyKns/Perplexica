@@ -70,6 +70,12 @@ const Optimization = ({
         className="p-2 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
       >
         <div className="flex flex-row items-center space-x-1">
+          {isCompact && (
+            <Minimize2
+              size={16}
+              className="text-gray-600 dark:text-gray-400"
+            />
+          )}
           {
             OptimizationModes.find((mode) => mode.key === optimizationMode)
               ?.icon
