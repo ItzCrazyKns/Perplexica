@@ -472,10 +472,10 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
   }, [isMessagesLoaded, isWSReady]);
 
-  const sendMessage = async (
+const sendMessage = async (
     message: string,
     messageId?: string,
-    options?: { isCompact?: boolean },
+    options?: { isCompact?: boolean; rewriteIndex?: number },
   ) => {
     if (loading) return;
     if (!ws || ws.readyState !== WebSocket.OPEN) {
@@ -489,6 +489,17 @@ const ChatWindow = ({ id }: { id?: string }) => {
     let sources: Document[] | undefined = undefined;
     let recievedMessage = '';
     let added = false;
+    let messageChatHistory = chatHistory;
+
+    if (options?.rewriteIndex !== undefined) {
+      const rewriteIndex = options.rewriteIndex;
+      setMessages((prev) => {
+        return [...prev.slice(0, messages.length > 2 ? rewriteIndex - 1 : 0)]
+      });
+      
+      messageChatHistory = chatHistory.slice(0, messages.length > 2 ? rewriteIndex - 1 : 0)
+      setChatHistory(messageChatHistory);
+    }
 
     messageId = messageId ?? crypto.randomBytes(7).toString('hex');
     let messageData = {
@@ -501,10 +512,9 @@ const ChatWindow = ({ id }: { id?: string }) => {
       files: fileIds,
       focusMode: focusMode,
       optimizationMode: optimizationMode,
-      history: [...chatHistory, ['human', message]],
+      history: [...messageChatHistory, ['human', message]],
       isCompact: options?.isCompact ?? isCompact,
     };
-    //console.log('sending:', messageData, JSON.stringify(messageData));
     ws.send(JSON.stringify(messageData));
 
     setMessages((prevMessages) => [
@@ -622,20 +632,9 @@ const ChatWindow = ({ id }: { id?: string }) => {
   };
 
   const rewrite = (messageId: string) => {
-    const index = messages.findIndex((msg) => msg.messageId === messageId);
-
-    if (index === -1) return;
-
-    const message = messages[index - 1];
-
-    setMessages((prev) => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
-    });
-    setChatHistory((prev) => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
-    });
-
-    sendMessage(message.content, message.messageId, { isCompact });
+    const messageIndex = messages.findIndex((msg) => msg.messageId === messageId);
+    if(messageIndex == -1) return;
+    sendMessage(messages[messageIndex - 1].content, messageId, { isCompact, rewriteIndex: messageIndex });
   };
 
   useEffect(() => {
