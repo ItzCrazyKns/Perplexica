@@ -103,7 +103,7 @@ const getDocumentsFromLocal = async ({links}: {links: string[]}) => {
     }),
   );
   return docs;
-}
+};
 
 const getDocumentsFromJinaReader = async ({links}: { links: string[] }) => {
   const splitter = new MarkdownTextSplitter();
@@ -160,4 +160,4 @@ const getDocumentsFromJinaReader = async ({links}: { links: string[] }) => {
     })
   );
   return docs;
-}
+};
