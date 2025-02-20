@@ -10,12 +10,14 @@ import {
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
 } from '../config';
+import { ChatOllama } from '@langchain/community/chat_models/ollama';
 
 const router = express.Router();
 
 interface ChatModel {
   provider: string;
   model: string;
+  ollamaContextWindow?: number;
 }
 
 interface VideoSearchBody {
@@ -61,6 +63,10 @@ router.post('/', async (req, res) => {
     ) {
       llm = chatModelProviders[chatModelProvider][chatModel]
         .model as unknown as BaseChatModel | undefined;
+      
+      if (llm instanceof ChatOllama) {
+        llm.numCtx = body.chatModel?.ollamaContextWindow || 2048;
+      }
     }
 
     if (!llm) {

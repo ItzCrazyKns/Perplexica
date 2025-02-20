@@ -5,6 +5,7 @@ import { getAvailableChatModelProviders } from '../lib/providers';
 import { HumanMessage, AIMessage } from '@langchain/core/messages';
 import logger from '../utils/logger';
 import { ChatOpenAI } from '@langchain/openai';
+import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
@@ -16,6 +17,7 @@ const router = express.Router();
 interface ChatModel {
   provider: string;
   model: string;
+  ollamaContextWindow?: number;
 }
 
 interface ImageSearchBody {
@@ -61,6 +63,10 @@ router.post('/', async (req, res) => {
     ) {
       llm = chatModelProviders[chatModelProvider][chatModel]
         .model as unknown as BaseChatModel | undefined;
+      
+      if (llm instanceof ChatOllama) {
+        llm.numCtx = body.chatModel?.ollamaContextWindow || 2048;
+      }
     }
 
     if (!llm) {

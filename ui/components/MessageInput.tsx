@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import Attach from './MessageInputActions/Attach';
 import CopilotToggle from './MessageInputActions/Copilot';
+import Optimization from './MessageInputActions/Optimization';
 import { File } from './ChatWindow';
 import AttachSmall from './MessageInputActions/AttachSmall';
 
@@ -14,13 +15,25 @@ const MessageInput = ({
   setFileIds,
   files,
   setFiles,
+  isCompact,
+  setIsCompact,
+  optimizationMode,
+  setOptimizationMode,
 }: {
-  sendMessage: (message: string) => void;
+  sendMessage: (
+    message: string,
+    messageId?: string,
+    options?: { isCompact?: boolean },
+  ) => void;
   loading: boolean;
   fileIds: string[];
   setFileIds: (fileIds: string[]) => void;
   files: File[];
   setFiles: (files: File[]) => void;
+  isCompact: boolean;
+  setIsCompact: (isCompact: boolean) => void;
+  optimizationMode: string;
+  setOptimizationMode: (mode: string) => void;
 }) => {
   const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [message, setMessage] = useState('');
@@ -40,20 +53,16 @@ const MessageInput = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeElement = document.activeElement;
-
       const isInputFocused =
         activeElement?.tagName === 'INPUT' ||
         activeElement?.tagName === 'TEXTAREA' ||
         activeElement?.hasAttribute('contenteditable');
-
       if (e.key === '/' && !isInputFocused) {
         e.preventDefault();
         inputRef.current?.focus();
       }
     };
-
     document.addEventListener('keydown', handleKeyDown);
-
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
@@ -64,28 +73,36 @@ const MessageInput = ({
       onSubmit={(e) => {
         if (loading) return;
         e.preventDefault();
-        sendMessage(message);
+        sendMessage(message, undefined, { isCompact });
         setMessage('');
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' && !e.shiftKey && !loading) {
           e.preventDefault();
-          sendMessage(message);
+          sendMessage(message, undefined, { isCompact });
           setMessage('');
         }
       }}
       className={cn(
-        'bg-light-secondary dark:bg-dark-secondary p-4 flex items-center overflow-hidden border border-light-200 dark:border-dark-200',
+        'bg-light-secondary dark:bg-dark-secondary p-4 flex items-center border border-light-200 dark:border-dark-200',
         mode === 'multi' ? 'flex-col rounded-lg' : 'flex-row rounded-full',
       )}
     >
       {mode === 'single' && (
-        <AttachSmall
-          fileIds={fileIds}
-          setFileIds={setFileIds}
-          files={files}
-          setFiles={setFiles}
-        />
+        <div className="flex flex-row items-center space-x-2">
+          <AttachSmall
+            fileIds={fileIds}
+            setFileIds={setFileIds}
+            files={files}
+            setFiles={setFiles}
+          />
+          <Optimization
+            optimizationMode={optimizationMode}
+            setOptimizationMode={setOptimizationMode}
+            isCompact={isCompact}
+            setIsCompact={setIsCompact}
+          />
+        </div>
       )}
       <TextareaAutosize
         ref={inputRef}
@@ -113,12 +130,20 @@ const MessageInput = ({
       )}
       {mode === 'multi' && (
         <div className="flex flex-row items-center justify-between w-full pt-2">
-          <AttachSmall
-            fileIds={fileIds}
-            setFileIds={setFileIds}
-            files={files}
-            setFiles={setFiles}
-          />
+          <div className="flex flex-row items-center space-x-2">
+            <AttachSmall
+              fileIds={fileIds}
+              setFileIds={setFileIds}
+              files={files}
+              setFiles={setFiles}
+            />
+            <Optimization
+              optimizationMode={optimizationMode}
+              setOptimizationMode={setOptimizationMode}
+              isCompact={isCompact}
+              setIsCompact={setIsCompact}
+            />
+          </div>
           <div className="flex flex-row items-center space-x-4">
             <CopilotToggle
               copilotEnabled={copilotEnabled}
