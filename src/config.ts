@@ -35,6 +35,9 @@ interface Config {
   API_ENDPOINTS: {
     SEARXNG: string;
   };
+  API_KEYS: {
+    JINA: string;
+  }
 }
 
 type RecursivePartial<T> = {
@@ -74,6 +77,9 @@ export const getCustomOpenaiApiUrl = () =>
 
 export const getCustomOpenaiModelName = () =>
   loadConfig().MODELS.CUSTOM_OPENAI.MODEL_NAME;
+
+export const getJinaApiKey = () =>
+  loadConfig().API_KEYS.JINA;
 
 const mergeConfigs = (current: any, update: any): any => {
   if (update === null || update === undefined) {
