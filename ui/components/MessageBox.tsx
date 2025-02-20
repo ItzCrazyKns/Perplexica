@@ -11,6 +11,8 @@ import {
   StopCircle,
   Layers3,
   Plus,
+  Brain,
+  ChevronDown,
 } from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
 import Copy from './MessageActions/Copy';
@@ -41,26 +43,58 @@ const MessageBox = ({
 }) => {
   const [parsedMessage, setParsedMessage] = useState(message.content);
   const [speechMessage, setSpeechMessage] = useState(message.content);
+  const [thinking, setThinking] = useState<string>('');
+  const [answer, setAnswer] = useState<string>('');
+  const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
 
   useEffect(() => {
     const regex = /\[(\d+)\]/g;
+    const thinkRegex = /<think>(.*?)(?:<\/think>|$)(.*)/s;
 
-    if (
-      message.role === 'assistant' &&
-      message?.sources &&
-      message.sources.length > 0
-    ) {
-      return setParsedMessage(
-        message.content.replace(
-          regex,
-          (_, number) =>
-            `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
-        ),
-      );
+    // Check for thinking content, including partial tags
+    const match = message.content.match(thinkRegex);
+    if (match) {
+      const [_, thinkingContent, answerContent] = match;
+      
+      // Set thinking content even if </think> hasn't appeared yet
+      if (thinkingContent) {
+        setThinking(thinkingContent.trim());
+        setIsThinkingExpanded(true); // Auto-expand when thinking starts
+      }
+
+      // Only set answer content if we have it (after </think>)
+      if (answerContent) {
+        setAnswer(answerContent.trim());
+        
+        // Process the answer part for sources if needed
+        if (message.role === 'assistant' && message?.sources && message.sources.length > 0) {
+          setParsedMessage(
+            answerContent.trim().replace(
+              regex,
+              (_, number) =>
+                `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
+            ),
+          );
+        } else {
+          setParsedMessage(answerContent.trim());
+        }
+        setSpeechMessage(answerContent.trim().replace(regex, ''));
+      }
+    } else {
+      // No thinking content - process as before
+      if (message.role === 'assistant' && message?.sources && message.sources.length > 0) {
+        setParsedMessage(
+          message.content.replace(
+            regex,
+            (_, number) =>
+              `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
+          ),
+        );
+      } else {
+        setParsedMessage(message.content);
+      }
+      setSpeechMessage(message.content.replace(regex, ''));
     }
-
-    setSpeechMessage(message.content.replace(regex, ''));
-    setParsedMessage(message.content);
   }, [message.content, message.sources, message.role]);
 
   const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
@@ -92,27 +126,71 @@ const MessageBox = ({
                 <MessageSources sources={message.sources} />
               </div>
             )}
-            <div className="flex flex-col space-y-2">
-              <div className="flex flex-row items-center space-x-2">
-                <Disc3
-                  className={cn(
-                    'text-black dark:text-white',
-                    isLast && loading ? 'animate-spin' : 'animate-none',
+            <div className="flex flex-col space-y-4">
+              {thinking && (
+                <div className="flex flex-col space-y-2 mb-4">
+                  <button 
+                    onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
+                    className="flex flex-row items-center space-x-2 group text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition duration-200"
+                  >
+                    <Brain size={20} />
+                    <h3 className="font-medium text-xl">Reasoning</h3>
+                    <ChevronDown 
+                      size={16}
+                      className={cn(
+                        "transition-transform duration-200",
+                        isThinkingExpanded ? "rotate-180" : ""
+                      )} 
+                    />
+                  </button>
+                  
+                  {isThinkingExpanded && (
+                    <div className="rounded-lg bg-light-secondary/50 dark:bg-dark-secondary/50 p-4">
+                      {thinking.split('\n\n').map((paragraph, index) => {
+                        if (!paragraph.trim()) return null;
+                        
+                        const content = paragraph.replace(/^[•\-\d.]\s*/, '');
+                        
+                        return (
+                          <div key={index} className="mb-2 last:mb-0">
+                            <details className="group [&_summary::-webkit-details-marker]:hidden">
+                              <summary className="flex items-center cursor-pointer list-none text-sm text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white">
+                                <span className="arrow mr-2 inline-block transition-transform duration-200 group-open:rotate-90 group-open:self-start group-open:mt-1">▸</span>
+                                <p className="relative whitespace-normal line-clamp-1 group-open:line-clamp-none after:content-['...'] after:inline group-open:after:hidden transition-all duration-200 text-ellipsis overflow-hidden group-open:overflow-visible">
+                                  {content}
+                                </p>
+                              </summary>
+                            </details>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
-                  size={20}
-                />
-                <h3 className="text-black dark:text-white font-medium text-xl">
-                  Answer
-                </h3>
+                </div>
+              )}
+
+              <div className="flex flex-col space-y-2">
+                <div className="flex flex-row items-center space-x-2">
+                  <Disc3
+                    className={cn(
+                      'text-black dark:text-white',
+                      isLast && loading ? 'animate-spin' : 'animate-none',
+                    )}
+                    size={20}
+                  />
+                  <h3 className="text-black dark:text-white font-medium text-xl">
+                    Answer
+                  </h3>
+                </div>
+                <Markdown
+                  className={cn(
+                    'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
+                    'max-w-none break-words text-black dark:text-white',
+                  )}
+                >
+                  {parsedMessage}
+                </Markdown>
               </div>
-              <Markdown
-                className={cn(
-                  'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
-                  'max-w-none break-words text-black dark:text-white',
-                )}
-              >
-                {parsedMessage}
-              </Markdown>
               {loading && isLast ? null : (
                 <div className="flex flex-row items-center justify-between w-full text-black dark:text-white py-4 -mx-2">
                   <div className="flex flex-row items-center space-x-1">
