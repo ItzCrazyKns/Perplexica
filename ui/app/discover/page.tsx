@@ -1,7 +1,7 @@
 'use client';
 
-import { Search, Settings } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Search, Sliders, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -15,8 +15,8 @@ interface Discover {
 // List of available categories
 const categories = [
   'For You', 'AI', 'Technology', 'Current News', 'Sports', 
-  'Money', 'Gaming', 'Weather', 'Entertainment', 'Science', 
-  'Health', 'Travel'
+  'Money', 'Gaming', 'Weather', 'Entertainment', 'Art and Culture', 
+  'Science', 'Health', 'Travel'
 ];
 
 const Page = () => {
@@ -25,6 +25,28 @@ const Page = () => {
   const [activeCategory, setActiveCategory] = useState('For You');
   const [showPreferences, setShowPreferences] = useState(false);
   const [userPreferences, setUserPreferences] = useState<string[]>(['AI', 'Technology']);
+  const [preferredLanguages, setPreferredLanguages] = useState<string[]>(['en']); // Default to English
+  
+  // Temporary state for the preferences modal
+  const [tempPreferences, setTempPreferences] = useState<string[]>([]);
+  const [tempLanguages, setTempLanguages] = useState<string[]>([]);
+  const categoryContainerRef = useRef<HTMLDivElement>(null);
+
+  // Function to scroll categories horizontally
+  const scrollCategories = (direction: 'left' | 'right') => {
+    const container = categoryContainerRef.current;
+    if (!container) return;
+    
+    const scrollAmount = container.clientWidth * 0.8;
+    const currentScroll = container.scrollLeft;
+    
+    container.scrollTo({
+      left: direction === 'left' 
+        ? Math.max(0, currentScroll - scrollAmount)
+        : currentScroll + scrollAmount,
+      behavior: 'smooth'
+    });
+  };
 
   // Load user preferences on component mount
   useEffect(() => {
@@ -40,6 +62,7 @@ const Page = () => {
         if (res.ok) {
           const data = await res.json();
           setUserPreferences(data.categories || ['AI', 'Technology']);
+          setPreferredLanguages(data.languages || ['en']); // Default to English if no languages are set
         }
       } catch (err: any) {
         console.error('Error loading preferences:', err.message);
@@ -51,14 +74,17 @@ const Page = () => {
   }, []);
 
   // Save user preferences
-  const saveUserPreferences = async (preferences: string[]) => {
+  const saveUserPreferences = async (preferences: string[], languages: string[]) => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/discover/preferences`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ categories: preferences }),
+        body: JSON.stringify({ 
+          categories: preferences,
+          languages
+        }),
       });
 
       if (res.ok) {
@@ -73,17 +99,26 @@ const Page = () => {
     }
   };
 
-  // Fetch data based on active category or user preferences
+  // Fetch data based on active category, user preferences, and language
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
         let endpoint = `${process.env.NEXT_PUBLIC_API_URL}/discover`;
+        let params = [];
         
         if (activeCategory !== 'For You') {
-          endpoint += `?category=${encodeURIComponent(activeCategory)}`;
+          params.push(`category=${encodeURIComponent(activeCategory)}`);
         } else if (userPreferences.length > 0) {
-          endpoint += `?preferences=${encodeURIComponent(JSON.stringify(userPreferences))}`;
+          params.push(`preferences=${encodeURIComponent(JSON.stringify(userPreferences))}`);
+        }
+        
+        if (preferredLanguages.length > 0) {
+          params.push(`languages=${encodeURIComponent(JSON.stringify(preferredLanguages))}`);
+        }
+        
+        if (params.length > 0) {
+          endpoint += `?${params.join('&')}`;
         }
         
         const res = await fetch(endpoint, {
@@ -111,7 +146,7 @@ const Page = () => {
     };
 
     fetchData();
-  }, [activeCategory, userPreferences]);
+  }, [activeCategory, userPreferences, preferredLanguages]);
 
   return loading ? (
     <div className="flex flex-row items-center justify-center min-h-screen">
@@ -146,78 +181,166 @@ const Page = () => {
               onClick={() => setShowPreferences(true)}
               aria-label="Personalize"
             >
-              <Settings size={20} />
+              <Sliders size={20} />
             </button>
           </div>
           
-          {/* Category Navigation */}
-          <div className="flex overflow-x-auto space-x-2 py-4 no-scrollbar">
-            {categories.map((category) => (
-              <button
-                key={category}
-                className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                  activeCategory === category 
-                    ? 'bg-light-primary dark:bg-dark-primary text-white' 
-                    : 'bg-light-secondary dark:bg-dark-secondary hover:bg-light-primary/80 hover:dark:bg-dark-primary/80'
-                }`}
-                onClick={() => setActiveCategory(category)}
-              >
-                {category}
-              </button>
-            ))}
+          {/* Category Navigation with Buttons */}
+          <div className="relative flex items-center py-4">
+            <button 
+              className="absolute left-0 z-10 p-1 rounded-full bg-light-secondary dark:bg-dark-secondary hover:bg-light-primary/80 hover:dark:bg-dark-primary/80 transition-colors"
+              onClick={() => scrollCategories('left')}
+              aria-label="Scroll left"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            
+            <div 
+              className="flex overflow-x-auto mx-8 no-scrollbar scroll-smooth" 
+              ref={categoryContainerRef}
+              style={{ scrollbarWidth: 'none' }} // Additional style to ensure no scrollbar in Firefox
+            >
+              <div className="flex space-x-2">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                      activeCategory === category 
+                        ? 'bg-light-primary dark:bg-dark-primary text-white' 
+                        : 'bg-light-secondary dark:bg-dark-secondary hover:bg-light-primary/80 hover:dark:bg-dark-primary/80'
+                    }`}
+                    onClick={() => setActiveCategory(category)}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <button 
+              className="absolute right-0 z-10 p-1 rounded-full bg-light-secondary dark:bg-dark-secondary hover:bg-light-primary/80 hover:dark:bg-dark-primary/80 transition-colors"
+              onClick={() => scrollCategories('right')}
+              aria-label="Scroll right"
+            >
+              <ChevronRight size={20} />
+            </button>
           </div>
           
           <hr className="border-t border-[#2B2C2C] my-4 w-full" />
         </div>
 
         {/* Personalization Modal */}
-        {showPreferences && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-[#1E1E1E] p-6 rounded-lg w-full max-w-md">
-              <h2 className="text-xl font-bold mb-4">Personalize Your Feed</h2>
-              <p className="mb-4">Select categories you&apos;re interested in:</p>
-              
-              <div className="grid grid-cols-2 gap-2 mb-4">
-                {categories.filter(c => c !== 'For You').map((category) => (
-                  <label key={category} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={userPreferences.includes(category)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setUserPreferences([...userPreferences, category]);
-                        } else {
-                          setUserPreferences(userPreferences.filter(p => p !== category));
-                        }
-                      }}
-                      className="rounded border-gray-300 text-light-primary focus:ring-light-primary dark:border-gray-600 dark:bg-dark-secondary"
-                    />
-                    <span>{category}</span>
-                  </label>
-                ))}
-              </div>
-              
-              <div className="flex justify-end space-x-2">
-                <button 
-                  className="px-4 py-2 rounded bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors"
-                  onClick={() => setShowPreferences(false)}
-                >
-                  Cancel
-                </button>
-                <button 
-                  className="px-4 py-2 rounded bg-light-primary dark:bg-dark-primary text-white hover:bg-light-primary/80 hover:dark:bg-dark-primary/80 transition-colors"
-                  onClick={() => {
-                    saveUserPreferences(userPreferences);
-                    setShowPreferences(false);
-                    setActiveCategory('For You'); // Switch to For You view to show personalized content
-                  }}
-                >
-                  Save
-                </button>
+        {/* Initialize temp preferences when modal opens */}
+        {showPreferences && (() => {
+          // Initialize temp preferences when modal opens
+          if (tempPreferences.length === 0) {
+            setTempPreferences([...userPreferences]);
+          }
+          if (tempLanguages.length === 0) {
+            setTempLanguages([...preferredLanguages]);
+          }
+          
+          return (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white dark:bg-[#1E1E1E] p-6 rounded-lg w-full max-w-md">
+                <h2 className="text-xl font-bold mb-4">Personalize Your Feed</h2>
+                
+                <h3 className="font-medium mb-2">Select categories you&apos;re interested in:</h3>
+                <div className="grid grid-cols-2 gap-2 mb-6">
+                  {categories.filter(c => c !== 'For You').map((category) => (
+                    <label key={category} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={tempPreferences.includes(category)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setTempPreferences([...tempPreferences, category]);
+                          } else {
+                            setTempPreferences(tempPreferences.filter(p => p !== category));
+                          }
+                        }}
+                        className="rounded border-gray-300 text-light-primary focus:ring-light-primary dark:border-gray-600 dark:bg-dark-secondary"
+                      />
+                      <span>{category}</span>
+                    </label>
+                  ))}
+                </div>
+                
+                <div className="mb-6">
+                  <h3 className="font-medium mb-2">Preferred Languages</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { code: 'en', name: 'English' },
+                      { code: 'ar', name: 'Arabic' },
+                      { code: 'zh', name: 'Chinese' },
+                      { code: 'fr', name: 'French' },
+                      { code: 'de', name: 'German' },
+                      { code: 'hi', name: 'Hindi' },
+                      { code: 'it', name: 'Italian' },
+                      { code: 'ja', name: 'Japanese' },
+                      { code: 'ko', name: 'Korean' },
+                      { code: 'pt', name: 'Portuguese' },
+                      { code: 'ru', name: 'Russian' },
+                      { code: 'es', name: 'Spanish' },
+                    ].map((language) => (
+                      <label key={language.code} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={tempLanguages.includes(language.code)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setTempLanguages([...tempLanguages, language.code]);
+                            } else {
+                              setTempLanguages(tempLanguages.filter(l => l !== language.code));
+                            }
+                          }}
+                          className="rounded border-gray-300 text-light-primary focus:ring-light-primary dark:border-gray-600 dark:bg-dark-secondary"
+                        />
+                        <span>{language.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-500 mt-2">
+                    {tempLanguages.length === 0 
+                      ? "No languages selected will show results in all languages" 
+                      : `Selected: ${tempLanguages.length} language(s)`}
+                  </p>
+                </div>
+                
+                <div className="flex justify-end space-x-2">
+                  <button 
+                    className="px-4 py-2 rounded bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors"
+                    onClick={() => {
+                      setShowPreferences(false);
+                      // Reset temp preferences
+                      setTempPreferences([]);
+                      setTempLanguages([]);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    className="px-4 py-2 rounded bg-light-primary dark:bg-dark-primary text-white hover:bg-light-primary/80 hover:dark:bg-dark-primary/80 transition-colors"
+                    onClick={async () => {
+                      await saveUserPreferences(tempPreferences, tempLanguages);
+                      // Update the actual preferences after saving
+                      setUserPreferences(tempPreferences);
+                      setPreferredLanguages(tempLanguages);
+                      setShowPreferences(false);
+                      setActiveCategory('For You'); // Switch to For You view to show personalized content
+                      
+                      // Reset temp preferences
+                      setTempPreferences([]);
+                      setTempLanguages([]);
+                    }}
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         <div className="grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-4 pb-28 lg:pb-8 w-full justify-items-center lg:justify-items-start">
           {discover &&
