@@ -61,7 +61,7 @@ export const loadDeepSeekChatModels = async (): Promise<Record<string, ChatModel
               baseURL: deepSeekEndpoint,
               modelName: model.id,
               temperature: 0.7,
-              streamDelay: 50, // Add a small delay to control streaming speed
+              streamDelay: 20 // Add a small delay to control streaming speed
             }),
           };
         } else {
