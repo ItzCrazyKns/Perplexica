@@ -25,6 +25,7 @@ interface Config {
     };
     DEEPSEEK: {
       API_KEY: string;
+      STREAM_DELAY: number;
     };
     OLLAMA: {
       API_URL: string;
@@ -68,6 +69,9 @@ export const getAnthropicApiKey = () => loadConfig().MODELS.ANTHROPIC.API_KEY;
 export const getGeminiApiKey = () => loadConfig().MODELS.GEMINI.API_KEY;
 
 export const getDeepseekApiKey = () => loadConfig().MODELS.DEEPSEEK.API_KEY;
+
+export const getDeepseekStreamDelay = () => 
+  loadConfig().MODELS.DEEPSEEK.STREAM_DELAY || 20; // Default to 20ms if not specified
 
 export const getSearxngApiEndpoint = () =>
   process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;

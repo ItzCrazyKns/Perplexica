@@ -17,6 +17,7 @@ API_KEY = ""
 
 [MODELS.DEEPSEEK]
 API_KEY = ""
+STREAM_DELAY = 5  # Milliseconds between token emissions for reasoning models (higher = slower, 0 = no delay)
 
 [MODELS.OLLAMA]
 API_URL = "" # Ollama API URL - http://host.docker.internal:11434

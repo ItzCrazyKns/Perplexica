@@ -1,7 +1,7 @@
 import { ReasoningChatModel } from '../reasoningChatModel';
 import { ChatOpenAI } from '@langchain/openai';
 import logger from '../../utils/logger';
-import { getDeepseekApiKey } from '../../config';
+import { getDeepseekApiKey, getDeepseekStreamDelay } from '../../config';
 import axios from 'axios';
 
 interface DeepSeekModel {
@@ -54,6 +54,9 @@ export const loadDeepSeekChatModels = async (): Promise<Record<string, ChatModel
       if (model.id in MODEL_DISPLAY_NAMES) {
         // Use ReasoningChatModel for models that need reasoning capabilities
         if (REASONING_MODELS.includes(model.id)) {
+          const streamDelay = getDeepseekStreamDelay();
+          logger.debug(`Using stream delay of ${streamDelay}ms for ${model.id}`);
+          
           acc[model.id] = {
             displayName: MODEL_DISPLAY_NAMES[model.id],
             model: new ReasoningChatModel({
@@ -61,7 +64,7 @@ export const loadDeepSeekChatModels = async (): Promise<Record<string, ChatModel
               baseURL: deepSeekEndpoint,
               modelName: model.id,
               temperature: 0.7,
-              streamDelay: 20 // Add a small delay to control streaming speed
+              streamDelay // Use configured stream delay from config
             }),
           };
         } else {
