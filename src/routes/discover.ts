@@ -45,13 +45,6 @@ const getSearchQueriesForCategory = (category: string): { site: string, keyword:
       { site: 'kotaku.com', keyword: 'gaming' },
       { site: 'eurogamer.net', keyword: 'games' }
     ],
-    'Weather': [
-      { site: 'weather.com', keyword: 'forecast' },
-      { site: 'accuweather.com', keyword: 'weather' },
-      { site: 'wunderground.com', keyword: 'weather' },
-      { site: 'noaa.gov', keyword: 'weather' },
-      { site: 'weatherchannel.com', keyword: 'forecast' }
-    ],
     'Entertainment': [
       { site: 'variety.com', keyword: 'entertainment' },
       { site: 'hollywoodreporter.com', keyword: 'entertainment' },
