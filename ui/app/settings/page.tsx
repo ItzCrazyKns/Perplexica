@@ -19,6 +19,7 @@ interface SettingsType {
   groqApiKey: string;
   anthropicApiKey: string;
   geminiApiKey: string;
+  deepseekApiKey: string;
   ollamaApiUrl: string;
   customOpenaiApiKey: string;
   customOpenaiApiUrl: string;
@@ -789,6 +790,25 @@ const Page = () => {
                       }));
                     }}
                     onSave={(value) => saveConfig('geminiApiKey', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    DeepSeek API Key
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="DeepSeek API key"
+                    value={config.deepseekApiKey}
+                    isSaving={savingStates['deepseekApiKey']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        deepseekApiKey: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('deepseekApiKey', value)}
                   />
                 </div>
               </div>
