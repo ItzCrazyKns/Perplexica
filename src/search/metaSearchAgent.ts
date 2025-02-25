@@ -23,7 +23,7 @@ import fs from 'fs';
 import computeSimilarity from '../utils/computeSimilarity';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
-import { getMessageProcessor } from '../utils/messageProcessor';
+import { getMessageValidator } from '../utils/alternatingMessageValidator';
 import { StreamEvent } from '@langchain/core/tracers/log_stream';
 import { IterableReadableStream } from '@langchain/core/utils/stream';
 
@@ -483,10 +483,10 @@ class MetaSearchAgent implements MetaSearchAgentType {
       new HumanMessage(message)
     ];
 
-    // Get message processor if model needs it
-    const messageProcessor = getMessageProcessor((llm as any).modelName);
-    const processedMessages = messageProcessor 
-      ? messageProcessor.processMessages(allMessages)
+    // Get message validator if model needs it
+    const messageValidator = getMessageValidator((llm as any).modelName);
+    const processedMessages = messageValidator 
+      ? messageValidator.processMessages(allMessages)
       : allMessages;
 
     // Extract system message and chat history
