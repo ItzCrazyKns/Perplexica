@@ -26,3 +26,13 @@ export const chats = sqliteTable('chats', {
     .$type<File[]>()
     .default(sql`'[]'`),
 });
+
+export const userPreferences = sqliteTable('user_preferences', {
+  id: integer('id').primaryKey(),
+  userId: text('user_id').notNull(),
+  categories: text('categories', { mode: 'json' })
+    .$type<string[]>()
+    .default(sql`'["AI", "Technology"]'`),
+  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+});

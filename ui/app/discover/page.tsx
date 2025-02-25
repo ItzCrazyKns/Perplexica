@@ -1,6 +1,6 @@
 'use client';
 
-import { Search } from 'lucide-react';
+import { Search, Settings } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -12,14 +12,81 @@ interface Discover {
   thumbnail: string;
 }
 
+// List of available categories
+const categories = [
+  'For You', 'AI', 'Technology', 'Current News', 'Sports', 
+  'Money', 'Gaming', 'Weather', 'Entertainment', 'Science', 
+  'Health', 'Travel'
+];
+
 const Page = () => {
   const [discover, setDiscover] = useState<Discover[] | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState('For You');
+  const [showPreferences, setShowPreferences] = useState(false);
+  const [userPreferences, setUserPreferences] = useState<string[]>(['AI', 'Technology']);
 
+  // Load user preferences on component mount
+  useEffect(() => {
+    const loadUserPreferences = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/discover/preferences`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setUserPreferences(data.categories || ['AI', 'Technology']);
+        }
+      } catch (err: any) {
+        console.error('Error loading preferences:', err.message);
+        // Use default preferences if loading fails
+      }
+    };
+
+    loadUserPreferences();
+  }, []);
+
+  // Save user preferences
+  const saveUserPreferences = async (preferences: string[]) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/discover/preferences`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ categories: preferences }),
+      });
+
+      if (res.ok) {
+        toast.success('Preferences saved successfully');
+      } else {
+        const data = await res.json();
+        throw new Error(data.message);
+      }
+    } catch (err: any) {
+      console.error('Error saving preferences:', err.message);
+      toast.error('Error saving preferences');
+    }
+  };
+
+  // Fetch data based on active category or user preferences
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/discover`, {
+        let endpoint = `${process.env.NEXT_PUBLIC_API_URL}/discover`;
+        
+        if (activeCategory !== 'For You') {
+          endpoint += `?category=${encodeURIComponent(activeCategory)}`;
+        } else if (userPreferences.length > 0) {
+          endpoint += `?preferences=${encodeURIComponent(JSON.stringify(userPreferences))}`;
+        }
+        
+        const res = await fetch(endpoint, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -44,7 +111,7 @@ const Page = () => {
     };
 
     fetchData();
-  }, []);
+  }, [activeCategory, userPreferences]);
 
   return loading ? (
     <div className="flex flex-row items-center justify-center min-h-screen">
@@ -69,12 +136,88 @@ const Page = () => {
     <>
       <div>
         <div className="flex flex-col pt-4">
-          <div className="flex items-center">
-            <Search />
-            <h1 className="text-3xl font-medium p-2">Discover</h1>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Search />
+              <h1 className="text-3xl font-medium p-2">Discover</h1>
+            </div>
+            <button 
+              className="p-2 rounded-full bg-light-secondary dark:bg-dark-secondary hover:bg-light-primary hover:dark:bg-dark-primary transition-colors"
+              onClick={() => setShowPreferences(true)}
+              aria-label="Personalize"
+            >
+              <Settings size={20} />
+            </button>
           </div>
+          
+          {/* Category Navigation */}
+          <div className="flex overflow-x-auto space-x-2 py-4 no-scrollbar">
+            {categories.map((category) => (
+              <button
+                key={category}
+                className={`px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
+                  activeCategory === category 
+                    ? 'bg-light-primary dark:bg-dark-primary text-white' 
+                    : 'bg-light-secondary dark:bg-dark-secondary hover:bg-light-primary/80 hover:dark:bg-dark-primary/80'
+                }`}
+                onClick={() => setActiveCategory(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+          
           <hr className="border-t border-[#2B2C2C] my-4 w-full" />
         </div>
+
+        {/* Personalization Modal */}
+        {showPreferences && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-[#1E1E1E] p-6 rounded-lg w-full max-w-md">
+              <h2 className="text-xl font-bold mb-4">Personalize Your Feed</h2>
+              <p className="mb-4">Select categories you&apos;re interested in:</p>
+              
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                {categories.filter(c => c !== 'For You').map((category) => (
+                  <label key={category} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={userPreferences.includes(category)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setUserPreferences([...userPreferences, category]);
+                        } else {
+                          setUserPreferences(userPreferences.filter(p => p !== category));
+                        }
+                      }}
+                      className="rounded border-gray-300 text-light-primary focus:ring-light-primary dark:border-gray-600 dark:bg-dark-secondary"
+                    />
+                    <span>{category}</span>
+                  </label>
+                ))}
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <button 
+                  className="px-4 py-2 rounded bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors"
+                  onClick={() => setShowPreferences(false)}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="px-4 py-2 rounded bg-light-primary dark:bg-dark-primary text-white hover:bg-light-primary/80 hover:dark:bg-dark-primary/80 transition-colors"
+                  onClick={() => {
+                    saveUserPreferences(userPreferences);
+                    setShowPreferences(false);
+                    setActiveCategory('For You'); // Switch to For You view to show personalized content
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-4 pb-28 lg:pb-8 w-full justify-items-center lg:justify-items-start">
           {discover &&
@@ -85,6 +228,7 @@ const Page = () => {
                 className="max-w-sm rounded-lg overflow-hidden bg-light-secondary dark:bg-dark-secondary hover:-translate-y-[1px] transition duration-200"
                 target="_blank"
               >
+                {/* Using img tag instead of Next.js Image for external URLs */}
                 <img
                   className="object-cover w-full aspect-video"
                   src={
