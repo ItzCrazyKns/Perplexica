@@ -2,7 +2,7 @@
 
 import { Settings as SettingsIcon, ArrowLeft, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn, formatProviderName } from '@/lib/utils';
 import { Switch } from '@headlessui/react';
 import ThemeSwitcher from '@/components/theme/Switcher';
 import { ImagesIcon, VideoIcon } from 'lucide-react';
@@ -500,9 +500,7 @@ const Page = () => {
                       options={Object.keys(config.chatModelProviders).map(
                         (provider) => ({
                           value: provider,
-                          label:
-                            provider.charAt(0).toUpperCase() +
-                            provider.slice(1),
+                          label: formatProviderName(provider),
                         }),
                       )}
                     />
@@ -642,9 +640,7 @@ const Page = () => {
                       options={Object.keys(config.embeddingModelProviders).map(
                         (provider) => ({
                           value: provider,
-                          label:
-                            provider.charAt(0).toUpperCase() +
-                            provider.slice(1),
+                          label: formatProviderName(provider),
                         }),
                       )}
                     />
