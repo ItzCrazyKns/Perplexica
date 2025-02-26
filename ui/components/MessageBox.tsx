@@ -28,6 +28,7 @@ const MessageBox = ({
   dividerRef,
   isLast,
   rewrite,
+  isCompact,
   sendMessage,
 }: {
   message: Message;
@@ -37,7 +38,12 @@ const MessageBox = ({
   dividerRef?: MutableRefObject<HTMLDivElement | null>;
   isLast: boolean;
   rewrite: (messageId: string) => void;
-  sendMessage: (message: string) => void;
+  isCompact: boolean;
+  sendMessage: (
+    message: string,
+    messageId?: string,
+    options?: { isCompact?: boolean },
+  ) => void;
 }) => {
   const [parsedMessage, setParsedMessage] = useState(message.content);
   const [speechMessage, setSpeechMessage] = useState(message.content);
@@ -64,6 +70,10 @@ const MessageBox = ({
   }, [message.content, message.sources, message.role]);
 
   const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
+
+  const handleSuggestionClick = (suggestion: string) => {
+    sendMessage(suggestion, undefined, { isCompact });
+  };
 
   return (
     <div>
@@ -163,7 +173,7 @@ const MessageBox = ({
                             <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
                             <div
                               onClick={() => {
-                                sendMessage(suggestion);
+                                handleSuggestionClick(suggestion);
                               }}
                               className="cursor-pointer flex flex-row justify-between font-medium space-x-2 items-center"
                             >

@@ -33,9 +33,10 @@ const SearchImages = ({
 
             const chatModelProvider = localStorage.getItem('chatModelProvider');
             const chatModel = localStorage.getItem('chatModel');
-
             const customOpenAIBaseURL = localStorage.getItem('openAIBaseURL');
             const customOpenAIKey = localStorage.getItem('openAIApiKey');
+            const ollamaContextWindow =
+              localStorage.getItem('ollamaContextWindow') || '2048';
 
             const res = await fetch(
               `${process.env.NEXT_PUBLIC_API_URL}/images`,
@@ -53,6 +54,9 @@ const SearchImages = ({
                     ...(chatModelProvider === 'custom_openai' && {
                       customOpenAIBaseURL: customOpenAIBaseURL,
                       customOpenAIKey: customOpenAIKey,
+                    }),
+                    ...(chatModelProvider === 'ollama' && {
+                      ollamaContextWindow: parseInt(ollamaContextWindow),
                     }),
                   },
                 }),

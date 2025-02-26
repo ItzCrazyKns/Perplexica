@@ -14,6 +14,7 @@ import {
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
 } from '../config';
+import { ChatOllama } from '@langchain/community/chat_models/ollama';
 
 export const handleConnection = async (
   ws: WebSocket,
@@ -42,6 +43,8 @@ export const handleConnection = async (
       searchParams.get('embeddingModel') ||
       Object.keys(embeddingModelProviders[embeddingModelProvider])[0];
 
+    const ollamaContextWindow = searchParams.get('ollamaContextWindow');
+
     let llm: BaseChatModel | undefined;
     let embeddings: Embeddings | undefined;
 
@@ -52,6 +55,9 @@ export const handleConnection = async (
     ) {
       llm = chatModelProviders[chatModelProvider][chatModel]
         .model as unknown as BaseChatModel | undefined;
+      if (llm instanceof ChatOllama) {
+        llm.numCtx = ollamaContextWindow ? parseInt(ollamaContextWindow) : 2048;
+      }
     } else if (chatModelProvider == 'custom_openai') {
       const customOpenaiApiKey = getCustomOpenaiApiKey();
       const customOpenaiApiUrl = getCustomOpenaiApiUrl();

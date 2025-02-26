@@ -197,6 +197,11 @@ const useSocket = (
             'openAIBaseURL',
             localStorage.getItem('openAIBaseURL')!,
           );
+        } else {
+          searchParams.append(
+            'ollamaContextWindow',
+            localStorage.getItem('ollamaContextWindow') || '2048',
+          );
         }
 
         searchParams.append('embeddingModel', embeddingModel!);
@@ -394,12 +399,28 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const [focusMode, setFocusMode] = useState('webSearch');
   const [optimizationMode, setOptimizationMode] = useState('speed');
+  const [isCompact, setIsCompact] = useState(false);
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
   const [notFound, setNotFound] = useState(false);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    const savedCompactMode = localStorage.getItem('compactMode');
+    const savedOptimizationMode = localStorage.getItem('optimizationMode');
+
+    if (savedCompactMode !== null) {
+      setIsCompact(savedCompactMode === 'true');
+    }
+
+    if (savedOptimizationMode !== null) {
+      setOptimizationMode(savedOptimizationMode);
+    } else {
+      localStorage.setItem('optimizationMode', optimizationMode);
+    }
+  }, []);
 
   useEffect(() => {
     if (
@@ -451,7 +472,11 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
   }, [isMessagesLoaded, isWSReady]);
 
-  const sendMessage = async (message: string, messageId?: string) => {
+const sendMessage = async (
+    message: string,
+    messageId?: string,
+    options?: { isCompact?: boolean; rewriteIndex?: number },
+  ) => {
     if (loading) return;
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       toast.error('Cannot send message while disconnected');
@@ -464,23 +489,33 @@ const ChatWindow = ({ id }: { id?: string }) => {
     let sources: Document[] | undefined = undefined;
     let recievedMessage = '';
     let added = false;
+    let messageChatHistory = chatHistory;
+
+    if (options?.rewriteIndex !== undefined) {
+      const rewriteIndex = options.rewriteIndex;
+      setMessages((prev) => {
+        return [...prev.slice(0, messages.length > 2 ? rewriteIndex - 1 : 0)]
+      });
+      
+      messageChatHistory = chatHistory.slice(0, messages.length > 2 ? rewriteIndex - 1 : 0)
+      setChatHistory(messageChatHistory);
+    }
 
     messageId = messageId ?? crypto.randomBytes(7).toString('hex');
-
-    ws.send(
-      JSON.stringify({
-        type: 'message',
-        message: {
-          messageId: messageId,
-          chatId: chatId!,
-          content: message,
-        },
-        files: fileIds,
-        focusMode: focusMode,
-        optimizationMode: optimizationMode,
-        history: [...chatHistory, ['human', message]],
-      }),
-    );
+    let messageData = {
+      type: 'message',
+      message: {
+        messageId: messageId,
+        chatId: chatId!,
+        content: message,
+      },
+      files: fileIds,
+      focusMode: focusMode,
+      optimizationMode: optimizationMode,
+      history: [...messageChatHistory, ['human', message]],
+      isCompact: options?.isCompact ?? isCompact,
+    };
+    ws.send(JSON.stringify(messageData));
 
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -597,25 +632,14 @@ const ChatWindow = ({ id }: { id?: string }) => {
   };
 
   const rewrite = (messageId: string) => {
-    const index = messages.findIndex((msg) => msg.messageId === messageId);
-
-    if (index === -1) return;
-
-    const message = messages[index - 1];
-
-    setMessages((prev) => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
-    });
-    setChatHistory((prev) => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
-    });
-
-    sendMessage(message.content, message.messageId);
+    const messageIndex = messages.findIndex((msg) => msg.messageId === messageId);
+    if(messageIndex == -1) return;
+    sendMessage(messages[messageIndex - 1].content, messageId, { isCompact, rewriteIndex: messageIndex });
   };
 
   useEffect(() => {
     if (isReady && initialMessage && ws?.readyState === 1) {
-      sendMessage(initialMessage);
+      sendMessage(initialMessage, undefined, { isCompact });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ws?.readyState, isReady, initialMessage, isWSReady]);
@@ -655,6 +679,10 @@ const ChatWindow = ({ id }: { id?: string }) => {
               setFileIds={setFileIds}
               files={files}
               setFiles={setFiles}
+              isCompact={isCompact}
+              setIsCompact={setIsCompact}
+              optimizationMode={optimizationMode}
+              setOptimizationMode={setOptimizationMode}
             />
           </>
         ) : (
@@ -668,6 +696,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
             setFileIds={setFileIds}
             files={files}
             setFiles={setFiles}
+            isCompact={isCompact}
+            setIsCompact={setIsCompact}
           />
         )}
       </div>

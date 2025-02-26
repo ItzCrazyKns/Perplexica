@@ -16,9 +16,17 @@ const Chat = ({
   setFileIds,
   files,
   setFiles,
+  isCompact,
+  setIsCompact,
+  optimizationMode,
+  setOptimizationMode,
 }: {
   messages: Message[];
-  sendMessage: (message: string) => void;
+  sendMessage: (
+    message: string,
+    messageId?: string,
+    options?: { isCompact?: boolean },
+  ) => void;
   loading: boolean;
   messageAppeared: boolean;
   rewrite: (messageId: string) => void;
@@ -26,6 +34,10 @@ const Chat = ({
   setFileIds: (fileIds: string[]) => void;
   files: File[];
   setFiles: (files: File[]) => void;
+  isCompact: boolean;
+  setIsCompact: (isCompact: boolean) => void;
+  optimizationMode: string;
+  setOptimizationMode: (mode: string) => void;
 }) => {
   const [dividerWidth, setDividerWidth] = useState(0);
   const dividerRef = useRef<HTMLDivElement | null>(null);
@@ -71,6 +83,7 @@ const Chat = ({
               dividerRef={isLast ? dividerRef : undefined}
               isLast={isLast}
               rewrite={rewrite}
+              isCompact={isCompact}
               sendMessage={sendMessage}
             />
             {!isLast && msg.role === 'assistant' && (
@@ -83,7 +96,7 @@ const Chat = ({
       <div ref={messageEnd} className="h-0" />
       {dividerWidth > 0 && (
         <div
-          className="bottom-24 lg:bottom-10 fixed z-40"
+          className="bottom-24 lg:bottom-10 fixed"
           style={{ width: dividerWidth }}
         >
           <MessageInput
@@ -93,6 +106,10 @@ const Chat = ({
             setFileIds={setFileIds}
             files={files}
             setFiles={setFiles}
+            isCompact={isCompact}
+            setIsCompact={setIsCompact}
+            optimizationMode={optimizationMode}
+            setOptimizationMode={setOptimizationMode}
           />
         </div>
       )}

@@ -26,6 +26,7 @@ type WSMessage = {
   focusMode: string;
   history: Array<[string, string]>;
   files: Array<string>;
+  isCompact?: boolean;
 };
 
 export const searchHandlers = {
@@ -33,6 +34,7 @@ export const searchHandlers = {
     activeEngines: [],
     queryGeneratorPrompt: prompts.webSearchRetrieverPrompt,
     responsePrompt: prompts.webSearchResponsePrompt,
+    preciseResponsePrompt: prompts.preciseWebSearchResponsePrompt,
     rerank: true,
     rerankThreshold: 0.3,
     searchWeb: true,
@@ -42,6 +44,7 @@ export const searchHandlers = {
     activeEngines: ['arxiv', 'google scholar', 'pubmed'],
     queryGeneratorPrompt: prompts.academicSearchRetrieverPrompt,
     responsePrompt: prompts.academicSearchResponsePrompt,
+    preciseResponsePrompt: prompts.preciseWebSearchResponsePrompt,
     rerank: true,
     rerankThreshold: 0,
     searchWeb: true,
@@ -51,6 +54,7 @@ export const searchHandlers = {
     activeEngines: [],
     queryGeneratorPrompt: '',
     responsePrompt: prompts.writingAssistantPrompt,
+    preciseResponsePrompt: prompts.preciseWebSearchResponsePrompt,
     rerank: true,
     rerankThreshold: 0,
     searchWeb: false,
@@ -60,6 +64,7 @@ export const searchHandlers = {
     activeEngines: ['wolframalpha'],
     queryGeneratorPrompt: prompts.wolframAlphaSearchRetrieverPrompt,
     responsePrompt: prompts.wolframAlphaSearchResponsePrompt,
+    preciseResponsePrompt: prompts.preciseWebSearchResponsePrompt,
     rerank: false,
     rerankThreshold: 0,
     searchWeb: true,
@@ -69,6 +74,7 @@ export const searchHandlers = {
     activeEngines: ['youtube'],
     queryGeneratorPrompt: prompts.youtubeSearchRetrieverPrompt,
     responsePrompt: prompts.youtubeSearchResponsePrompt,
+    preciseResponsePrompt: prompts.preciseWebSearchResponsePrompt,
     rerank: true,
     rerankThreshold: 0.3,
     searchWeb: true,
@@ -78,6 +84,7 @@ export const searchHandlers = {
     activeEngines: ['reddit'],
     queryGeneratorPrompt: prompts.redditSearchRetrieverPrompt,
     responsePrompt: prompts.redditSearchResponsePrompt,
+    preciseResponsePrompt: prompts.preciseWebSearchResponsePrompt,
     rerank: true,
     rerankThreshold: 0.3,
     searchWeb: true,
@@ -116,6 +123,7 @@ const handleEmitterEvents = (
       sources = parsedData.data;
     }
   });
+
   emitter.on('end', () => {
     ws.send(JSON.stringify({ type: 'messageEnd', messageId: messageId }));
 
@@ -132,6 +140,7 @@ const handleEmitterEvents = (
       })
       .execute();
   });
+
   emitter.on('error', (data) => {
     const parsedData = JSON.parse(data);
     ws.send(
@@ -197,6 +206,7 @@ export const handleMessage = async (
             embeddings,
             parsedWSMessage.optimizationMode,
             parsedWSMessage.files,
+            parsedWSMessage.isCompact,
           );
 
           handleEmitterEvents(emitter, ws, aiMessageId, parsedMessage.chatId);
