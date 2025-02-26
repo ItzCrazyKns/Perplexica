@@ -26,6 +26,9 @@ interface Config {
     OLLAMA: {
       API_URL: string;
     };
+    LMSTUDIO: { 
+      API_URL: string;
+    };
     CUSTOM_OPENAI: {
       API_URL: string;
       API_KEY: string;
@@ -66,6 +69,8 @@ export const getSearxngApiEndpoint = () =>
 
 export const getOllamaApiEndpoint = () => loadConfig().MODELS.OLLAMA.API_URL;
 
+export const getLMStudioApiEndpoint = () => loadConfig().MODELS.LMSTUDIO.API_URL;
+
 export const getCustomOpenaiApiKey = () =>
   loadConfig().MODELS.CUSTOM_OPENAI.API_KEY;
 
@@ -76,10 +81,6 @@ export const getCustomOpenaiModelName = () =>
   loadConfig().MODELS.CUSTOM_OPENAI.MODEL_NAME;
 
 const mergeConfigs = (current: any, update: any): any => {
-  if (update === null || update === undefined) {
-    return current;
-  }
-
   if (typeof current !== 'object' || current === null) {
     return update;
   }
