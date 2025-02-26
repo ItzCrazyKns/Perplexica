@@ -75,6 +75,13 @@ router.post(
       }
 
       const files = req.files['files'] as Express.Multer.File[];
+
+      files.forEach((file) => {
+        file.originalname = Buffer.from(file.originalname, 'latin1').toString(
+          'utf8',
+        );
+      });
+
       if (!files || files.length === 0) {
         res.status(400).json({ message: 'No files uploaded' });
         return;
