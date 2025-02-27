@@ -2,6 +2,7 @@
 PORT = 3001 # Port to run the server on
 SIMILARITY_MEASURE = "cosine" # "cosine" or "dot"
 KEEP_ALIVE = "5m" # How long to keep Ollama models loaded into memory. (Instead of using -1 use "-1m")
+SEARCH_ENGINE_BACKEND = "google" # "google" | "searxng" | "ddg" | "bing" | "brave"
 
 [MODELS.OPENAI]
 API_KEY = ""
@@ -22,5 +23,15 @@ API_URL = ""
 [MODELS.OLLAMA]
 API_URL = "" # Ollama API URL - http://host.docker.internal:11434
 
-[API_ENDPOINTS]
-SEARXNG = "http://localhost:32768" # SearxNG API URL
+[SEARCH_ENGINES.GOOGLE]
+API_KEY = ""
+CSE_ID = ""
+
+[SEARCH_ENGINES.SEARXNG]
+ENDPOINT = ""
+
+[SEARCH_ENGINES.BING]
+SUBSCRIPTION_KEY = ""
+
+[SEARCH_ENGINES.BRAVE]
+API_KEY = ""
