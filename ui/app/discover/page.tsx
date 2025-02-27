@@ -12,14 +12,12 @@ interface Discover {
   thumbnail: string;
 }
 
-// List of available categories
 const categories = [
   'For You', 'AI', 'Technology', 'Current News', 'Sports', 
   'Money', 'Gaming', 'Entertainment', 'Art and Culture', 
   'Science', 'Health', 'Travel'
 ];
 
-// Memoized header component that won't re-render when content changes
 const DiscoverHeader = memo(({ 
   activeCategory, 
   setActiveCategory, 
@@ -31,7 +29,6 @@ const DiscoverHeader = memo(({
 }) => {
   const categoryContainerRef = useRef<HTMLDivElement>(null);
 
-  // Function to scroll categories horizontally
   const scrollCategories = (direction: 'left' | 'right') => {
     const container = categoryContainerRef.current;
     if (!container) return;
@@ -63,7 +60,6 @@ const DiscoverHeader = memo(({
         </button>
       </div>
       
-      {/* Category Navigation with Buttons */}
       <div className="relative flex items-center py-4">
         <button 
           className="absolute left-0 z-10 p-1 rounded-full bg-light-secondary dark:bg-dark-secondary hover:bg-light-primary/80 hover:dark:bg-dark-primary/80 transition-colors"
@@ -111,7 +107,6 @@ const DiscoverHeader = memo(({
 
 DiscoverHeader.displayName = 'DiscoverHeader';
 
-// Memoized content component that handles its own loading state
 const DiscoverContent = memo(({ 
   activeCategory, 
   userPreferences, 
@@ -124,7 +119,6 @@ const DiscoverContent = memo(({
   const [discover, setDiscover] = useState<Discover[] | null>(null);
   const [contentLoading, setContentLoading] = useState(true);
 
-  // Fetch data based on active category, user preferences, and language
   useEffect(() => {
     const fetchData = async () => {
       setContentLoading(true);
@@ -232,7 +226,6 @@ const DiscoverContent = memo(({
 
 DiscoverContent.displayName = 'DiscoverContent';
 
-// Preferences modal component
 const PreferencesModal = memo(({
   showPreferences,
   setShowPreferences,
@@ -253,7 +246,6 @@ const PreferencesModal = memo(({
   const [tempPreferences, setTempPreferences] = useState<string[]>([]);
   const [tempLanguages, setTempLanguages] = useState<string[]>([]);
 
-  // Initialize temp preferences when modal opens
   useEffect(() => {
     if (showPreferences) {
       setTempPreferences([...userPreferences]);
@@ -261,7 +253,6 @@ const PreferencesModal = memo(({
     }
   }, [showPreferences, userPreferences, preferredLanguages]);
 
-  // Save user preferences
   const saveUserPreferences = async (preferences: string[], languages: string[]) => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/discover/preferences`, {
@@ -393,16 +384,13 @@ const PreferencesModal = memo(({
 
 PreferencesModal.displayName = 'PreferencesModal';
 
-// Main page component
 const Page = () => {
-  // State for the entire page
   const [activeCategory, setActiveCategory] = useState('For You');
   const [showPreferences, setShowPreferences] = useState(false);
   const [userPreferences, setUserPreferences] = useState<string[]>(['AI', 'Technology']);
   const [preferredLanguages, setPreferredLanguages] = useState<string[]>(['en']); // Default to English
   const [initialLoading, setInitialLoading] = useState(true);
 
-  // Load user preferences on component mount
   useEffect(() => {
     const loadUserPreferences = async () => {
       try {
@@ -420,7 +408,6 @@ const Page = () => {
         }
       } catch (err: any) {
         console.error('Error loading preferences:', err.message);
-        // Use default preferences if loading fails
       } finally {
         setInitialLoading(false);
       }
@@ -454,21 +441,18 @@ const Page = () => {
 
   return (
     <div>
-      {/* Static header that doesn't re-render when content changes */}
       <DiscoverHeader 
         activeCategory={activeCategory} 
         setActiveCategory={setActiveCategory} 
         setShowPreferences={setShowPreferences} 
       />
       
-      {/* Dynamic content that updates independently */}
       <DiscoverContent 
         activeCategory={activeCategory} 
         userPreferences={userPreferences} 
         preferredLanguages={preferredLanguages} 
       />
       
-      {/* Preferences modal */}
       <PreferencesModal 
         showPreferences={showPreferences}
         setShowPreferences={setShowPreferences}

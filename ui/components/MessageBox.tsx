@@ -47,34 +47,21 @@ const MessageBox = ({
   const [isThinkingExpanded, setIsThinkingExpanded] = useState(true);
 
   useEffect(() => {
-    logger.info(`Processing message:`, {
-      content: message.content,
-      role: message.role,
-      messageId: message.messageId
-    });
-
     const regex = /\[(\d+)\]/g;
     const thinkRegex = /<think>(.*?)(?:<\/think>|$)(.*)/s;
 
-    // Check for thinking content, including partial tags
     const match = message.content.match(thinkRegex);
-    logger.info(`Think tag match:`, match);
 
     if (match) {
       const [_, thinkingContent, answerContent] = match;
       
-      // Set thinking content even if </think> hasn't appeared yet
       if (thinkingContent) {
-        logger.info(`Found thinking content:`, thinkingContent.trim());
         setThinking(thinkingContent.trim());
-        setIsThinkingExpanded(true);  // Expand when thinking starts
+        setIsThinkingExpanded(true);
       }
 
-      // Only set answer content if we have it (after </think>)
       if (answerContent) {
-        logger.info(`Found answer content:`, answerContent.trim());
-        setIsThinkingExpanded(false);  // Collapse when thinking is done
-        // Process the answer part for sources if needed
+        setIsThinkingExpanded(false);
         if (message.role === 'assistant' && message?.sources && message.sources.length > 0) {
           setParsedMessage(
             answerContent.trim().replace(
@@ -89,7 +76,6 @@ const MessageBox = ({
         setSpeechMessage(answerContent.trim().replace(regex, ''));
       }
     } else {
-      // No thinking content - process as before
       if (message.role === 'assistant' && message?.sources && message.sources.length > 0) {
         setParsedMessage(
           message.content.replace(

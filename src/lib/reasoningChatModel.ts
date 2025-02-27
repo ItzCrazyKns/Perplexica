@@ -139,10 +139,8 @@ export class ReasoningChatModel extends BaseChatModel<BaseChatModelCallOptions &
       if (jsonStr === '[DONE]') break;
 
       try {
-        console.log('Received chunk:', jsonStr);
         const chunk = JSON.parse(jsonStr);
         const delta = chunk.choices[0].delta;
-        console.log('Parsed delta:', delta);
 
         // Handle usage stats in final chunk
         if (chunk.usage && !chunk.choices?.length) {
@@ -165,7 +163,6 @@ export class ReasoningChatModel extends BaseChatModel<BaseChatModelCallOptions &
             thinkState = 0;
             const startTag = '<think>\n';
             currentContent += startTag;
-            console.log('Emitting think start:', startTag);
             runManager?.handleLLMNewToken(startTag);
             const chunk = new ChatGenerationChunk({
               text: startTag,
@@ -181,7 +178,6 @@ export class ReasoningChatModel extends BaseChatModel<BaseChatModelCallOptions &
             yield chunk;
           }
           currentContent += delta.reasoning_content;
-          console.log('Emitting reasoning:', delta.reasoning_content);
           runManager?.handleLLMNewToken(delta.reasoning_content);
           const chunk = new ChatGenerationChunk({
             text: delta.reasoning_content,
@@ -203,7 +199,6 @@ export class ReasoningChatModel extends BaseChatModel<BaseChatModelCallOptions &
             thinkState = 1;
             const endTag = '\n</think>\n\n';
             currentContent += endTag;
-            console.log('Emitting think end:', endTag);
             runManager?.handleLLMNewToken(endTag);
             const chunk = new ChatGenerationChunk({
               text: endTag,
@@ -219,7 +214,6 @@ export class ReasoningChatModel extends BaseChatModel<BaseChatModelCallOptions &
             yield chunk;
           }
           currentContent += delta.content;
-          console.log('Emitting content:', delta.content);
           runManager?.handleLLMNewToken(delta.content);
           const chunk = new ChatGenerationChunk({
             text: delta.content,

@@ -16,15 +16,8 @@ const ReasoningPanel = ({ thinking, className, isExpanded: propExpanded }: Reaso
   const [isExpanded, setIsExpanded] = React.useState(true);
   const [detailsRefs, setDetailsRefs] = React.useState<HTMLDetailsElement[]>([]);
 
-  logger.info('ReasoningPanel rendering with:', {
-    thinking: thinking,
-    isExpanded: propExpanded,
-    detailsRefsCount: detailsRefs.length
-  });
-
   React.useEffect(() => {
     if (propExpanded !== undefined) {
-      logger.info('Updating expansion state:', propExpanded);
       setIsExpanded(propExpanded);
     }
   }, [propExpanded]);
@@ -33,7 +26,6 @@ const ReasoningPanel = ({ thinking, className, isExpanded: propExpanded }: Reaso
     if (element) {
       setDetailsRefs(refs => {
         if (!refs.includes(element)) {
-          logger.info('Adding new details ref');
           return [...refs, element];
         }
         return refs;
@@ -42,11 +34,9 @@ const ReasoningPanel = ({ thinking, className, isExpanded: propExpanded }: Reaso
   }, []);
 
   const expandAll = () => {
-    logger.info('Expanding all details');
     detailsRefs.forEach(ref => ref.open = true);
   };
   const collapseAll = () => {
-    logger.info('Collapsing all details');
     detailsRefs.forEach(ref => ref.open = false);
   };
 
@@ -73,9 +63,7 @@ const ReasoningPanel = ({ thinking, className, isExpanded: propExpanded }: Reaso
           {thinking.split('\n\n').map((paragraph, index) => {
             if (!paragraph.trim()) return null;
             
-            // Extract content without the bullet prefix
             const content = paragraph.replace(/^[•\-\d.]\s*/, '');
-            logger.info(`Processing paragraph ${index}:`, content);
             
             return (
               <div key={index} className="mb-2 last:mb-0">

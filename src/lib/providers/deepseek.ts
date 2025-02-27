@@ -20,7 +20,6 @@ interface ChatModelConfig {
   model: ReasoningChatModel | ChatOpenAI;
 }
 
-// Define which models require reasoning capabilities
 const REASONING_MODELS = ['deepseek-reasoner'];
 
 const MODEL_DISPLAY_NAMES: Record<string, string> = {
@@ -35,7 +34,6 @@ export const loadDeepSeekChatModels = async (): Promise<Record<string, ChatModel
   if (!apiKey) return {}; 
 
   if (!deepSeekEndpoint || !apiKey) {
-    logger.debug('DeepSeek endpoint or API key not configured, skipping');
     return {};
   }
 
@@ -50,12 +48,10 @@ export const loadDeepSeekChatModels = async (): Promise<Record<string, ChatModel
     const deepSeekModels = response.data.data;
 
     const chatModels = deepSeekModels.reduce<Record<string, ChatModelConfig>>((acc, model) => {
-      // Only include models we have display names for
       if (model.id in MODEL_DISPLAY_NAMES) {
         // Use ReasoningChatModel for models that need reasoning capabilities
         if (REASONING_MODELS.includes(model.id)) {
           const streamDelay = getDeepseekStreamDelay();
-          logger.debug(`Using stream delay of ${streamDelay}ms for ${model.id}`);
           
           acc[model.id] = {
             displayName: MODEL_DISPLAY_NAMES[model.id],

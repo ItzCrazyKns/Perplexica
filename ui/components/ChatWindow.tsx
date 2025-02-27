@@ -39,11 +39,11 @@ const useSocket = (
   const retryCountRef = useRef(0);
   const isCleaningUpRef = useRef(false);
   const MAX_RETRIES = 3;
-  const INITIAL_BACKOFF = 1000; // 1 second
+  const INITIAL_BACKOFF = 1000;
   const isConnectionErrorRef = useRef(false);
 
   const getBackoffDelay = (retryCount: number) => {
-    return Math.min(INITIAL_BACKOFF * Math.pow(2, retryCount), 10000); // Cap at 10 seconds
+    return Math.min(INITIAL_BACKOFF * Math.pow(2, retryCount), 10000);
   };
 
   useEffect(() => {

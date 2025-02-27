@@ -1,4 +1,3 @@
-// Using the import paths that have been working for you
 import { BaseMessage, HumanMessage, AIMessage, SystemMessage } from "@langchain/core/messages";
 import logger from "./logger";
 
@@ -18,7 +17,6 @@ export class AlternatingMessageValidator {
     }
 
     processMessages(messages: BaseMessage[]): BaseMessage[] {
-        // Always respect requireAlternating for models that need it
         if (!this.rules.requireAlternating) {
             return messages;
         }
@@ -27,8 +25,7 @@ export class AlternatingMessageValidator {
         
         for (let i = 0; i < messages.length; i++) {
             const currentMsg = messages[i];
-            
-            // Handle system messages
+
             if (currentMsg instanceof SystemMessage) {
                 if (this.rules.allowSystem) {
                     processedMessages.push(currentMsg);
@@ -38,7 +35,6 @@ export class AlternatingMessageValidator {
                 continue;
             }
 
-            // Handle first non-system message
             if (processedMessages.length === 0 || 
                 processedMessages[processedMessages.length - 1] instanceof SystemMessage) {
                 if (this.rules.firstMessageType && 
@@ -52,7 +48,6 @@ export class AlternatingMessageValidator {
                 }
             }
 
-            // Handle alternating pattern
             const lastMsg = processedMessages[processedMessages.length - 1];
             if (lastMsg instanceof HumanMessage && currentMsg instanceof HumanMessage) {
                 logger.warn(`${this.modelName}: Skipping consecutive human message`);
@@ -63,7 +58,6 @@ export class AlternatingMessageValidator {
                 continue;
             }
 
-            // For deepseek-reasoner, strip out reasoning_content from message history
             if (this.modelName === 'deepseek-reasoner' && currentMsg instanceof AIMessage) {
                 const { reasoning_content, ...cleanedKwargs } = currentMsg.additional_kwargs;
                 processedMessages.push(new AIMessage({
@@ -79,7 +73,6 @@ export class AlternatingMessageValidator {
     }
 }
 
-// Pre-configured validators for specific models
 export const getMessageValidator = (modelName: string): AlternatingMessageValidator | null => {
     const validators: Record<string, MessageValidationRules> = {
         'deepseek-reasoner': {

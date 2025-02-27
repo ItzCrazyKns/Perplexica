@@ -35,7 +35,6 @@ const BatchDeleteChats = ({
     
     setLoading(true);
     try {
-      // Delete chats one by one
       for (const chatId of chatIds) {
         await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chats/${chatId}`, {
           method: 'DELETE',
@@ -45,7 +44,6 @@ const BatchDeleteChats = ({
         });
       }
 
-      // Update local state
       const newChats = chats.filter(chat => !chatIds.includes(chat.id));
       setChats(newChats);
       
