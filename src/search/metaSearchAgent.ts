@@ -17,7 +17,7 @@ import LineListOutputParser from '../lib/outputParsers/listLineOutputParser';
 import LineOutputParser from '../lib/outputParsers/lineOutputParser';
 import { getDocumentsFromLinks } from '../utils/documents';
 import { Document } from 'langchain/document';
-import { searchSearxng } from '../lib/searxng';
+import { searchSearxng } from '../lib/searchEngines/searxng';
 import path from 'path';
 import fs from 'fs';
 import computeSimilarity from '../utils/computeSimilarity';

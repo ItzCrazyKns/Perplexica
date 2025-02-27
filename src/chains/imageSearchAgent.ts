@@ -7,7 +7,7 @@ import { PromptTemplate } from '@langchain/core/prompts';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
-import { searchSearxng } from '../lib/searxng';
+import { searchSearxng } from '../lib/searchEngines/searxng';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const imageSearchChainPrompt = `

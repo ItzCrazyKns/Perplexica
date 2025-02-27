@@ -1,5 +1,5 @@
 import express from 'express';
-import { searchSearxng } from '../lib/searxng';
+import { searchSearxng } from '../lib/searchEngines/searxng';
 import logger from '../utils/logger';
 
 const router = express.Router();
