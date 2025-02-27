@@ -18,6 +18,8 @@ import LineOutputParser from '../lib/outputParsers/lineOutputParser';
 import { getDocumentsFromLinks } from '../utils/documents';
 import { Document } from 'langchain/document';
 import { searchSearxng } from '../lib/searchEngines/searxng';
+import { searchGooglePSE } from '../lib/searchEngines/google_pse';
+import { getSearchEngineBackend } from '../config';
 import path from 'path';
 import fs from 'fs';
 import computeSimilarity from '../utils/computeSimilarity';
@@ -203,10 +205,27 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
           return { query: question, docs: docs };
         } else {
-          const res = await searchSearxng(question, {
-            language: 'en',
-            engines: this.config.activeEngines,
-          });
+
+          const searchEngine = getSearchEngineBackend();
+
+          let res;
+          switch (searchEngine) {
+            case 'searxng':
+              res = await searchSearxng(question, {
+                language: 'en',
+                engines: this.config.activeEngines,
+              });
+              break;
+            case 'google':
+              res = await searchGooglePSE(question);
+              break;
+            default:
+              throw new Error(`Unknown search engine ${searchEngine}`);
+          }
+
+          if (!res?.results) {
+            throw new Error(`No results found for search engine: ${searchEngine}`);
+          }
 
           const documents = res.results.map(
             (result) =>

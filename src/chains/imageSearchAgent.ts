@@ -8,6 +8,8 @@ import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { searchSearxng } from '../lib/searchEngines/searxng';
+import { searchGooglePSE } from '../lib/searchEngines/google_pse';
+import { getSearchEngineBackend } from '../config';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const imageSearchChainPrompt = `
@@ -36,6 +38,59 @@ type ImageSearchChainInput = {
   query: string;
 };
 
+async function performImageSearch(query: string) {
+  const searchEngine = getSearchEngineBackend();
+  let images = [];
+
+  switch (searchEngine) {
+    case 'google': {
+      const googleResult = await searchGooglePSE(query);
+      images = googleResult.originalres
+        .map((result) => {
+          // Extract image URL from multiple possible locations in Google's response
+          const imageSrc = result.pagemap?.cse_image?.[0]?.src ||
+                            result.pagemap?.cse_thumbnail?.[0]?.src ||
+                            result.image?.thumbnailLink;
+
+          if (imageSrc && result.link && result.title) {
+            images.push({
+              img_src: imageSrc,
+              url: result.link,
+              title: result.title,
+              // Add additional metadata if needed
+              source: result.displayLink,
+              fileFormat: result.fileFormat,
+            });
+          }
+        })
+        .filter(Boolean);
+      break;
+    }
+
+    case 'searxng': {
+      const searxResult = await searchSearxng(query, {
+        engines: ['google images', 'bing images'],
+        pageno: 1,
+      });
+      searxResult.results.forEach((result) => {
+        if (result.img_src && result.url && result.title) {
+          images.push({
+            img_src: result.img_src,
+            url: result.url,
+            title: result.title,
+          });
+        }
+      });
+      break;
+    }
+
+    default:
+      throw new Error(`Unknown search engine ${searchEngine}`);
+  }
+
+  return images;
+}
+
 const strParser = new StringOutputParser();
 
 const createImageSearchChain = (llm: BaseChatModel) => {
@@ -52,22 +107,7 @@ const createImageSearchChain = (llm: BaseChatModel) => {
     llm,
     strParser,
     RunnableLambda.from(async (input: string) => {
-      const res = await searchSearxng(input, {
-        engines: ['bing images', 'google images'],
-      });
-
-      const images = [];
-
-      res.results.forEach((result) => {
-        if (result.img_src && result.url && result.title) {
-          images.push({
-            img_src: result.img_src,
-            url: result.url,
-            title: result.title,
-          });
-        }
-      });
-
+      const images = await performImageSearch(input);
       return images.slice(0, 10);
     }),
   ]);
