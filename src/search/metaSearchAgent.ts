@@ -19,6 +19,9 @@ import { getDocumentsFromLinks } from '../utils/documents';
 import { Document } from 'langchain/document';
 import { searchSearxng } from '../lib/searchEngines/searxng';
 import { searchGooglePSE } from '../lib/searchEngines/google_pse';
+import { searchBingAPI } from '../lib/searchEngines/bing';
+import { searchBraveAPI } from '../lib/searchEngines/brave';
+import { searchYaCy } from '../lib/searchEngines/yacy';
 import { getSearchEngineBackend } from '../config';
 import path from 'path';
 import fs from 'fs';
@@ -134,7 +137,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
             You are a web search summarizer, tasked with summarizing a piece of text retrieved from a web search. Your job is to summarize the 
             text into a detailed, 2-4 paragraph explanation that captures the main ideas and provides a comprehensive answer to the query.
             If the query is \"summarize\", you should provide a detailed summary of the text. If the query is a specific question, you should answer it in the summary.
-            
+
             - **Journalistic tone**: The summary should sound professional and journalistic, not too casual or vague.
             - **Thorough and detailed**: Ensure that every key point from the text is captured and that the summary directly answers the query.
             - **Not too lengthy, but detailed**: The summary should be informative but not excessively long. Focus on providing detailed information in a concise format.
@@ -218,6 +221,15 @@ class MetaSearchAgent implements MetaSearchAgentType {
               break;
             case 'google':
               res = await searchGooglePSE(question);
+              break;
+            case 'bing':
+              res = await searchBingAPI(question);
+              break;
+            case 'brave':
+              res = await searchBraveAPI(question);
+              break;
+            case 'yacy':
+              res = await searchYaCy(question);
               break;
             default:
               throw new Error(`Unknown search engine ${searchEngine}`);

@@ -52,6 +52,9 @@ interface Config {
     BRAVE: {
       API_KEY: string;
     };
+    YACY: {
+      ENDPOINT: string;
+    };
   };
 }
 
@@ -90,6 +93,8 @@ export const getBraveApiKey = () => loadConfig().SEARCH_ENGINES.BRAVE.API_KEY;
 
 export const getBingSubscriptionKey = () =>
   loadConfig().SEARCH_ENGINES.BING.SUBSCRIPTION_KEY;
+
+export const getYacyJsonEndpoint = () => loadConfig().SEARCH_ENGINES.YACY.ENDPOINT;
 
 export const getSearxngApiEndpoint = () =>
   process.env.SEARXNG_API_URL || loadConfig().SEARCH_ENGINES.SEARXNG.ENDPOINT;

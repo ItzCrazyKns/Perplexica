@@ -1,6 +1,8 @@
 import express from 'express';
 import { searchSearxng } from '../lib/searchEngines/searxng';
 import { searchGooglePSE } from '../lib/searchEngines/google_pse';
+import { searchBraveAPI } from '../lib/searchEngines/brave';
+import { searchYaCy } from '../lib/searchEngines/yacy';
 import { getSearchEngineBackend } from '../config';
 import logger from '../utils/logger';
 
@@ -40,6 +42,34 @@ async function performSearch(query: string, site: string) {
         pageno: 1,
       });
       return searxResult.results;
+    }
+
+    case 'brave': {
+      const braveResult = await searchBraveAPI(query);
+      return braveResult.results.map(item => ({
+        title: item.title,
+        url: item.url,
+        content: item.content,
+        thumbnail: item.img_src,
+        img_src: item.img_src,
+        iframe_src: null,
+        author: item.meta?.fetched || site,
+        publishedDate: item.meta?.lastCrawled
+      }));
+    }
+
+    case 'yacy': {
+      const yacyResult = await searchYaCy(query);
+      return yacyResult.results.map((item) => ({
+        title: item.title,
+        url: item.url,
+        content: item.content,
+        thumbnail: item.img_src,
+        img_src: item.img_src,
+        iframe_src: null,
+        author: item?.host || site,
+        publishedDate: item?.pubDate
+      }))
     }
 
     default:
