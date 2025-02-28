@@ -2,7 +2,12 @@
 PORT = 3001 # Port to run the server on
 SIMILARITY_MEASURE = "cosine" # "cosine" or "dot"
 KEEP_ALIVE = "5m" # How long to keep Ollama models loaded into memory. (Instead of using -1 use "-1m")
-SEARCH_ENGINE_BACKEND = "google" # "google" | "searxng" | "ddg" | "bing" | "brave"
+SEARCH_ENGINE_BACKEND = "searxng" # "google" | "searxng" | "ddg" | "bing" | "brave"
+
+[KEYCLOAK]
+URL = ""
+REALM = ""
+CLIENT_ID = ""
 
 [MODELS.OPENAI]
 API_KEY = ""
