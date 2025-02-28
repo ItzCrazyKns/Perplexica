@@ -11,6 +11,7 @@ import { searchSearxng } from '../lib/searchEngines/searxng';
 import { searchGooglePSE } from '../lib/searchEngines/google_pse';
 import { searchBraveAPI } from '../lib/searchEngines/brave';
 import { searchYaCy } from '../lib/searchEngines/yacy';
+import { searchBingAPI } from '../lib/searchEngines/bing';
 import { getSearchEngineBackend } from '../config';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
@@ -95,6 +96,21 @@ async function performImageSearch(query: string) {
     case 'yacy': {
       const yacyResult = await searchYaCy(query);
       images = yacyResult.results.map((result) => {
+        if (result.img_src && result.url && result.title) {
+          return {
+            img_src: result.img_src,
+            url: result.url,
+            title: result.title,
+            source: result.url
+          }
+        }
+      }).filter(Boolean);
+      break;
+    }
+
+    case 'bing': {
+      const bingResult = await searchBingAPI(query);
+      images = bingResult.results.map((result) => {
         if (result.img_src && result.url && result.title) {
           return {
             img_src: result.img_src,

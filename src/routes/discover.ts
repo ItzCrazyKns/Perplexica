@@ -3,6 +3,7 @@ import { searchSearxng } from '../lib/searchEngines/searxng';
 import { searchGooglePSE } from '../lib/searchEngines/google_pse';
 import { searchBraveAPI } from '../lib/searchEngines/brave';
 import { searchYaCy } from '../lib/searchEngines/yacy';
+import { searchBingAPI } from '../lib/searchEngines/bing';
 import { getSearchEngineBackend } from '../config';
 import logger from '../utils/logger';
 
@@ -69,6 +70,20 @@ async function performSearch(query: string, site: string) {
         iframe_src: null,
         author: item?.host || site,
         publishedDate: item?.pubDate
+      }))
+    }
+
+    case 'bing': {
+      const bingResult = await searchBingAPI(query);
+      return bingResult.results.map(item => ({
+        title: item.title,
+        url: item.url,
+        content: item.content,
+        thumbnail: item.img_src,
+        img_src: item.img_src,
+        iframe_src: null,
+        author: item?.publisher || site,
+        publishedDate: item?.datePublished
       }))
     }
 
