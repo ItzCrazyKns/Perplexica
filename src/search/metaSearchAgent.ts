@@ -21,6 +21,7 @@ import { searchSearxng } from '../lib/searchEngines/searxng';
 import { searchGooglePSE } from '../lib/searchEngines/google_pse';
 import { searchBingAPI } from '../lib/searchEngines/bing';
 import { searchBraveAPI } from '../lib/searchEngines/brave';
+import { searchYaCy } from '../lib/searchEngines/yacy';
 import { getSearchEngineBackend } from '../config';
 import path from 'path';
 import fs from 'fs';
@@ -226,6 +227,9 @@ class MetaSearchAgent implements MetaSearchAgentType {
               break;
             case 'brave':
               res = await searchBraveAPI(question);
+              break;
+            case 'yacy':
+              res = await searchYaCy(question);
               break;
             default:
               throw new Error(`Unknown search engine ${searchEngine}`);

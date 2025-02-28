@@ -10,6 +10,7 @@ import { StringOutputParser } from '@langchain/core/output_parsers';
 import { searchSearxng } from '../lib/searchEngines/searxng';
 import { searchGooglePSE } from '../lib/searchEngines/google_pse';
 import { searchBraveAPI } from '../lib/searchEngines/brave';
+import { searchYaCy } from '../lib/searchEngines/yacy';
 import { getSearchEngineBackend } from '../config';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
@@ -98,6 +99,12 @@ async function performVideoSearch(query: string) {
           });
         }
       });
+      break;
+    }
+
+    case 'yacy': {
+      console.log('Not available for yacy');
+      videos = [];
       break;
     }
 
