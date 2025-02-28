@@ -4,6 +4,11 @@ SIMILARITY_MEASURE = "cosine" # "cosine" or "dot"
 KEEP_ALIVE = "5m" # How long to keep Ollama models loaded into memory. (Instead of using -1 use "-1m")
 SEARCH_ENGINE_BACKEND = "searxng" # "google" | "searxng" | "bing" | "brave" | "yacy"
 
+[KEYCLOAK]
+URL = ""
+REALM = ""
+CLIENT_ID = ""
+
 [MODELS.OPENAI]
 API_KEY = ""
 
