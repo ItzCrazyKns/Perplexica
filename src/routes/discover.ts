@@ -6,9 +6,8 @@ import logger from '../utils/logger';
 
 const router = express.Router();
 
-const searchEngine = getSearchEngineBackend();
-
-async function performSearch(query: string, site: string, searchEngine: string) {
+async function performSearch(query: string, site: string) {
+  const searchEngine = getSearchEngineBackend();
   switch (searchEngine) {
     case 'google': {
       const googleResult = await searchGooglePSE(query);
@@ -65,7 +64,7 @@ router.get('/', async (req, res) => {
         queries.map(async ({ site, topic }) => {
           try {
             const query = `site:${site} ${topic}`;
-            return await performSearch(query, site, searchEngine);
+            return await performSearch(query, site);
           } catch (error) {
             logger.error(`Error searching ${site}: ${error.message}`);
             return [];

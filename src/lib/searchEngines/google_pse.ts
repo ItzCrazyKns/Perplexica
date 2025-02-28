@@ -63,11 +63,22 @@ export const searchGooglePSE = async (query: string) => {
       title: item.title,
       url: item.link,
       content: item.snippet,
-      img_src: item.pagemap?.cse_image?.[0]?.src,
+      img_src: item.pagemap?.cse_image?.[0]?.src
+             || item.pagemap?.cse_thumbnail?.[0]?.src
+             || item.image?.thumbnailLink,
+      ...(item.pagemap?.videoobject?.[0] && {
+        videoData: {
+          duration: item.pagemap.videoobject[0].duration,
+          embedUrl: item.pagemap.videoobject[0].embedurl
+        }
+      })
     }));
 
     return { results, originalres };
   } catch (error) {
-    throw new Error('Google PSE Error:', error.response?.data || error.message);
+    const errorMessage = error.response?.data
+      ? JSON.stringify(error.response.data, null, 2)
+      : error.message || 'Unknown error';
+    throw new Error(`Google PSE Error: ${errorMessage}`);
   }
 };

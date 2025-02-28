@@ -45,22 +45,14 @@ async function performImageSearch(query: string) {
   switch (searchEngine) {
     case 'google': {
       const googleResult = await searchGooglePSE(query);
-      images = googleResult.originalres
-        .map((result) => {
-          // Extract image URL from multiple possible locations in Google's response
-          const imageSrc = result.pagemap?.cse_image?.[0]?.src ||
-                            result.pagemap?.cse_thumbnail?.[0]?.src ||
-                            result.image?.thumbnailLink;
-
-          if (imageSrc && result.link && result.title) {
-            images.push({
-              img_src: imageSrc,
-              url: result.link,
+      images = googleResult.results.map((result) => {
+          if (result.img_src && result.url && result.title) {
+            return {
+              img_src: result.img_src,
+              url: result.url,
               title: result.title,
-              // Add additional metadata if needed
-              source: result.displayLink,
-              fileFormat: result.fileFormat,
-            });
+              source: result.displayLink
+            };
           }
         })
         .filter(Boolean);

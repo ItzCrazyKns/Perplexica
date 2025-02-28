@@ -40,12 +40,6 @@ type VideoSearchChainInput = {
 
 const strParser = new StringOutputParser();
 
-function extractYouTubeVideoId(url: string): string | null {
-  const regex = /(?:v=|\/embed\/|\.be\/)([a-zA-Z0-9_-]{11})/;
-  const match = url.match(regex);
-  return match ? match[1] : null;
-}
-
 async function performVideoSearch(query: string) {
   const searchEngine = getSearchEngineBackend();
   const youtubeQuery = `${query} site:youtube.com`;
@@ -54,20 +48,14 @@ async function performVideoSearch(query: string) {
   switch (searchEngine) {
     case 'google': {
       const googleResult = await searchGooglePSE(youtubeQuery);
-      googleResult.originalres.results.forEach((result) => {
-        // Extract video metadata from Google PSE results
-        const thumbnail = result.pagemap?.cse_thumbnail?.[0]?.src 
-                         || result.pagemap?.videoobject?.[0]?.thumbnailurl;
-
-        if (thumbnail && result.link && result.title) {
+      googleResult.results.forEach((result) => { // Use .results instead of .originalres
+        if (result.img_src && result.url && result.title) {
+          const videoId = new URL(result.url).searchParams.get('v');
           videos.push({
-            img_src: thumbnail,
-            url: result.link,
+            img_src: result.img_src,
+            url: result.url,
             title: result.title,
-            // Construct iframe URL from YouTube video ID
-            iframe_src: result.link.includes('youtube.com/watch?v=')
-              ? `https://www.youtube.com/embed/${result.link.split('v=')[1].split('&')[0]}`
-              : null,
+            iframe_src: videoId ? `https://www.youtube.com/embed/${videoId}` : null
           });
         }
       });
