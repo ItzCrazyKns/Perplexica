@@ -7,7 +7,9 @@ import { PromptTemplate } from '@langchain/core/prompts';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
-import { searchSearxng } from '../lib/searxng';
+import { searchSearxng } from '../lib/searchEngines/searxng';
+import { searchGooglePSE } from '../lib/searchEngines/google_pse';
+import { getSearchEngineBackend } from '../config';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const VideoSearchChainPrompt = `
@@ -38,27 +40,33 @@ type VideoSearchChainInput = {
 
 const strParser = new StringOutputParser();
 
-const createVideoSearchChain = (llm: BaseChatModel) => {
-  return RunnableSequence.from([
-    RunnableMap.from({
-      chat_history: (input: VideoSearchChainInput) => {
-        return formatChatHistoryAsString(input.chat_history);
-      },
-      query: (input: VideoSearchChainInput) => {
-        return input.query;
-      },
-    }),
-    PromptTemplate.fromTemplate(VideoSearchChainPrompt),
-    llm,
-    strParser,
-    RunnableLambda.from(async (input: string) => {
-      const res = await searchSearxng(input, {
+async function performVideoSearch(query: string) {
+  const searchEngine = getSearchEngineBackend();
+  const youtubeQuery = `${query} site:youtube.com`;
+  let videos = [];
+
+  switch (searchEngine) {
+    case 'google': {
+      const googleResult = await searchGooglePSE(youtubeQuery);
+      googleResult.results.forEach((result) => { // Use .results instead of .originalres
+        if (result.img_src && result.url && result.title) {
+          const videoId = new URL(result.url).searchParams.get('v');
+          videos.push({
+            img_src: result.img_src,
+            url: result.url,
+            title: result.title,
+            iframe_src: videoId ? `https://www.youtube.com/embed/${videoId}` : null
+          });
+        }
+      });
+      break;
+    }
+
+    case 'searxng': {
+      const searxResult = await searchSearxng(query, {
         engines: ['youtube'],
       });
-
-      const videos = [];
-
-      res.results.forEach((result) => {
+      searxResult.results.forEach((result) => {
         if (
           result.thumbnail &&
           result.url &&
@@ -73,7 +81,31 @@ const createVideoSearchChain = (llm: BaseChatModel) => {
           });
         }
       });
+      break;
+    }
 
+    default:
+      throw new Error(`Unknown search engine ${searchEngine}`);
+  }
+
+  return videos;
+}
+
+const createVideoSearchChain = (llm: BaseChatModel) => {
+  return RunnableSequence.from([
+    RunnableMap.from({
+      chat_history: (input: VideoSearchChainInput) => {
+        return formatChatHistoryAsString(input.chat_history);
+      },
+      query: (input: VideoSearchChainInput) => {
+        return input.query;
+      },
+    }),
+    PromptTemplate.fromTemplate(VideoSearchChainPrompt),
+    llm,
+    strParser,
+    RunnableLambda.from(async (input: string) => {
+      const videos = await performVideoSearch(input);
       return videos.slice(0, 10);
     }),
   ]);

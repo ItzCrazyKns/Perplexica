@@ -9,6 +9,7 @@ interface Config {
     PORT: number;
     SIMILARITY_MEASURE: string;
     KEEP_ALIVE: string;
+    SEARCH_ENGINE_BACKEND: string;
   };
   MODELS: {
     OPENAI: {
@@ -32,8 +33,20 @@ interface Config {
       MODEL_NAME: string;
     };
   };
-  API_ENDPOINTS: {
-    SEARXNG: string;
+  SEARCH_ENGINES: {
+    GOOGLE: {
+      API_KEY: string;
+      CSE_ID: string;
+    };
+    SEARXNG: {
+      ENDPOINT: string;
+    };
+    BING: {
+      SUBSCRIPTION_KEY: string;
+    };
+    BRAVE: {
+      API_KEY: string;
+    };
   };
 }
 
@@ -61,8 +74,18 @@ export const getAnthropicApiKey = () => loadConfig().MODELS.ANTHROPIC.API_KEY;
 
 export const getGeminiApiKey = () => loadConfig().MODELS.GEMINI.API_KEY;
 
+export const getSearchEngineBackend = () => loadConfig().GENERAL.SEARCH_ENGINE_BACKEND;
+
+export const getGoogleApiKey = () => loadConfig().SEARCH_ENGINES.GOOGLE.API_KEY;
+
+export const getGoogleCseId = () => loadConfig().SEARCH_ENGINES.GOOGLE.CSE_ID;
+
+export const getBraveApiKey = () => loadConfig().SEARCH_ENGINES.BRAVE.API_KEY;
+
+export const getBingSubscriptionKey = () => loadConfig().SEARCH_ENGINES.BING.SUBSCRIPTION_KEY;
+
 export const getSearxngApiEndpoint = () =>
-  process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
+  process.env.SEARXNG_API_URL || loadConfig().SEARCH_ENGINES.SEARXNG.ENDPOINT;
 
 export const getOllamaApiEndpoint = () => loadConfig().MODELS.OLLAMA.API_URL;
 
