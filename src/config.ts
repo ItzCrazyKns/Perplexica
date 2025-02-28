@@ -9,8 +9,13 @@ interface Config {
     PORT: number;
     SIMILARITY_MEASURE: string;
     KEEP_ALIVE: string;
-    SEARCH_ENGINE_BACKEND: string;
   };
+  SEARCH_ENGINE_BACKENDS: {
+    SEARCH: string;
+    IMAGE: string;
+    VIDEO: string;
+    NEWS: string;
+  }
   KEYCLOAK: {
     URL: string;
     REALM: string;
@@ -83,7 +88,16 @@ export const getAnthropicApiKey = () => loadConfig().MODELS.ANTHROPIC.API_KEY;
 export const getGeminiApiKey = () => loadConfig().MODELS.GEMINI.API_KEY;
 
 export const getSearchEngineBackend = () =>
-  loadConfig().GENERAL.SEARCH_ENGINE_BACKEND;
+  loadConfig().SEARCH_ENGINE_BACKENDS.SEARCH;
+
+export const getImageSearchEngineBackend = () =>
+  loadConfig().SEARCH_ENGINE_BACKENDS.IMAGE || getSearchEngineBackend();
+
+export const getVideoSearchEngineBackend = () =>
+  loadConfig().SEARCH_ENGINE_BACKENDS.VIDEO || getSearchEngineBackend();
+
+export const getNewsSearchEngineBackend = () =>
+  loadConfig().SEARCH_ENGINE_BACKENDS.NEWS || getSearchEngineBackend();
 
 export const getGoogleApiKey = () => loadConfig().SEARCH_ENGINES.GOOGLE.API_KEY;
 

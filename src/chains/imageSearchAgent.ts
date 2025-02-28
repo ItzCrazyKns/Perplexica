@@ -12,7 +12,7 @@ import { searchGooglePSE } from '../lib/searchEngines/google_pse';
 import { searchBraveAPI } from '../lib/searchEngines/brave';
 import { searchYaCy } from '../lib/searchEngines/yacy';
 import { searchBingAPI } from '../lib/searchEngines/bing';
-import { getSearchEngineBackend } from '../config';
+import { getImageSearchEngineBackend } from '../config';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const imageSearchChainPrompt = `
@@ -42,7 +42,7 @@ type ImageSearchChainInput = {
 };
 
 async function performImageSearch(query: string) {
-  const searchEngine = getSearchEngineBackend();
+  const searchEngine = getImageSearchEngineBackend();
   let images = [];
 
   switch (searchEngine) {

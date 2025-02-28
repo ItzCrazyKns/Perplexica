@@ -4,13 +4,13 @@ import { searchGooglePSE } from '../lib/searchEngines/google_pse';
 import { searchBraveAPI } from '../lib/searchEngines/brave';
 import { searchYaCy } from '../lib/searchEngines/yacy';
 import { searchBingAPI } from '../lib/searchEngines/bing';
-import { getSearchEngineBackend } from '../config';
+import { getNewsSearchEngineBackend } from '../config';
 import logger from '../utils/logger';
 
 const router = express.Router();
 
 async function performSearch(query: string, site: string) {
-  const searchEngine = getSearchEngineBackend();
+  const searchEngine = getNewsSearchEngineBackend();
   switch (searchEngine) {
     case 'google': {
       const googleResult = await searchGooglePSE(query);
