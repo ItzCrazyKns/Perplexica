@@ -9,26 +9,27 @@ import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import { searchSearxng } from '../lib/searchEngines/searxng';
 import { searchGooglePSE } from '../lib/searchEngines/google_pse';
+import { searchBraveAPI } from '../lib/searchEngines/brave';
 import { getSearchEngineBackend } from '../config';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const VideoSearchChainPrompt = `
   You will be given a conversation below and a follow up question. You need to rephrase the follow-up question so it is a standalone question that can be used by the LLM to search Youtube for videos.
   You need to make sure the rephrased question agrees with the conversation and is relevant to the conversation.
-  
+
   Example:
   1. Follow up question: How does a car work?
   Rephrased: How does a car work?
-  
+
   2. Follow up question: What is the theory of relativity?
   Rephrased: What is theory of relativity
-  
+
   3. Follow up question: How does an AC work?
   Rephrased: How does an AC work
-  
+
   Conversation:
   {chat_history}
-  
+
   Follow up question: {query}
   Rephrased question:
   `;
@@ -78,6 +79,22 @@ async function performVideoSearch(query: string) {
             url: result.url,
             title: result.title,
             iframe_src: result.iframe_src,
+          });
+        }
+      });
+      break;
+    }
+
+    case 'brave': {
+      const braveResult = await searchBraveAPI(youtubeQuery);
+      braveResult.results.forEach((result) => {
+        if (result.img_src && result.url && result.title) {
+          const videoId = new URL(result.url).searchParams.get('v');
+          videos.push({
+            img_src: result.img_src,
+            url: result.url,
+            title: result.title,
+            iframe_src: videoId ? `https://www.youtube.com/embed/${videoId}` : null
           });
         }
       });
