@@ -119,12 +119,6 @@ export const getCustomOpenaiApiUrl = () =>
 export const getCustomOpenaiModelName = () =>
   loadConfig().MODELS.CUSTOM_OPENAI.MODEL_NAME;
 
-export const getKeyCloakUrl = () => loadConfig().KEYCLOAK.URL;
-
-export const getKeyCloakRealm = () => loadConfig().KEYCLOAK.REALM;
-
-export const getKeyCloakClientId = () => loadConfig().KEYCLOAK.CLIENT_ID;
-
 const mergeConfigs = (current: any, update: any): any => {
   if (update === null || update === undefined) {
     return current;
