@@ -16,11 +16,6 @@ interface Config {
     VIDEO: string;
     NEWS: string;
   }
-  KEYCLOAK: {
-    URL: string;
-    REALM: string;
-    CLIENT_ID: string;
-  };
   MODELS: {
     OPENAI: {
       API_KEY: string;
