@@ -9,11 +9,6 @@ IMAGE = "searxng"
 VIDEO = "searxng"
 NEWS = "searxng"
 
-[KEYCLOAK]
-URL = ""
-REALM = ""
-CLIENT_ID = ""
-
 [MODELS.OPENAI]
 API_KEY = ""
 
