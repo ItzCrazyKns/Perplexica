@@ -2,7 +2,7 @@
 
 import { Settings as SettingsIcon, ArrowLeft, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn, formatProviderName } from '@/lib/utils';
 import { Switch } from '@headlessui/react';
 import ThemeSwitcher from '@/components/theme/Switcher';
 import { ImagesIcon, VideoIcon } from 'lucide-react';
@@ -19,6 +19,7 @@ interface SettingsType {
   groqApiKey: string;
   anthropicApiKey: string;
   geminiApiKey: string;
+  deepseekApiKey: string;
   ollamaApiUrl: string;
   customOpenaiApiKey: string;
   customOpenaiApiUrl: string;
@@ -499,9 +500,7 @@ const Page = () => {
                       options={Object.keys(config.chatModelProviders).map(
                         (provider) => ({
                           value: provider,
-                          label:
-                            provider.charAt(0).toUpperCase() +
-                            provider.slice(1),
+                          label: formatProviderName(provider),
                         }),
                       )}
                     />
@@ -641,9 +640,7 @@ const Page = () => {
                       options={Object.keys(config.embeddingModelProviders).map(
                         (provider) => ({
                           value: provider,
-                          label:
-                            provider.charAt(0).toUpperCase() +
-                            provider.slice(1),
+                          label: formatProviderName(provider),
                         }),
                       )}
                     />
@@ -789,6 +786,25 @@ const Page = () => {
                       }));
                     }}
                     onSave={(value) => saveConfig('geminiApiKey', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    DeepSeek API Key
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="DeepSeek API key"
+                    value={config.deepseekApiKey}
+                    isSaving={savingStates['deepseekApiKey']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        deepseekApiKey: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('deepseekApiKey', value)}
                   />
                 </div>
               </div>

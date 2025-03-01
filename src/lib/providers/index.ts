@@ -4,6 +4,8 @@ import { loadOpenAIChatModels, loadOpenAIEmbeddingsModels } from './openai';
 import { loadAnthropicChatModels } from './anthropic';
 import { loadTransformersEmbeddingsModels } from './transformers';
 import { loadGeminiChatModels, loadGeminiEmbeddingsModels } from './gemini';
+import { loadDeepSeekChatModels } from './deepseek';
+import { loadLMStudioChatModels, loadLMStudioEmbeddingsModels } from './lmstudio';
 import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
@@ -17,6 +19,8 @@ const chatModelProviders = {
   ollama: loadOllamaChatModels,
   anthropic: loadAnthropicChatModels,
   gemini: loadGeminiChatModels,
+  deepseek: loadDeepSeekChatModels,
+  lm_studio: loadLMStudioChatModels,
 };
 
 const embeddingModelProviders = {
@@ -24,6 +28,7 @@ const embeddingModelProviders = {
   local: loadTransformersEmbeddingsModels,
   ollama: loadOllamaEmbeddingsModels,
   gemini: loadGeminiEmbeddingsModels,
+  lm_studio: loadLMStudioEmbeddingsModels,
 };
 
 export const getAvailableChatModelProviders = async () => {

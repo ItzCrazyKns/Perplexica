@@ -4,6 +4,7 @@
 import React, { MutableRefObject, useEffect, useState } from 'react';
 import { Message } from './ChatWindow';
 import { cn } from '@/lib/utils';
+import logger from '@/lib/logger';
 import {
   BookCopy,
   Disc3,
@@ -12,6 +13,7 @@ import {
   Layers3,
   Plus,
 } from 'lucide-react';
+import ReasoningPanel from './MessageActions/ReasoningPanel';
 import Markdown from 'markdown-to-jsx';
 import Copy from './MessageActions/Copy';
 import Rewrite from './MessageActions/Rewrite';
@@ -41,26 +43,52 @@ const MessageBox = ({
 }) => {
   const [parsedMessage, setParsedMessage] = useState(message.content);
   const [speechMessage, setSpeechMessage] = useState(message.content);
+  const [thinking, setThinking] = useState<string>('');
+  const [isThinkingExpanded, setIsThinkingExpanded] = useState(true);
 
   useEffect(() => {
     const regex = /\[(\d+)\]/g;
+    const thinkRegex = /<think>(.*?)(?:<\/think>|$)(.*)/s;
 
-    if (
-      message.role === 'assistant' &&
-      message?.sources &&
-      message.sources.length > 0
-    ) {
-      return setParsedMessage(
-        message.content.replace(
-          regex,
-          (_, number) =>
-            `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
-        ),
-      );
+    const match = message.content.match(thinkRegex);
+
+    if (match) {
+      const [_, thinkingContent, answerContent] = match;
+      
+      if (thinkingContent) {
+        setThinking(thinkingContent.trim());
+        setIsThinkingExpanded(true);
+      }
+
+      if (answerContent) {
+        setIsThinkingExpanded(false);
+        if (message.role === 'assistant' && message?.sources && message.sources.length > 0) {
+          setParsedMessage(
+            answerContent.trim().replace(
+              regex,
+              (_, number) =>
+                `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
+            ),
+          );
+        } else {
+          setParsedMessage(answerContent.trim());
+        }
+        setSpeechMessage(answerContent.trim().replace(regex, ''));
+      }
+    } else {
+      if (message.role === 'assistant' && message?.sources && message.sources.length > 0) {
+        setParsedMessage(
+          message.content.replace(
+            regex,
+            (_, number) =>
+              `<a href="${message.sources?.[number - 1]?.metadata?.url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${number}</a>`,
+          ),
+        );
+      } else {
+        setParsedMessage(message.content);
+      }
+      setSpeechMessage(message.content.replace(regex, ''));
     }
-
-    setSpeechMessage(message.content.replace(regex, ''));
-    setParsedMessage(message.content);
   }, [message.content, message.sources, message.role]);
 
   const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
@@ -81,6 +109,7 @@ const MessageBox = ({
             ref={dividerRef}
             className="flex flex-col space-y-6 w-full lg:w-9/12"
           >
+            {thinking && <ReasoningPanel thinking={thinking} isExpanded={isThinkingExpanded} />}
             {message.sources && message.sources.length > 0 && (
               <div className="flex flex-col space-y-2">
                 <div className="flex flex-row items-center space-x-2">

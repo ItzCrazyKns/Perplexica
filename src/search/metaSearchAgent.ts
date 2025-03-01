@@ -11,7 +11,7 @@ import {
   RunnableMap,
   RunnableSequence,
 } from '@langchain/core/runnables';
-import { BaseMessage } from '@langchain/core/messages';
+import { BaseMessage, SystemMessage, HumanMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import LineListOutputParser from '../lib/outputParsers/listLineOutputParser';
 import LineOutputParser from '../lib/outputParsers/lineOutputParser';
@@ -23,6 +23,7 @@ import fs from 'fs';
 import computeSimilarity from '../utils/computeSimilarity';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
+import { getMessageValidator } from '../utils/alternatingMessageValidator';
 import { StreamEvent } from '@langchain/core/tracers/log_stream';
 import { IterableReadableStream } from '@langchain/core/utils/stream';
 
@@ -475,10 +476,41 @@ class MetaSearchAgent implements MetaSearchAgentType {
       optimizationMode,
     );
 
+    // Create all messages including system prompt and new query
+    const allMessages = [
+      new SystemMessage(this.config.responsePrompt),
+      ...history,
+      new HumanMessage(message)
+    ];
+
+    // Get message validator if model needs it
+    const messageValidator = getMessageValidator((llm as any).modelName);
+    const processedMessages = messageValidator 
+      ? messageValidator.processMessages(allMessages)
+      : allMessages;
+
+    // Extract system message and chat history
+    const systemMessage = processedMessages[0];
+    const chatHistory = processedMessages.slice(1, -1);
+    const userQuery = processedMessages[processedMessages.length - 1];
+
+    // Extract string content from message
+    const getStringContent = (content: any): string => {
+      if (typeof content === 'string') return content;
+      if (Array.isArray(content)) return content.map(getStringContent).join('\n');
+      if (typeof content === 'object' && content !== null) {
+        if ('text' in content) return content.text;
+        if ('value' in content) return content.value;
+      }
+      return String(content || '');
+    };
+
+    const queryContent = getStringContent(userQuery.content);
+
     const stream = answeringChain.streamEvents(
       {
-        chat_history: history,
-        query: message,
+        chat_history: chatHistory,
+        query: queryContent,
       },
       {
         version: 'v1',
