@@ -208,7 +208,6 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
           return { query: question, docs: docs };
         } else {
-
           const searchEngine = getSearchEngineBackend();
 
           let res;
@@ -236,7 +235,9 @@ class MetaSearchAgent implements MetaSearchAgentType {
           }
 
           if (!res?.results) {
-            throw new Error(`No results found for search engine: ${searchEngine}`);
+            throw new Error(
+              `No results found for search engine: ${searchEngine}`,
+            );
           }
 
           const documents = res.results.map(

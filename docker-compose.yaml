@@ -4,7 +4,7 @@ services:
     volumes:
       - ./searxng:/etc/searxng:rw
     ports:
-      - "4000:8080"
+      - '4000:8080'
     networks:
       - perplexica-network
     restart: unless-stopped
@@ -19,7 +19,7 @@ services:
     depends_on:
       - searxng
     ports:
-      - "3001:3001"
+      - '3001:3001'
     volumes:
       - backend-dbstore:/home/perplexica/data
       - uploads:/home/perplexica/uploads
@@ -41,7 +41,7 @@ services:
     depends_on:
       - perplexica-backend
     ports:
-      - "3000:3000"
+      - '3000:3000'
     networks:
       - perplexica-network
     restart: unless-stopped

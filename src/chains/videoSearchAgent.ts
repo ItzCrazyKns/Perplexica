@@ -50,14 +50,17 @@ async function performVideoSearch(query: string) {
   switch (searchEngine) {
     case 'google': {
       const googleResult = await searchGooglePSE(youtubeQuery);
-      googleResult.results.forEach((result) => { // Use .results instead of .originalres
+      googleResult.results.forEach((result) => {
+        // Use .results instead of .originalres
         if (result.img_src && result.url && result.title) {
           const videoId = new URL(result.url).searchParams.get('v');
           videos.push({
             img_src: result.img_src,
             url: result.url,
             title: result.title,
-            iframe_src: videoId ? `https://www.youtube.com/embed/${videoId}` : null
+            iframe_src: videoId
+              ? `https://www.youtube.com/embed/${videoId}`
+              : null,
           });
         }
       });
@@ -95,7 +98,9 @@ async function performVideoSearch(query: string) {
             img_src: result.img_src,
             url: result.url,
             title: result.title,
-            iframe_src: videoId ? `https://www.youtube.com/embed/${videoId}` : null
+            iframe_src: videoId
+              ? `https://www.youtube.com/embed/${videoId}`
+              : null,
           });
         }
       });
@@ -117,7 +122,9 @@ async function performVideoSearch(query: string) {
             img_src: result.img_src,
             url: result.url,
             title: result.title,
-            iframe_src: videoId ? `https://www.youtube.com/embed/${videoId}` : null
+            iframe_src: videoId
+              ? `https://www.youtube.com/embed/${videoId}`
+              : null,
           });
         }
       });

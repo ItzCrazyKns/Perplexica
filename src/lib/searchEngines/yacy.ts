@@ -48,11 +48,7 @@ interface YaCySearchResult {
   }[];
 }
 
-
-export const searchYaCy = async (
-  query: string,
-  numResults: number = 20
-) => {
+export const searchYaCy = async (query: string, numResults: number = 20) => {
   try {
     const yacyBaseUrl = getYacyJsonEndpoint();
 
@@ -64,7 +60,7 @@ export const searchYaCy = async (
 
     const originalres = res.data as YaCySearchResult;
 
-    const results = originalres.channels[0].items.map(item => ({
+    const results = originalres.channels[0].items.map((item) => ({
       title: item.title,
       url: item.link,
       content: item.description,

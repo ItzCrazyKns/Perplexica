@@ -48,16 +48,18 @@ async function performImageSearch(query: string) {
   switch (searchEngine) {
     case 'google': {
       const googleResult = await searchGooglePSE(query);
-      images = googleResult.results.map((result) => {
-        if (result.img_src && result.url && result.title) {
-          return {
-            img_src: result.img_src,
-            url: result.url,
-            title: result.title,
-            source: result.displayLink
-          };
-        }
-      }).filter(Boolean);
+      images = googleResult.results
+        .map((result) => {
+          if (result.img_src && result.url && result.title) {
+            return {
+              img_src: result.img_src,
+              url: result.url,
+              title: result.title,
+              source: result.displayLink,
+            };
+          }
+        })
+        .filter(Boolean);
       break;
     }
 
@@ -80,46 +82,52 @@ async function performImageSearch(query: string) {
 
     case 'brave': {
       const braveResult = await searchBraveAPI(query);
-      images = braveResult.results.map((result) => {
-        if (result.img_src && result.url && result.title) {
-          return {
-            img_src: result.img_src,
-            url: result.url,
-            title: result.title,
-            source: result.url
-          };
-        }
-      }).filter(Boolean);
+      images = braveResult.results
+        .map((result) => {
+          if (result.img_src && result.url && result.title) {
+            return {
+              img_src: result.img_src,
+              url: result.url,
+              title: result.title,
+              source: result.url,
+            };
+          }
+        })
+        .filter(Boolean);
       break;
     }
 
     case 'yacy': {
       const yacyResult = await searchYaCy(query);
-      images = yacyResult.results.map((result) => {
-        if (result.img_src && result.url && result.title) {
-          return {
-            img_src: result.img_src,
-            url: result.url,
-            title: result.title,
-            source: result.url
+      images = yacyResult.results
+        .map((result) => {
+          if (result.img_src && result.url && result.title) {
+            return {
+              img_src: result.img_src,
+              url: result.url,
+              title: result.title,
+              source: result.url,
+            };
           }
-        }
-      }).filter(Boolean);
+        })
+        .filter(Boolean);
       break;
     }
 
     case 'bing': {
       const bingResult = await searchBingAPI(query);
-      images = bingResult.results.map((result) => {
-        if (result.img_src && result.url && result.title) {
-          return {
-            img_src: result.img_src,
-            url: result.url,
-            title: result.title,
-            source: result.url
+      images = bingResult.results
+        .map((result) => {
+          if (result.img_src && result.url && result.title) {
+            return {
+              img_src: result.img_src,
+              url: result.url,
+              title: result.title,
+              source: result.url,
+            };
           }
-        }
-      }).filter(Boolean);
+        })
+        .filter(Boolean);
       break;
     }
 

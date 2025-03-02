@@ -33,7 +33,7 @@ interface BraveSearchResult {
 
 export const searchBraveAPI = async (
   query: string,
-  numResults: number = 20
+  numResults: number = 20,
 ): Promise<{ results: BraveSearchResult[]; originalres: any }> => {
   try {
     const braveApiKey = await getBraveApiKey();
@@ -45,8 +45,8 @@ export const searchBraveAPI = async (
     const res = await axios.get(url.toString(), {
       headers: {
         'X-Subscription-Token': braveApiKey,
-        'Accept': 'application/json'
-      }
+        Accept: 'application/json',
+      },
     });
 
     if (res.data.error) {
@@ -64,26 +64,32 @@ export const searchBraveAPI = async (
       age: item.age,
       family_friendly: item.family_friendly,
       language: item.language,
-      video: item.video ? {
-        embedUrl: item.video.embed_url,
-        duration: item.video.duration
-      } : undefined,
-      rating: item.rating ? {
-        value: item.rating.value,
-        scale: item.rating.scale_max
-      } : undefined,
+      video: item.video
+        ? {
+            embedUrl: item.video.embed_url,
+            duration: item.video.duration,
+          }
+        : undefined,
+      rating: item.rating
+        ? {
+            value: item.rating.value,
+            scale: item.rating.scale_max,
+          }
+        : undefined,
       products: item.deep_results?.product_cluster?.map((p: any) => ({
         name: p.name,
-        price: p.price
+        price: p.price,
       })),
-      recipe: item.recipe ? {
-        ingredients: item.recipe.ingredients,
-        cookTime: item.recipe.cook_time
-      } : undefined,
+      recipe: item.recipe
+        ? {
+            ingredients: item.recipe.ingredients,
+            cookTime: item.recipe.cook_time,
+          }
+        : undefined,
       meta: {
         fetched: item.meta?.fetched,
-        lastCrawled: item.meta?.last_crawled
-      }
+        lastCrawled: item.meta?.last_crawled,
+      },
     }));
 
     return { results, originalres };

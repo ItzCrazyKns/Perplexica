@@ -60,8 +60,8 @@ export const searchBingAPI = async (query: string) => {
     const res = await axios.get(url.toString(), {
       headers: {
         'Ocp-Apim-Subscription-Key': bingApiKey,
-        'Accept': 'application/json'
-      }
+        Accept: 'application/json',
+      },
     });
 
     if (res.data.error) {
@@ -79,17 +79,20 @@ export const searchBingAPI = async (query: string) => {
       title: item.name,
       url: item.url,
       content: item.snippet,
-      img_src: item.primaryImageOfPage?.thumbnailUrl
-             || imageResults.find((img: any) => img.hostPageUrl === item.url)?.thumbnailUrl
-             || videoResults.find((vid: any) => vid.hostPageUrl === item.url)?.thumbnailUrl,
+      img_src:
+        item.primaryImageOfPage?.thumbnailUrl ||
+        imageResults.find((img: any) => img.hostPageUrl === item.url)
+          ?.thumbnailUrl ||
+        videoResults.find((vid: any) => vid.hostPageUrl === item.url)
+          ?.thumbnailUrl,
       ...(item.video && {
         videoData: {
           duration: item.video.duration,
-          embedUrl: item.video.embedHtml?.match(/src="(.*?)"/)?.[1]
+          embedUrl: item.video.embedHtml?.match(/src="(.*?)"/)?.[1],
         },
-      publisher: item.publisher,
-      datePublished: item.datePublished
-      })
+        publisher: item.publisher,
+        datePublished: item.datePublished,
+      }),
     }));
 
     return { results, originalres };

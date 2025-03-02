@@ -15,7 +15,7 @@ async function performSearch(query: string, site: string) {
     case 'google': {
       const googleResult = await searchGooglePSE(query);
 
-      return googleResult.originalres.map(item => {
+      return googleResult.originalres.map((item) => {
         const imageSources = [
           item.pagemap?.cse_image?.[0]?.src,
           item.pagemap?.cse_thumbnail?.[0]?.src,
@@ -29,10 +29,11 @@ async function performSearch(query: string, site: string) {
           url: item.link,
           content: item.snippet,
           thumbnail: imageSources[0], // First available image
-          img_src: imageSources[0],   // Same as thumbnail for consistency
+          img_src: imageSources[0], // Same as thumbnail for consistency
           iframe_src: null,
           author: item.pagemap?.metatags?.[0]?.['og:site_name'] || site,
-          publishedDate: item.pagemap?.metatags?.[0]?.['article:published_time']
+          publishedDate:
+            item.pagemap?.metatags?.[0]?.['article:published_time'],
         };
       });
     }
@@ -47,7 +48,7 @@ async function performSearch(query: string, site: string) {
 
     case 'brave': {
       const braveResult = await searchBraveAPI(query);
-      return braveResult.results.map(item => ({
+      return braveResult.results.map((item) => ({
         title: item.title,
         url: item.url,
         content: item.content,
@@ -55,7 +56,7 @@ async function performSearch(query: string, site: string) {
         img_src: item.img_src,
         iframe_src: null,
         author: item.meta?.fetched || site,
-        publishedDate: item.meta?.lastCrawled
+        publishedDate: item.meta?.lastCrawled,
       }));
     }
 
@@ -69,13 +70,13 @@ async function performSearch(query: string, site: string) {
         img_src: item.img_src,
         iframe_src: null,
         author: item?.host || site,
-        publishedDate: item?.pubDate
-      }))
+        publishedDate: item?.pubDate,
+      }));
     }
 
     case 'bing': {
       const bingResult = await searchBingAPI(query);
-      return bingResult.results.map(item => ({
+      return bingResult.results.map((item) => ({
         title: item.title,
         url: item.url,
         content: item.content,
@@ -83,15 +84,14 @@ async function performSearch(query: string, site: string) {
         img_src: item.img_src,
         iframe_src: null,
         author: item?.publisher || site,
-        publishedDate: item?.datePublished
-      }))
+        publishedDate: item?.datePublished,
+      }));
     }
 
     default:
       throw new Error(`Unknown search engine ${searchEngine}`);
   }
 }
-
 
 router.get('/', async (req, res) => {
   try {
@@ -114,12 +114,12 @@ router.get('/', async (req, res) => {
             logger.error(`Error searching ${site}: ${error.message}`);
             return [];
           }
-        })
+        }),
       )
     )
       .flat()
       .sort(() => Math.random() - 0.5)
-      .filter(item => item.title && item.url && item.content);
+      .filter((item) => item.title && item.url && item.content);
 
     return res.json({ blogs: data });
   } catch (err: any) {

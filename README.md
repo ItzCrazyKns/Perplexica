@@ -2,7 +2,6 @@
 
 [![Discord](https://dcbadge.vercel.app/api/server/26aArMy8tT?style=flat&compact=true)](https://discord.gg/26aArMy8tT)
 
-
 ![preview](.assets/perplexica-screenshot.png?)
 
 ## Table of Contents <!-- omit in toc -->

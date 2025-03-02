@@ -21,7 +21,7 @@ interface GooglePSESearchResult {
     }>;
     metatags?: Array<{
       [key: string]: string;
-      'author'?: string;
+      author?: string;
     }>;
     cse_image?: Array<{
       src: string;
@@ -43,7 +43,7 @@ export const searchGooglePSE = async (query: string) => {
   try {
     const [googleApiKey, googleCseID] = await Promise.all([
       getGoogleApiKey(),
-      getGoogleCseId()
+      getGoogleCseId(),
     ]);
 
     const url = new URL(`https://www.googleapis.com/customsearch/v1`);
@@ -63,15 +63,16 @@ export const searchGooglePSE = async (query: string) => {
       title: item.title,
       url: item.link,
       content: item.snippet,
-      img_src: item.pagemap?.cse_image?.[0]?.src
-             || item.pagemap?.cse_thumbnail?.[0]?.src
-             || item.image?.thumbnailLink,
+      img_src:
+        item.pagemap?.cse_image?.[0]?.src ||
+        item.pagemap?.cse_thumbnail?.[0]?.src ||
+        item.image?.thumbnailLink,
       ...(item.pagemap?.videoobject?.[0] && {
         videoData: {
           duration: item.pagemap.videoobject[0].duration,
-          embedUrl: item.pagemap.videoobject[0].embedurl
-        }
-      })
+          embedUrl: item.pagemap.videoobject[0].embedurl,
+        },
+      }),
     }));
 
     return { results, originalres };
