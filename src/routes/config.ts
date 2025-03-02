@@ -13,6 +13,16 @@ import {
   getCustomOpenaiApiUrl,
   getCustomOpenaiApiKey,
   getCustomOpenaiModelName,
+  getSearchEngineBackend,
+  getImageSearchEngineBackend,
+  getVideoSearchEngineBackend,
+  getNewsSearchEngineBackend,
+  getSearxngApiEndpoint,
+  getGoogleApiKey,
+  getGoogleCseId,
+  getBingSubscriptionKey,
+  getBraveApiKey,
+  getYacyJsonEndpoint,
 } from '../config';
 import logger from '../utils/logger';
 
@@ -60,6 +70,21 @@ router.get('/', async (_, res) => {
     config['customOpenaiApiUrl'] = getCustomOpenaiApiUrl();
     config['customOpenaiApiKey'] = getCustomOpenaiApiKey();
     config['customOpenaiModelName'] = getCustomOpenaiModelName();
+    
+    // Add search engine configuration
+    config['searchEngineBackends'] = {
+      search: getSearchEngineBackend(),
+      image: getImageSearchEngineBackend(),
+      video: getVideoSearchEngineBackend(),
+      news: getNewsSearchEngineBackend(),
+    };
+    
+    config['searxngEndpoint'] = getSearxngApiEndpoint();
+    config['googleApiKey'] = getGoogleApiKey();
+    config['googleCseId'] = getGoogleCseId();
+    config['bingSubscriptionKey'] = getBingSubscriptionKey();
+    config['braveApiKey'] = getBraveApiKey();
+    config['yacyEndpoint'] = getYacyJsonEndpoint();
 
     res.status(200).json(config);
   } catch (err: any) {
@@ -92,6 +117,30 @@ router.post('/', async (req, res) => {
         API_URL: config.customOpenaiApiUrl,
         API_KEY: config.customOpenaiApiKey,
         MODEL_NAME: config.customOpenaiModelName,
+      },
+    },
+    SEARCH_ENGINE_BACKENDS: config.searchEngineBackends ? {
+      SEARCH: config.searchEngineBackends.search,
+      IMAGE: config.searchEngineBackends.image,
+      VIDEO: config.searchEngineBackends.video,
+      NEWS: config.searchEngineBackends.news,
+    } : undefined,
+    SEARCH_ENGINES: {
+      GOOGLE: {
+        API_KEY: config.googleApiKey,
+        CSE_ID: config.googleCseId,
+      },
+      SEARXNG: {
+        ENDPOINT: config.searxngEndpoint,
+      },
+      BING: {
+        SUBSCRIPTION_KEY: config.bingSubscriptionKey,
+      },
+      BRAVE: {
+        API_KEY: config.braveApiKey,
+      },
+      YACY: {
+        ENDPOINT: config.yacyEndpoint,
       },
     },
   };

@@ -10,6 +10,12 @@ interface Config {
     SIMILARITY_MEASURE: string;
     KEEP_ALIVE: string;
   };
+  SEARCH_ENGINE_BACKENDS: {
+    SEARCH: string;
+    IMAGE: string;
+    VIDEO: string;
+    NEWS: string;
+  };
   MODELS: {
     OPENAI: {
       API_KEY: string;
@@ -32,8 +38,23 @@ interface Config {
       MODEL_NAME: string;
     };
   };
-  API_ENDPOINTS: {
-    SEARXNG: string;
+  SEARCH_ENGINES: {
+    GOOGLE: {
+      API_KEY: string;
+      CSE_ID: string;
+    };
+    SEARXNG: {
+      ENDPOINT: string;
+    };
+    BING: {
+      SUBSCRIPTION_KEY: string;
+    };
+    BRAVE: {
+      API_KEY: string;
+    };
+    YACY: {
+      ENDPOINT: string;
+    };
   };
 }
 
@@ -61,8 +82,32 @@ export const getAnthropicApiKey = () => loadConfig().MODELS.ANTHROPIC.API_KEY;
 
 export const getGeminiApiKey = () => loadConfig().MODELS.GEMINI.API_KEY;
 
+export const getSearchEngineBackend = () =>
+  loadConfig().SEARCH_ENGINE_BACKENDS.SEARCH;
+
+export const getImageSearchEngineBackend = () =>
+  loadConfig().SEARCH_ENGINE_BACKENDS.IMAGE || getSearchEngineBackend();
+
+export const getVideoSearchEngineBackend = () =>
+  loadConfig().SEARCH_ENGINE_BACKENDS.VIDEO || getSearchEngineBackend();
+
+export const getNewsSearchEngineBackend = () =>
+  loadConfig().SEARCH_ENGINE_BACKENDS.NEWS || getSearchEngineBackend();
+
+export const getGoogleApiKey = () => loadConfig().SEARCH_ENGINES.GOOGLE.API_KEY;
+
+export const getGoogleCseId = () => loadConfig().SEARCH_ENGINES.GOOGLE.CSE_ID;
+
+export const getBraveApiKey = () => loadConfig().SEARCH_ENGINES.BRAVE.API_KEY;
+
+export const getBingSubscriptionKey = () =>
+  loadConfig().SEARCH_ENGINES.BING.SUBSCRIPTION_KEY;
+
+export const getYacyJsonEndpoint = () =>
+  loadConfig().SEARCH_ENGINES.YACY.ENDPOINT;
+
 export const getSearxngApiEndpoint = () =>
-  process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
+  process.env.SEARXNG_API_URL || loadConfig().SEARCH_ENGINES.SEARXNG.ENDPOINT;
 
 export const getOllamaApiEndpoint = () => loadConfig().MODELS.OLLAMA.API_URL;
 

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getSearxngApiEndpoint } from '../config';
+import { getSearxngApiEndpoint } from '../../config';
 
 interface SearxngSearchOptions {
   categories?: string[];

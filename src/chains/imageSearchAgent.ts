@@ -7,7 +7,12 @@ import { PromptTemplate } from '@langchain/core/prompts';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
-import { searchSearxng } from '../lib/searxng';
+import { searchSearxng } from '../lib/searchEngines/searxng';
+import { searchGooglePSE } from '../lib/searchEngines/google_pse';
+import { searchBraveAPI } from '../lib/searchEngines/brave';
+import { searchYaCy } from '../lib/searchEngines/yacy';
+import { searchBingAPI } from '../lib/searchEngines/bing';
+import { getImageSearchEngineBackend } from '../config';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const imageSearchChainPrompt = `
@@ -36,6 +41,103 @@ type ImageSearchChainInput = {
   query: string;
 };
 
+async function performImageSearch(query: string) {
+  const searchEngine = getImageSearchEngineBackend();
+  let images = [];
+
+  switch (searchEngine) {
+    case 'google': {
+      const googleResult = await searchGooglePSE(query);
+      images = googleResult.results
+        .map((result) => {
+          if (result.img_src && result.url && result.title) {
+            return {
+              img_src: result.img_src,
+              url: result.url,
+              title: result.title,
+              source: result.displayLink,
+            };
+          }
+        })
+        .filter(Boolean);
+      break;
+    }
+
+    case 'searxng': {
+      const searxResult = await searchSearxng(query, {
+        engines: ['google images', 'bing images'],
+        pageno: 1,
+      });
+      searxResult.results.forEach((result) => {
+        if (result.img_src && result.url && result.title) {
+          images.push({
+            img_src: result.img_src,
+            url: result.url,
+            title: result.title,
+          });
+        }
+      });
+      break;
+    }
+
+    case 'brave': {
+      const braveResult = await searchBraveAPI(query);
+      images = braveResult.results
+        .map((result) => {
+          if (result.img_src && result.url && result.title) {
+            return {
+              img_src: result.img_src,
+              url: result.url,
+              title: result.title,
+              source: result.url,
+            };
+          }
+        })
+        .filter(Boolean);
+      break;
+    }
+
+    case 'yacy': {
+      const yacyResult = await searchYaCy(query);
+      images = yacyResult.results
+        .map((result) => {
+          if (result.img_src && result.url && result.title) {
+            return {
+              img_src: result.img_src,
+              url: result.url,
+              title: result.title,
+              source: result.url,
+            };
+          }
+        })
+        .filter(Boolean);
+      break;
+    }
+
+    case 'bing': {
+      const bingResult = await searchBingAPI(query);
+      images = bingResult.results
+        .map((result) => {
+          if (result.img_src && result.url && result.title) {
+            return {
+              img_src: result.img_src,
+              url: result.url,
+              title: result.title,
+              source: result.url,
+            };
+          }
+        })
+        .filter(Boolean);
+      break;
+    }
+
+    default:
+      throw new Error(`Unknown search engine ${searchEngine}`);
+  }
+
+  return images;
+}
+
 const strParser = new StringOutputParser();
 
 const createImageSearchChain = (llm: BaseChatModel) => {
@@ -52,22 +154,7 @@ const createImageSearchChain = (llm: BaseChatModel) => {
     llm,
     strParser,
     RunnableLambda.from(async (input: string) => {
-      const res = await searchSearxng(input, {
-        engines: ['bing images', 'google images'],
-      });
-
-      const images = [];
-
-      res.results.forEach((result) => {
-        if (result.img_src && result.url && result.title) {
-          images.push({
-            img_src: result.img_src,
-            url: result.url,
-            title: result.title,
-          });
-        }
-      });
-
+      const images = await performImageSearch(input);
       return images.slice(0, 10);
     }),
   ]);
