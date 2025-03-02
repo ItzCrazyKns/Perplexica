@@ -23,6 +23,18 @@ interface SettingsType {
   customOpenaiApiKey: string;
   customOpenaiApiUrl: string;
   customOpenaiModelName: string;
+  searchEngineBackends: {
+    search: string;
+    image: string;
+    video: string;
+    news: string;
+  };
+  searxngEndpoint: string;
+  googleApiKey: string;
+  googleCseId: string;
+  bingSubscriptionKey: string;
+  braveApiKey: string;
+  yacyEndpoint: string;
 }
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -112,6 +124,12 @@ const Page = () => {
   const [automaticImageSearch, setAutomaticImageSearch] = useState(false);
   const [automaticVideoSearch, setAutomaticVideoSearch] = useState(false);
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
+  const [searchEngineBackends, setSearchEngineBackends] = useState({
+    search: '',
+    image: '',
+    video: '',
+    news: '',
+  });
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -124,6 +142,16 @@ const Page = () => {
 
       const data = (await res.json()) as SettingsType;
       setConfig(data);
+
+      // Set search engine backends if they exist in the response
+      if (data.searchEngineBackends) {
+        setSearchEngineBackends({
+          search: data.searchEngineBackends.search || '',
+          image: data.searchEngineBackends.image || '',
+          video: data.searchEngineBackends.video || '',
+          news: data.searchEngineBackends.news || '',
+        });
+      }
 
       const chatModelProvidersKeys = Object.keys(data.chatModelProviders || {});
       const embeddingModelProvidersKeys = Object.keys(
@@ -331,6 +359,8 @@ const Page = () => {
         localStorage.setItem('embeddingModelProvider', value);
       } else if (key === 'embeddingModel') {
         localStorage.setItem('embeddingModel', value);
+      } else if (key === 'searchEngineBackends') {
+        localStorage.setItem('searchEngineBackends', value);
       }
     } catch (err) {
       console.error('Failed to save:', err);
@@ -789,6 +819,234 @@ const Page = () => {
                       }));
                     }}
                     onSave={(value) => saveConfig('geminiApiKey', value)}
+                  />
+                </div>
+              </div>
+            </SettingsSection>
+
+            <SettingsSection title="Search Engine Settings">
+              <div className="flex flex-col space-y-4">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Default Search Engine
+                  </p>
+                  <Select
+                    value={searchEngineBackends.search}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSearchEngineBackends((prev) => ({
+                        ...prev,
+                        search: value,
+                      }));
+                      saveConfig('searchEngineBackends', {
+                        ...searchEngineBackends,
+                        search: value,
+                      });
+                    }}
+                    options={[
+                      { value: 'searxng', label: 'SearXNG' },
+                      { value: 'google', label: 'Google' },
+                      { value: 'bing', label: 'Bing' },
+                      { value: 'brave', label: 'Brave' },
+                      { value: 'yacy', label: 'YaCy' },
+                    ]}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Image Search Engine
+                  </p>
+                  <Select
+                    value={searchEngineBackends.image}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSearchEngineBackends((prev) => ({
+                        ...prev,
+                        image: value,
+                      }));
+                      saveConfig('searchEngineBackends', {
+                        ...searchEngineBackends,
+                        image: value,
+                      });
+                    }}
+                    options={[
+                      { value: '', label: 'Use Default Search Engine' },
+                      { value: 'searxng', label: 'SearXNG' },
+                      { value: 'google', label: 'Google' },
+                      { value: 'bing', label: 'Bing' },
+                      { value: 'brave', label: 'Brave' },
+                    ]}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Video Search Engine
+                  </p>
+                  <Select
+                    value={searchEngineBackends.video}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSearchEngineBackends((prev) => ({
+                        ...prev,
+                        video: value,
+                      }));
+                      saveConfig('searchEngineBackends', {
+                        ...searchEngineBackends,
+                        video: value,
+                      });
+                    }}
+                    options={[
+                      { value: '', label: 'Use Default Search Engine' },
+                      { value: 'searxng', label: 'SearXNG' },
+                      { value: 'google', label: 'Google' },
+                      { value: 'bing', label: 'Bing' },
+                      { value: 'brave', label: 'Brave' },
+                    ]}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    News Search Engine
+                  </p>
+                  <Select
+                    value={searchEngineBackends.news}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSearchEngineBackends((prev) => ({
+                        ...prev,
+                        news: value,
+                      }));
+                      saveConfig('searchEngineBackends', {
+                        ...searchEngineBackends,
+                        news: value,
+                      });
+                    }}
+                    options={[
+                      { value: '', label: 'Use Default Search Engine' },
+                      { value: 'searxng', label: 'SearXNG' },
+                      { value: 'google', label: 'Google' },
+                      { value: 'bing', label: 'Bing' },
+                      { value: 'brave', label: 'Brave' },
+                    ]}
+                  />
+                </div>
+
+                <div className="pt-4 border-t border-light-200 dark:border-dark-200">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-black/70 dark:text-white/70 text-sm">
+                      SearXNG Endpoint
+                    </p>
+                    <Input
+                      type="text"
+                      placeholder="SearXNG API Endpoint"
+                      value={config.searxngEndpoint || ''}
+                      isSaving={savingStates['searxngEndpoint']}
+                      onChange={(e) => {
+                        setConfig((prev) => ({
+                          ...prev!,
+                          searxngEndpoint: e.target.value,
+                        }));
+                      }}
+                      onSave={(value) => saveConfig('searxngEndpoint', value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Google API Key
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="Google API Key"
+                    value={config.googleApiKey || ''}
+                    isSaving={savingStates['googleApiKey']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        googleApiKey: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('googleApiKey', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Google CSE ID
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="Google Custom Search Engine ID"
+                    value={config.googleCseId || ''}
+                    isSaving={savingStates['googleCseId']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        googleCseId: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('googleCseId', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Bing Subscription Key
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="Bing Subscription Key"
+                    value={config.bingSubscriptionKey || ''}
+                    isSaving={savingStates['bingSubscriptionKey']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        bingSubscriptionKey: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('bingSubscriptionKey', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Brave API Key
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="Brave API Key"
+                    value={config.braveApiKey || ''}
+                    isSaving={savingStates['braveApiKey']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        braveApiKey: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('braveApiKey', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    YaCy Endpoint
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="YaCy API Endpoint"
+                    value={config.yacyEndpoint || ''}
+                    isSaving={savingStates['yacyEndpoint']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        yacyEndpoint: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('yacyEndpoint', value)}
                   />
                 </div>
               </div>
