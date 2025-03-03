@@ -35,13 +35,26 @@ services:
       context: .
       dockerfile: app.dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
-        - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
+        - NEXT_PUBLIC_API_URL=/api
+        - NEXT_PUBLIC_WS_URL=auto
     image: itzcrazykns1337/perplexica-frontend:main
     depends_on:
       - perplexica-backend
     ports:
       - 3000:3000
+    networks:
+      - perplexica-network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - perplexica-frontend
+      - perplexica-backend
     networks:
       - perplexica-network
     restart: unless-stopped
