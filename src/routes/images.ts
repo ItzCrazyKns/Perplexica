@@ -9,6 +9,7 @@ import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
+  getCustomOpenaiTemperature,
 } from '../config';
 
 const router = express.Router();
@@ -50,7 +51,7 @@ router.post('/', async (req, res) => {
       llm = new ChatOpenAI({
         modelName: getCustomOpenaiModelName(),
         openAIApiKey: getCustomOpenaiApiKey(),
-        temperature: 0.7,
+        temperature: getCustomOpenaiTemperature(),
         configuration: {
           baseURL: getCustomOpenaiApiUrl(),
         },

@@ -8,6 +8,7 @@ import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
+  getCustomOpenaiTemperature,
 } from '../../config';
 import { ChatOpenAI } from '@langchain/openai';
 
@@ -39,6 +40,7 @@ export const getAvailableChatModelProviders = async () => {
   const customOpenAiApiKey = getCustomOpenaiApiKey();
   const customOpenAiApiUrl = getCustomOpenaiApiUrl();
   const customOpenAiModelName = getCustomOpenaiModelName();
+  const customOpenAiTemperature = getCustomOpenaiTemperature();
 
   models['custom_openai'] = {
     ...(customOpenAiApiKey && customOpenAiApiUrl && customOpenAiModelName
@@ -48,7 +50,7 @@ export const getAvailableChatModelProviders = async () => {
             model: new ChatOpenAI({
               openAIApiKey: customOpenAiApiKey,
               modelName: customOpenAiModelName,
-              temperature: 0.7,
+              temperature: customOpenAiTemperature,
               configuration: {
                 baseURL: customOpenAiApiUrl,
               },

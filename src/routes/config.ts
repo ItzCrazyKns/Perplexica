@@ -13,6 +13,7 @@ import {
   getCustomOpenaiApiUrl,
   getCustomOpenaiApiKey,
   getCustomOpenaiModelName,
+  getCustomOpenaiTemperature,
 } from '../config';
 import logger from '../utils/logger';
 
@@ -60,6 +61,7 @@ router.get('/', async (_, res) => {
     config['customOpenaiApiUrl'] = getCustomOpenaiApiUrl();
     config['customOpenaiApiKey'] = getCustomOpenaiApiKey();
     config['customOpenaiModelName'] = getCustomOpenaiModelName();
+    config['customOpenaiTemperature'] = getCustomOpenaiTemperature();
 
     res.status(200).json(config);
   } catch (err: any) {

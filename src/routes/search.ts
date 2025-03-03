@@ -14,6 +14,7 @@ import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
+  getCustomOpenaiTemperature,
 } from '../config';
 
 const router = express.Router();
@@ -23,6 +24,7 @@ interface chatModel {
   model: string;
   customOpenAIKey?: string;
   customOpenAIBaseURL?: string;
+  customOpenAITemperature?: number;
 }
 
 interface embeddingModel {
@@ -87,7 +89,9 @@ router.post('/', async (req, res) => {
         modelName: body.chatModel?.model || getCustomOpenaiModelName(),
         openAIApiKey:
           body.chatModel?.customOpenAIKey || getCustomOpenaiApiKey(),
-        temperature: 0.7,
+        temperature:
+          body.chatModel?.customOpenAITemperature ||
+          getCustomOpenaiTemperature(),
         configuration: {
           baseURL:
             body.chatModel?.customOpenAIBaseURL || getCustomOpenaiApiUrl(),

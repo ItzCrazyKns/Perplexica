@@ -23,6 +23,7 @@ interface SettingsType {
   customOpenaiApiKey: string;
   customOpenaiApiUrl: string;
   customOpenaiModelName: string;
+  customOpenaiTemperature: number;
 }
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -573,6 +574,32 @@ const Page = () => {
                         }}
                         onSave={(value) =>
                           saveConfig('customOpenaiModelName', value)
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-black/70 dark:text-white/70 text-sm">
+                        Temperature
+                      </p>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={0.1}
+                        max={1}
+                        placeholder="Temperature"
+                        value={config.customOpenaiTemperature}
+                        isSaving={savingStates['customOpenaiTemperature']}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          setConfig((prev) => ({
+                            ...prev!,
+                            customOpenaiTemperature: parseInt(
+                              e.target.value,
+                              10,
+                            ),
+                          }));
+                        }}
+                        onSave={(value) =>
+                          saveConfig('customOpenaiTemperature', value)
                         }
                       />
                     </div>

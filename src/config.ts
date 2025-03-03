@@ -30,6 +30,7 @@ interface Config {
       API_URL: string;
       API_KEY: string;
       MODEL_NAME: string;
+      TEMPERATURE: number;
     };
   };
   API_ENDPOINTS: {
@@ -74,6 +75,9 @@ export const getCustomOpenaiApiUrl = () =>
 
 export const getCustomOpenaiModelName = () =>
   loadConfig().MODELS.CUSTOM_OPENAI.MODEL_NAME;
+
+export const getCustomOpenaiTemperature = () =>
+  loadConfig().MODELS.CUSTOM_OPENAI.TEMPERATURE;
 
 const mergeConfigs = (current: any, update: any): any => {
   if (update === null || update === undefined) {
