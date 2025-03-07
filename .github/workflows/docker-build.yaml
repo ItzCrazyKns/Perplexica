@@ -1,0 +1,73 @@
+name: Build & Push Docker Images
+
+on:
+  push:
+    branches:
+      - master
+  release:
+    types: [published]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [backend, app]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          install: true
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract version from release tag
+        if: github.event_name == 'release'
+        id: version
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Build and push Docker image for ${{ matrix.service }}
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+        run: |
+          docker buildx create --use
+          if [[ "${{ matrix.service }}" == "backend" ]]; then \
+            DOCKERFILE=backend.dockerfile; \
+            IMAGE_NAME=perplexica-backend; \
+          else \
+            DOCKERFILE=app.dockerfile; \
+            IMAGE_NAME=perplexica-frontend; \
+          fi
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            --cache-from=type=registry,ref=itzcrazykns1337/${IMAGE_NAME}:main \
+            --cache-to=type=inline \
+            -f $DOCKERFILE \
+            -t itzcrazykns1337/${IMAGE_NAME}:main \
+            --push .
+
+      - name: Build and push release Docker image for ${{ matrix.service }}
+        if: github.event_name == 'release'
+        run: |
+          docker buildx create --use
+          if [[ "${{ matrix.service }}" == "backend" ]]; then \
+            DOCKERFILE=backend.dockerfile; \
+            IMAGE_NAME=perplexica-backend; \
+          else \
+            DOCKERFILE=app.dockerfile; \
+            IMAGE_NAME=perplexica-frontend; \
+          fi
+          docker buildx build --platform linux/amd64,linux/arm64 \
+            --cache-from=type=registry,ref=itzcrazykns1337/${IMAGE_NAME}:${{ env.RELEASE_VERSION }} \
+            --cache-to=type=inline \
+            -f $DOCKERFILE \
+            -t itzcrazykns1337/${IMAGE_NAME}:${{ env.RELEASE_VERSION }} \
+            --push .

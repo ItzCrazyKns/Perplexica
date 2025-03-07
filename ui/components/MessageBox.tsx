@@ -68,7 +68,7 @@ const MessageBox = ({
   return (
     <div>
       {message.role === 'user' && (
-        <div className={cn('w-full', messageIndex === 0 ? 'pt-16' : 'pt-8')}>
+        <div className={cn('w-full', messageIndex === 0 ? 'pt-16' : 'pt-8', 'break-words')}>
           <h2 className="text-black dark:text-white font-medium text-3xl lg:w-9/12">
             {message.content}
           </h2>
@@ -107,8 +107,8 @@ const MessageBox = ({
               </div>
               <Markdown
                 className={cn(
-                  'prose dark:prose-invert prose-p:leading-relaxed prose-pre:p-0',
-                  'max-w-none break-words text-black dark:text-white text-sm md:text-base font-medium',
+                  'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
+                  'max-w-none break-words text-black dark:text-white',
                 )}
               >
                 {parsedMessage}
@@ -186,10 +186,10 @@ const MessageBox = ({
           <div className="lg:sticky lg:top-20 flex flex-col items-center space-y-3 w-full lg:w-3/12 z-30 h-full pb-4">
             <SearchImages
               query={history[messageIndex - 1].content}
-              chat_history={history.slice(0, messageIndex - 1)}
+              chatHistory={history.slice(0, messageIndex - 1)}
             />
             <SearchVideos
-              chat_history={history.slice(0, messageIndex - 1)}
+              chatHistory={history.slice(0, messageIndex - 1)}
               query={history[messageIndex - 1].content}
             />
           </div>

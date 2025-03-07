@@ -4,13 +4,23 @@ import { useEffect, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import Attach from './MessageInputActions/Attach';
 import CopilotToggle from './MessageInputActions/Copilot';
+import { File } from './ChatWindow';
+import AttachSmall from './MessageInputActions/AttachSmall';
 
 const MessageInput = ({
   sendMessage,
   loading,
+  fileIds,
+  setFileIds,
+  files,
+  setFiles,
 }: {
   sendMessage: (message: string) => void;
   loading: boolean;
+  fileIds: string[];
+  setFileIds: (fileIds: string[]) => void;
+  files: File[];
+  setFiles: (files: File[]) => void;
 }) => {
   const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [message, setMessage] = useState('');
@@ -27,14 +37,21 @@ const MessageInput = ({
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === '/') {
-      e.preventDefault();
-      inputRef.current?.focus();
-    }
-  };
-
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement;
+
+      const isInputFocused =
+        activeElement?.tagName === 'INPUT' ||
+        activeElement?.tagName === 'TEXTAREA' ||
+        activeElement?.hasAttribute('contenteditable');
+
+      if (e.key === '/' && !isInputFocused) {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
@@ -62,7 +79,14 @@ const MessageInput = ({
         mode === 'multi' ? 'flex-col rounded-lg' : 'flex-row rounded-full',
       )}
     >
-      {mode === 'single' && <Attach />}
+      {mode === 'single' && (
+        <AttachSmall
+          fileIds={fileIds}
+          setFileIds={setFileIds}
+          files={files}
+          setFiles={setFiles}
+        />
+      )}
       <TextareaAutosize
         ref={inputRef}
         value={message}
@@ -89,7 +113,12 @@ const MessageInput = ({
       )}
       {mode === 'multi' && (
         <div className="flex flex-row items-center justify-between w-full pt-2">
-          <Attach />
+          <AttachSmall
+            fileIds={fileIds}
+            setFileIds={setFileIds}
+            files={files}
+            setFiles={setFiles}
+          />
           <div className="flex flex-row items-center space-x-4">
             <CopilotToggle
               copilotEnabled={copilotEnabled}

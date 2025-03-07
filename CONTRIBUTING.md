@@ -8,6 +8,7 @@ Perplexica's design consists of two main domains:
 
 - **Frontend (`ui` directory)**: This is a Next.js application holding all user interface components. It's a self-contained environment that manages everything the user interacts with.
 - **Backend (root and `src` directory)**: The backend logic is situated in the `src` folder, but the root directory holds the main `package.json` for backend dependency management.
+  - All of the focus modes are created using the Meta Search Agent class present in `src/search/metaSearchAgent.ts`. The main logic behind Perplexica lies there.
 
 ## Setting Up Your Environment
 
@@ -18,7 +19,8 @@ Before diving into coding, setting up your local environment is key. Here's what
 1. In the root directory, locate the `sample.config.toml` file.
 2. Rename it to `config.toml` and fill in the necessary configuration fields specific to the backend.
 3. Run `npm install` to install dependencies.
-4. Use `npm run dev` to start the backend in development mode.
+4. Run `npm run db:push` to set up the local sqlite.
+5. Use `npm run dev` to start the backend in development mode.
 
 ### Frontend
 

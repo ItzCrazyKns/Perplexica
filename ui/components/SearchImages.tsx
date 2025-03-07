@@ -13,10 +13,10 @@ type Image = {
 
 const SearchImages = ({
   query,
-  chat_history,
+  chatHistory,
 }: {
   query: string;
-  chat_history: Message[];
+  chatHistory: Message[];
 }) => {
   const [images, setImages] = useState<Image[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -27,11 +27,15 @@ const SearchImages = ({
     <>
       {!loading && images === null && (
         <button
+          id="search-images"
           onClick={async () => {
             setLoading(true);
 
             const chatModelProvider = localStorage.getItem('chatModelProvider');
             const chatModel = localStorage.getItem('chatModel');
+
+            const customOpenAIBaseURL = localStorage.getItem('openAIBaseURL');
+            const customOpenAIKey = localStorage.getItem('openAIApiKey');
 
             const res = await fetch(
               `${process.env.NEXT_PUBLIC_API_URL}/images`,
@@ -42,16 +46,22 @@ const SearchImages = ({
                 },
                 body: JSON.stringify({
                   query: query,
-                  chat_history: chat_history,
-                  chat_model_provider: chatModelProvider,
-                  chat_model: chatModel,
+                  chatHistory: chatHistory,
+                  chatModel: {
+                    provider: chatModelProvider,
+                    model: chatModel,
+                    ...(chatModelProvider === 'custom_openai' && {
+                      customOpenAIBaseURL: customOpenAIBaseURL,
+                      customOpenAIKey: customOpenAIKey,
+                    }),
+                  },
                 }),
               },
             );
 
             const data = await res.json();
 
-            const images = data.images;
+            const images = data.images ?? [];
             setImages(images);
             setSlides(
               images.map((image: Image) => {

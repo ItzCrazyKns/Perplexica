@@ -1,19 +1,18 @@
 import { EventEmitter, WebSocket } from 'ws';
 import { BaseMessage, AIMessage, HumanMessage } from '@langchain/core/messages';
-import handleWebSearch from '../agents/webSearchAgent';
-import handleAcademicSearch from '../agents/academicSearchAgent';
-import handleWritingAssistant from '../agents/writingAssistant';
-import handleWolframAlphaSearch from '../agents/wolframAlphaSearchAgent';
-import handleYoutubeSearch from '../agents/youtubeSearchAgent';
-import handleRedditSearch from '../agents/redditSearchAgent';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { Embeddings } from '@langchain/core/embeddings';
 import logger from '../utils/logger';
 import db from '../db';
-import { chats, messages } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { chats, messages as messagesSchema } from '../db/schema';
+import { eq, gt, and } from 'drizzle-orm';
 import crypto from 'crypto';
 import { isLibraryEnabled } from '../config';
+import { getFileDetails } from '../utils/files';
+import MetaSearchAgent, {
+  MetaSearchAgentType,
+} from '../search/metaSearchAgent';
+import prompts from '../prompts';
 
 type Message = {
   messageId: string;
@@ -23,19 +22,68 @@ type Message = {
 
 type WSMessage = {
   message: Message;
-  copilot: boolean;
+  optimizationMode: 'speed' | 'balanced' | 'quality';
   type: string;
   focusMode: string;
   history: Array<[string, string]>;
+  files: Array<string>;
 };
 
-const searchHandlers = {
-  webSearch: handleWebSearch,
-  academicSearch: handleAcademicSearch,
-  writingAssistant: handleWritingAssistant,
-  wolframAlphaSearch: handleWolframAlphaSearch,
-  youtubeSearch: handleYoutubeSearch,
-  redditSearch: handleRedditSearch,
+export const searchHandlers = {
+  webSearch: new MetaSearchAgent({
+    activeEngines: [],
+    queryGeneratorPrompt: prompts.webSearchRetrieverPrompt,
+    responsePrompt: prompts.webSearchResponsePrompt,
+    rerank: true,
+    rerankThreshold: 0.3,
+    searchWeb: true,
+    summarizer: true,
+  }),
+  academicSearch: new MetaSearchAgent({
+    activeEngines: ['arxiv', 'google scholar', 'pubmed'],
+    queryGeneratorPrompt: prompts.academicSearchRetrieverPrompt,
+    responsePrompt: prompts.academicSearchResponsePrompt,
+    rerank: true,
+    rerankThreshold: 0,
+    searchWeb: true,
+    summarizer: false,
+  }),
+  writingAssistant: new MetaSearchAgent({
+    activeEngines: [],
+    queryGeneratorPrompt: '',
+    responsePrompt: prompts.writingAssistantPrompt,
+    rerank: true,
+    rerankThreshold: 0,
+    searchWeb: false,
+    summarizer: false,
+  }),
+  wolframAlphaSearch: new MetaSearchAgent({
+    activeEngines: ['wolframalpha'],
+    queryGeneratorPrompt: prompts.wolframAlphaSearchRetrieverPrompt,
+    responsePrompt: prompts.wolframAlphaSearchResponsePrompt,
+    rerank: false,
+    rerankThreshold: 0,
+    searchWeb: true,
+    summarizer: false,
+  }),
+  youtubeSearch: new MetaSearchAgent({
+    activeEngines: ['youtube'],
+    queryGeneratorPrompt: prompts.youtubeSearchRetrieverPrompt,
+    responsePrompt: prompts.youtubeSearchResponsePrompt,
+    rerank: true,
+    rerankThreshold: 0.3,
+    searchWeb: true,
+    summarizer: false,
+  }),
+  redditSearch: new MetaSearchAgent({
+    activeEngines: ['reddit'],
+    queryGeneratorPrompt: prompts.redditSearchRetrieverPrompt,
+    responsePrompt: prompts.redditSearchResponsePrompt,
+    rerank: true,
+    rerankThreshold: 0.3,
+    searchWeb: true,
+    summarizer: false,
+  }),
 };
 
 const handleEmitterEvents = (
@@ -75,7 +123,7 @@ const handleEmitterEvents = (
     ws.send(JSON.stringify({ type: 'messageEnd', messageId: messageId }));
 
     if (libraryEnabled) {
-      db.insert(messages)
+      db.insert(messagesSchema)
         .values({
           content: recievedMessage,
           chatId: chatId,
@@ -111,7 +159,14 @@ export const handleMessage = async (
     const parsedWSMessage = JSON.parse(message) as WSMessage;
     const parsedMessage = parsedWSMessage.message;
 
-    const id = crypto.randomBytes(7).toString('hex');
+    if (parsedWSMessage.files.length > 0) {
+      /* TODO: Implement uploads in other classes/single meta class system*/
+      parsedWSMessage.focusMode = 'webSearch';
+    }
+
+    const humanMessageId =
+      parsedMessage.messageId ?? crypto.randomBytes(7).toString('hex');
+    const aiMessageId = crypto.randomBytes(7).toString('hex');
 
     if (!parsedMessage.content)
       return ws.send(
@@ -135,49 +190,73 @@ export const handleMessage = async (
     });
 
     if (parsedWSMessage.type === 'message') {
-      const handler = searchHandlers[parsedWSMessage.focusMode];
+      const handler: MetaSearchAgentType =
+        searchHandlers[parsedWSMessage.focusMode];
 
       const libraryEnabled = isLibraryEnabled();
 
       if (handler) {
-        const emitter = handler(
-          parsedMessage.content,
-          history,
-          llm,
-          embeddings,
-        );
+        try {
+          const emitter = await handler.searchAndAnswer(
+            parsedMessage.content,
+            history,
+            llm,
+            embeddings,
+            parsedWSMessage.optimizationMode,
+            parsedWSMessage.files,
+          );
 
-        handleEmitterEvents(emitter, ws, id, parsedMessage.chatId);
+          handleEmitterEvents(emitter, ws, aiMessageId, parsedMessage.chatId);
 
-        if (libraryEnabled) {
-          const chat = await db.query.chats.findFirst({
-            where: eq(chats.id, parsedMessage.chatId),
-          });
+          if (libraryEnabled) {
+            const chat = await db.query.chats.findFirst({
+              where: eq(chats.id, parsedMessage.chatId),
+            });
 
-          if (!chat) {
-            await db
-              .insert(chats)
-              .values({
-                id: parsedMessage.chatId,
-                title: parsedMessage.content,
-                createdAt: new Date().toString(),
-                focusMode: parsedWSMessage.focusMode,
-              })
-              .execute();
+            if (!chat) {
+              await db
+                .insert(chats)
+                .values({
+                  id: parsedMessage.chatId,
+                  title: parsedMessage.content,
+                  createdAt: new Date().toString(),
+                  focusMode: parsedWSMessage.focusMode,
+                  files: parsedWSMessage.files.map(getFileDetails),
+                })
+                .execute();
+            }
+
+            const messageExists = await db.query.messages.findFirst({
+              where: eq(messagesSchema.messageId, humanMessageId),
+            });
+
+            if (!messageExists) {
+              await db
+                .insert(messagesSchema)
+                .values({
+                  content: parsedMessage.content,
+                  chatId: parsedMessage.chatId,
+                  messageId: humanMessageId,
+                  role: 'user',
+                  metadata: JSON.stringify({
+                    createdAt: new Date(),
+                  }),
+                })
+                .execute();
+            } else {
+              await db
+                .delete(messagesSchema)
+                .where(
+                  and(
+                    gt(messagesSchema.id, messageExists.id),
+                    eq(messagesSchema.chatId, parsedMessage.chatId),
+                  ),
+                )
+                .execute();
+            }
           }
-
-          await db
-            .insert(messages)
-            .values({
-              content: parsedMessage.content,
-              chatId: parsedMessage.chatId,
-              messageId: id,
-              role: 'user',
-              metadata: JSON.stringify({
-                createdAt: new Date(),
-              }),
-            })
-            .execute();
+        } catch (err) {
+          console.log(err);
         }
       } else {
         ws.send(
