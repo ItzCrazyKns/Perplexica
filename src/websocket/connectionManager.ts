@@ -13,6 +13,7 @@ import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
+  getCustomOpenaiTemperature,
 } from '../config';
 
 export const handleConnection = async (
@@ -56,12 +57,13 @@ export const handleConnection = async (
       const customOpenaiApiKey = getCustomOpenaiApiKey();
       const customOpenaiApiUrl = getCustomOpenaiApiUrl();
       const customOpenaiModelName = getCustomOpenaiModelName();
+      const customOpenaiTemperature = getCustomOpenaiTemperature();
 
       if (customOpenaiApiKey && customOpenaiApiUrl && customOpenaiModelName) {
         llm = new ChatOpenAI({
           modelName: customOpenaiModelName,
           openAIApiKey: customOpenaiApiKey,
-          temperature: 0.7,
+          temperature: customOpenaiTemperature,
           configuration: {
             baseURL: customOpenaiApiUrl,
           },
