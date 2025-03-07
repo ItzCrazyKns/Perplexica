@@ -1,5 +1,21 @@
 # 🚀 Perplexica - An AI-powered search engine 🔎 <!-- omit in toc -->
 
+<div align="center" markdown="1">
+   <sup>Special thanks to:</sup>
+   <br>
+   <br>
+   <a href="https://www.warp.dev/perplexica">
+      <img alt="Warp sponsorship" width="400" src="https://github.com/user-attachments/assets/775dd593-9b5f-40f1-bf48-479faff4c27b">
+   </a>
+
+### [Warp, the AI Devtool that lives in your terminal](https://www.warp.dev/perplexica)
+
+[Available for MacOS, Linux, & Windows](https://www.warp.dev/perplexica)
+
+</div>
+
+<hr/>
+
 [![Discord](https://dcbadge.vercel.app/api/server/26aArMy8tT?style=flat&compact=true)](https://discord.gg/26aArMy8tT)
 
 ![preview](.assets/perplexica-screenshot.png?)
@@ -43,7 +59,7 @@ Want to know more about its architecture and how it works? You can read it [here
   - **Normal Mode:** Processes your query and performs a web search.
 - **Focus Modes:** Special modes to better answer specific types of questions. Perplexica currently has 6 focus modes:
   - **All Mode:** Searches the entire web to find the best results.
-  - **Writing Assistant Mode:** Helpful for writing tasks that does not require searching the web.
+  - **Writing Assistant Mode:** Helpful for writing tasks that do not require searching the web.
   - **Academic Search Mode:** Finds articles and papers, ideal for academic research.
   - **YouTube Search Mode:** Finds YouTube videos based on the search query.
   - **Wolfram Alpha Search Mode:** Answers queries that need calculations or data analysis using Wolfram Alpha.
@@ -142,6 +158,7 @@ You can access Perplexica over your home network by following our networking gui
 
 ## One-Click Deployment
 
+[![Deploy to Sealos](https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg)](https://usw.sealos.io/?openapp=system-template%3FtemplateName%3Dperplexica)
 [![Deploy to RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/?app_id=267)
 
 ## Upcoming Features
