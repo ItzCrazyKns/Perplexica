@@ -1,6 +1,6 @@
 {
   "name": "perplexica-frontend",
-  "version": "1.9.0-rc1",
+  "version": "1.10.0-rc3",
   "license": "MIT",
   "author": "ItzCrazyKns",
   "scripts": {
@@ -11,14 +11,14 @@
     "format:write": "prettier . --write"
   },
   "dependencies": {
-    "@headlessui/react": "^1.7.18",
+    "@headlessui/react": "^2.2.0",
     "@icons-pack/react-simple-icons": "^9.4.0",
     "@langchain/openai": "^0.0.25",
     "@tailwindcss/typography": "^0.5.12",
     "clsx": "^2.1.0",
     "langchain": "^0.1.30",
     "lucide-react": "^0.363.0",
-    "markdown-to-jsx": "^7.4.5",
+    "markdown-to-jsx": "^7.7.2",
     "next": "14.1.4",
     "next-themes": "^0.3.0",
     "react": "^18",

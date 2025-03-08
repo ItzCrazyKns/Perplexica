@@ -9,7 +9,9 @@ import crypto from 'crypto';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import { getSuggestions } from '@/lib/actions';
-import Error from 'next/error';
+import { Settings } from 'lucide-react';
+import Link from 'next/link';
+import NextError from 'next/error';
 
 export type Message = {
   messageId: string;
@@ -21,22 +23,53 @@ export type Message = {
   sources?: Document[];
 };
 
+export interface File {
+  fileName: string;
+  fileExtension: string;
+  fileId: string;
+}
+
 const useSocket = (
   url: string,
   setIsWSReady: (ready: boolean) => void,
   setError: (error: boolean) => void,
 ) => {
-  const [ws, setWs] = useState<WebSocket | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const retryCountRef = useRef(0);
+  const isCleaningUpRef = useRef(false);
+  const MAX_RETRIES = 3;
+  const INITIAL_BACKOFF = 1000; // 1 second
+  const isConnectionErrorRef = useRef(false);
+
+  const getBackoffDelay = (retryCount: number) => {
+    return Math.min(INITIAL_BACKOFF * Math.pow(2, retryCount), 10000); // Cap at 10 seconds
+  };
 
   useEffect(() => {
-    if (!ws) {
-      const connectWs = async () => {
+    const connectWs = async () => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
+      }
+
+      try {
         let chatModel = localStorage.getItem('chatModel');
         let chatModelProvider = localStorage.getItem('chatModelProvider');
         let embeddingModel = localStorage.getItem('embeddingModel');
         let embeddingModelProvider = localStorage.getItem(
           'embeddingModelProvider',
         );
+
+        const autoImageSearch = localStorage.getItem('autoImageSearch');
+        const autoVideoSearch = localStorage.getItem('autoVideoSearch');
+
+        if (!autoImageSearch) {
+          localStorage.setItem('autoImageSearch', 'true');
+        }
+
+        if (!autoVideoSearch) {
+          localStorage.setItem('autoVideoSearch', 'false');
+        }
 
         const providers = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/models`,
@@ -45,7 +78,13 @@ const useSocket = (
               'Content-Type': 'application/json',
             },
           },
-        ).then(async (res) => await res.json());
+        ).then(async (res) => {
+          if (!res.ok)
+            throw new Error(
+              `Failed to fetch models: ${res.status} ${res.statusText}`,
+            );
+          return res.json();
+        });
 
         if (
           !chatModel ||
@@ -56,20 +95,16 @@ const useSocket = (
           if (!chatModel || !chatModelProvider) {
             const chatModelProviders = providers.chatModelProviders;
 
-            chatModelProvider = Object.keys(chatModelProviders)[0];
+            chatModelProvider =
+              chatModelProvider || Object.keys(chatModelProviders)[0];
 
-            if (chatModelProvider === 'custom_openai') {
-              toast.error('Seems like you are using the custom OpenAI provider, please open the settings and configure the API key and base URL');
-              setError(true);
-              return;
-            } else {
-              chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
-              if (
-                !chatModelProviders ||
-                Object.keys(chatModelProviders).length === 0
-              )
-                return toast.error('No chat models available');
-            }
+            chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
+
+            if (
+              !chatModelProviders ||
+              Object.keys(chatModelProviders).length === 0
+            )
+              return toast.error('No chat models available');
           }
 
           if (!embeddingModel || !embeddingModelProvider) {
@@ -102,16 +137,26 @@ const useSocket = (
             Object.keys(chatModelProviders).length > 0 &&
             !chatModelProviders[chatModelProvider]
           ) {
-            chatModelProvider = Object.keys(chatModelProviders)[0];
+            const chatModelProvidersKeys = Object.keys(chatModelProviders);
+            chatModelProvider =
+              chatModelProvidersKeys.find(
+                (key) => Object.keys(chatModelProviders[key]).length > 0,
+              ) || chatModelProvidersKeys[0];
+
             localStorage.setItem('chatModelProvider', chatModelProvider);
           }
 
           if (
             chatModelProvider &&
-            chatModelProvider != 'custom_openai' &&
             !chatModelProviders[chatModelProvider][chatModel]
           ) {
-            chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
+            chatModel = Object.keys(
+              chatModelProviders[
+                Object.keys(chatModelProviders[chatModelProvider]).length > 0
+                  ? chatModelProvider
+                  : Object.keys(chatModelProviders)[0]
+              ],
+            )[0];
             localStorage.setItem('chatModel', chatModel);
           }
 
@@ -160,6 +205,7 @@ const useSocket = (
         wsURL.search = searchParams.toString();
 
         const ws = new WebSocket(wsURL.toString());
+        wsRef.current = ws;
 
         const timeoutId = setTimeout(() => {
           if (ws.readyState !== 1) {
@@ -169,46 +215,94 @@ const useSocket = (
           }
         }, 10000);
 
-        ws.onopen = () => {
-          console.log('[DEBUG] open');
-          clearTimeout(timeoutId);
-          setIsWSReady(true);
-        };
+        ws.addEventListener('message', (e) => {
+          const data = JSON.parse(e.data);
+          if (data.type === 'signal' && data.data === 'open') {
+            const interval = setInterval(() => {
+              if (ws.readyState === 1) {
+                setIsWSReady(true);
+                setError(false);
+                if (retryCountRef.current > 0) {
+                  toast.success('Connection restored.');
+                }
+                retryCountRef.current = 0;
+                clearInterval(interval);
+              }
+            }, 5);
+            clearTimeout(timeoutId);
+            console.debug(new Date(), 'ws:connected');
+          }
+          if (data.type === 'error') {
+            isConnectionErrorRef.current = true;
+            setError(true);
+            toast.error(data.data);
+          }
+        });
 
         ws.onerror = () => {
           clearTimeout(timeoutId);
-          setError(true);
+          setIsWSReady(false);
           toast.error('WebSocket connection error.');
         };
 
         ws.onclose = () => {
           clearTimeout(timeoutId);
-          setError(true);
-          console.log('[DEBUG] closed');
-        };
-
-        ws.addEventListener('message', (e) => {
-          const data = JSON.parse(e.data);
-          if (data.type === 'error') {
-            toast.error(data.data);
+          setIsWSReady(false);
+          console.debug(new Date(), 'ws:disconnected');
+          if (!isCleaningUpRef.current && !isConnectionErrorRef.current) {
+            toast.error('Connection lost. Attempting to reconnect...');
+            attemptReconnect();
           }
-        })
-
-        setWs(ws);
-      };
-
-      connectWs();
-    }
-
-    return () => {
-      if (ws?.readyState === 1) {
-        ws?.close();
-        console.log('[DEBUG] closed');
+        };
+      } catch (error) {
+        console.debug(new Date(), 'ws:error', error);
+        setIsWSReady(false);
+        attemptReconnect();
       }
     };
-  }, [ws, url, setIsWSReady, setError]);
 
-  return ws;
+    const attemptReconnect = () => {
+      retryCountRef.current += 1;
+
+      if (retryCountRef.current > MAX_RETRIES) {
+        console.debug(new Date(), 'ws:max_retries');
+        setError(true);
+        toast.error(
+          'Unable to connect to server after multiple attempts. Please refresh the page to try again.',
+        );
+        return;
+      }
+
+      const backoffDelay = getBackoffDelay(retryCountRef.current);
+      console.debug(
+        new Date(),
+        `ws:retry attempt=${retryCountRef.current}/${MAX_RETRIES} delay=${backoffDelay}ms`,
+      );
+
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+
+      reconnectTimeoutRef.current = setTimeout(() => {
+        connectWs();
+      }, backoffDelay);
+    };
+
+    connectWs();
+
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
+        isCleaningUpRef.current = true;
+        console.debug(new Date(), 'ws:cleanup');
+      }
+    };
+  }, [url, setIsWSReady, setError]);
+
+  return wsRef.current;
 };
 
 const loadMessages = async (
@@ -218,6 +312,8 @@ const loadMessages = async (
   setChatHistory: (history: [string, string][]) => void,
   setFocusMode: (mode: string) => void,
   setNotFound: (notFound: boolean) => void,
+  setFiles: (files: File[]) => void,
+  setFileIds: (fileIds: string[]) => void,
 ) => {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/chats/${chatId}`,
@@ -250,9 +346,20 @@ const loadMessages = async (
     return [msg.role, msg.content];
   }) as [string, string][];
 
-  console.log('[DEBUG] messages loaded');
+  console.debug(new Date(), 'app:messages_loaded');
 
   document.title = messages[0].content;
+
+  const files = data.chat.files.map((file: any) => {
+    return {
+      fileName: file.name,
+      fileExtension: file.name.split('.').pop(),
+      fileId: file.fileId,
+    };
+  });
+
+  setFiles(files);
+  setFileIds(files.map((file: File) => file.fileId));
 
   setChatHistory(history);
   setFocusMode(data.chat.focusMode);
@@ -282,11 +389,17 @@ const ChatWindow = ({ id }: { id?: string }) => {
   const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
 
+  const [files, setFiles] = useState<File[]>([]);
+  const [fileIds, setFileIds] = useState<string[]>([]);
+
   const [focusMode, setFocusMode] = useState('webSearch');
+  const [optimizationMode, setOptimizationMode] = useState('speed');
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
   const [notFound, setNotFound] = useState(false);
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (
@@ -302,12 +415,24 @@ const ChatWindow = ({ id }: { id?: string }) => {
         setChatHistory,
         setFocusMode,
         setNotFound,
+        setFiles,
+        setFileIds,
       );
     } else if (!chatId) {
       setNewChatCreated(true);
       setIsMessagesLoaded(true);
       setChatId(crypto.randomBytes(20).toString('hex'));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (ws?.readyState === 1) {
+        ws.close();
+        console.debug(new Date(), 'ws:cleanup');
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -320,11 +445,19 @@ const ChatWindow = ({ id }: { id?: string }) => {
   useEffect(() => {
     if (isMessagesLoaded && isWSReady) {
       setIsReady(true);
+      console.debug(new Date(), 'app:ready');
+    } else {
+      setIsReady(false);
     }
   }, [isMessagesLoaded, isWSReady]);
 
-  const sendMessage = async (message: string) => {
+  const sendMessage = async (message: string, messageId?: string) => {
     if (loading) return;
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      toast.error('Cannot send message while disconnected');
+      return;
+    }
+
     setLoading(true);
     setMessageAppeared(false);
 
@@ -332,16 +465,19 @@ const ChatWindow = ({ id }: { id?: string }) => {
     let recievedMessage = '';
     let added = false;
 
-    const messageId = crypto.randomBytes(7).toString('hex');
+    messageId = messageId ?? crypto.randomBytes(7).toString('hex');
 
-    ws?.send(
+    ws.send(
       JSON.stringify({
         type: 'message',
         message: {
+          messageId: messageId,
           chatId: chatId!,
           content: message,
         },
+        files: fileIds,
         focusMode: focusMode,
+        optimizationMode: optimizationMode,
         history: [...chatHistory, ['human', message]],
       }),
     );
@@ -443,6 +579,17 @@ const ChatWindow = ({ id }: { id?: string }) => {
             }),
           );
         }
+
+        const autoImageSearch = localStorage.getItem('autoImageSearch');
+        const autoVideoSearch = localStorage.getItem('autoVideoSearch');
+
+        if (autoImageSearch === 'true') {
+          document.getElementById('search-images')?.click();
+        }
+
+        if (autoVideoSearch === 'true') {
+          document.getElementById('search-videos')?.click();
+        }
       }
     };
 
@@ -463,40 +610,51 @@ const ChatWindow = ({ id }: { id?: string }) => {
       return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
     });
 
-    sendMessage(message.content);
+    sendMessage(message.content, message.messageId);
   };
 
   useEffect(() => {
-    if (isReady && initialMessage) {
+    if (isReady && initialMessage && ws?.readyState === 1) {
       sendMessage(initialMessage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isReady, initialMessage]);
+  }, [ws?.readyState, isReady, initialMessage, isWSReady]);
 
   if (hasError) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <p className="dark:text-white/70 text-black/70 text-sm">
-          Failed to connect to the server. Please try again later.
-        </p>
+      <div className="relative">
+        <div className="absolute w-full flex flex-row items-center justify-end mr-5 mt-5">
+          <Link href="/settings">
+            <Settings className="cursor-pointer lg:hidden" />
+          </Link>
+        </div>
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <p className="dark:text-white/70 text-black/70 text-sm">
+            Failed to connect to the server. Please try again later.
+          </p>
+        </div>
       </div>
     );
   }
 
   return isReady ? (
     notFound ? (
-      <Error statusCode={404} />
+      <NextError statusCode={404} />
     ) : (
       <div>
         {messages.length > 0 ? (
           <>
-            <Navbar messages={messages} />
+            <Navbar chatId={chatId!} messages={messages} />
             <Chat
               loading={loading}
               messages={messages}
               sendMessage={sendMessage}
               messageAppeared={messageAppeared}
               rewrite={rewrite}
+              fileIds={fileIds}
+              setFileIds={setFileIds}
+              files={files}
+              setFiles={setFiles}
             />
           </>
         ) : (
@@ -504,6 +662,12 @@ const ChatWindow = ({ id }: { id?: string }) => {
             sendMessage={sendMessage}
             focusMode={focusMode}
             setFocusMode={setFocusMode}
+            optimizationMode={optimizationMode}
+            setOptimizationMode={setOptimizationMode}
+            fileIds={fileIds}
+            setFileIds={setFileIds}
+            files={files}
+            setFiles={setFiles}
           />
         )}
       </div>

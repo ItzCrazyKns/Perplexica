@@ -19,6 +19,8 @@ class LineListOutputParser extends BaseOutputParser<string[]> {
   lc_namespace = ['langchain', 'output_parsers', 'line_list_output_parser'];
 
   async parse(text: string): Promise<string[]> {
+    text = text.trim() || '';
+
     const regex = /^(\s*(-|\*|\d+\.\s|\d+\)\s|\u2022)\s*)+/;
     const startKeyIndex = text.indexOf(`<${this.key}>`);
     const endKeyIndex = text.indexOf(`</${this.key}>`);

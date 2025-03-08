@@ -1,6 +1,24 @@
 # 🚀 Perplexica - An AI-powered search engine 🔎 <!-- omit in toc -->
 
-![preview](.assets/perplexica-screenshot.png)
+<div align="center" markdown="1">
+   <sup>Special thanks to:</sup>
+   <br>
+   <br>
+   <a href="https://www.warp.dev/perplexica">
+      <img alt="Warp sponsorship" width="400" src="https://github.com/user-attachments/assets/775dd593-9b5f-40f1-bf48-479faff4c27b">
+   </a>
+
+### [Warp, the AI Devtool that lives in your terminal](https://www.warp.dev/perplexica)
+
+[Available for MacOS, Linux, & Windows](https://www.warp.dev/perplexica)
+
+</div>
+
+<hr/>
+
+[![Discord](https://dcbadge.vercel.app/api/server/26aArMy8tT?style=flat&compact=true)](https://discord.gg/26aArMy8tT)
+
+![preview](.assets/perplexica-screenshot.png?)
 
 ## Table of Contents <!-- omit in toc -->
 
@@ -12,6 +30,8 @@
   - [Non-Docker Installation](#non-docker-installation)
   - [Ollama Connection Errors](#ollama-connection-errors)
 - [Using as a Search Engine](#using-as-a-search-engine)
+- [Using Perplexica's API](#using-perplexicas-api)
+- [Expose Perplexica to a network](#expose-perplexica-to-network)
 - [One-Click Deployment](#one-click-deployment)
 - [Upcoming Features](#upcoming-features)
 - [Support Us](#support-us)
@@ -39,12 +59,13 @@ Want to know more about its architecture and how it works? You can read it [here
   - **Normal Mode:** Processes your query and performs a web search.
 - **Focus Modes:** Special modes to better answer specific types of questions. Perplexica currently has 6 focus modes:
   - **All Mode:** Searches the entire web to find the best results.
-  - **Writing Assistant Mode:** Helpful for writing tasks that does not require searching the web.
+  - **Writing Assistant Mode:** Helpful for writing tasks that do not require searching the web.
   - **Academic Search Mode:** Finds articles and papers, ideal for academic research.
   - **YouTube Search Mode:** Finds YouTube videos based on the search query.
   - **Wolfram Alpha Search Mode:** Answers queries that need calculations or data analysis using Wolfram Alpha.
   - **Reddit Search Mode:** Searches Reddit for discussions and opinions related to the query.
 - **Current Information:** Some search tools might give you outdated info because they use data from crawling bots and convert them into embeddings and store them in a index. Unlike them, Perplexica uses SearxNG, a metasearch engine to get the results and rerank and get the most relevant source out of it, ensuring you always get the latest information without the overhead of daily data updates.
+- **API**: Integrate Perplexica into your existing applications and make use of its capibilities.
 
 It has many more features like image and video search. Some of the planned features are mentioned in [upcoming features](#upcoming-features).
 
@@ -125,8 +146,19 @@ If you wish to use Perplexica as an alternative to traditional search engines li
 3. Add a new site search with the following URL: `http://localhost:3000/?q=%s`. Replace `localhost` with your IP address or domain name, and `3000` with the port number if Perplexica is not hosted locally.
 4. Click the add button. Now, you can use Perplexica directly from your browser's search bar.
 
+## Using Perplexica's API
+
+Perplexica also provides an API for developers looking to integrate its powerful search engine into their own applications. You can run searches, use multiple models and get answers to your queries.
+
+For more details, check out the full documentation [here](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/API/SEARCH.md).
+
+## Expose Perplexica to network
+
+You can access Perplexica over your home network by following our networking guide [here](https://github.com/ItzCrazyKns/Perplexica/blob/master/docs/installation/NETWORKING.md).
+
 ## One-Click Deployment
 
+[![Deploy to Sealos](https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg)](https://usw.sealos.io/?openapp=system-template%3FtemplateName%3Dperplexica)
 [![Deploy to RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/?app_id=267)
 
 ## Upcoming Features
@@ -135,8 +167,9 @@ If you wish to use Perplexica as an alternative to traditional search engines li
 - [x] Adding support for local LLMs
 - [x] History Saving features
 - [x] Introducing various Focus Modes
+- [x] Adding API support
+- [x] Adding Discover
 - [ ] Finalizing Copilot Mode
-- [ ] Adding Discover
 
 ## Support Us
 

@@ -9,6 +9,11 @@ import type { Embeddings } from '@langchain/core/embeddings';
 import type { IncomingMessage } from 'http';
 import logger from '../utils/logger';
 import { ChatOpenAI } from '@langchain/openai';
+import {
+  getCustomOpenaiApiKey,
+  getCustomOpenaiApiUrl,
+  getCustomOpenaiModelName,
+} from '../config';
 
 export const handleConnection = async (
   ws: WebSocket,
@@ -45,18 +50,23 @@ export const handleConnection = async (
       chatModelProviders[chatModelProvider][chatModel] &&
       chatModelProvider != 'custom_openai'
     ) {
-      llm = chatModelProviders[chatModelProvider][chatModel] as unknown as
-        | BaseChatModel
-        | undefined;
+      llm = chatModelProviders[chatModelProvider][chatModel]
+        .model as unknown as BaseChatModel | undefined;
     } else if (chatModelProvider == 'custom_openai') {
-      llm = new ChatOpenAI({
-        modelName: chatModel,
-        openAIApiKey: searchParams.get('openAIApiKey'),
-        temperature: 0.7,
-        configuration: {
-          baseURL: searchParams.get('openAIBaseURL'),
-        },
-      }) as unknown as BaseChatModel;
+      const customOpenaiApiKey = getCustomOpenaiApiKey();
+      const customOpenaiApiUrl = getCustomOpenaiApiUrl();
+      const customOpenaiModelName = getCustomOpenaiModelName();
+
+      if (customOpenaiApiKey && customOpenaiApiUrl && customOpenaiModelName) {
+        llm = new ChatOpenAI({
+          modelName: customOpenaiModelName,
+          openAIApiKey: customOpenaiApiKey,
+          temperature: 0.7,
+          configuration: {
+            baseURL: customOpenaiApiUrl,
+          },
+        }) as unknown as BaseChatModel;
+      }
     }
 
     if (
@@ -65,7 +75,7 @@ export const handleConnection = async (
     ) {
       embeddings = embeddingModelProviders[embeddingModelProvider][
         embeddingModel
-      ] as Embeddings | undefined;
+      ].model as Embeddings | undefined;
     }
 
     if (!llm || !embeddings) {
@@ -78,6 +88,18 @@ export const handleConnection = async (
       );
       ws.close();
     }
+
+    const interval = setInterval(() => {
+      if (ws.readyState === ws.OPEN) {
+        ws.send(
+          JSON.stringify({
+            type: 'signal',
+            data: 'open',
+          }),
+        );
+        clearInterval(interval);
+      }
+    }, 5);
 
     ws.on(
       'message',
