@@ -397,6 +397,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
+  const [pendingRewrite, setPendingRewrite] = useState<{ content: string; messageId: string } | null>(null);
+
   const [notFound, setNotFound] = useState(false);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -435,6 +437,12 @@ const ChatWindow = ({ id }: { id?: string }) => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const chatHistoryRef = useRef<[string, string][]>([]);
+
+  useEffect(() => {
+    chatHistoryRef.current = chatHistory;
+  }, [chatHistory]);
 
   const messagesRef = useRef<Message[]>([]);
 
@@ -478,7 +486,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         files: fileIds,
         focusMode: focusMode,
         optimizationMode: optimizationMode,
-        history: [...chatHistory, ['human', message]],
+        history: [...chatHistoryRef.current],
       }),
     );
 
@@ -604,14 +612,21 @@ const ChatWindow = ({ id }: { id?: string }) => {
     const message = messages[index - 1];
 
     setMessages((prev) => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
+      return [...prev.slice(0, messages.length >= 2 ? index - 1 : 0)];
     });
     setChatHistory((prev) => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
+      return [...prev.slice(0, messages.length >= 2 ? index - 1 : 0)];
     });
 
-    sendMessage(message.content, message.messageId);
+    setPendingRewrite({content: message.content, messageId: message.messageId});
   };
+
+  useEffect(() => {
+    if (pendingRewrite) {
+      sendMessage(pendingRewrite.content, pendingRewrite.messageId);
+      setPendingRewrite(null);
+    }
+  }, [pendingRewrite]);
 
   useEffect(() => {
     if (isReady && initialMessage && ws?.readyState === 1) {
