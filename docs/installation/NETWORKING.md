@@ -1,12 +1,10 @@
-# Exposing Perplexica to a Network
+# Accessing Perplexica over a Network
 
-This guide explains how to make Perplexica available over a network using the built-in Nginx reverse proxy.
+This guide explains how to access Perplexica over your network using the nginx reverse proxy included in the Docker setup.
 
-## Accessing Perplexica Over a Network
+## Basic Network Access
 
-### Basic Access
-
-With the Nginx reverse proxy, Perplexica is automatically accessible from any device on your network:
+Perplexica is automatically accessible from any device on your network:
 
 1. Start Perplexica using Docker Compose:
    ```bash
@@ -23,28 +21,15 @@ With the Nginx reverse proxy, Perplexica is automatically accessible from any de
    http://YOUR_SERVER_IP:8080
    ```
 
-### Domain Configuration
-
-If you have a domain name, you can point it to your server:
-
-1. Configure your domain's DNS settings to point to your server IP
-
-2. Access Perplexica via:
-   ```
-   http://your-domain.com:8080
-   ```
-
-## Advanced Configuration
-
-### Custom Port
+## Custom Port Configuration
 
 If you need to use a different port instead of the default 8080:
 
 1. Modify the `docker-compose.yaml` file:
    ```yaml
-   nginx:
+   perplexica:
      ports:
-       - "YOUR_CUSTOM_PORT:80"
+       - "YOUR_CUSTOM_PORT:8080"
    ```
 
 2. Restart the containers:
@@ -52,55 +37,10 @@ If you need to use a different port instead of the default 8080:
    docker compose down && docker compose up -d
    ```
 
-### SSL/HTTPS Configuration
-
-For secure HTTPS access:
-
-1. Modify the Nginx configuration to include SSL:
-   ```nginx
-   # In nginx.conf
-   server {
-     listen 80;
-     listen 443 ssl;
-
-     ssl_certificate /path/to/certificate.crt;
-     ssl_certificate_key /path/to/private.key;
-
-     # Rest of configuration...
-   }
-   ```
-
-2. Update the Docker volume to include your certificates:
-   ```yaml
-   nginx:
-     volumes:
-       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-       - ./ssl:/path/to/ssl:ro
-   ```
-
-3. Restart the containers:
-   ```bash
-   docker compose down && docker compose up -d
-   ```
-
-4. Or just use another reverse proxy on top of this one...
-
 ## Troubleshooting
 
 If you encounter issues accessing Perplexica over your network:
 
 1. **Firewall Settings**: Ensure port 8080 (or your custom port) is allowed in your firewall
-
-2. **Docker Network**: Check if Docker's network settings allow external connections:
-   ```bash
-   docker network inspect perplexica_perplexica-network
-   ```
-
-3. **Nginx Logs**: Check for any connection issues:
-   ```bash
-   docker logs perplexica-nginx-1
-   ```
-
-4. **Direct Access**: Verify if you can access the services directly:
-   - Frontend: http://YOUR_SERVER_IP:3000
-   - Backend: http://YOUR_SERVER_IP:3001
+2. **Docker Logs**: Check for any connection issues with `docker logs perplexica`
+3. **Network Access**: Make sure your devices are on the same network and can reach the server

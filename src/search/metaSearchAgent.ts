@@ -129,7 +129,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
           await Promise.all(
             docGroups.map(async (doc) => {
               const res = await llm.invoke(`
-            You are a web search summarizer, tasked with summarizing a piece of text retrieved from a web search. Your job is to summarize the 
+            You are a web search summarizer, tasked with summarizing a piece of text retrieved from a web search. Your job is to summarize the
             text into a detailed, 2-4 paragraph explanation that captures the main ideas and provides a comprehensive answer to the query.
             If the query is \"summarize\", you should provide a detailed summary of the text. If the query is a specific question, you should answer it in the summary.
 
@@ -141,8 +141,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
             <example>
             1. \`<text>
-            Docker is a set of platform-as-a-service products that use OS-level virtualization to deliver software in packages called containers. 
-            It was first released in 2013 and is developed by Docker, Inc. Docker is designed to make it easier to create, deploy, and run applications 
+            Docker is a set of platform-as-a-service products that use OS-level virtualization to deliver software in packages called containers.
+            It was first released in 2013 and is developed by Docker, Inc. Docker is designed to make it easier to create, deploy, and run applications
             by using containers.
             </text>
 
@@ -151,8 +151,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
             </query>
 
             Response:
-            Docker is a revolutionary platform-as-a-service product developed by Docker, Inc., that uses container technology to make application 
-            deployment more efficient. It allows developers to package their software with all necessary dependencies, making it easier to run in 
+            Docker is a revolutionary platform-as-a-service product developed by Docker, Inc., that uses container technology to make application
+            deployment more efficient. It allows developers to package their software with all necessary dependencies, making it easier to run in
             any environment. Released in 2013, Docker has transformed the way applications are built, deployed, and managed.
             \`
             2. \`<text>

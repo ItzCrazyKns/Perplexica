@@ -1,0 +1,8 @@
+#!/usr/bin/with-contenv bash
+cd /app/backend
+
+# Run database migrations before starting the app
+yarn db:push
+
+# Start the application
+exec node dist/app.js

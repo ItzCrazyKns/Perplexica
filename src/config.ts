@@ -41,39 +41,83 @@ type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>;
 };
 
-const loadConfig = () =>
-  toml.parse(
-    fs.readFileSync(path.join(__dirname, `../${configFileName}`), 'utf-8'),
-  ) as any as Config;
+const loadConfig = () => {
+  try {
+    return toml.parse(
+      fs.readFileSync(path.join(__dirname, `../${configFileName}`), 'utf-8'),
+    ) as any as Config;
+  } catch (error) {
+    // Return default config if file doesn't exist
+    return {
+      GENERAL: {
+        PORT: 3001,
+        SIMILARITY_MEASURE: 'cosine',
+        KEEP_ALIVE: '5m',
+      },
+      MODELS: {
+        OPENAI: {
+          API_KEY: '',
+        },
+        GROQ: {
+          API_KEY: '',
+        },
+        ANTHROPIC: {
+          API_KEY: '',
+        },
+        GEMINI: {
+          API_KEY: '',
+        },
+        OLLAMA: {
+          API_URL: '',
+        },
+        CUSTOM_OPENAI: {
+          API_URL: '',
+          API_KEY: '',
+          MODEL_NAME: '',
+        },
+      },
+      API_ENDPOINTS: {
+        SEARXNG: '',
+      },
+    };
+  }
+};
 
-export const getPort = () => loadConfig().GENERAL.PORT;
+export const getPort = () =>
+  process.env.PORT ? parseInt(process.env.PORT, 10) : loadConfig().GENERAL.PORT;
 
 export const getSimilarityMeasure = () =>
-  loadConfig().GENERAL.SIMILARITY_MEASURE;
+  process.env.SIMILARITY_MEASURE || loadConfig().GENERAL.SIMILARITY_MEASURE;
 
-export const getKeepAlive = () => loadConfig().GENERAL.KEEP_ALIVE;
+export const getKeepAlive = () =>
+  process.env.KEEP_ALIVE || loadConfig().GENERAL.KEEP_ALIVE;
 
-export const getOpenaiApiKey = () => loadConfig().MODELS.OPENAI.API_KEY;
+export const getOpenaiApiKey = () =>
+  process.env.OPENAI_API_KEY || loadConfig().MODELS.OPENAI.API_KEY;
 
-export const getGroqApiKey = () => loadConfig().MODELS.GROQ.API_KEY;
+export const getGroqApiKey = () =>
+  process.env.GROQ_API_KEY || loadConfig().MODELS.GROQ.API_KEY;
 
-export const getAnthropicApiKey = () => loadConfig().MODELS.ANTHROPIC.API_KEY;
+export const getAnthropicApiKey = () =>
+  process.env.ANTHROPIC_API_KEY || loadConfig().MODELS.ANTHROPIC.API_KEY;
 
-export const getGeminiApiKey = () => loadConfig().MODELS.GEMINI.API_KEY;
+export const getGeminiApiKey = () =>
+  process.env.GEMINI_API_KEY || loadConfig().MODELS.GEMINI.API_KEY;
 
 export const getSearxngApiEndpoint = () =>
   process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
 
-export const getOllamaApiEndpoint = () => loadConfig().MODELS.OLLAMA.API_URL;
+export const getOllamaApiEndpoint = () =>
+  process.env.OLLAMA_API_URL || loadConfig().MODELS.OLLAMA.API_URL;
 
 export const getCustomOpenaiApiKey = () =>
-  loadConfig().MODELS.CUSTOM_OPENAI.API_KEY;
+  process.env.CUSTOM_OPENAI_API_KEY || loadConfig().MODELS.CUSTOM_OPENAI.API_KEY;
 
 export const getCustomOpenaiApiUrl = () =>
-  loadConfig().MODELS.CUSTOM_OPENAI.API_URL;
+  process.env.CUSTOM_OPENAI_API_URL || loadConfig().MODELS.CUSTOM_OPENAI.API_URL;
 
 export const getCustomOpenaiModelName = () =>
-  loadConfig().MODELS.CUSTOM_OPENAI.MODEL_NAME;
+  process.env.CUSTOM_OPENAI_MODEL_NAME || loadConfig().MODELS.CUSTOM_OPENAI.MODEL_NAME;
 
 const mergeConfigs = (current: any, update: any): any => {
   if (update === null || update === undefined) {

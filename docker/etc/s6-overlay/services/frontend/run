@@ -1,0 +1,3 @@
+#!/usr/bin/with-contenv bash
+cd /app/frontend
+exec node_modules/.bin/next start

@@ -26,7 +26,7 @@
 - [Preview](#preview)
 - [Features](#features)
 - [Installation](#installation)
-  - [Getting Started with Docker (Recommended)](#getting-started-with-docker-recommended)
+  - [Docker Installation (Recommended)](#docker-installation-recommended)
   - [Non-Docker Installation](#non-docker-installation)
   - [Nginx Reverse Proxy](#nginx-reverse-proxy)
   - [Ollama Connection Errors](#ollama-connection-errors)
@@ -72,9 +72,9 @@ It has many more features like image and video search. Some of the planned featu
 
 ## Installation
 
-There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. Using Docker is highly recommended.
+Perplexica can be installed using Docker (recommended) or directly on your system.
 
-### Getting Started with Docker (Recommended)
+### Docker Installation (Recommended)
 
 1. Ensure Docker is installed and running on your system.
 2. Clone the Perplexica repository:
@@ -102,9 +102,14 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
    docker compose up -d
    ```
 
-6. Wait a few minutes for the setup to complete. You can access Perplexica at http://localhost:3000 in your web browser.
+6. Wait a few minutes for the setup to complete. You can access Perplexica at http://localhost:8080 in your web browser.
 
 **Note**: After the containers are built, you can start Perplexica directly from Docker without having to open a terminal.
+
+The Docker configuration is located in the `docker/` directory, containing:
+- Dockerfile with multi-stage build for efficient images
+- Service configurations for the integrated process manager
+- Nginx reverse proxy configuration
 
 ### Non-Docker Installation
 
