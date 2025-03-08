@@ -26,12 +26,13 @@
 - [Preview](#preview)
 - [Features](#features)
 - [Installation](#installation)
-  - [Getting Started with Docker (Recommended)](#getting-started-with-docker-recommended)
+  - [Docker Installation (Recommended)](#docker-installation-recommended)
   - [Non-Docker Installation](#non-docker-installation)
+  - [Nginx Reverse Proxy](#nginx-reverse-proxy)
   - [Ollama Connection Errors](#ollama-connection-errors)
 - [Using as a Search Engine](#using-as-a-search-engine)
 - [Using Perplexica's API](#using-perplexicas-api)
-- [Expose Perplexica to a network](#expose-perplexica-to-network)
+- [Expose Perplexica to a Network](#expose-perplexica-to-a-network)
 - [One-Click Deployment](#one-click-deployment)
 - [Upcoming Features](#upcoming-features)
 - [Support Us](#support-us)
@@ -71,9 +72,9 @@ It has many more features like image and video search. Some of the planned featu
 
 ## Installation
 
-There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. Using Docker is highly recommended.
+Perplexica can be installed using Docker (recommended) or directly on your system.
 
-### Getting Started with Docker (Recommended)
+### Docker Installation (Recommended)
 
 1. Ensure Docker is installed and running on your system.
 2. Clone the Perplexica repository:
@@ -101,9 +102,14 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
    docker compose up -d
    ```
 
-6. Wait a few minutes for the setup to complete. You can access Perplexica at http://localhost:3000 in your web browser.
+6. Wait a few minutes for the setup to complete. You can access Perplexica at http://localhost:8080 in your web browser.
 
 **Note**: After the containers are built, you can start Perplexica directly from Docker without having to open a terminal.
+
+The Docker configuration is located in the `docker/` directory, containing:
+- Dockerfile with multi-stage build for efficient images
+- Service configurations for the integrated process manager
+- Nginx reverse proxy configuration
 
 ### Non-Docker Installation
 
@@ -117,6 +123,17 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 **Note**: Using Docker is recommended as it simplifies the setup process, especially for managing environment variables and dependencies.
 
 See the [installation documentation](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/installation) for more information like exposing it your network, etc.
+
+### Nginx Reverse Proxy
+
+Perplexica includes an Nginx reverse proxy that provides several key benefits:
+
+- **Single Port Access**: Access both frontend and backend through a single port (8080)
+- **Dynamic Configuration**: Works with any domain or IP without rebuilding
+- **WebSocket Support**: Automatic WebSocket URL configuration based on the current domain
+- **Security Headers**: Enhanced security with proper HTTP headers
+
+When using Docker, the reverse proxy is automatically configured. Access Perplexica at `http://localhost:8080` or `http://your-ip:8080` after starting the containers.
 
 ### Ollama Connection Errors
 
@@ -143,7 +160,7 @@ If you wish to use Perplexica as an alternative to traditional search engines li
 
 1. Open your browser's settings.
 2. Navigate to the 'Search Engines' section.
-3. Add a new site search with the following URL: `http://localhost:3000/?q=%s`. Replace `localhost` with your IP address or domain name, and `3000` with the port number if Perplexica is not hosted locally.
+3. Add a new site search with the following URL: `http://localhost:8080/?q=%s`. Replace `localhost` with your IP address or domain name if needed.
 4. Click the add button. Now, you can use Perplexica directly from your browser's search bar.
 
 ## Using Perplexica's API
@@ -152,9 +169,15 @@ Perplexica also provides an API for developers looking to integrate its powerful
 
 For more details, check out the full documentation [here](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/API/SEARCH.md).
 
-## Expose Perplexica to network
+## Expose Perplexica to a Network
 
-You can access Perplexica over your home network by following our networking guide [here](https://github.com/ItzCrazyKns/Perplexica/blob/master/docs/installation/NETWORKING.md).
+Perplexica can be easily accessed over your home network or exposed to the internet through the Nginx reverse proxy. With this setup:
+
+1. **Local Network Access**: Access Perplexica from any device on your network using `http://server-ip:8080`
+2. **Domain Configuration**: If you have a domain name, point it to your server and access Perplexica with `http://your-domain.com:8080`
+3. **SSL Support**: Configure SSL certificates in Nginx for secure `https://` access
+
+For more network configuration details, see our [networking guide](https://github.com/ItzCrazyKns/Perplexica/blob/master/docs/installation/NETWORKING.md).
 
 ## One-Click Deployment
 

@@ -368,7 +368,7 @@ const loadMessages = async (
 
 const ChatWindow = ({ id }: { id?: string }) => {
   const searchParams = useSearchParams();
-  const initialMessage = searchParams.get('q');
+  const initialMessage = searchParams?.get('q');
 
   const [chatId, setChatId] = useState<string | undefined>(id);
   const [newChatCreated, setNewChatCreated] = useState(false);
@@ -378,7 +378,9 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const [isWSReady, setIsWSReady] = useState(false);
   const ws = useSocket(
-    process.env.NEXT_PUBLIC_WS_URL!,
+    process.env.NEXT_PUBLIC_WS_URL === 'auto'
+      ? `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`
+      : process.env.NEXT_PUBLIC_WS_URL!,
     setIsWSReady,
     setHasError,
   );

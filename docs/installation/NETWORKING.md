@@ -1,109 +1,46 @@
-# Expose Perplexica to a network
+# Accessing Perplexica over a Network
 
-This guide will show you how to make Perplexica available over a network. Follow these steps to allow computers on the same network to interact with Perplexica. Choose the instructions that match the operating system you are using.
+This guide explains how to access Perplexica over your network using the nginx reverse proxy included in the Docker setup.
 
-## Windows
+## Basic Network Access
 
-1. Open PowerShell as Administrator
+Perplexica is automatically accessible from any device on your network:
 
-2. Navigate to the directory containing the `docker-compose.yaml` file
-
-3. Stop and remove the existing Perplexica containers and images:
-
+1. Start Perplexica using Docker Compose:
    ```bash
-   docker compose down --rmi all
+   docker compose up -d
    ```
 
-4. Open the `docker-compose.yaml` file in a text editor like Notepad++
+2. Find your server's IP address:
+   - **Windows**: `ipconfig` in Command Prompt
+   - **macOS**: `ifconfig | grep "inet "` in Terminal
+   - **Linux**: `ip addr show | grep "inet "` in Terminal
 
-5. Replace `127.0.0.1` with the IP address of the server Perplexica is running on in these two lines:
-
-   ```bash
-   args:
-     - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
-     - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
+3. Access Perplexica from any device on your network:
+   ```
+   http://YOUR_SERVER_IP:8080
    ```
 
-6. Save and close the `docker-compose.yaml` file
+## Custom Port Configuration
 
-7. Rebuild and restart the Perplexica container:
+If you need to use a different port instead of the default 8080:
 
-   ```bash
-   docker compose up -d --build
+1. Modify the `docker-compose.yaml` file:
+   ```yaml
+   perplexica:
+     ports:
+       - "YOUR_CUSTOM_PORT:8080"
    ```
 
-## macOS
-
-1. Open the Terminal application
-
-2. Navigate to the directory with the `docker-compose.yaml` file:
-
+2. Restart the containers:
    ```bash
-   cd /path/to/docker-compose.yaml
+   docker compose down && docker compose up -d
    ```
 
-3. Stop and remove existing containers and images:
+## Troubleshooting
 
-   ```bash
-   docker compose down --rmi all
-   ```
+If you encounter issues accessing Perplexica over your network:
 
-4. Open `docker-compose.yaml` in a text editor like Sublime Text:
-
-   ```bash
-   nano docker-compose.yaml
-   ```
-
-5. Replace `127.0.0.1` with the server IP in these lines:
-
-   ```bash
-   args:
-     - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
-     - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
-   ```
-
-6. Save and exit the editor
-
-7. Rebuild and restart Perplexica:
-
-   ```bash
-   docker compose up -d --build
-   ```
-
-## Linux
-
-1. Open the terminal
-
-2. Navigate to the `docker-compose.yaml` directory:
-
-   ```bash
-   cd /path/to/docker-compose.yaml
-   ```
-
-3. Stop and remove containers and images:
-
-   ```bash
-   docker compose down --rmi all
-   ```
-
-4. Edit `docker-compose.yaml`:
-
-   ```bash
-   nano docker-compose.yaml
-   ```
-
-5. Replace `127.0.0.1` with the server IP:
-
-   ```bash
-   args:
-     - NEXT_PUBLIC_API_URL=http://127.0.0.1:3001/api
-     - NEXT_PUBLIC_WS_URL=ws://127.0.0.1:3001
-   ```
-
-6. Save and exit the editor
-
-7. Rebuild and restart Perplexica:
-
-   ```bash
-   docker compose up -d --build
-   ```
+1. **Firewall Settings**: Ensure port 8080 (or your custom port) is allowed in your firewall
+2. **Docker Logs**: Check for any connection issues with `docker logs perplexica`
+3. **Network Access**: Make sure your devices are on the same network and can reach the server
