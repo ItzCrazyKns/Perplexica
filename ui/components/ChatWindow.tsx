@@ -377,11 +377,16 @@ const ChatWindow = ({ id }: { id?: string }) => {
   const [isReady, setIsReady] = useState(false);
 
   const [isWSReady, setIsWSReady] = useState(false);
-  const ws = useSocket(
-    process.env.NEXT_PUBLIC_WS_URL!,
-    setIsWSReady,
-    setHasError,
-  );
+
+  let websocketUrl = process.env.NEXT_PUBLIC_WS_URL!;
+  if (websocketUrl.startsWith('/')) {
+    const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    const host = window.location.host;
+    const path = websocketUrl;
+    websocketUrl = `${protocol}${host}${path}`;
+  }
+
+  const ws = useSocket(websocketUrl, setIsWSReady, setHasError);
 
   const [loading, setLoading] = useState(false);
   const [messageAppeared, setMessageAppeared] = useState(false);
