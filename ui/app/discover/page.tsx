@@ -4,6 +4,7 @@ import { Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { getApiUrl, get } from '@/lib/api';
 
 interface Discover {
   title: string;
@@ -19,25 +20,11 @@ const Page = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/discover`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          throw new Error(data.message);
-        }
-
-        data.blogs = data.blogs.filter((blog: Discover) => blog.thumbnail);
-
-        setDiscover(data.blogs);
-      } catch (err: any) {
-        console.error('Error fetching data:', err.message);
-        toast.error('Error fetching data');
+        const data = await get<{ blogs: Discover[] }>(getApiUrl('/discover'));
+        setDiscover(data.blogs.filter(blog => blog.thumbnail));
+      } catch (error) {
+        console.error('Unable to fetch discovers:', error);
+        toast.error('Unable to fetch discovers');
       } finally {
         setLoading(false);
       }
@@ -88,9 +75,17 @@ const Page = () => {
                 <img
                   className="object-cover w-full aspect-video"
                   src={
-                    new URL(item.thumbnail).origin +
-                    new URL(item.thumbnail).pathname +
-                    `?id=${new URL(item.thumbnail).searchParams.get('id')}`
+                    (() => {
+                      try {
+                        if (!item.thumbnail) return '/placeholder.jpg';
+                        const url = new URL(item.thumbnail);
+                        return url.origin + url.pathname + 
+                          (url.searchParams.get('id') ? 
+                            `?id=${url.searchParams.get('id')}` : '');
+                      } catch (e) {
+                        return item.thumbnail || '/placeholder.jpg';
+                      }
+                    })()
                   }
                   alt={item.title}
                 />

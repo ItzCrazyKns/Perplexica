@@ -1,9 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 import { ImagesIcon, PlusIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 import { Message } from './ChatWindow';
+import { getApiUrl, post } from '@/lib/api';
+import { toast } from 'sonner';
 
 type Image = {
   url: string;
@@ -37,34 +39,25 @@ const SearchImages = ({
             const customOpenAIBaseURL = localStorage.getItem('openAIBaseURL');
             const customOpenAIKey = localStorage.getItem('openAIApiKey');
 
-            const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/images`,
+            const data = await post<{ images: Image[] }>(
+              getApiUrl('/images'),
               {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
+                query,
+                chatHistory,
+                chatModel: {
+                  provider: chatModelProvider,
+                  model: chatModel,
+                  ...(chatModelProvider === 'custom_openai' && {
+                    customOpenAIKey,
+                    customOpenAIBaseURL,
+                  }),
                 },
-                body: JSON.stringify({
-                  query: query,
-                  chatHistory: chatHistory,
-                  chatModel: {
-                    provider: chatModelProvider,
-                    model: chatModel,
-                    ...(chatModelProvider === 'custom_openai' && {
-                      customOpenAIBaseURL: customOpenAIBaseURL,
-                      customOpenAIKey: customOpenAIKey,
-                    }),
-                  },
-                }),
-              },
+              }
             );
 
-            const data = await res.json();
-
-            const images = data.images ?? [];
-            setImages(images);
+            setImages(data.images);
             setSlides(
-              images.map((image: Image) => {
+              data.images.map((image: Image) => {
                 return {
                   src: image.img_src,
                 };

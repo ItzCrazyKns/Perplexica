@@ -35,6 +35,9 @@ interface Config {
   API_ENDPOINTS: {
     SEARXNG: string;
   };
+  AUTH_PAGE: {
+    AUTH_SECRET: string;
+  };
 }
 
 type RecursivePartial<T> = {
@@ -63,6 +66,8 @@ export const getGeminiApiKey = () => loadConfig().MODELS.GEMINI.API_KEY;
 
 export const getSearxngApiEndpoint = () =>
   process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
+
+export const getAuthSecret = () => loadConfig().AUTH_PAGE.AUTH_SECRET;
 
 export const getOllamaApiEndpoint = () => loadConfig().MODELS.OLLAMA.API_URL;
 

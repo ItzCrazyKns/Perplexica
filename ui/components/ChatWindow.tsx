@@ -12,6 +12,7 @@ import { getSuggestions } from '@/lib/actions';
 import { Settings } from 'lucide-react';
 import Link from 'next/link';
 import NextError from 'next/error';
+import { getApiUrl, get } from '@/lib/api';
 
 export type Message = {
   messageId: string;
@@ -71,20 +72,10 @@ const useSocket = (
           localStorage.setItem('autoVideoSearch', 'false');
         }
 
-        const providers = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/models`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          },
-        ).then(async (res) => {
-          if (!res.ok)
-            throw new Error(
-              `Failed to fetch models: ${res.status} ${res.statusText}`,
-            );
-          return res.json();
-        });
+        const providers = await get<{
+          chatModelProviders: Record<string, Record<string, any>>,
+          embeddingModelProviders: Record<string, Record<string, any>>
+        }>(getApiUrl('/models'));
 
         if (
           !chatModel ||
@@ -201,6 +192,12 @@ const useSocket = (
 
         searchParams.append('embeddingModel', embeddingModel!);
         searchParams.append('embeddingModelProvider', embeddingModelProvider);
+        
+        // 添加认证令牌
+        const authToken = localStorage.getItem('authToken');
+        if (authToken) {
+          searchParams.append('token', authToken);
+        }
 
         wsURL.search = searchParams.toString();
 
@@ -315,55 +312,45 @@ const loadMessages = async (
   setFiles: (files: File[]) => void,
   setFileIds: (fileIds: string[]) => void,
 ) => {
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/chats/${chatId}`,
-    {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    },
-  );
+  try {
+    const data = await get<any>(getApiUrl(`/chats/${chatId}`));
+    
+    const messages = data.messages.map((msg: any) => {
+      return {
+        ...msg,
+        ...JSON.parse(msg.metadata),
+      };
+    }) as Message[];
 
-  if (res.status === 404) {
-    setNotFound(true);
+    setMessages(messages);
+
+    const history = messages.map((msg) => {
+      return [msg.role, msg.content];
+    }) as [string, string][];
+
+    console.debug(new Date(), 'app:messages_loaded');
+
+    document.title = messages[0].content;
+
+    const files = data.chat.files.map((file: any) => {
+      return {
+        fileName: file.name,
+        fileExtension: file.name.split('.').pop(),
+        fileId: file.fileId,
+      };
+    });
+
+    setFiles(files);
+    setFileIds(files.map((file: File) => file.fileId));
+
+    setChatHistory(history);
+    setFocusMode(data.chat.focusMode);
     setIsMessagesLoaded(true);
-    return;
+  } catch (error) {
+    console.debug(new Date(), 'ws:error', error);
+    setIsMessagesLoaded(true);
+    setNotFound(true);
   }
-
-  const data = await res.json();
-
-  const messages = data.messages.map((msg: any) => {
-    return {
-      ...msg,
-      ...JSON.parse(msg.metadata),
-    };
-  }) as Message[];
-
-  setMessages(messages);
-
-  const history = messages.map((msg) => {
-    return [msg.role, msg.content];
-  }) as [string, string][];
-
-  console.debug(new Date(), 'app:messages_loaded');
-
-  document.title = messages[0].content;
-
-  const files = data.chat.files.map((file: any) => {
-    return {
-      fileName: file.name,
-      fileExtension: file.name.split('.').pop(),
-      fileId: file.fileId,
-    };
-  });
-
-  setFiles(files);
-  setFileIds(files.map((file: File) => file.fileId));
-
-  setChatHistory(history);
-  setFocusMode(data.chat.focusMode);
-  setIsMessagesLoaded(true);
 };
 
 const ChatWindow = ({ id }: { id?: string }) => {

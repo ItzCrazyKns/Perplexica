@@ -7,13 +7,15 @@ import { Switch } from '@headlessui/react';
 import ThemeSwitcher from '@/components/theme/Switcher';
 import { ImagesIcon, VideoIcon } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
+import { getApiUrl, get, post } from '@/lib/api';
 
 interface SettingsType {
   chatModelProviders: {
-    [key: string]: [Record<string, any>];
+    [key: string]: Record<string, any>[];
   };
   embeddingModelProviders: {
-    [key: string]: [Record<string, any>];
+    [key: string]: Record<string, any>[];
   };
   openaiApiKey: string;
   groqApiKey: string;
@@ -116,63 +118,62 @@ const Page = () => {
   useEffect(() => {
     const fetchConfig = async () => {
       setIsLoading(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      try {
+        const data = await get<SettingsType>(getApiUrl('/config'));
+        setConfig(data);
 
-      const data = (await res.json()) as SettingsType;
-      setConfig(data);
+        const chatModelProvidersKeys = Object.keys(data.chatModelProviders || {});
+        const embeddingModelProvidersKeys = Object.keys(
+          data.embeddingModelProviders || {},
+        );
 
-      const chatModelProvidersKeys = Object.keys(data.chatModelProviders || {});
-      const embeddingModelProvidersKeys = Object.keys(
-        data.embeddingModelProviders || {},
-      );
+        const defaultChatModelProvider =
+          chatModelProvidersKeys.length > 0 ? chatModelProvidersKeys[0] : '';
+        const defaultEmbeddingModelProvider =
+          embeddingModelProvidersKeys.length > 0
+            ? embeddingModelProvidersKeys[0]
+            : '';
 
-      const defaultChatModelProvider =
-        chatModelProvidersKeys.length > 0 ? chatModelProvidersKeys[0] : '';
-      const defaultEmbeddingModelProvider =
-        embeddingModelProvidersKeys.length > 0
-          ? embeddingModelProvidersKeys[0]
-          : '';
+        const chatModelProvider =
+          localStorage.getItem('chatModelProvider') ||
+          defaultChatModelProvider ||
+          '';
+        const chatModel =
+          localStorage.getItem('chatModel') ||
+          (data.chatModelProviders &&
+          data.chatModelProviders[chatModelProvider]?.length > 0
+            ? data.chatModelProviders[chatModelProvider][0].name
+            : undefined) ||
+          '';
+        const embeddingModelProvider =
+          localStorage.getItem('embeddingModelProvider') ||
+          defaultEmbeddingModelProvider ||
+          '';
+        const embeddingModel =
+          localStorage.getItem('embeddingModel') ||
+          (data.embeddingModelProviders &&
+            data.embeddingModelProviders[embeddingModelProvider]?.[0].name) ||
+          '';
 
-      const chatModelProvider =
-        localStorage.getItem('chatModelProvider') ||
-        defaultChatModelProvider ||
-        '';
-      const chatModel =
-        localStorage.getItem('chatModel') ||
-        (data.chatModelProviders &&
-        data.chatModelProviders[chatModelProvider]?.length > 0
-          ? data.chatModelProviders[chatModelProvider][0].name
-          : undefined) ||
-        '';
-      const embeddingModelProvider =
-        localStorage.getItem('embeddingModelProvider') ||
-        defaultEmbeddingModelProvider ||
-        '';
-      const embeddingModel =
-        localStorage.getItem('embeddingModel') ||
-        (data.embeddingModelProviders &&
-          data.embeddingModelProviders[embeddingModelProvider]?.[0].name) ||
-        '';
+        setSelectedChatModelProvider(chatModelProvider);
+        setSelectedChatModel(chatModel);
+        setSelectedEmbeddingModelProvider(embeddingModelProvider);
+        setSelectedEmbeddingModel(embeddingModel);
+        setChatModels(data.chatModelProviders || {});
+        setEmbeddingModels(data.embeddingModelProviders || {});
 
-      setSelectedChatModelProvider(chatModelProvider);
-      setSelectedChatModel(chatModel);
-      setSelectedEmbeddingModelProvider(embeddingModelProvider);
-      setSelectedEmbeddingModel(embeddingModel);
-      setChatModels(data.chatModelProviders || {});
-      setEmbeddingModels(data.embeddingModelProviders || {});
-
-      setAutomaticImageSearch(
-        localStorage.getItem('autoImageSearch') === 'true',
-      );
-      setAutomaticVideoSearch(
-        localStorage.getItem('autoVideoSearch') === 'true',
-      );
-
-      setIsLoading(false);
+        setAutomaticImageSearch(
+          localStorage.getItem('autoImageSearch') === 'true',
+        );
+        setAutomaticVideoSearch(
+          localStorage.getItem('autoVideoSearch') === 'true',
+        );
+      } catch (error) {
+        console.error('获取配置失败:', error);
+        toast.error('获取配置失败');
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchConfig();
@@ -187,39 +188,15 @@ const Page = () => {
         [key]: value,
       } as SettingsType;
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/config`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(updatedConfig),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to update config');
-      }
-
+      await post(getApiUrl('/config'), updatedConfig);
+      
       setConfig(updatedConfig);
 
       if (
         key.toLowerCase().includes('api') ||
         key.toLowerCase().includes('url')
       ) {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!res.ok) {
-          throw new Error('Failed to fetch updated config');
-        }
-
-        const data = await res.json();
-
+        const data = await get<SettingsType>(getApiUrl('/config'));
         setChatModels(data.chatModelProviders || {});
         setEmbeddingModels(data.embeddingModelProviders || {});
 
@@ -332,13 +309,11 @@ const Page = () => {
       } else if (key === 'embeddingModel') {
         localStorage.setItem('embeddingModel', value);
       }
-    } catch (err) {
-      console.error('Failed to save:', err);
-      setConfig((prev) => ({ ...prev! }));
+    } catch (error) {
+      console.error('保存配置失败:', error);
+      toast.error('保存配置失败');
     } finally {
-      setTimeout(() => {
-        setSavingStates((prev) => ({ ...prev, [key]: false }));
-      }, 500);
+      setSavingStates((prev) => ({ ...prev, [key]: false }));
     }
   };
 

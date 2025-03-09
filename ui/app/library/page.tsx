@@ -5,6 +5,8 @@ import { cn, formatTimeDifference } from '@/lib/utils';
 import { BookOpenText, ClockIcon, Delete, ScanEye } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { getApiUrl, get } from '@/lib/api';
 
 export interface Chat {
   id: string;
@@ -21,17 +23,15 @@ const Page = () => {
     const fetchChats = async () => {
       setLoading(true);
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chats`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const data = await res.json();
-
-      setChats(data.chats);
-      setLoading(false);
+      try {
+        const data = await get<{ chats: Chat[] }>(getApiUrl('/chats'));
+        setChats(data.chats);
+      } catch (error) {
+        console.error('获取聊天记录失败:', error);
+        toast.error('获取聊天记录失败');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchChats();

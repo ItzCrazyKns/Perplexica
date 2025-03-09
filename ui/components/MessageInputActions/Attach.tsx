@@ -41,8 +41,18 @@ const Attach = ({
     data.append('embedding_model_provider', embeddingModelProvider!);
     data.append('embedding_model', embeddingModel!);
 
+    // 获取认证令牌
+    const authToken = localStorage.getItem('authToken');
+    
+    // 创建headers对象，添加认证令牌
+    const headers: HeadersInit = {};
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/uploads`, {
       method: 'POST',
+      headers,
       body: data,
     });
 

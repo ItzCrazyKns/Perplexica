@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import Lightbox, { GenericSlide, VideoSlide } from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
 import { Message } from './ChatWindow';
+import { getApiUrl, post } from '@/lib/api';
 
 type Video = {
   url: string;
@@ -52,40 +53,31 @@ const Searchvideos = ({
             const customOpenAIBaseURL = localStorage.getItem('openAIBaseURL');
             const customOpenAIKey = localStorage.getItem('openAIApiKey');
 
-            const res = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/videos`,
+            const data = await post<{ videos: Video[] }>(
+              getApiUrl('/videos'),
               {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
+                query,
+                chatHistory,
+                chatModel: {
+                  provider: chatModelProvider,
+                  model: chatModel,
+                  ...(chatModelProvider === 'custom_openai' && {
+                    customOpenAIKey,
+                    customOpenAIBaseURL,
+                  }),
                 },
-                body: JSON.stringify({
-                  query: query,
-                  chatHistory: chatHistory,
-                  chatModel: {
-                    provider: chatModelProvider,
-                    model: chatModel,
-                    ...(chatModelProvider === 'custom_openai' && {
-                      customOpenAIBaseURL: customOpenAIBaseURL,
-                      customOpenAIKey: customOpenAIKey,
-                    }),
-                  },
-                }),
-              },
+              }
             );
 
-            const data = await res.json();
-
-            const videos = data.videos ?? [];
-            setVideos(videos);
+            setVideos(data.videos || []);
             setSlides(
-              videos.map((video: Video) => {
+              data.videos.map((video: Video) => {
                 return {
                   type: 'video-slide',
                   iframe_src: video.iframe_src,
                   src: video.img_src,
                 };
-              }),
+              })
             );
             setLoading(false);
           }}

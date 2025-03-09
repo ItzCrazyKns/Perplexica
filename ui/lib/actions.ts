@@ -1,4 +1,5 @@
 import { Message } from '@/components/ChatWindow';
+import { getApiUrl, post } from './api';
 
 export const getSuggestions = async (chatHisory: Message[]) => {
   const chatModel = localStorage.getItem('chatModel');
@@ -7,12 +8,9 @@ export const getSuggestions = async (chatHisory: Message[]) => {
   const customOpenAIKey = localStorage.getItem('openAIApiKey');
   const customOpenAIBaseURL = localStorage.getItem('openAIBaseURL');
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/suggestions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
+  const data = await post<{ suggestions: string[] }>(
+    getApiUrl('/suggestions'),
+    {
       chatHistory: chatHisory,
       chatModel: {
         provider: chatModelProvider,
@@ -22,10 +20,8 @@ export const getSuggestions = async (chatHisory: Message[]) => {
           customOpenAIBaseURL,
         }),
       },
-    }),
-  });
-
-  const data = (await res.json()) as { suggestions: string[] };
+    }
+  );
 
   return data.suggestions;
 };
