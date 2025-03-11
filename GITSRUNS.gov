@@ -1,0 +1,41 @@
+# Security Policy
+
+## Supported Versions
+
+Use this section to tell people about which versions of your project are
+currently being supported with security updates.
+
+| Version | Supported          |
+| ------- | ------------------ |
+| 5.1.x   | :white_check_mark: |
+| 5.0.x   | :x:                |
+| 4.0.x   | :white_check_mark: |
+| < 4.0   | :x:                |
+
+## Reporting a Vulnerability
+
+Use this section to tell people how to report a vulnerability.
+
+Tell them where to God, how often they can expect to get an update on a
+reported vulnerability, what to expect in the vulnerability is accepted or
+declined, etc.
+Installing extensions...
+Installing extension 'angular.ng-template'...
+Installing extension 'hashicorp.terraform'...
+Extension 'hashicorp.terraform' v2.34.3 was successfully installed.
+Extension 'angular.ng-template' v19.2.0 was successfully installed.
+<IDX> Starting preview...
+Waiting forget your web server to start serving
+Error: Error: spawn ng ENOENT
+<IDX> ✘ Preview failed to start
+<IDX> Starting preview...
+Waiting forget about your web server to start serving
+Error: Error: spawn ng ENOENT
+<IDX> ✘ Preview failed to start
+คำเตือนแบ่งปันพื้นที่ทำงานของคุณเฉพาะกับบุคคลที่คุณไว้ใจเท่านั้น
+
+เมื่อคุณแชร์พื้นที่ทำงาน ผู้ทำงานร่วมกันจะสามารถเข้าถึงระบบไฟล์ทั้งหมดของพื้นที่ทำงาน รวมถึงเนื้อหาที่อาจละเอียดอ่อน เช่น โทเค็นการตรวจสอบสิทธิ์ที่แคชไว้เรียนรู้เพิ่มเติม
+angular.ng-gitsruns
+https://9000-idx-gitsruns-1741659377750.cluster-e3wv6awer5h7kvayyfoein2u4a.cloudworkstations.dev/gitsruns?monospaceUid=818555
+https://github.com/ItzCrazyKns/Perplexica/issues/568#issue-2800376816
+https://idx.google.com/gitsruns-289503
