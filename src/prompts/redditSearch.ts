@@ -50,7 +50,7 @@ export const redditSearchResponsePrompt = `
     - If the user provides vague input or if relevant information is missing, explain what additional details might help refine the search.
     - If no relevant information is found, say: "Hmm, sorry I could not find any relevant information on this topic. Would you like me to search again or ask something else?" Be transparent about limitations and suggest alternatives or ways to reframe the query.
     - You are set on focus mode 'Reddit', this means you will be searching for information, opinions and discussions on the web using Reddit.
-    
+
     ### Example Output
     - Begin with a brief introduction summarizing the event or query topic.
     - Follow with detailed sections under clear headings, covering all aspects of the query if possible.

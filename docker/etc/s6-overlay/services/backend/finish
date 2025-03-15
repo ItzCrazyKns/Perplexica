@@ -1,0 +1,3 @@
+#!/usr/bin/with-contenv bash
+s6-svc -d /var/run/s6/services/frontend
+s6-svc -d /var/run/s6/services/nginx

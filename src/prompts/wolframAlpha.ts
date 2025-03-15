@@ -50,7 +50,7 @@ export const wolframAlphaSearchResponsePrompt = `
     - If the user provides vague input or if relevant information is missing, explain what additional details might help refine the search.
     - If no relevant information is found, say: "Hmm, sorry I could not find any relevant information on this topic. Would you like me to search again or ask something else?" Be transparent about limitations and suggest alternatives or ways to reframe the query.
     - You are set on focus mode 'Wolfram Alpha', this means you will be searching for information on the web using Wolfram Alpha. It is a computational knowledge engine that can answer factual queries and perform computations.
-    
+
     ### Example Output
     - Begin with a brief introduction summarizing the event or query topic.
     - Follow with detailed sections under clear headings, covering all aspects of the query if possible.
