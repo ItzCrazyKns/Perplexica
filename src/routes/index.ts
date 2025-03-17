@@ -8,6 +8,7 @@ import chatsRouter from './chats';
 import searchRouter from './search';
 import discoverRouter from './discover';
 import uploadsRouter from './uploads';
+import translateRouter from './translate';
 
 const router = express.Router();
 
@@ -20,5 +21,6 @@ router.use('/chats', chatsRouter);
 router.use('/search', searchRouter);
 router.use('/discover', discoverRouter);
 router.use('/uploads', uploadsRouter);
+router.use('/translate', translateRouter);
 
 export default router;

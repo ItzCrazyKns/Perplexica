@@ -11,6 +11,8 @@ import {
   StopCircle,
   Layers3,
   Plus,
+  Languages,
+  Loader2
 } from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
 import Copy from './MessageActions/Copy';
@@ -20,6 +22,7 @@ import SearchImages from './SearchImages';
 import SearchVideos from './SearchVideos';
 import { useSpeech } from 'react-text-to-speech';
 import { SearchPDFs } from './SearchPDFs';
+import { Select } from './ui/Select';
 
 const MessageBox = ({
   message,
@@ -42,6 +45,8 @@ const MessageBox = ({
 }) => {
   const [parsedMessage, setParsedMessage] = useState(message.content);
   const [speechMessage, setSpeechMessage] = useState(message.content);
+  const [translating, setTranslating] = useState(false);
+  const [currentLanguage, setCurrentLanguage] = useState('english');
 
   useEffect(() => {
     const regex = /\[(\d+)\]/g;
@@ -64,7 +69,33 @@ const MessageBox = ({
     setParsedMessage(message.content);
   }, [message.content, message.sources, message.role]);
 
- 
+  const handleTranslate = async (language: string) => {
+    if (language === currentLanguage) return;
+    setTranslating(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/translate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: message.content,
+          targetLanguage: language
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Translation failed');
+      
+      const data = await response.json();
+      setParsedMessage(data.translatedText);
+      setCurrentLanguage(language);
+    } catch (error) {
+      console.error('Translation error:', error);
+    } finally {
+      setTranslating(false);
+    }
+  };
+
   const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
 
   return (
@@ -101,17 +132,36 @@ const MessageBox = ({
               </div>
             )}
             <div className="flex flex-col space-y-2">
-              <div className="flex flex-row items-center space-x-2">
-                <Disc3
-                  className={cn(
-                    'text-black dark:text-white',
-                    isLast && loading ? 'animate-spin' : 'animate-none',
+              <div className="flex flex-row items-center justify-between">
+                <div className="flex flex-row items-center space-x-2">
+                  <Disc3
+                    className={cn(
+                      'text-black dark:text-white',
+                      isLast && loading ? 'animate-spin' : 'animate-none',
+                    )}
+                    size={20}
+                  />
+                  <h3 className="text-black dark:text-white font-medium text-xl">
+                    Answer
+                  </h3>
+                </div>
+                <div className="flex items-center space-x-2">
+                  {translating && (
+                    <Loader2 className="animate-spin text-black/70 dark:text-white/70" size={16} />
                   )}
-                  size={20}
-                />
-                <h3 className="text-black dark:text-white font-medium text-xl">
-                  Answer
-                </h3>
+                  <div className="flex items-center space-x-2">
+                    <Languages size={16} className="text-black/70 dark:text-white/70" />
+                    <Select
+                      value={currentLanguage}
+                      onChange={(e) => handleTranslate(e.target.value)}
+                      className="h-auto text-sm py-1 min-w-[120px]" // Adjusted height and padding
+                      options={[
+                        { value: 'english', label: 'English' },
+                        { value: 'russian', label: 'Russian' }
+                      ]}
+                    />
+                  </div>
+                </div>
               </div>
               <Markdown
                 className={cn(
