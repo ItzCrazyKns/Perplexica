@@ -40,6 +40,7 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
               metadata: {
                 title: title,
                 url: link,
+                type: 'pdf', // Add this type indicator
               },
             });
           });

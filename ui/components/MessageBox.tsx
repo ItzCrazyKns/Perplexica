@@ -19,6 +19,7 @@ import MessageSources from './MessageSources';
 import SearchImages from './SearchImages';
 import SearchVideos from './SearchVideos';
 import { useSpeech } from 'react-text-to-speech';
+import { SearchPDFs } from './SearchPDFs';
 
 const MessageBox = ({
   message,
@@ -63,6 +64,7 @@ const MessageBox = ({
     setParsedMessage(message.content);
   }, [message.content, message.sources, message.role]);
 
+ 
   const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
 
   return (
@@ -119,6 +121,7 @@ const MessageBox = ({
               >
                 {parsedMessage}
               </Markdown>
+
               {loading && isLast ? null : (
                 <div className="flex flex-row items-center justify-between w-full text-black dark:text-white py-4 -mx-2">
                   <div className="flex flex-row items-center space-x-1">
@@ -187,6 +190,7 @@ const MessageBox = ({
                     </div>
                   </>
                 )}
+              {/* PDF Documents Section - Moved from sidebar to under the answer */}
             </div>
           </div>
           <div className="lg:sticky lg:top-20 flex flex-col items-center space-y-3 w-full lg:w-3/12 z-30 h-full pb-4">
@@ -197,6 +201,10 @@ const MessageBox = ({
             <SearchVideos
               chatHistory={history.slice(0, messageIndex - 1)}
               query={history[messageIndex - 1].content}
+            />
+            <SearchPDFs
+              query={history[messageIndex - 1]?.content}
+              chatHistory={history.slice(0, messageIndex - 1)}
             />
           </div>
         </div>

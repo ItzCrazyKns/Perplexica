@@ -69,11 +69,15 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
           <div className="flex flex-row items-center space-x-1">
             {sources.slice(3, 6).map((source, i) => {
               return source.metadata.url === 'File' ? (
-                <div className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-6 h-6 rounded-full">
+                <div 
+                  key={`source-icon-${i}`} 
+                  className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-6 h-6 rounded-full"
+                >
                   <File size={12} className="text-white/70" />
                 </div>
               ) : (
                 <img
+                  key={`source-icon-${i}`}
                   src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
                   width={16}
                   height={16}
@@ -139,7 +143,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
                             </p>
                           </div>
                           <div className="flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 text-xs">
-                            <div className="bg-black/50 dark:bg-white/50 h-[4px] w-[4px] rounded-full" />
+                            <div className="bg-black/50 dark:bg.white/50 h-[4px] w-[4px] rounded-full" />
                             <span>{i + 1}</span>
                           </div>
                         </div>
