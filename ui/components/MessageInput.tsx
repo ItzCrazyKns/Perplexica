@@ -26,6 +26,7 @@ const MessageInput = ({
   const [message, setMessage] = useState('');
   const [textareaRows, setTextareaRows] = useState(1);
   const [mode, setMode] = useState<'multi' | 'single'>('single');
+  const [isComposing, setIsComposing] = useState(false);
 
   useEffect(() => {
     if (textareaRows >= 2 && message && mode === 'single') {
@@ -68,7 +69,7 @@ const MessageInput = ({
         setMessage('');
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' && !e.shiftKey && !loading) {
+        if (e.key === 'Enter' && !e.shiftKey && !loading && !isComposing) {
           e.preventDefault();
           sendMessage(message);
           setMessage('');
@@ -91,6 +92,8 @@ const MessageInput = ({
         ref={inputRef}
         value={message}
         onChange={(e) => setMessage(e.target.value)}
+        onCompositionStart={() => setIsComposing(true)}
+        onCompositionEnd={() => setIsComposing(false)}
         onHeightChange={(height, props) => {
           setTextareaRows(Math.ceil(height / props.rowHeight));
         }}
