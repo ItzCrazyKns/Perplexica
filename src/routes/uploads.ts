@@ -115,13 +115,26 @@ router.post(
           const pathToSave = file.path.replace(/\.\w+$/, '-extracted.json');
           fs.writeFileSync(pathToSave, json);
 
-          const embeddings = await embeddingsModel.embedDocuments(
-            splitted.map((doc) => doc.pageContent),
-          );
+          const batchSize = 32; // Maximum allowable batch size
+          const batches: Document[][] = [];
+
+          // Split the document into multiple batches
+          for (let i = 0; i < splitted.length; i += batchSize) {
+            batches.push(splitted.slice(i, i + batchSize));
+          }
+
+          // Batch generate embeddings and merge results
+          const allEmbeddings: number[][] = [];
+          for (const batch of batches) {
+            const batchEmbeddings = await embeddingsModel.embedDocuments(
+              batch.map((doc) => doc.pageContent),
+            );
+            allEmbeddings.push(...batchEmbeddings);
+          }
 
           const embeddingsJSON = JSON.stringify({
             title: file.originalname,
-            embeddings: embeddings,
+            embeddings: allEmbeddings,
           });
 
           const pathToSaveEmbeddings = file.path.replace(
