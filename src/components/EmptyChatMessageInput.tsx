@@ -84,7 +84,7 @@ const EmptyChatMessageInput = ({
         />
         <div className="flex flex-row items-center justify-between mt-4">
           <div className="flex flex-row items-center space-x-2 lg:space-x-4">
-            <Focus focusMode={focusMode} setFocusMode={setFocusMode} />
+            {/* <Focus focusMode={focusMode} setFocusMode={setFocusMode} /> */}
             <Attach
               fileIds={fileIds}
               setFileIds={setFileIds}
@@ -94,10 +94,10 @@ const EmptyChatMessageInput = ({
             />
           </div>
           <div className="flex flex-row items-center space-x-1 sm:space-x-4">
-            <Optimization
+            {/* <Optimization
               optimizationMode={optimizationMode}
               setOptimizationMode={setOptimizationMode}
-            />
+            /> */}
             <button
               disabled={message.trim().length === 0}
               className="bg-[#24A0ED] text-white disabled:text-black/50 dark:disabled:text-white/50 disabled:bg-[#e0e0dc] dark:disabled:bg-[#ececec21] hover:bg-opacity-85 transition duration-100 rounded-full p-2"

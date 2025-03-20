@@ -1,17 +1,31 @@
 import type { Config } from 'tailwindcss';
 import type { DefaultColors } from 'tailwindcss/types/generated/colors';
 
+// const themeDark = (colors: DefaultColors) => ({
+//   50: '#0a0a0a',
+//   100: '#111111',
+//   200: '#1c1c1c',
+// });
+
 const themeDark = (colors: DefaultColors) => ({
-  50: '#0a0a0a',
-  100: '#111111',
-  200: '#1c1c1c',
+  50: '#0a1f44',  // Dark Navy Blue
+  100: '#081a37', // Slightly Darker Blue
+  200: '#06132a', // Deepest Dark Blue
 });
 
+
+// const themeLight = (colors: DefaultColors) => ({
+//   50: '#fcfcf9',
+//   100: '#f3f3ee',
+//   200: '#e8e8e3',
+// });
+
 const themeLight = (colors: DefaultColors) => ({
-  50: '#fcfcf9',
-  100: '#f3f3ee',
-  200: '#e8e8e3',
+  50: '#e0f7fa',  // Lightest Blue
+  100: '#b2ebf2', // Lighter Blue
+  200: '#80deea', // Slightly Darker Blue
 });
+
 
 const config: Config = {
   content: [
