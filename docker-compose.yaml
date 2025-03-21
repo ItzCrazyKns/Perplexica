@@ -16,6 +16,8 @@ services:
       dockerfile: app.dockerfile
     environment:
       - SEARXNG_API_URL=http://searxng:8080
+    env_file:
+      - .env
     ports:
       - 3000:3000
     networks:

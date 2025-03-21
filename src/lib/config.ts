@@ -40,37 +40,70 @@ type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>;
 };
 
-const loadConfig = () =>
-  toml.parse(
-    fs.readFileSync(path.join(process.cwd(), `${configFileName}`), 'utf-8'),
-  ) as any as Config;
+const loadConfig = () => {
+  const configPath = path.join(process.cwd(), configFileName);
+  if (!fs.existsSync(configPath) || fs.lstatSync(configPath).isDirectory()) {
+    return {} as Config;
+  }
+  return toml.parse(fs.readFileSync(configPath, 'utf-8')) as any as Config;
+};
+
+const getEnvVar = (key: string): string | undefined => {
+  return process.env[key];
+};
+
+const getConfigValue = (path: string[], defaultValue: string): string => {
+  // Convert path to environment variable name (e.g., ['MODELS', 'GROQ', 'API_KEY'] -> 'GROQ_API_KEY')
+  const envKey = path.slice(1).join('_').toUpperCase();
+  const envValue = getEnvVar(envKey);
+
+  if (envValue !== undefined) {
+    return envValue;
+  }
+
+  // Fall back to config.toml
+  let value: any = loadConfig();
+  for (const key of path) {
+    value = value[key];
+    if (value === undefined) {
+      return defaultValue;
+    }
+  }
+  return value;
+};
 
 export const getSimilarityMeasure = () =>
-  loadConfig().GENERAL.SIMILARITY_MEASURE;
+  getConfigValue(['GENERAL', 'SIMILARITY_MEASURE'], 'cosine');
 
-export const getKeepAlive = () => loadConfig().GENERAL.KEEP_ALIVE;
+export const getKeepAlive = () =>
+  getConfigValue(['GENERAL', 'KEEP_ALIVE'], '30s');
 
-export const getOpenaiApiKey = () => loadConfig().MODELS.OPENAI.API_KEY;
+export const getOpenaiApiKey = () =>
+  getConfigValue(['MODELS', 'OPENAI', 'API_KEY'], '');
 
-export const getGroqApiKey = () => loadConfig().MODELS.GROQ.API_KEY;
+export const getGroqApiKey = () =>
+  getConfigValue(['MODELS', 'GROQ', 'API_KEY'], '');
 
-export const getAnthropicApiKey = () => loadConfig().MODELS.ANTHROPIC.API_KEY;
+export const getAnthropicApiKey = () =>
+  getConfigValue(['MODELS', 'ANTHROPIC', 'API_KEY'], '');
 
-export const getGeminiApiKey = () => loadConfig().MODELS.GEMINI.API_KEY;
+export const getGeminiApiKey = () =>
+  getConfigValue(['MODELS', 'GEMINI', 'API_KEY'], '');
 
 export const getSearxngApiEndpoint = () =>
-  process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
+  process.env.SEARXNG_API_URL || getConfigValue(['API_ENDPOINTS', 'SEARXNG'], '');
 
-export const getOllamaApiEndpoint = () => loadConfig().MODELS.OLLAMA.API_URL;
+export const getOllamaApiEndpoint = () =>
+  getConfigValue(['MODELS', 'OLLAMA', 'API_URL'], 'http://localhost:11434');
 
 export const getCustomOpenaiApiKey = () =>
-  loadConfig().MODELS.CUSTOM_OPENAI.API_KEY;
+  getConfigValue(['MODELS', 'CUSTOM_OPENAI', 'API_KEY'], '');
 
 export const getCustomOpenaiApiUrl = () =>
-  loadConfig().MODELS.CUSTOM_OPENAI.API_URL;
+  getConfigValue(['MODELS', 'CUSTOM_OPENAI', 'API_URL'], '');
 
 export const getCustomOpenaiModelName = () =>
-  loadConfig().MODELS.CUSTOM_OPENAI.MODEL_NAME;
+  getConfigValue(['MODELS', 'CUSTOM_OPENAI', 'MODEL_NAME'], '');
 
 const mergeConfigs = (current: any, update: any): any => {
   if (update === null || update === undefined) {
