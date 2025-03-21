@@ -40,10 +40,13 @@ type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>;
 };
 
-const loadConfig = () =>
-  toml.parse(
-    fs.readFileSync(path.join(process.cwd(), `${configFileName}`), 'utf-8'),
-  ) as any as Config;
+const loadConfig = () => {
+  const configPath = path.join(process.cwd(), configFileName);
+  if (!fs.existsSync(configPath) || fs.lstatSync(configPath).isDirectory()) {
+    return {} as Config;
+  }
+  return toml.parse(fs.readFileSync(configPath, 'utf-8')) as any as Config;
+};
 
 const getEnvVar = (key: string): string | undefined => {
   return process.env[key];
@@ -88,7 +91,7 @@ export const getGeminiApiKey = () =>
   getConfigValue(['MODELS', 'GEMINI', 'API_KEY'], '');
 
 export const getSearxngApiEndpoint = () =>
-  getConfigValue(['API_ENDPOINTS', 'SEARXNG'], '');
+  process.env.SEARXNG_API_URL || getConfigValue(['API_ENDPOINTS', 'SEARXNG'], '');
 
 export const getOllamaApiEndpoint = () =>
   getConfigValue(['MODELS', 'OLLAMA', 'API_URL'], 'http://localhost:11434');
