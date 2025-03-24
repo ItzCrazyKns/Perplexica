@@ -1,5 +1,8 @@
 FROM node:20.18.0-slim AS builder
 
+ENV NEXT_PUBLIC_AWS_DB_API_URL=https://lyxeetk4w1.execute-api.us-east-1.amazonaws.com/default/getFromStockalyzerDB
+ENV NEXT_PUBLIC_AWS_DB_API_KEY=0KcuAyP5zT8kk2vW4MXAU9lMi52Yorti4vRwLwia
+
 WORKDIR /home/perplexica
 
 COPY package.json yarn.lock ./
