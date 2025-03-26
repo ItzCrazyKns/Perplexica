@@ -16,6 +16,7 @@ services:
       dockerfile: app.dockerfile
     environment:
       - SEARXNG_API_URL=http://searxng:8080
+      - CHOKIDAR_USEPOLLING=true
     ports:
       - 3000:3000
     networks:
@@ -24,6 +25,7 @@ services:
       - backend-dbstore:/home/perplexica/data
       - uploads:/home/perplexica/uploads
       - ./config.toml:/home/perplexica/config.toml
+      - ./:/home/perplexica 
     restart: unless-stopped
 
 networks:
