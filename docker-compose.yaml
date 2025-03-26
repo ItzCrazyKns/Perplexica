@@ -28,7 +28,8 @@ services:
       - backend-dbstore:/home/perplexica/data
       - uploads:/home/perplexica/uploads
       - ./config.toml:/home/perplexica/config.toml
-      - ./:/home/perplexica 
+      - ./src:/home/perplexica/src
+      - ./public:/home/perplexica/public
     restart: unless-stopped
 
 networks:

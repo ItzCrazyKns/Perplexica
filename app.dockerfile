@@ -22,13 +22,15 @@ FROM node:20.18.0-slim
 
 WORKDIR /home/perplexica
 
-COPY --from=builder /home/perplexica/public ./public
+COPY --from=builder /home/perplexica /home/perplexica
+
+# COPY --from=builder /home/perplexica/public ./public
 # COPY --from=builder /home/perplexica/.next/static ./public/_next/static
 
 # COPY --from=builder /home/perplexica/.next/standalone ./
-COPY --from=builder /home/perplexica/data ./data
+# COPY --from=builder /home/perplexica/data ./data
 
-RUN mkdir /home/perplexica/uploads
+RUN mkdir -p /home/perplexica/uploads
 
 # CMD ["node", "server.js"]
 CMD ["yarn", "dev"]
