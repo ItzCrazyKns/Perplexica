@@ -18,6 +18,10 @@ services:
       - .env # env variables for auth0
     environment:
       - SEARXNG_API_URL=http://searxng:8080
+      - CHOKIDAR_USEPOLLING=true
+      - NEXT_PUBLIC_AWS_DB_API_URL=https://lyxeetk4w1.execute-api.us-east-1.amazonaws.com/default/getFromStockalyzerDB
+      - NEXT_PUBLIC_AWS_DB_API_KEY=0KcuAyP5zT8kk2vW4MXAU9lMi52Yorti4vRwLwia
+      - NODE_ENV=development
     ports:
       - 3000:3000
     networks:
@@ -26,6 +30,8 @@ services:
       - backend-dbstore:/home/perplexica/data
       - uploads:/home/perplexica/uploads
       - ./config.toml:/home/perplexica/config.toml
+      - ./src:/home/perplexica/src
+      - ./public:/home/perplexica/public
     restart: unless-stopped
 
 networks:
