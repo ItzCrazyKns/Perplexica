@@ -19,6 +19,9 @@ FROM node:20.18.0-slim
 
 WORKDIR /home/perplexica
 
+# 🐧 Install curl + netstat (from net-tools)
+# RUN apt-get update && apt-get install -y curl net-tools && apt-get clean
+
 COPY --from=builder /home/perplexica/public ./public
 COPY --from=builder /home/perplexica/.next/static ./public/_next/static
 
