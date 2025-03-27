@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import Sidebar from '@/components/Sidebar';
 import { Toaster } from 'sonner';
 import ThemeProvider from '@/components/theme/Provider';
+import Header from '@/components/Header';
 
 const montserrat = Montserrat({
   weight: ['300', '400', '500', '700'],
@@ -28,6 +29,7 @@ export default function RootLayout({
     <html className="h-full" lang="en" suppressHydrationWarning>
       <body className={cn('h-full', montserrat.className)}>
         <ThemeProvider>
+          <Header />
           <Sidebar>{children}</Sidebar>
           <Toaster
             toastOptions={{

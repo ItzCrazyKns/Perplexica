@@ -64,8 +64,7 @@ const Navbar = ({
           size={17}
           className="active:scale-95 transition duration-100 cursor-pointer"
         />
-        <DeleteChat redirect chatId={chatId} chats={[]} setChats={() => {}} />
-        <ProfileButton /> {/* 👈 Add this here */}
+        <DeleteChat redirect chatId={chatId} chats={[]} setChats={() => {}} />}
       </div>
     </div>
   );
