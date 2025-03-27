@@ -16,7 +16,7 @@ services:
       dockerfile: app.dockerfile
     env_file:
       - .env # env variables for auth0
-    environment
+    environment:
       - SEARXNG_API_URL=http://localhost:8080
     ports:
       - 3000:3000
