@@ -3,6 +3,7 @@ import { Message } from './ChatWindow';
 import { useEffect, useState } from 'react';
 import { formatTimeDifference } from '@/lib/utils';
 import DeleteChat from './DeleteChat';
+import ProfileButton from './ProfileButton'; // adjust path if needed
 
 const Navbar = ({
   chatId,
@@ -64,6 +65,7 @@ const Navbar = ({
           className="active:scale-95 transition duration-100 cursor-pointer"
         />
         <DeleteChat redirect chatId={chatId} chats={[]} setChats={() => {}} />
+        <ProfileButton /> {/* 👈 Add this here */}
       </div>
     </div>
   );
