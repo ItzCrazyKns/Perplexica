@@ -1,16 +1,25 @@
 import db from '@/lib/db';
 import { chats, messages } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
+import { getSession } from '@auth0/nextjs-auth0';
 
 export const GET = async (
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) => {
   try {
+    const session = await getSession();
+    if (!session?.user) {
+      return Response.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
 
     const chatExists = await db.query.chats.findFirst({
-      where: eq(chats.id, id),
+      where: and(
+        eq(chats.id, id),
+        eq(chats.userId, session.user.sub)
+      ),
     });
 
     if (!chatExists) {
@@ -42,10 +51,18 @@ export const DELETE = async (
   { params }: { params: Promise<{ id: string }> },
 ) => {
   try {
+    const session = await getSession();
+    if (!session?.user) {
+      return Response.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
     const { id } = await params;
 
     const chatExists = await db.query.chats.findFirst({
-      where: eq(chats.id, id),
+      where: and(
+        eq(chats.id, id),
+        eq(chats.userId, session.user.sub)
+      ),
     });
 
     if (!chatExists) {

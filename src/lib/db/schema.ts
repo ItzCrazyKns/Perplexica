@@ -19,6 +19,7 @@ interface File {
 
 export const chats = sqliteTable('chats', {
   id: text('id').primaryKey(),
+  userId: text('userId').notNull(), // user id from auth0
   title: text('title').notNull(),
   createdAt: text('createdAt').notNull(),
   focusMode: text('focusMode').notNull(),

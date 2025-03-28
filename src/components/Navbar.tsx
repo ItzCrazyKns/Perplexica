@@ -3,7 +3,6 @@ import { Message } from './ChatWindow';
 import { useEffect, useState } from 'react';
 import { formatTimeDifference } from '@/lib/utils';
 import DeleteChat from './DeleteChat';
-import ProfileButton from './ProfileButton'; // adjust path if needed
 
 const Navbar = ({
   chatId,

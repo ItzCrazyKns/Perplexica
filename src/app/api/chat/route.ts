@@ -21,6 +21,7 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
+import { getSession } from '@auth0/nextjs-auth0';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -133,8 +134,16 @@ const handleHistorySave = async (
   focusMode: string,
   files: string[],
 ) => {
+  const session = await getSession();
+  if (!session?.user) {
+    throw new Error('Unauthorized');
+  }
+
   const chat = await db.query.chats.findFirst({
-    where: eq(chats.id, message.chatId),
+    where: and(
+      eq(chats.id, message.chatId),
+      eq(chats.userId, session.user.sub)
+    ),
   });
 
   if (!chat) {
@@ -142,6 +151,7 @@ const handleHistorySave = async (
       .insert(chats)
       .values({
         id: message.chatId,
+        userId: session.user.sub,
         title: message.content,
         createdAt: new Date().toString(),
         focusMode: focusMode,
