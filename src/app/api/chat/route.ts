@@ -21,7 +21,7 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
-import { getSession } from '@auth0/nextjs-auth0';
+import { auth0 } from '@/lib/auth0';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -134,7 +134,7 @@ const handleHistorySave = async (
   focusMode: string,
   files: string[],
 ) => {
-  const session = await getSession();
+  const session = await auth0.getSession();
   if (!session?.user) {
     throw new Error('Unauthorized');
   }
