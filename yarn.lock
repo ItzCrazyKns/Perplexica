@@ -1992,10 +1992,10 @@ domutils@^3.0.1:
     domelementtype "^2.3.0"
     domhandler "^5.0.3"
 
-drizzle-kit@^0.30.5:
-  version "0.30.5"
-  resolved "https://registry.yarnpkg.com/drizzle-kit/-/drizzle-kit-0.30.5.tgz#fce34a8ca9f82da5212f31c266e407c78523166f"
-  integrity sha512-l6dMSE100u7sDaTbLczibrQZjA35jLsHNqIV+jmhNVO3O8jzM6kywMOmV9uOz9ZVSCMPQhAZEFjL/qDPVrqpUA==
+drizzle-kit@^0.30.6:
+  version "0.30.6"
+  resolved "https://registry.yarnpkg.com/drizzle-kit/-/drizzle-kit-0.30.6.tgz#e6a1bc57cfbf9f10ed467974a923e236c4f68b31"
+  integrity sha512-U4wWit0fyZuGuP7iNmRleQyK2V8wCuv57vf5l3MnG4z4fzNTjY/U13M8owyQ5RavqvqxBifWORaR3wIUzlN64g==
   dependencies:
     "@drizzle-team/brocli" "^0.10.2"
     "@esbuild-kit/esm-loader" "^2.5.5"
