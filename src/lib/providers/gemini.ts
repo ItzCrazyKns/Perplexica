@@ -1,10 +1,17 @@
-import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
+import {
+  ChatGoogleGenerativeAI,
+  GoogleGenerativeAIEmbeddings,
+} from '@langchain/google-genai';
 import { getGeminiApiKey } from '../config';
 import { ChatModel, EmbeddingModel } from '.';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { Embeddings } from '@langchain/core/embeddings';
 
 const geminiChatModels: Record<string, string>[] = [
+  {
+    displayName: 'Gemini 2.5 Pro Experimental',
+    key: 'gemini-2.5-pro-exp-03-25',
+  },
   {
     displayName: 'Gemini 2.0 Flash',
     key: 'gemini-2.0-flash',
@@ -14,8 +21,8 @@ const geminiChatModels: Record<string, string>[] = [
     key: 'gemini-2.0-flash-lite',
   },
   {
-    displayName: 'Gemini 2.0 Pro Experimental',
-    key: 'gemini-2.0-pro-exp-02-05',
+    displayName: 'Gemini 2.0 Flash Thinking Experimental',
+    key: 'gemini-2.0-flash-thinking-exp-01-21',
   },
   {
     displayName: 'Gemini 1.5 Flash',
@@ -49,13 +56,10 @@ export const loadGeminiChatModels = async () => {
     geminiChatModels.forEach((model) => {
       chatModels[model.key] = {
         displayName: model.displayName,
-        model: new ChatOpenAI({
-          openAIApiKey: geminiApiKey,
+        model: new ChatGoogleGenerativeAI({
+          apiKey: geminiApiKey,
           modelName: model.key,
           temperature: 0.7,
-          configuration: {
-            baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-          },
         }) as unknown as BaseChatModel,
       };
     });
@@ -78,12 +82,9 @@ export const loadGeminiEmbeddingModels = async () => {
     geminiEmbeddingModels.forEach((model) => {
       embeddingModels[model.key] = {
         displayName: model.displayName,
-        model: new OpenAIEmbeddings({
-          openAIApiKey: geminiApiKey,
+        model: new GoogleGenerativeAIEmbeddings({
+          apiKey: geminiApiKey,
           modelName: model.key,
-          configuration: {
-            baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-          },
         }) as unknown as Embeddings,
       };
     });
