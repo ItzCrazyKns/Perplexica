@@ -5,6 +5,7 @@ import {
   getCustomOpenaiModelName,
   getGeminiApiKey,
   getGroqApiKey,
+  getOpenrouterApiKey,
   getOllamaApiEndpoint,
   getOpenaiApiKey,
   updateConfig,
@@ -52,6 +53,7 @@ export const GET = async (req: Request) => {
     config['ollamaApiUrl'] = getOllamaApiEndpoint();
     config['anthropicApiKey'] = getAnthropicApiKey();
     config['groqApiKey'] = getGroqApiKey();
+    config['openrouterApiKey'] = getOpenrouterApiKey();
     config['geminiApiKey'] = getGeminiApiKey();
     config['customOpenaiApiUrl'] = getCustomOpenaiApiUrl();
     config['customOpenaiApiKey'] = getCustomOpenaiApiKey();
@@ -78,6 +80,9 @@ export const POST = async (req: Request) => {
         },
         GROQ: {
           API_KEY: config.groqApiKey,
+        },
+        OPENROUTER: {
+          API_KEY: config.openrouterApiKey,
         },
         ANTHROPIC: {
           API_KEY: config.anthropicApiKey,
