@@ -363,20 +363,18 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
       if (data.type === 'sources') {
         sources = data.data;
-        if (!added) {
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            {
-              content: '',
-              messageId: data.messageId,
-              chatId: chatId!,
-              role: 'assistant',
-              sources: sources,
-              createdAt: new Date(),
-            },
-          ]);
-          added = true;
-        }
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            content: '',
+            messageId: data.messageId,
+            chatId: chatId!,
+            role: 'assistant',
+            sources: sources,
+            createdAt: new Date(),
+          },
+        ]);
+        added = true;
         setMessageAppeared(true);
       }
 
@@ -394,20 +392,20 @@ const ChatWindow = ({ id }: { id?: string }) => {
             },
           ]);
           added = true;
+          setMessageAppeared(true);
+        } else {
+          setMessages((prev) =>
+            prev.map((message) => {
+              if (message.messageId === data.messageId) {
+                return { ...message, content: message.content + data.data };
+              }
+
+              return message;
+            }),
+          );
         }
 
-        setMessages((prev) =>
-          prev.map((message) => {
-            if (message.messageId === data.messageId) {
-              return { ...message, content: message.content + data.data };
-            }
-
-            return message;
-          }),
-        );
-
         recievedMessage += data.data;
-        setMessageAppeared(true);
       }
 
       if (data.type === 'messageEnd') {
