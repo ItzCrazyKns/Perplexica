@@ -26,9 +26,21 @@ services:
       - ./config.toml:/home/perplexica/config.toml
     restart: unless-stopped
 
+  redict:
+    image: registry.redict.io/redict:latest
+    container_name: perplexica-redict
+    ports:
+      - "6379:6379"
+    volumes:
+      - redict_data:/data
+    networks:
+      - perplexica-network
+    restart: unless-stopped
+
 networks:
   perplexica-network:
 
 volumes:
   backend-dbstore:
   uploads:
+  redict_data:
