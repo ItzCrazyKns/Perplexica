@@ -101,6 +101,12 @@ const checkConfig = async (
           localStorage.setItem('userSessionId', userSessionId!)
         }
 
+        let maxRecordLimit = localStorage.getItem('maxRecordLimit');
+        if (!maxRecordLimit) {
+          maxRecordLimit = '20';
+          localStorage.setItem('maxRecordLimit', maxRecordLimit);
+        }
+
         if (
           !embeddingModelProviders ||
           Object.keys(embeddingModelProviders).length === 0

@@ -28,11 +28,28 @@ const Page = () => {
         localStorage.setItem('userSessionId', userSessionId)
       }
 
+      // Get maxRecordLimit from localStorage or set default
+      let maxRecordLimit = localStorage.getItem('maxRecordLimit');
+      if (!maxRecordLimit) {
+        maxRecordLimit = '20';
+        localStorage.setItem('maxRecordLimit', maxRecordLimit);
+      } else {
+        let valueInt = parseInt(maxRecordLimit, 10) || 20;
+        if (valueInt < 1) {
+          valueInt = 1;
+        } else if (valueInt > 100) {
+          valueInt = 100;
+        }
+        maxRecordLimit = valueInt.toString();
+        localStorage.setItem('maxRecordLimit', maxRecordLimit);
+      }
+
       const res = await fetch(`/api/chats`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'user-session-id': userSessionId!,
+          'max-record-limit': maxRecordLimit,
         },
       });
 

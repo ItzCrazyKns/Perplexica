@@ -6,7 +6,8 @@ export const GET = async (req: Request) => {
   try {
     // get header from request
     const headers = await req.headers;
-    let userSessionId = headers.get('user-session-id')?.toString() ?? '';
+    const userSessionId = headers.get('user-session-id')?.toString() ?? '';
+    const maxRecordLimit = parseInt(headers.get('max-record-limit') || '20', 10);
 
     if (userSessionId == '') {
       return Response.json({ chats: {} }, { status: 200 });
@@ -17,8 +18,7 @@ export const GET = async (req: Request) => {
     });
     
     chatsRes = chatsRes.reverse();
-    // Keep only the latest 20 records in the database. Delete older records.
-    let maxRecordLimit = 20;
+    // Keep only the latest records in the database. Delete older records.
     if (chatsRes.length > maxRecordLimit) {
       const deleteChatsQuery = sql`DELETE FROM chats
         WHERE userSessionId = ${userSessionId} AND (
