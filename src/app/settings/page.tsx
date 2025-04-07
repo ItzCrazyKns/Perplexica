@@ -20,6 +20,7 @@ interface SettingsType {
   anthropicApiKey: string;
   geminiApiKey: string;
   ollamaApiUrl: string;
+  deepseekApiKey: string;
   customOpenaiApiKey: string;
   customOpenaiApiUrl: string;
   customOpenaiModelName: string;
@@ -44,6 +45,38 @@ const Input = ({ className, isSaving, onSave, ...restProps }: InputProps) => {
       />
       {isSaving && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <Loader2
+            size={16}
+            className="animate-spin text-black/70 dark:text-white/70"
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface TextareaProps extends React.InputHTMLAttributes<HTMLTextAreaElement> {
+  isSaving?: boolean;
+  onSave?: (value: string) => void;
+}
+
+const Textarea = ({
+  className,
+  isSaving,
+  onSave,
+  ...restProps
+}: TextareaProps) => {
+  return (
+    <div className="relative">
+      <textarea
+        placeholder="Any special instructions for the LLM"
+        className="placeholder:text-sm text-sm w-full flex items-center justify-between p-3 bg-light-secondary dark:bg-dark-secondary rounded-lg hover:bg-light-200 dark:hover:bg-dark-200 transition-colors"
+        rows={4}
+        onBlur={(e) => onSave?.(e.target.value)}
+        {...restProps}
+      />
+      {isSaving && (
+        <div className="absolute right-3 top-3">
           <Loader2
             size={16}
             className="animate-spin text-black/70 dark:text-white/70"
@@ -111,6 +144,7 @@ const Page = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [automaticImageSearch, setAutomaticImageSearch] = useState(false);
   const [automaticVideoSearch, setAutomaticVideoSearch] = useState(false);
+  const [systemInstructions, setSystemInstructions] = useState<string>('');
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -171,6 +205,8 @@ const Page = () => {
       setAutomaticVideoSearch(
         localStorage.getItem('autoVideoSearch') === 'true',
       );
+
+      setSystemInstructions(localStorage.getItem('systemInstructions')!);
 
       setIsLoading(false);
     };
@@ -328,6 +364,8 @@ const Page = () => {
         localStorage.setItem('embeddingModelProvider', value);
       } else if (key === 'embeddingModel') {
         localStorage.setItem('embeddingModel', value);
+      } else if (key === 'systemInstructions') {
+        localStorage.setItem('systemInstructions', value);
       }
     } catch (err) {
       console.error('Failed to save:', err);
@@ -470,6 +508,19 @@ const Page = () => {
                     />
                   </Switch>
                 </div>
+              </div>
+            </SettingsSection>
+
+            <SettingsSection title="System Instructions">
+              <div className="flex flex-col space-y-4">
+                <Textarea
+                  value={systemInstructions}
+                  isSaving={savingStates['systemInstructions']}
+                  onChange={(e) => {
+                    setSystemInstructions(e.target.value);
+                  }}
+                  onSave={(value) => saveConfig('systemInstructions', value)}
+                />
               </div>
             </SettingsSection>
 
@@ -786,6 +837,25 @@ const Page = () => {
                       }));
                     }}
                     onSave={(value) => saveConfig('geminiApiKey', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Deepseek API Key
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="Deepseek API Key"
+                    value={config.deepseekApiKey}
+                    isSaving={savingStates['deepseekApiKey']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        deepseekApiKey: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('deepseekApiKey', value)}
                   />
                 </div>
               </div>

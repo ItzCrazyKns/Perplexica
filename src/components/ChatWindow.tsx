@@ -478,6 +478,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
           name: embeddingModelProvider.name,
           provider: embeddingModelProvider.provider,
         },
+        systemInstructions: localStorage.getItem('systemInstructions'),
       }),
     });
 
