@@ -90,9 +90,6 @@ export const getAvailableChatModelProviders = async () => {
       : {}),
   };
 
-  console.log("here ok1 - start azure_openai");
-  console.log(azureOpenAiApiKey, azureOpenAiEndpoint, azureOpenAiApiVersion, azureOpenAiModelName);
-
   models['azure_openai'] = {
     ...(azureOpenAiApiKey && azureOpenAiEndpoint && azureOpenAiApiVersion && azureOpenAiModelName
       ? {
@@ -109,8 +106,6 @@ export const getAvailableChatModelProviders = async () => {
       }
     : {}),
   }
-
-  console.log(models);
 
   return models;
 };

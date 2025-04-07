@@ -5,14 +5,12 @@ import {
 
 export const GET = async (req: Request) => {
   try {
-    console.error('here ok0');
     const [chatModelProviders, embeddingModelProviders] = await Promise.all([
       getAvailableChatModelProviders(),
       getAvailableEmbeddingModelProviders(),
     ]);
 
 
-    console.error('here ok1');
 
     Object.keys(chatModelProviders).forEach((provider) => {
       Object.keys(chatModelProviders[provider]).forEach((model) => {
@@ -21,7 +19,6 @@ export const GET = async (req: Request) => {
       });
     });
 
-    console.error('here ok2');
 
     Object.keys(embeddingModelProviders).forEach((provider) => {
       Object.keys(embeddingModelProviders[provider]).forEach((model) => {
