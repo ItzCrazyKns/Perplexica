@@ -29,6 +29,7 @@ export interface MetaSearchAgentType {
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'balanced' | 'quality',
     fileIds: string[],
+    systemInstructions: string,
   ) => Promise<eventEmitter>;
 }
 
@@ -239,6 +240,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     fileIds: string[],
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'balanced' | 'quality',
+    systemInstructions: string,
     input: SearchInput,
     emitter: EventEmitter,
   ) {
@@ -275,6 +277,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
       chat_history: input.chat_history,
       date: new Date().toISOString(),
       context: context,
+      systemInstructions: systemInstructions,
     });
 
     const llmRes = await llm.stream(formattedChatPrompt);
@@ -436,6 +439,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'balanced' | 'quality',
     fileIds: string[],
+    systemInstructions: string,
   ) {
     const emitter = new eventEmitter();
 
@@ -444,6 +448,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
       fileIds,
       embeddings,
       optimizationMode,
+      systemInstructions,
       {
         chat_history: history,
         query: message,
