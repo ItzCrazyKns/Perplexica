@@ -19,6 +19,12 @@ API_KEY = ""
 API_URL = ""
 MODEL_NAME = ""
 
+[MODELS.AZURE_OPENAI]
+API_KEY = ""
+ENDPOINT = ""
+MODEL_NAME = ""
+API_VERSION = ""
+
 [MODELS.OLLAMA]
 API_URL = "" # Ollama API URL - http://host.docker.internal:11434
 

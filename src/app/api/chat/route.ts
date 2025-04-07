@@ -14,11 +14,17 @@ import { chats, messages as messagesSchema } from '@/lib/db/schema';
 import { and, eq, gt } from 'drizzle-orm';
 import { getFileDetails } from '@/lib/utils/files';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { ChatOpenAI } from '@langchain/openai';
+import { ChatOpenAI, AzureChatOpenAI } from '@langchain/openai';
 import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
+} from '@/lib/config';
+import {
+  getAzureOpenaiApiKey,
+  getAzureOpenaiEndpoint,
+  getAzureOpenaiModelName,
+  getAzureOpenaiApiVersion,
 } from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
 
@@ -186,6 +192,8 @@ export const POST = async (req: Request) => {
     const body = (await req.json()) as Body;
     const { message } = body;
 
+    console.error('An error occurred while processing chat request:', "here");
+
     if (message.content === '') {
       return Response.json(
         {
@@ -222,6 +230,7 @@ export const POST = async (req: Request) => {
     let embedding = embeddingModel.model;
 
     if (body.chatModel?.provider === 'custom_openai') {
+      console.error('An error occurred while processing chat request:', "custom_openai");
       llm = new ChatOpenAI({
         openAIApiKey: getCustomOpenaiApiKey(),
         modelName: getCustomOpenaiModelName(),
@@ -230,6 +239,15 @@ export const POST = async (req: Request) => {
           baseURL: getCustomOpenaiApiUrl(),
         },
       }) as unknown as BaseChatModel;
+    } else if (body.chatModel?.provider == 'azure_openai') {
+      console.error('An error occurred while processing chat request:', "azure_openai");
+      llm = new AzureChatOpenAI({
+        openAIApiKey: getAzureOpenaiApiKey(),
+        deploymentName: getAzureOpenaiModelName(),
+        openAIBasePath: getAzureOpenaiEndpoint(),
+        openAIApiVersion: getAzureOpenaiApiVersion(),
+        temperature: 0.7
+      }) as unknown as BaseChatModel
     } else if (chatModelProvider && chatModel) {
       llm = chatModel.model;
     }
@@ -297,7 +315,7 @@ export const POST = async (req: Request) => {
       },
     });
   } catch (err) {
-    console.error('An error occurred while processing chat request:', err);
+    console.error('An error occurred while processing chat request 123:', err);
     return Response.json(
       { message: 'An error occurred while processing chat request' },
       { status: 500 },

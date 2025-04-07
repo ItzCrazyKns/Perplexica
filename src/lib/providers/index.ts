@@ -6,13 +6,20 @@ import {
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
 } from '../config';
-import { ChatOpenAI } from '@langchain/openai';
+import {
+  getAzureOpenaiApiKey,
+  getAzureOpenaiEndpoint,
+  getAzureOpenaiModelName,
+  getAzureOpenaiApiVersion,
+} from '../config';
+import { ChatOpenAI, AzureChatOpenAI } from '@langchain/openai';
 import { loadOllamaChatModels, loadOllamaEmbeddingModels } from './ollama';
 import { loadGroqChatModels } from './groq';
 import { loadAnthropicChatModels } from './anthropic';
 import { loadGeminiChatModels, loadGeminiEmbeddingModels } from './gemini';
 import { loadTransformersEmbeddingsModels } from './transformers';
 import { loadDeepseekChatModels } from './deepseek';
+import Chat from '@/components/Chat';
 
 export interface ChatModel {
   displayName: string;
@@ -60,6 +67,11 @@ export const getAvailableChatModelProviders = async () => {
   const customOpenAiApiUrl = getCustomOpenaiApiUrl();
   const customOpenAiModelName = getCustomOpenaiModelName();
 
+  const azureOpenAiApiKey = getAzureOpenaiApiKey();
+  const azureOpenAiModelName = getAzureOpenaiModelName();
+  const azureOpenAiApiVersion = getAzureOpenaiApiVersion();
+  const azureOpenAiEndpoint = getAzureOpenaiEndpoint();
+
   models['custom_openai'] = {
     ...(customOpenAiApiKey && customOpenAiApiUrl && customOpenAiModelName
       ? {
@@ -77,6 +89,28 @@ export const getAvailableChatModelProviders = async () => {
         }
       : {}),
   };
+
+  console.log("here ok1 - start azure_openai");
+  console.log(azureOpenAiApiKey, azureOpenAiEndpoint, azureOpenAiApiVersion, azureOpenAiModelName);
+
+  models['azure_openai'] = {
+    ...(azureOpenAiApiKey && azureOpenAiEndpoint && azureOpenAiApiVersion && azureOpenAiModelName
+      ? {
+        [azureOpenAiModelName]: {
+          displayName: azureOpenAiModelName,
+          model: new AzureChatOpenAI({
+            openAIApiKey: azureOpenAiApiKey,
+            deploymentName: azureOpenAiModelName,
+            openAIBasePath: azureOpenAiEndpoint,
+            openAIApiVersion: azureOpenAiApiVersion,
+            temperature: 0.7
+          }) as unknown as BaseChatModel
+        },
+      }
+    : {}),
+  }
+
+  console.log(models);
 
   return models;
 };

@@ -3,6 +3,10 @@ import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
+  getAzureOpenaiApiKey,
+  getAzureOpenaiApiVersion,
+  getAzureOpenaiModelName,
+  getAzureOpenaiEndpoint,
   getGeminiApiKey,
   getGroqApiKey,
   getOllamaApiEndpoint,
@@ -58,6 +62,10 @@ export const GET = async (req: Request) => {
     config['customOpenaiApiUrl'] = getCustomOpenaiApiUrl();
     config['customOpenaiApiKey'] = getCustomOpenaiApiKey();
     config['customOpenaiModelName'] = getCustomOpenaiModelName();
+    config['azureOpenaiApiKey'] = getAzureOpenaiApiKey();
+    config['azureOpenaiApiVersion'] = getAzureOpenaiApiVersion();
+    config['azureOpenaiModelName'] = getAzureOpenaiModelName();
+    config['azureOpenaiEndpoint'] = getAzureOpenaiEndpoint();
 
     return Response.json({ ...config }, { status: 200 });
   } catch (err) {
@@ -98,6 +106,12 @@ export const POST = async (req: Request) => {
           API_KEY: config.customOpenaiApiKey,
           MODEL_NAME: config.customOpenaiModelName,
         },
+        AZURE_OPENAI: {
+          API_KEY: config.azureOpenaiApiKey,
+          MODEL_NAME: config.azureOpenaiModelName,
+          ENDPOINT: config.azureOpenaiEndpoint,
+          API_VERSION: config.azureOpenaiApiVersion,
+        }
       },
     };
 

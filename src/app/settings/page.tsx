@@ -24,6 +24,10 @@ interface SettingsType {
   customOpenaiApiKey: string;
   customOpenaiApiUrl: string;
   customOpenaiModelName: string;
+  azureOpenaiModelName: string;
+  azureOpenaiEndpoint: string;
+  azureOpenaiApiKey: string;
+  azureOpenaiApiVersion: string;
 }
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -556,7 +560,8 @@ const Page = () => {
                   </div>
 
                   {selectedChatModelProvider &&
-                    selectedChatModelProvider != 'custom_openai' && (
+                    selectedChatModelProvider != 'custom_openai' &&
+                    selectedChatModelProvider != 'azure_openai' && (
                       <div className="flex flex-col space-y-1">
                         <p className="text-black/70 dark:text-white/70 text-sm">
                           Chat Model
@@ -666,6 +671,93 @@ const Page = () => {
                     </div>
                   </div>
                 )}
+              
+              {selectedChatModelProvider &&
+                selectedChatModelProvider === 'azure_openai' && (
+                  <div className="flex flex-col space-y-4">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-black/70 dark:text-white/70 text-sm">
+                        Model Name
+                      </p>
+                      <Input
+                        type="text"
+                        placeholder="Model name"
+                        value={config.azureOpenaiModelName}
+                        isSaving={savingStates['azureOpenaiModelName']}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          setConfig((prev) => ({
+                            ...prev!,
+                            azureOpenaiModelName: e.target.value,
+                          }));
+                        }}
+                        onSave={(value) =>
+                          saveConfig('azureOpenaiModelName', value)
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-black/70 dark:text-white/70 text-sm">
+                        Azure OpenAI API Key
+                      </p>
+                      <Input
+                        type="text"
+                        placeholder="Azure OpenAI API Key"
+                        value={config.azureOpenaiApiKey}
+                        isSaving={savingStates['azureOpenaiApiKey']}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          setConfig((prev) => ({
+                            ...prev!,
+                            azureOpenaiApiKey: e.target.value,
+                          }));
+                        }}
+                        onSave={(value) =>
+                          saveConfig('azureOpenaiApiKey', value)
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-black/70 dark:text-white/70 text-sm">
+                        Azure OpenAI Base URL
+                      </p>
+                      <Input
+                        type="text"
+                        placeholder="Azure OpenAI Base URL"
+                        value={config.azureOpenaiEndpoint}
+                        isSaving={savingStates['azureOpenaiEndpoint']}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          setConfig((prev) => ({
+                            ...prev!,
+                            azureOpenaiEndpoint: e.target.value,
+                          }));
+                        }}
+                        onSave={(value) =>
+                          saveConfig('azureOpenaiEndpoint', value)
+                        }
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-black/70 dark:text-white/70 text-sm">
+                        Azure OpenAI Api Version
+                      </p>
+                      <Input
+                        type="text"
+                        placeholder="Azure OpenAI Api Version"
+                        value={config.azureOpenaiApiVersion}
+                        isSaving={savingStates['azureOpenaiApiVersion']}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          setConfig((prev) => ({
+                            ...prev!,
+                            azureOpenaiApiVersion: e.target.value,
+                          }));
+                        }}
+                        onSave={(value) =>
+                          saveConfig('azureOpenaiApiVersion', value)
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+
 
               {config.embeddingModelProviders && (
                 <div className="flex flex-col space-y-4 mt-4 pt-4 border-t border-light-200 dark:border-dark-200">

@@ -4,10 +4,16 @@ import {
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
 } from '@/lib/config';
+import {
+  getAzureOpenaiApiKey,
+  getAzureOpenaiEndpoint,
+  getAzureOpenaiModelName,
+  getAzureOpenaiApiVersion,
+} from '@/lib/config';
 import { getAvailableChatModelProviders } from '@/lib/providers';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
-import { ChatOpenAI } from '@langchain/openai';
+import { ChatOpenAI, AzureChatOpenAI } from '@langchain/openai';
 
 interface ChatModel {
   provider: string;
@@ -56,6 +62,14 @@ export const POST = async (req: Request) => {
           baseURL: getCustomOpenaiApiUrl(),
         },
       }) as unknown as BaseChatModel;
+    } else if (body.chatModel?.provider == 'azure_openai') {
+          llm = new AzureChatOpenAI({
+            openAIApiKey: getAzureOpenaiApiKey(),
+            deploymentName: getAzureOpenaiModelName(),
+            openAIBasePath: getAzureOpenaiEndpoint(),
+            openAIApiVersion: getAzureOpenaiApiVersion(),
+            temperature: 0.7
+          }) as unknown as BaseChatModel
     } else if (chatModelProvider && chatModel) {
       llm = chatModel.model;
     }

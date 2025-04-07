@@ -33,6 +33,12 @@ interface Config {
       API_KEY: string;
       MODEL_NAME: string;
     };
+    AZURE_OPENAI: {
+      ENDPOINT: string;
+      API_KEY: string;
+      MODEL_NAME: string;
+      API_VERSION: string;
+    }
   };
   API_ENDPOINTS: {
     SEARXNG: string;
@@ -76,6 +82,18 @@ export const getCustomOpenaiApiUrl = () =>
 
 export const getCustomOpenaiModelName = () =>
   loadConfig().MODELS.CUSTOM_OPENAI.MODEL_NAME;
+
+export const getAzureOpenaiApiKey = () =>
+  loadConfig().MODELS.AZURE_OPENAI.API_KEY;
+
+export const getAzureOpenaiEndpoint = () =>
+  loadConfig().MODELS.AZURE_OPENAI.ENDPOINT;
+
+export const getAzureOpenaiModelName = () =>
+  loadConfig().MODELS.AZURE_OPENAI.MODEL_NAME;
+
+export const getAzureOpenaiApiVersion = () =>
+  loadConfig().MODELS.AZURE_OPENAI.API_VERSION;
 
 const mergeConfigs = (current: any, update: any): any => {
   if (update === null || update === undefined) {

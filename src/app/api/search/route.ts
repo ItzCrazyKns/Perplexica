@@ -1,6 +1,6 @@
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { Embeddings } from '@langchain/core/embeddings';
-import { ChatOpenAI } from '@langchain/openai';
+import { ChatOpenAI, AzureChatOpenAI } from '@langchain/openai';
 import {
   getAvailableChatModelProviders,
   getAvailableEmbeddingModelProviders,
@@ -12,6 +12,12 @@ import {
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
 } from '@/lib/config';
+import {
+  getAzureOpenaiApiKey,
+  getAzureOpenaiEndpoint,
+  getAzureOpenaiModelName,
+  getAzureOpenaiApiVersion,
+} from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
 
 interface chatModel {
@@ -19,6 +25,10 @@ interface chatModel {
   name: string;
   customOpenAIKey?: string;
   customOpenAIBaseURL?: string;
+  azureOpenAIApiVersion?: string;
+  azureOpenAIApiKey?: string;
+  azureOpenAIApiDeploymentName?: string;
+  azureOpenAIEndpoint?: string;
 }
 
 interface embeddingModel {
@@ -89,6 +99,14 @@ export const POST = async (req: Request) => {
             body.chatModel?.customOpenAIBaseURL || getCustomOpenaiApiUrl(),
         },
       }) as unknown as BaseChatModel;
+    } else if (body.chatModel?.provider == 'azure_openai') {
+      llm = new AzureChatOpenAI({
+        openAIApiKey: body.chatModel?.azureOpenAIApiKey || getAzureOpenaiApiKey(),
+        deploymentName: body.chatModel?.azureOpenAIApiDeploymentName || getAzureOpenaiModelName(),
+        openAIBasePath: body.chatModel?.azureOpenAIEndpoint || getAzureOpenaiEndpoint(),
+        openAIApiVersion: body.chatModel?.azureOpenAIApiVersion || getAzureOpenaiApiVersion(),
+        temperature: 0.7
+      }) as unknown as BaseChatModel
     } else if (
       chatModelProviders[chatModelProvider] &&
       chatModelProviders[chatModelProvider][chatModel]
