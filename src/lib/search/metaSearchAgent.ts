@@ -12,7 +12,7 @@ import LineListOutputParser from '../outputParsers/listLineOutputParser';
 import LineOutputParser from '../outputParsers/lineOutputParser';
 import { getDocumentsFromLinks } from '../utils/documents';
 import { Document } from 'langchain/document';
-import { searchSearxng } from '../searxng';
+import { searchSearxng, SearxngSearchResult } from '../searxng';
 import path from 'node:path';
 import fs from 'node:fs';
 import computeSimilarity from '../utils/computeSimilarity';
@@ -235,6 +235,134 @@ class MetaSearchAgent implements MetaSearchAgentType {
     }
   }
 
+  private async performDeepResearch(
+    llm: BaseChatModel,
+    input: SearchInput,
+    emitter: EventEmitter,
+  ) {
+    (llm as unknown as ChatOpenAI).temperature = 0;
+
+    const queryGenPrompt = PromptTemplate.fromTemplate(
+      this.config.queryGeneratorPrompt,
+    );
+
+    const formattedChatPrompt = await queryGenPrompt.invoke({
+      chat_history: formatChatHistoryAsString(input.chat_history),
+      query: input.query,
+    });
+
+    let i = 0;
+    let currentQuery = await this.strParser.invoke(
+      await llm.invoke(formattedChatPrompt),
+    );
+    const originalQuery = currentQuery;
+    const pastQueries: string[] = [];
+    const results: SearxngSearchResult[] = [];
+
+    while (i < 10) {
+      const res = await searchSearxng(currentQuery, {
+        language: 'en',
+        engines: this.config.activeEngines,
+      });
+
+      results.push(...res.results);
+
+      const reflectorPrompt = PromptTemplate.fromTemplate(`
+          You are an LLM that is tasked with reflecting on the results of a search query.
+
+          ## Goal
+          You will be given question of the user, a list of search results collected from the web to answer that question along with past queries made to collect those results. You have to analyze the results based on user's question and do the following:
+          
+          1. Identify unexplored areas or areas with less detailed information in the results and generate a new query that focuses on those areas. The new queries should be more specific and a similar query shall not exist in past queries which will be provided to you. Make sure to include keywords that you're looking for because the new query will be used to search the web for information on that topic. Make sure the query contains only 1 question and is not too long to ensure it is Search Engine friendly.
+          2. You'll have to generate a description explaining what you are doing for example "I am looking for more information about X" or "Understanding how X works" etc. The description should be short and concise.
+          
+          ## Output format
+
+          You need to output in XML format and do not generate any other text. ake sure to not include any other text in the output or start a conversation in the output. The output should be in the following format:
+
+          <query>(query)</query>
+          <description>(description)</description>
+
+          ## Example
+          Say the user asked "What is Llama 4 by Meta?" and let search results contain information about Llama 4 being an LLM and very little information about its features. You can output:
+
+          <query>Llama 4 features</query> // Generate queries that capture keywords for SEO and not making words like "How", "What", "Why" etc.
+          <description>Looking for new features in Llama 4</description>
+
+          or something like
+
+          <query>How is Llama 4 better than its previous generation models</query>
+          <description>Understanding the difference between Llama 4 and previous generation models.</description>
+          
+          ## BELOW IS THE ACTUAL DATA YOU WILL BE WORKING WITH. IT IS NOT A PART OF EXAMPLES. YOU'LL HAVE TO GENERATE YOUR ANSWER BASED ON THIS DATA.
+          <user_question>\n{question}\n</user_question>
+          <search_results>\n{search_results}\n</search_results>
+          <past_queries>\n{past_queries}\n</past_queries>
+
+          Response:
+      `);
+
+      const formattedReflectorPrompt = await reflectorPrompt.invoke({
+        question: originalQuery,
+        search_results: results
+          .map(
+            (result) => `<result>${result.title} - ${result.content}</result>`,
+          )
+          .join('\n'),
+        past_queries: pastQueries.map((q) => `<query>${q}</query>`).join('\n'),
+      });
+
+      const feedback = await this.strParser.invoke(
+        await llm.invoke(formattedReflectorPrompt),
+      );
+
+      console.log(`Feedback: ${feedback}`);
+
+      const queryOutputParser = new LineOutputParser({
+        key: 'query',
+      });
+
+      const descriptionOutputParser = new LineOutputParser({
+        key: 'description',
+      });
+
+      currentQuery = await queryOutputParser.parse(feedback);
+      const description = await descriptionOutputParser.parse(feedback);
+      console.log(`Query: ${currentQuery}`);
+      console.log(`Description: ${description}`);
+
+      pastQueries.push(currentQuery);
+      ++i;
+    }
+
+    const uniqueResults: SearxngSearchResult[] = [];
+
+    results.forEach((res) => {
+      const exists = uniqueResults.find((r) => r.url === res.url);
+
+      if (!exists) {
+        uniqueResults.push(res);
+      } else {
+        exists.content += `\n\n` + res.content;
+      }
+    });
+
+    const documents = uniqueResults /* .slice(0, 50) */
+      .map(
+        (r) =>
+          new Document({
+            pageContent: r.content || '',
+            metadata: {
+              title: r.title,
+              url: r.url,
+              ...(r.img_src && { img_src: r.img_src }),
+            },
+          }),
+      );
+
+    return documents;
+  }
+
   private async streamAnswer(
     llm: BaseChatModel,
     fileIds: string[],
@@ -250,27 +378,42 @@ class MetaSearchAgent implements MetaSearchAgentType {
       ['user', '{query}'],
     ]);
 
-    let docs: Document[] | null = null;
-    let query = input.query;
+    let context = '';
 
-    if (this.config.searchWeb) {
-      const searchResults = await this.searchSources(llm, input, emitter);
+    if (optimizationMode === 'speed' || optimizationMode === 'balanced') {
+      let docs: Document[] | null = null;
+      let query = input.query;
 
-      query = searchResults.query;
-      docs = searchResults.docs;
+      if (this.config.searchWeb) {
+        const searchResults = await this.searchSources(llm, input, emitter);
+
+        query = searchResults.query;
+        docs = searchResults.docs;
+      }
+
+      const sortedDocs = await this.rerankDocs(
+        query,
+        docs ?? [],
+        fileIds,
+        embeddings,
+        optimizationMode,
+      );
+
+      emitter.emit(
+        'data',
+        JSON.stringify({ type: 'sources', data: sortedDocs }),
+      );
+
+      context = this.processDocs(sortedDocs);
+    } else if (optimizationMode === 'quality') {
+      let docs: Document[] = [];
+
+      docs = await this.performDeepResearch(llm, input, emitter);
+
+      emitter.emit('data', JSON.stringify({ type: 'sources', data: docs }));
+
+      context = this.processDocs(docs);
     }
-
-    const sortedDocs = await this.rerankDocs(
-      query,
-      docs ?? [],
-      fileIds,
-      embeddings,
-      optimizationMode,
-    );
-
-    emitter.emit('data', JSON.stringify({ type: 'sources', data: sortedDocs }));
-
-    const context = this.processDocs(sortedDocs);
 
     const formattedChatPrompt = await chatPrompt.invoke({
       query: input.query,
@@ -427,7 +570,9 @@ class MetaSearchAgent implements MetaSearchAgentType {
     return docs
       .map(
         (_, index) =>
-          `${index + 1}. ${docs[index].metadata.title} ${docs[index].pageContent}`,
+          `${index + 1}. ${docs[index].metadata.title} ${
+            docs[index].pageContent
+          }`,
       )
       .join('\n');
   }

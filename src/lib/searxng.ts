@@ -8,7 +8,7 @@ interface SearxngSearchOptions {
   pageno?: number;
 }
 
-interface SearxngSearchResult {
+export interface SearxngSearchResult {
   title: string;
   url: string;
   img_src?: string;
