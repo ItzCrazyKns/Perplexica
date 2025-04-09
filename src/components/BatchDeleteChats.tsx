@@ -36,7 +36,7 @@ const BatchDeleteChats = ({
     setLoading(true);
     try {
       for (const chatId of chatIds) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/chats/${chatId}`, {
+        await fetch(`/api/chats/${chatId}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
