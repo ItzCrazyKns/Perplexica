@@ -24,6 +24,7 @@ interface SettingsType {
   customOpenaiApiKey: string;
   customOpenaiApiUrl: string;
   customOpenaiModelName: string;
+  maxRecordLimit: string;
 }
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -146,6 +147,7 @@ const Page = () => {
   const [automaticVideoSearch, setAutomaticVideoSearch] = useState(false);
   const [systemInstructions, setSystemInstructions] = useState<string>('');
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
+  const [maxRecordLimit, setMaxRecordLimit] = useState<string>('20');
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -207,6 +209,8 @@ const Page = () => {
       );
 
       setSystemInstructions(localStorage.getItem('systemInstructions')!);
+
+      setMaxRecordLimit(localStorage.getItem('maxRecordLimit') || data.maxRecordLimit || '20');
 
       setIsLoading(false);
     };
@@ -366,6 +370,15 @@ const Page = () => {
         localStorage.setItem('embeddingModel', value);
       } else if (key === 'systemInstructions') {
         localStorage.setItem('systemInstructions', value);
+      } else if (key === 'maxRecordLimit') {
+        let valueInt = parseInt(value, 10) || 20;
+        if (valueInt < 1) {
+          valueInt = 1;
+        } else if (valueInt > 100) {
+          valueInt = 100;
+        }
+        setMaxRecordLimit(valueInt.toString());
+        localStorage.setItem('maxRecordLimit', valueInt.toString());
       }
     } catch (err) {
       console.error('Failed to save:', err);
@@ -857,6 +870,37 @@ const Page = () => {
                     }}
                     onSave={(value) => saveConfig('deepseekApiKey', value)}
                   />
+                </div>
+              </div>
+            </SettingsSection>
+
+            <SettingsSection title="Chat History">
+              <div className="flex flex-col space-y-4">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Maximum Chat History Records
+                  </p>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="100"
+                      pattern="[0-9]*"
+                      inputMode="numeric"
+                      value={maxRecordLimit}
+                      isSaving={savingStates['maxRecordLimit']}
+                      onChange={(e) => {
+                        setMaxRecordLimit(e.target.value);
+                      }}
+                      onSave={(value) => saveConfig('maxRecordLimit', value)}
+                    />
+                    <span className="text-black/60 dark:text-white/60 text-sm">
+                      records
+                    </span>
+                  </div>
+                  <p className="text-xs text-black/60 dark:text-white/60 mt-1">
+                    Maximum number of chat records to keep in history. Older records will be automatically deleted.
+                  </p>
                 </div>
               </div>
             </SettingsSection>
