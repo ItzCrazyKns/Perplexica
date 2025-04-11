@@ -26,3 +26,17 @@ export const chats = sqliteTable('chats', {
     .$type<File[]>()
     .default(sql`'[]'`),
 });
+
+// Add user preferences table for Discover features
+export const userPreferences = sqliteTable('userPreferences', {
+  id: integer('id').primaryKey(),
+  userId: text('userId').notNull().unique(),
+  categories: text('categories', { mode: 'json' })
+    .$type<string[]>()
+    .default(sql`'[]'`), // Categories will be set at the application level
+  languages: text('languages', { mode: 'json' })
+    .$type<string[]>()
+    .default(sql`'[]'`), // Languages will be set at the application level
+  createdAt: text('createdAt').notNull(),
+  updatedAt: text('updatedAt').notNull(),
+});
