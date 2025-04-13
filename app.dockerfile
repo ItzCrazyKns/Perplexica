@@ -21,7 +21,9 @@ COPY --from=builder /home/perplexica/.next/static ./public/_next/static
 
 COPY --from=builder /home/perplexica/.next/standalone ./
 COPY --from=builder /home/perplexica/data ./data
+COPY sample.config.toml /home/perplexica/config.toml
+COPY container_entrypoint.sh /home/perplexica/container_entrypoint.sh
 
 RUN mkdir /home/perplexica/uploads
 
-CMD ["node", "server.js"]
+CMD ["bash", "/home/perplexica/container_entrypoint.sh"]
