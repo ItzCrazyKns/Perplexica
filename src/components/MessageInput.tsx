@@ -15,23 +15,18 @@ const MessageInput = ({
   setFileIds,
   files,
   setFiles,
-  isCompact,
-  setIsCompact,
   optimizationMode,
   setOptimizationMode,
 }: {
   sendMessage: (
     message: string,
-    messageId?: string,
-    options?: { isCompact?: boolean },
+    messageId?: string
   ) => void;
   loading: boolean;
   fileIds: string[];
   setFileIds: (fileIds: string[]) => void;
   files: File[];
   setFiles: (files: File[]) => void;
-  isCompact: boolean;
-  setIsCompact: (isCompact: boolean) => void;
   optimizationMode: string;
   setOptimizationMode: (mode: string) => void;
 }) => {
@@ -73,13 +68,13 @@ const MessageInput = ({
       onSubmit={(e) => {
         if (loading) return;
         e.preventDefault();
-        sendMessage(message, undefined, { isCompact });
+        sendMessage(message, undefined);
         setMessage('');
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' && !e.shiftKey && !loading) {
           e.preventDefault();
-          sendMessage(message, undefined, { isCompact });
+          sendMessage(message, undefined);
           setMessage('');
         }
       }}
@@ -99,8 +94,6 @@ const MessageInput = ({
           <Optimization
             optimizationMode={optimizationMode}
             setOptimizationMode={setOptimizationMode}
-            isCompact={isCompact}
-            setIsCompact={setIsCompact}
           />
         </div>
       )}
@@ -140,8 +133,6 @@ const MessageInput = ({
             <Optimization
               optimizationMode={optimizationMode}
               setOptimizationMode={setOptimizationMode}
-              isCompact={isCompact}
-              setIsCompact={setIsCompact}
             />
           </div>
           <div className="flex flex-row items-center space-x-4">

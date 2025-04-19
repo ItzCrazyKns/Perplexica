@@ -16,8 +16,6 @@ const Chat = ({
   setFileIds,
   files,
   setFiles,
-  isCompact,
-  setIsCompact,
   optimizationMode,
   setOptimizationMode,
 }: {
@@ -25,7 +23,6 @@ const Chat = ({
   sendMessage: (
     message: string,
     messageId?: string,
-    options?: { isCompact?: boolean },
   ) => void;
   loading: boolean;
   messageAppeared: boolean;
@@ -34,8 +31,6 @@ const Chat = ({
   setFileIds: (fileIds: string[]) => void;
   files: File[];
   setFiles: (files: File[]) => void;
-  isCompact: boolean;
-  setIsCompact: (isCompact: boolean) => void;
   optimizationMode: string;
   setOptimizationMode: (mode: string) => void;
 }) => {
@@ -89,7 +84,6 @@ const Chat = ({
               dividerRef={isLast ? dividerRef : undefined}
               isLast={isLast}
               rewrite={rewrite}
-              isCompact={isCompact}
               sendMessage={sendMessage}
             />
             {!isLast && msg.role === 'assistant' && (
@@ -112,8 +106,6 @@ const Chat = ({
             setFileIds={setFileIds}
             files={files}
             setFiles={setFiles}
-            isCompact={isCompact}
-            setIsCompact={setIsCompact}
             optimizationMode={optimizationMode}
             setOptimizationMode={setOptimizationMode}
           />

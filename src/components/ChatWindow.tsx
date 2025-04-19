@@ -282,19 +282,13 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const [focusMode, setFocusMode] = useState('webSearch');
   const [optimizationMode, setOptimizationMode] = useState('speed');
-  const [isCompact, setIsCompact] = useState(false);
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    const savedCompactMode = localStorage.getItem('compactMode');
     const savedOptimizationMode = localStorage.getItem('optimizationMode');
-
-    if (savedCompactMode !== null) {
-      setIsCompact(savedCompactMode === 'true');
-    }
 
     if (savedOptimizationMode !== null) {
       setOptimizationMode(savedOptimizationMode);
@@ -346,7 +340,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
 const sendMessage = async (
     message: string,
     messageId?: string,
-    options?: { isCompact?: boolean; rewriteIndex?: number },
+    options?: { rewriteIndex?: number },
   ) => {
     if (loading) return;
     if (!isConfigReady) {
@@ -559,12 +553,12 @@ const sendMessage = async (
   const rewrite = (messageId: string) => {
     const messageIndex = messages.findIndex((msg) => msg.messageId === messageId);
     if(messageIndex == -1) return;
-    sendMessage(messages[messageIndex - 1].content, messageId, { isCompact, rewriteIndex: messageIndex });
+    sendMessage(messages[messageIndex - 1].content, messageId, { rewriteIndex: messageIndex });
   };
 
   useEffect(() => {
     if (isReady && initialMessage && isConfigReady) {
-      sendMessage(initialMessage, undefined, { isCompact });
+      sendMessage(initialMessage, undefined, { });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfigReady, isReady, initialMessage]);
@@ -604,8 +598,6 @@ const sendMessage = async (
               setFileIds={setFileIds}
               files={files}
               setFiles={setFiles}
-              isCompact={isCompact}
-              setIsCompact={setIsCompact}
               optimizationMode={optimizationMode}
               setOptimizationMode={setOptimizationMode}
             />
@@ -621,8 +613,6 @@ const sendMessage = async (
             setFileIds={setFileIds}
             files={files}
             setFiles={setFiles}
-            isCompact={isCompact}
-            setIsCompact={setIsCompact}
           />
         )}
       </div>

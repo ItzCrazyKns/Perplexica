@@ -17,13 +17,10 @@ const EmptyChatMessageInput = ({
   setFileIds,
   files,
   setFiles,
-  isCompact,
-  setIsCompact,
 }: {
   sendMessage: (
     message: string,
     messageId?: string,
-    options?: { isCompact?: boolean },
   ) => void;
   focusMode: string;
   setFocusMode: (mode: string) => void;
@@ -33,8 +30,6 @@ const EmptyChatMessageInput = ({
   setFileIds: (fileIds: string[]) => void;
   files: File[];
   setFiles: (files: File[]) => void;
-  isCompact: boolean;
-  setIsCompact: (isCompact: boolean) => void;
 }) => {
   const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [message, setMessage] = useState('');
@@ -69,13 +64,13 @@ const EmptyChatMessageInput = ({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        sendMessage(message, undefined, { isCompact });
+        sendMessage(message, undefined);
         setMessage('');
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
-          sendMessage(message, undefined, { isCompact });
+          sendMessage(message, undefined);
           setMessage('');
         }
       }}
@@ -105,8 +100,6 @@ const EmptyChatMessageInput = ({
             <Optimization
               optimizationMode={optimizationMode}
               setOptimizationMode={setOptimizationMode}
-              isCompact={isCompact}
-              setIsCompact={setIsCompact}
             />
             <button
               disabled={message.trim().length === 0}

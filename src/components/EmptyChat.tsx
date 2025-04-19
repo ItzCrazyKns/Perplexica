@@ -14,8 +14,6 @@ const EmptyChat = ({
   setFileIds,
   files,
   setFiles,
-  isCompact,
-  setIsCompact,
 }: {
   sendMessage: (message: string) => void;
   focusMode: string;
@@ -26,8 +24,6 @@ const EmptyChat = ({
   setFileIds: (fileIds: string[]) => void;
   files: File[];
   setFiles: (files: File[]) => void;
-  isCompact: boolean;
-  setIsCompact: (isCompact: boolean) => void;
 }) => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -52,8 +48,6 @@ const EmptyChat = ({
           setFileIds={setFileIds}
           files={files}
           setFiles={setFiles}
-          isCompact={isCompact}
-          setIsCompact={setIsCompact}
         />
       </div>
     </div>

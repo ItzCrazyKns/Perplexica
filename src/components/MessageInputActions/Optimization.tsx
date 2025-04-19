@@ -35,28 +35,11 @@ const OptimizationModes = [
 
 const Optimization = ({
   optimizationMode,
-  setOptimizationMode,
-  isCompact,
-  setIsCompact,
+  setOptimizationMode
 }: {
   optimizationMode: string;
   setOptimizationMode: (mode: string) => void;
-  isCompact: boolean;
-  setIsCompact: (isCompact: boolean) => void;
 }) => {
-  useEffect(() => {
-    const savedCompactMode = localStorage.getItem('compactMode');
-    if (savedCompactMode === null) {
-      localStorage.setItem('compactMode', String(isCompact));
-    } else {
-      setIsCompact(savedCompactMode === 'true');
-    }
-  }, [setIsCompact]);
-
-  const handleCompactChange = (checked: boolean) => {
-    setIsCompact(checked);
-    localStorage.setItem('compactMode', String(checked));
-  };
 
   const handleOptimizationChange = (mode: string) => {
     setOptimizationMode(mode);
@@ -70,12 +53,6 @@ const Optimization = ({
         className="p-2 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
       >
         <div className="flex flex-row items-center space-x-1">
-          {isCompact && (
-            <Minimize2
-              size={16}
-              className="text-gray-600 dark:text-gray-400"
-            />
-          )}
           {
             OptimizationModes.find((mode) => mode.key === optimizationMode)
               ?.icon
@@ -122,30 +99,6 @@ const Optimization = ({
                 </p>
               </PopoverButton>
             ))}
-            <div className="border-t border-light-200 dark:border-dark-200 pt-2 mt-1">
-              <label className="flex items-center space-x-2 p-2 rounded-lg cursor-pointer hover:bg-light-secondary dark:hover:bg-dark-secondary">
-                <input
-                  type="checkbox"
-                  checked={isCompact}
-                  onChange={(e) => handleCompactChange(e.target.checked)}
-                  className="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
-                />
-                <div className="flex items-center space-x-2">
-                  <Minimize2
-                    size={16}
-                    className="text-gray-600 dark:text-gray-400"
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-black dark:text-white">
-                      Compact Mode
-                    </p>
-                    <p className="text-xs text-black/70 dark:text-white/70">
-                      Generate more concise responses
-                    </p>
-                  </div>
-                </div>
-              </label>
-            </div>
           </div>
         </PopoverPanel>
       </Transition>

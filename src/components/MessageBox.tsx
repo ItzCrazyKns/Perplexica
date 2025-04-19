@@ -33,7 +33,6 @@ const MessageBox = ({
   dividerRef,
   isLast,
   rewrite,
-  isCompact,
   sendMessage,
 }: {
   message: Message;
@@ -43,11 +42,9 @@ const MessageBox = ({
   dividerRef?: MutableRefObject<HTMLDivElement | null>;
   isLast: boolean;
   rewrite: (messageId: string) => void;
-  isCompact: boolean;
   sendMessage: (
     message: string,
-    messageId?: string,
-    options?: { isCompact?: boolean },
+    messageId?: string
   ) => void;
 }) => {
   const [parsedMessage, setParsedMessage] = useState(message.content);
@@ -114,7 +111,7 @@ const MessageBox = ({
   const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
 
   const handleSuggestionClick = (suggestion: string) => {
-    sendMessage(suggestion, undefined, { isCompact });
+    sendMessage(suggestion, undefined);
   };
   
   const markdownOverrides: MarkdownToJSX.Options = {

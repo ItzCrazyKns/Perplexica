@@ -8,8 +8,7 @@ import {
 } from './redditSearch';
 import {
   webSearchResponsePrompt,
-  webSearchRetrieverPrompt,
-  preciseWebSearchResponsePrompt,
+  webSearchRetrieverPrompt
 } from './webSearch';
 import {
   wolframAlphaSearchResponsePrompt,
@@ -24,7 +23,6 @@ import {
 export default {
   webSearchResponsePrompt,
   webSearchRetrieverPrompt,
-  preciseWebSearchResponsePrompt,
   academicSearchResponsePrompt,
   academicSearchRetrieverPrompt,
   redditSearchResponsePrompt,
