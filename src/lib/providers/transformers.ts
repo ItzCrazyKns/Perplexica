@@ -1,5 +1,9 @@
-import logger from '../../utils/logger';
 import { HuggingFaceTransformersEmbeddings } from '../huggingfaceTransformer';
+
+export const PROVIDER_INFO = {
+  key: 'transformers',
+  displayName: 'Hugging Face',
+};
 
 export const loadTransformersEmbeddingsModels = async () => {
   try {
@@ -26,7 +30,7 @@ export const loadTransformersEmbeddingsModels = async () => {
 
     return embeddingModels;
   } catch (err) {
-    logger.error(`Error loading Transformers embeddings model: ${err}`);
+    console.error(`Error loading Transformers embeddings model: ${err}`);
     return {};
   }
 };

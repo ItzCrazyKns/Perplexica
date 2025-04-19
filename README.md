@@ -109,14 +109,13 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 1. Install SearXNG and allow `JSON` format in the SearXNG settings.
 2. Clone the repository and rename the `sample.config.toml` file to `config.toml` in the root directory. Ensure you complete all required fields in this file.
-3. Rename the `.env.example` file to `.env` in the `ui` folder and fill in all necessary fields.
-4. After populating the configuration and environment files, run `npm i` in both the `ui` folder and the root directory.
-5. Install the dependencies and then execute `npm run build` in both the `ui` folder and the root directory.
-6. Finally, start both the frontend and the backend by running `npm run start` in both the `ui` folder and the root directory.
+3. After populating the configuration run `npm i`.
+4. Install the dependencies and then execute `npm run build`.
+5. Finally, start the app by running `npm rum start`
 
 **Note**: Using Docker is recommended as it simplifies the setup process, especially for managing environment variables and dependencies.
 
-See the [installation documentation](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/installation) for more information like exposing it your network, etc.
+See the [installation documentation](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/installation) for more information like updating, etc.
 
 ### Ollama Connection Errors
 
@@ -154,12 +153,13 @@ For more details, check out the full documentation [here](https://github.com/Itz
 
 ## Expose Perplexica to network
 
-You can access Perplexica over your home network by following our networking guide [here](https://github.com/ItzCrazyKns/Perplexica/blob/master/docs/installation/NETWORKING.md).
+Perplexica runs on Next.js and handles all API requests. It works right away on the same network and stays accessible even with port forwarding.
 
 ## One-Click Deployment
 
 [![Deploy to Sealos](https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg)](https://usw.sealos.io/?openapp=system-template%3FtemplateName%3Dperplexica)
 [![Deploy to RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/?app_id=267)
+[![Run on ClawCloud](https://raw.githubusercontent.com/ClawCloud/Run-Template/refs/heads/main/Run-on-ClawCloud.svg)](https://template.run.claw.cloud/?referralCode=U11MRQ8U9RM4&openapp=system-fastdeploy%3FtemplateName%3Dperplexica)
 
 ## Upcoming Features
 
