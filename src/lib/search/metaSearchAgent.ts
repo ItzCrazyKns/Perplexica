@@ -242,6 +242,9 @@ class MetaSearchAgent implements MetaSearchAgentType {
     systemInstructions: string,
     isCompact?: boolean,
   ) {
+
+      console.log("compact mode", isCompact);
+      console.log("optimization mode", optimizationMode);
     return RunnableSequence.from([
       RunnableMap.from({
         systemInstructions: () => systemInstructions,
