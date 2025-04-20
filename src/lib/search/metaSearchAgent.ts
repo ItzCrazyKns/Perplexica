@@ -239,7 +239,6 @@ class MetaSearchAgent implements MetaSearchAgentType {
     optimizationMode: 'speed' | 'balanced' | 'quality',
     systemInstructions: string,
   ) {
-      console.log("optimization mode", optimizationMode);
     return RunnableSequence.from([
       RunnableMap.from({
         systemInstructions: () => systemInstructions,

@@ -20,6 +20,7 @@ import {
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
 } from '@/lib/config';
+import { ChatOllama } from '@langchain/ollama';
 import { searchHandlers } from '@/lib/search';
 
 export const runtime = 'nodejs';
@@ -34,6 +35,7 @@ type Message = {
 type ChatModel = {
   provider: string;
   name: string;
+  ollamaContextWindow?: number;
 };
 
 type EmbeddingModel = {
@@ -232,6 +234,11 @@ export const POST = async (req: Request) => {
       }) as unknown as BaseChatModel;
     } else if (chatModelProvider && chatModel) {
       llm = chatModel.model;
+      
+      // Set context window size for Ollama models
+      if (llm instanceof ChatOllama && body.chatModel?.provider === 'ollama') {
+        llm.numCtx = body.chatModel.ollamaContextWindow || 2048;
+      }
     }
 
     if (!llm) {

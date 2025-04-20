@@ -494,6 +494,8 @@ const sendMessage = async (
       }
     };
 
+    const ollamaContextWindow = localStorage.getItem('ollamaContextWindow') || '2048';
+
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {
@@ -514,6 +516,9 @@ const sendMessage = async (
         chatModel: {
           name: chatModelProvider.name,
           provider: chatModelProvider.provider,
+          ...(chatModelProvider.provider === 'ollama' && {
+            ollamaContextWindow: parseInt(ollamaContextWindow),
+          }),
         },
         embeddingModel: {
           name: embeddingModelProvider.name,
