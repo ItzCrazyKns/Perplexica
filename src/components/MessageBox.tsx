@@ -42,10 +42,7 @@ const MessageBox = ({
   dividerRef?: MutableRefObject<HTMLDivElement | null>;
   isLast: boolean;
   rewrite: (messageId: string) => void;
-  sendMessage: (
-    message: string,
-    messageId?: string
-  ) => void;
+  sendMessage: (message: string) => void;
 }) => {
   const [parsedMessage, setParsedMessage] = useState(message.content);
   const [speechMessage, setSpeechMessage] = useState(message.content);
@@ -110,10 +107,6 @@ const MessageBox = ({
 
   const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
 
-  const handleSuggestionClick = (suggestion: string) => {
-    sendMessage(suggestion, undefined);
-  };
-  
   const markdownOverrides: MarkdownToJSX.Options = {
     overrides: {
       think: {
@@ -228,7 +221,7 @@ const MessageBox = ({
                             <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
                             <div
                               onClick={() => {
-                                handleSuggestionClick(suggestion);
+                                sendMessage(suggestion);
                               }}
                               className="cursor-pointer flex flex-row justify-between font-medium space-x-2 items-center"
                             >

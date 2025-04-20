@@ -18,10 +18,7 @@ const MessageInput = ({
   optimizationMode,
   setOptimizationMode,
 }: {
-  sendMessage: (
-    message: string,
-    messageId?: string
-  ) => void;
+  sendMessage: (message: string) => void;
   loading: boolean;
   fileIds: string[];
   setFileIds: (fileIds: string[]) => void;
@@ -68,13 +65,13 @@ const MessageInput = ({
       onSubmit={(e) => {
         if (loading) return;
         e.preventDefault();
-        sendMessage(message, undefined);
+        sendMessage(message);
         setMessage('');
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' && !e.shiftKey && !loading) {
           e.preventDefault();
-          sendMessage(message, undefined);
+          sendMessage(message);
           setMessage('');
         }
       }}

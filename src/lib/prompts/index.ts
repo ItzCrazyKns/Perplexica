@@ -6,10 +6,7 @@ import {
   redditSearchResponsePrompt,
   redditSearchRetrieverPrompt,
 } from './redditSearch';
-import {
-  webSearchResponsePrompt,
-  webSearchRetrieverPrompt
-} from './webSearch';
+import { webSearchResponsePrompt, webSearchRetrieverPrompt } from './webSearch';
 import {
   wolframAlphaSearchResponsePrompt,
   wolframAlphaSearchRetrieverPrompt,

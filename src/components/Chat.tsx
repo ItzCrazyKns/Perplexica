@@ -20,10 +20,7 @@ const Chat = ({
   setOptimizationMode,
 }: {
   messages: Message[];
-  sendMessage: (
-    message: string,
-    messageId?: string,
-  ) => void;
+  sendMessage: (message: string) => void;
   loading: boolean;
   messageAppeared: boolean;
   rewrite: (messageId: string) => void;
@@ -96,7 +93,7 @@ const Chat = ({
       <div ref={messageEnd} className="h-0" />
       {dividerWidth > 0 && (
         <div
-          className="bottom-24 lg:bottom-10 fixed"
+          className="bottom-24 lg:bottom-10 fixed z-40"
           style={{ width: dividerWidth }}
         >
           <MessageInput

@@ -47,7 +47,7 @@ const Optimization = ({
   };
 
   return (
-    <Popover className="relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
+    <Popover className="relative">
       <PopoverButton
         type="button"
         className="p-2 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
@@ -75,8 +75,8 @@ const Optimization = ({
         leaveFrom="opacity-100 translate-y-0"
         leaveTo="opacity-0 translate-y-1"
       >
-        <PopoverPanel className="absolute z-10 w-64 md:w-[250px] right-0 bottom-[100%] mb-2">
-          <div className="flex flex-col gap-2 bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-full p-4 max-h-[200px] md:max-h-none overflow-y-auto">
+        <PopoverPanel className="absolute z-10 bottom-[100%] mb-2 left-1/2 transform -translate-x-1/2">
+          <div className="flex flex-col gap-2 bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-max max-w-[300px] p-4 max-h-[200px] md:max-h-none overflow-y-auto">
             {OptimizationModes.map((mode, i) => (
               <PopoverButton
                 onClick={() => handleOptimizationChange(mode.key)}

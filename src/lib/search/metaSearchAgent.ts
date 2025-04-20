@@ -282,10 +282,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
           .pipe(this.processDocs),
       }),
       ChatPromptTemplate.fromMessages([
-        [
-          'system',
-          this.config.responsePrompt
-        ],
+        ['system', this.config.responsePrompt],
         new MessagesPlaceholder('chat_history'),
         ['user', '{query}'],
       ]),
@@ -483,7 +480,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
       fileIds,
       embeddings,
       optimizationMode,
-      systemInstructions
+      systemInstructions,
     );
 
     const stream = answeringChain.streamEvents(

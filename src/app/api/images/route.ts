@@ -7,11 +7,13 @@ import {
 import { getAvailableChatModelProviders } from '@/lib/providers';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
+import { ChatOllama } from '@langchain/ollama';
 import { ChatOpenAI } from '@langchain/openai';
 
 interface ChatModel {
   provider: string;
   model: string;
+  ollamaContextWindow?: number;
 }
 
 interface ImageSearchBody {
@@ -58,6 +60,10 @@ export const POST = async (req: Request) => {
       }) as unknown as BaseChatModel;
     } else if (chatModelProvider && chatModel) {
       llm = chatModel.model;
+      // Set context window size for Ollama models
+      if (llm instanceof ChatOllama && body.chatModel?.provider === 'ollama') {
+        llm.numCtx = body.chatModel.ollamaContextWindow || 2048;
+      }
     }
 
     if (!llm) {

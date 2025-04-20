@@ -18,10 +18,7 @@ const EmptyChatMessageInput = ({
   files,
   setFiles,
 }: {
-  sendMessage: (
-    message: string,
-    messageId?: string,
-  ) => void;
+  sendMessage: (message: string) => void;
   focusMode: string;
   setFocusMode: (mode: string) => void;
   optimizationMode: string;
@@ -64,13 +61,13 @@ const EmptyChatMessageInput = ({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        sendMessage(message, undefined);
+        sendMessage(message);
         setMessage('');
       }}
       onKeyDown={(e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
-          sendMessage(message, undefined);
+          sendMessage(message);
           setMessage('');
         }
       }}

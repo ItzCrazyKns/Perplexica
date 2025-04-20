@@ -367,20 +367,6 @@ const sendMessage = async (
     }
 
     messageId = messageId ?? crypto.randomBytes(7).toString('hex');
-    // let messageData = {
-    //   type: 'message',
-    //   message: {
-    //     messageId: messageId,
-    //     chatId: chatId!,
-    //     content: message,
-    //   },
-    //   files: fileIds,
-    //   focusMode: focusMode,
-    //   optimizationMode: optimizationMode,
-    //   history: [...messageChatHistory, ['human', message]],
-    //   isCompact: options?.isCompact ?? isCompact,
-    // };
-    // ws.send(JSON.stringify(messageData));
 
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -563,7 +549,7 @@ const sendMessage = async (
 
   useEffect(() => {
     if (isReady && initialMessage && isConfigReady) {
-      sendMessage(initialMessage, undefined, { });
+      sendMessage(initialMessage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfigReady, isReady, initialMessage]);
