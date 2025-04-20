@@ -56,25 +56,25 @@ const Searchvideos = ({
               localStorage.getItem('ollamaContextWindow') || '2048';
 
             const res = await fetch(`/api/videos`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                query: query,
+                chatHistory: chatHistory,
+                chatModel: {
+                  provider: chatModelProvider,
+                  model: chatModel,
+                  ...(chatModelProvider === 'custom_openai' && {
+                    customOpenAIBaseURL: customOpenAIBaseURL,
+                    customOpenAIKey: customOpenAIKey,
+                  }),
+                  ...(chatModelProvider === 'ollama' && {
+                    ollamaContextWindow: parseInt(ollamaContextWindow),
+                  }),
                 },
-                body: JSON.stringify({
-                  query: query,
-                  chatHistory: chatHistory,
-                  chatModel: {
-                    provider: chatModelProvider,
-                    model: chatModel,
-                    ...(chatModelProvider === 'custom_openai' && {
-                      customOpenAIBaseURL: customOpenAIBaseURL,
-                      customOpenAIKey: customOpenAIKey,
-                    }),
-                    ...(chatModelProvider === 'ollama' && {
-                      ollamaContextWindow: parseInt(ollamaContextWindow),
-                    }),
-                  },
-                }),
+              }),
             });
 
             const data = await res.json();

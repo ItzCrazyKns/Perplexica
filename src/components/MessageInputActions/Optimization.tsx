@@ -35,12 +35,11 @@ const OptimizationModes = [
 
 const Optimization = ({
   optimizationMode,
-  setOptimizationMode
+  setOptimizationMode,
 }: {
   optimizationMode: string;
   setOptimizationMode: (mode: string) => void;
 }) => {
-
   const handleOptimizationChange = (mode: string) => {
     setOptimizationMode(mode);
     localStorage.setItem('optimizationMode', mode);

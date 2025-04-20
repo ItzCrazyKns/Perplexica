@@ -337,7 +337,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
   }, [isMessagesLoaded, isConfigReady]);
 
-const sendMessage = async (
+  const sendMessage = async (
     message: string,
     messageId?: string,
     options?: { rewriteIndex?: number },
@@ -359,10 +359,13 @@ const sendMessage = async (
     if (options?.rewriteIndex !== undefined) {
       const rewriteIndex = options.rewriteIndex;
       setMessages((prev) => {
-        return [...prev.slice(0, messages.length > 2 ? rewriteIndex - 1 : 0)]
+        return [...prev.slice(0, messages.length > 2 ? rewriteIndex - 1 : 0)];
       });
-      
-      messageChatHistory = chatHistory.slice(0, messages.length > 2 ? rewriteIndex - 1 : 0)
+
+      messageChatHistory = chatHistory.slice(
+        0,
+        messages.length > 2 ? rewriteIndex - 1 : 0,
+      );
       setChatHistory(messageChatHistory);
     }
 
@@ -480,7 +483,8 @@ const sendMessage = async (
       }
     };
 
-    const ollamaContextWindow = localStorage.getItem('ollamaContextWindow') || '2048';
+    const ollamaContextWindow =
+      localStorage.getItem('ollamaContextWindow') || '2048';
 
     const res = await fetch('/api/chat', {
       method: 'POST',
@@ -542,9 +546,13 @@ const sendMessage = async (
   };
 
   const rewrite = (messageId: string) => {
-    const messageIndex = messages.findIndex((msg) => msg.messageId === messageId);
-    if(messageIndex == -1) return;
-    sendMessage(messages[messageIndex - 1].content, messageId, { rewriteIndex: messageIndex });
+    const messageIndex = messages.findIndex(
+      (msg) => msg.messageId === messageId,
+    );
+    if (messageIndex == -1) return;
+    sendMessage(messages[messageIndex - 1].content, messageId, {
+      rewriteIndex: messageIndex,
+    });
   };
 
   useEffect(() => {

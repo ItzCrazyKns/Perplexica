@@ -98,7 +98,7 @@ export const POST = async (req: Request) => {
       llm = chatModelProviders[chatModelProvider][chatModel]
         .model as unknown as BaseChatModel | undefined;
     }
-    
+
     if (llm instanceof ChatOllama && body.chatModel?.provider === 'ollama') {
       llm.numCtx = body.chatModel.ollamaContextWindow || 2048;
     }

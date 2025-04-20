@@ -234,7 +234,7 @@ export const POST = async (req: Request) => {
       }) as unknown as BaseChatModel;
     } else if (chatModelProvider && chatModel) {
       llm = chatModel.model;
-      
+
       // Set context window size for Ollama models
       if (llm instanceof ChatOllama && body.chatModel?.provider === 'ollama') {
         llm.numCtx = body.chatModel.ollamaContextWindow || 2048;

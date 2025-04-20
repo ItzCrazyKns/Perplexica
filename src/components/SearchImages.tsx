@@ -46,20 +46,20 @@ const SearchImages = ({
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                  query: query,
-                  chatHistory: chatHistory,
-                  chatModel: {
-                    provider: chatModelProvider,
-                    model: chatModel,
-                    ...(chatModelProvider === 'custom_openai' && {
-                      customOpenAIBaseURL: customOpenAIBaseURL,
-                      customOpenAIKey: customOpenAIKey,
-                    }),
-                    ...(chatModelProvider === 'ollama' && {
-                      ollamaContextWindow: parseInt(ollamaContextWindow),
-                    }),
-                  },
-                }),
+                query: query,
+                chatHistory: chatHistory,
+                chatModel: {
+                  provider: chatModelProvider,
+                  model: chatModel,
+                  ...(chatModelProvider === 'custom_openai' && {
+                    customOpenAIBaseURL: customOpenAIBaseURL,
+                    customOpenAIKey: customOpenAIKey,
+                  }),
+                  ...(chatModelProvider === 'ollama' && {
+                    ollamaContextWindow: parseInt(ollamaContextWindow),
+                  }),
+                },
+              }),
             });
 
             const data = await res.json();

@@ -77,7 +77,9 @@ const MessageInput = ({
       }}
       className={cn(
         'bg-light-secondary dark:bg-dark-secondary p-4 flex items-center border border-light-200 dark:border-dark-200',
-        mode === 'multi' ? 'flex-col rounded-lg' : 'flex-col md:flex-row rounded-lg md:rounded-full',
+        mode === 'multi'
+          ? 'flex-col rounded-lg'
+          : 'flex-col md:flex-row rounded-lg md:rounded-full',
       )}
     >
       {mode === 'single' && (
@@ -130,7 +132,7 @@ const MessageInput = ({
           </div>
         )}
       </div>
-      
+
       {mode === 'multi' && (
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between w-full pt-2">
           <div className="flex flex-row items-center justify-between w-full md:w-auto mb-2 md:mb-0">
