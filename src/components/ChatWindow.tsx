@@ -512,7 +512,7 @@ const sendMessage = async (
         files: fileIds,
         focusMode: focusMode,
         optimizationMode: optimizationMode,
-        history: chatHistory,
+        history: messageChatHistory,
         chatModel: {
           name: chatModelProvider.name,
           provider: chatModelProvider.provider,

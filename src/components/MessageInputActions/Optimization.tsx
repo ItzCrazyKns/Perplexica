@@ -6,7 +6,7 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
-import { Fragment, useEffect } from 'react';
+import { Fragment } from 'react';
 const OptimizationModes = [
   {
     key: 'speed',
