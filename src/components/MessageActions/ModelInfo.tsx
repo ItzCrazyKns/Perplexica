@@ -63,7 +63,9 @@ const ModelInfoButton: React.FC<ModelInfoButtonProps> = ({ modelStats }) => {
               </div>
               {modelStats?.responseTime && (
                 <div className="flex justify-between">
-                  <span className="text-black/70 dark:text-white/70">Response time:</span>
+                  <span className="text-black/70 dark:text-white/70">
+                    Response time:
+                  </span>
                   <span className="text-black dark:text-white font-medium">
                     {(modelStats.responseTime / 1000).toFixed(2)}s
                   </span>

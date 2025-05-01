@@ -58,11 +58,15 @@ const MessageBox = ({
   const [speechMessage, setSpeechMessage] = useState(message.content);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [autoSuggestions, setAutoSuggestions] = useState(
-    localStorage.getItem('autoSuggestions')
+    localStorage.getItem('autoSuggestions'),
   );
 
   const handleLoadSuggestions = async () => {
-    if (loadingSuggestions || (message?.suggestions && message.suggestions.length > 0)) return;
+    if (
+      loadingSuggestions ||
+      (message?.suggestions && message.suggestions.length > 0)
+    )
+      return;
 
     setLoadingSuggestions(true);
     try {
@@ -202,8 +206,8 @@ const MessageBox = ({
                 <h3 className="text-black dark:text-white font-medium text-xl">
                   Answer
                 </h3>
-                {message.metadata?.modelStats && (
-                  <ModelInfoButton modelStats={message.metadata.modelStats} />
+                {message.modelStats && (
+                  <ModelInfoButton modelStats={message.modelStats} />
                 )}
               </div>
               <Markdown
@@ -251,8 +255,9 @@ const MessageBox = ({
                     <div className="flex flex-row items-center space-x-2 mt-4">
                       <Layers3 />
                       <h3 className="text-xl font-medium">Related</h3>{' '}
-                      {(!autoSuggestions || autoSuggestions === 'false') && (!message.suggestions ||
-                      message.suggestions.length === 0) ? (
+                      {(!autoSuggestions || autoSuggestions === 'false') &&
+                      (!message.suggestions ||
+                        message.suggestions.length === 0) ? (
                         <div className="bg-light-secondary dark:bg-dark-secondary">
                           <button
                             onClick={handleLoadSuggestions}

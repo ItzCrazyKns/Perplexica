@@ -546,8 +546,7 @@ const Page = () => {
                         Automatic Suggestions
                       </p>
                       <p className="text-xs text-black/60 dark:text-white/60 mt-0.5">
-                        Automatically show related suggestions after
-                        responses
+                        Automatically show related suggestions after responses
                       </p>
                     </div>
                   </div>

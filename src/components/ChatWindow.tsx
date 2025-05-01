@@ -18,10 +18,6 @@ export type ModelStats = {
   responseTime?: number;
 };
 
-export type MessageMetadata = {
-  modelStats?: ModelStats;
-};
-
 export type Message = {
   messageId: string;
   chatId: string;
@@ -30,7 +26,7 @@ export type Message = {
   role: 'user' | 'assistant';
   suggestions?: string[];
   sources?: Document[];
-  metadata?: MessageMetadata;
+  modelStats?: ModelStats;
 };
 
 export interface File {
@@ -217,6 +213,7 @@ const loadMessages = async (
   const messages = data.messages.map((msg: any) => {
     return {
       ...msg,
+      ...JSON.parse(msg.metadata),
     };
   }) as Message[];
 
@@ -445,11 +442,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
               role: 'assistant',
               sources: sources,
               createdAt: new Date(),
-              metadata: {
-                // modelStats will be added when we receive messageEnd event
-                modelStats: {
-                  modelName: data.modelName,
-                },
+              modelStats: {
+                modelName: data.modelName,
               },
             },
           ]);
@@ -483,10 +477,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
             if (message.messageId === data.messageId) {
               return {
                 ...message,
-                metadata: {
-                  // Include model stats if available, otherwise null
-                  modelStats: data.modelStats || null,
-                },
+                // Include model stats if available, otherwise null
+                modelStats: data.modelStats || null,
               };
             }
             return message;
