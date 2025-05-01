@@ -112,7 +112,7 @@ const handleEmitterEvents = async (
   stream.on('end', () => {
     const endTime = Date.now();
     const duration = endTime - startTime;
-    
+
     modelStats = {
       ...modelStats,
       responseTime: duration,
@@ -135,9 +135,11 @@ const handleEmitterEvents = async (
         chatId: chatId,
         messageId: aiMessageId,
         role: 'assistant',
-        metadata: {
+        metadata: JSON.stringify({
+          createdAt: new Date(),
+          ...(sources && sources.length > 0 && { sources }),
           modelStats: modelStats,
-        },
+        }),
       })
       .execute();
   });
@@ -319,7 +321,14 @@ export const POST = async (req: Request) => {
     const writer = responseStream.writable.getWriter();
     const encoder = new TextEncoder();
 
-    handleEmitterEvents(stream, writer, encoder, aiMessageId, message.chatId, startTime);
+    handleEmitterEvents(
+      stream,
+      writer,
+      encoder,
+      aiMessageId,
+      message.chatId,
+      startTime,
+    );
     handleHistorySave(message, humanMessageId, body.focusMode, body.files);
 
     return new Response(responseStream.readable, {
