@@ -13,6 +13,15 @@ import { Settings } from 'lucide-react';
 import Link from 'next/link';
 import NextError from 'next/error';
 
+export type ModelStats = {
+  modelName: string;
+  responseTime?: number;
+};
+
+export type MessageMetadata = {
+  modelStats?: ModelStats;
+};
+
 export type Message = {
   messageId: string;
   chatId: string;
@@ -21,6 +30,7 @@ export type Message = {
   role: 'user' | 'assistant';
   suggestions?: string[];
   sources?: Document[];
+  metadata?: MessageMetadata;
 };
 
 export interface File {
@@ -207,7 +217,6 @@ const loadMessages = async (
   const messages = data.messages.map((msg: any) => {
     return {
       ...msg,
-      ...JSON.parse(msg.metadata),
     };
   }) as Message[];
 
@@ -339,9 +348,25 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const sendMessage = async (
     message: string,
-    messageId?: string,
-    options?: { rewriteIndex?: number },
+    options?: {
+      messageId?: string;
+      rewriteIndex?: number;
+      suggestions?: string[];
+    },
   ) => {
+    // Special case: If we're just updating an existing message with suggestions
+    if (options?.suggestions && options.messageId) {
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.messageId === options.messageId) {
+            return { ...msg, suggestions: options.suggestions };
+          }
+          return msg;
+        }),
+      );
+      return;
+    }
+
     if (loading) return;
     if (!isConfigReady) {
       toast.error('Cannot send message before the configuration is ready');
@@ -369,7 +394,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
       setChatHistory(messageChatHistory);
     }
 
-    messageId = messageId ?? crypto.randomBytes(7).toString('hex');
+    const messageId =
+      options?.messageId ?? crypto.randomBytes(7).toString('hex');
 
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -419,6 +445,12 @@ const ChatWindow = ({ id }: { id?: string }) => {
               role: 'assistant',
               sources: sources,
               createdAt: new Date(),
+              metadata: {
+                // modelStats will be added when we receive messageEnd event
+                modelStats: {
+                  modelName: data.modelName,
+                },
+              },
             },
           ]);
           added = true;
@@ -445,12 +477,29 @@ const ChatWindow = ({ id }: { id?: string }) => {
           ['assistant', recievedMessage],
         ]);
 
+        // Always update the message, adding modelStats if available
+        setMessages((prev) =>
+          prev.map((message) => {
+            if (message.messageId === data.messageId) {
+              return {
+                ...message,
+                metadata: {
+                  // Include model stats if available, otherwise null
+                  modelStats: data.modelStats || null,
+                },
+              };
+            }
+            return message;
+          }),
+        );
+
         setLoading(false);
 
         const lastMsg = messagesRef.current[messagesRef.current.length - 1];
 
         const autoImageSearch = localStorage.getItem('autoImageSearch');
         const autoVideoSearch = localStorage.getItem('autoVideoSearch');
+        const autoSuggestions = localStorage.getItem('autoSuggestions');
 
         if (autoImageSearch === 'true') {
           document
@@ -468,7 +517,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
           lastMsg.role === 'assistant' &&
           lastMsg.sources &&
           lastMsg.sources.length > 0 &&
-          !lastMsg.suggestions
+          !lastMsg.suggestions &&
+          autoSuggestions !== 'false' // Default to true if not set
         ) {
           const suggestions = await getSuggestions(messagesRef.current);
           setMessages((prev) =>
@@ -550,7 +600,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
       (msg) => msg.messageId === messageId,
     );
     if (messageIndex == -1) return;
-    sendMessage(messages[messageIndex - 1].content, messageId, {
+    sendMessage(messages[messageIndex - 1].content, {
+      messageId: messageId,
       rewriteIndex: messageIndex,
     });
   };

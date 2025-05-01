@@ -434,13 +434,13 @@ class MetaSearchAgent implements MetaSearchAgentType {
   private async handleStream(
     stream: AsyncGenerator<StreamEvent, any, any>,
     emitter: eventEmitter,
+    llm: BaseChatModel,
   ) {
     for await (const event of stream) {
       if (
         event.event === 'on_chain_end' &&
         event.name === 'FinalSourceRetriever'
       ) {
-        ``;
         emitter.emit(
           'data',
           JSON.stringify({ type: 'sources', data: event.data.output }),
@@ -459,6 +459,50 @@ class MetaSearchAgent implements MetaSearchAgentType {
         event.event === 'on_chain_end' &&
         event.name === 'FinalResponseGenerator'
       ) {
+        // Get model name safely with better detection
+        let modelName = 'Unknown';
+        try {
+          // @ts-ignore - Different LLM implementations have different properties
+          if (llm.modelName) {
+            // @ts-ignore
+            modelName = llm.modelName;
+            // @ts-ignore
+          } else if (llm._llm && llm._llm.modelName) {
+            // @ts-ignore
+            modelName = llm._llm.modelName;
+            // @ts-ignore
+          } else if (llm.model && llm.model.modelName) {
+            // @ts-ignore
+            modelName = llm.model.modelName;
+          } else if ('model' in llm) {
+            // @ts-ignore
+            const model = llm.model;
+            if (typeof model === 'string') {
+              modelName = model;
+              // @ts-ignore
+            } else if (model && model.modelName) {
+              // @ts-ignore
+              modelName = model.modelName;
+            }
+          } else if (llm.constructor && llm.constructor.name) {
+            // Last resort: use the class name
+            modelName = llm.constructor.name;
+          }
+        } catch (e) {
+          console.error('Failed to get model name:', e);
+        }
+
+        // Send model info before ending
+        emitter.emit(
+          'stats',
+          JSON.stringify({
+            type: 'modelStats',
+            data: {
+              modelName,
+            },
+          }),
+        );
+
         emitter.emit('end');
       }
     }
@@ -493,7 +537,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
       },
     );
 
-    this.handleStream(stream, emitter);
+    this.handleStream(stream, emitter, llm);
 
     return emitter;
   }

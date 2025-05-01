@@ -20,7 +20,14 @@ const Chat = ({
   setOptimizationMode,
 }: {
   messages: Message[];
-  sendMessage: (message: string) => void;
+  sendMessage: (
+    message: string,
+    options?: {
+      messageId?: string;
+      rewriteIndex?: number;
+      suggestions?: string[];
+    },
+  ) => void;
   loading: boolean;
   messageAppeared: boolean;
   rewrite: (messageId: string) => void;
