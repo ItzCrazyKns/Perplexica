@@ -2,6 +2,7 @@ import {
   BadgePercent,
   ChevronDown,
   Globe,
+  MessageCircle,
   Pencil,
   ScanEye,
   SwatchBook,
@@ -30,10 +31,22 @@ const focusModes = [
     icon: <SwatchBook size={20} />,
   },
   {
-    key: 'writingAssistant',
-    title: 'Writing',
-    description: 'Chat without searching the web',
+    key: 'chat',
+    title: 'Chat',
+    description: 'Have a creative conversation',
+    icon: <MessageCircle size={16} />,
+  },
+  {
+    key: 'localResearch',
+    title: 'Local Research',
+    description: 'Research and interact with local files with citations',
     icon: <Pencil size={16} />,
+  },
+  {
+    key: 'redditSearch',
+    title: 'Reddit',
+    description: 'Search for discussions and opinions',
+    icon: <SiReddit className="h-5 w-auto mr-0.5" />,
   },
   {
     key: 'wolframAlphaSearch',
@@ -46,12 +59,6 @@ const focusModes = [
     title: 'Youtube',
     description: 'Search and watch videos',
     icon: <SiYoutube className="h-5 w-auto mr-0.5" />,
-  },
-  {
-    key: 'redditSearch',
-    title: 'Reddit',
-    description: 'Search for discussions and opinions',
-    icon: <SiReddit className="h-5 w-auto mr-0.5" />,
   },
 ];
 
