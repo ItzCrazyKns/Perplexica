@@ -92,12 +92,24 @@ const handleEmitterEvents = async (
       sources = parsedData.data;
     }
   });
+  let modelStats = {
+    modelName: '',
+  };
+
+  stream.on('stats', (data) => {
+    const parsedData = JSON.parse(data);
+    if (parsedData.type === 'modelStats') {
+      modelStats = parsedData.data;
+    }
+  });
+
   stream.on('end', () => {
     writer.write(
       encoder.encode(
         JSON.stringify({
           type: 'messageEnd',
           messageId: aiMessageId,
+          modelStats: modelStats,
         }) + '\n',
       ),
     );
@@ -109,10 +121,9 @@ const handleEmitterEvents = async (
         chatId: chatId,
         messageId: aiMessageId,
         role: 'assistant',
-        metadata: JSON.stringify({
-          createdAt: new Date(),
-          ...(sources && sources.length > 0 && { sources }),
-        }),
+        metadata: {
+          modelStats: modelStats,
+        },
       })
       .execute();
   });

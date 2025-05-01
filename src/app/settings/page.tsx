@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@headlessui/react';
 import ThemeSwitcher from '@/components/theme/Switcher';
-import { ImagesIcon, VideoIcon } from 'lucide-react';
+import { ImagesIcon, VideoIcon, Layers3 } from 'lucide-react';
 import Link from 'next/link';
 import { PROVIDER_METADATA } from '@/lib/providers';
 
@@ -147,6 +147,7 @@ const Page = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [automaticImageSearch, setAutomaticImageSearch] = useState(false);
   const [automaticVideoSearch, setAutomaticVideoSearch] = useState(false);
+  const [automaticSuggestions, setAutomaticSuggestions] = useState(true);
   const [systemInstructions, setSystemInstructions] = useState<string>('');
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
   const [contextWindowSize, setContextWindowSize] = useState(2048);
@@ -213,6 +214,9 @@ const Page = () => {
       );
       setAutomaticVideoSearch(
         localStorage.getItem('autoVideoSearch') === 'true',
+      );
+      setAutomaticSuggestions(
+        localStorage.getItem('autoSuggestions') !== 'false', // default to true if not set
       );
       const storedContextWindow = parseInt(
         localStorage.getItem('ollamaContextWindow') ?? '2048',
@@ -372,6 +376,8 @@ const Page = () => {
         localStorage.setItem('autoImageSearch', value.toString());
       } else if (key === 'automaticVideoSearch') {
         localStorage.setItem('autoVideoSearch', value.toString());
+      } else if (key === 'automaticSuggestions') {
+        localStorage.setItem('autoSuggestions', value.toString());
       } else if (key === 'chatModelProvider') {
         localStorage.setItem('chatModelProvider', value);
       } else if (key === 'chatModel') {
@@ -519,6 +525,48 @@ const Page = () => {
                     <span
                       className={cn(
                         automaticVideoSearch
+                          ? 'translate-x-6'
+                          : 'translate-x-1',
+                        'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                      )}
+                    />
+                  </Switch>
+                </div>
+
+                <div className="flex items-center justify-between p-3 bg-light-secondary dark:bg-dark-secondary rounded-lg hover:bg-light-200 dark:hover:bg-dark-200 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-light-200 dark:bg-dark-200 rounded-lg">
+                      <Layers3
+                        size={18}
+                        className="text-black/70 dark:text-white/70"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-sm text-black/90 dark:text-white/90 font-medium">
+                        Automatic Suggestions
+                      </p>
+                      <p className="text-xs text-black/60 dark:text-white/60 mt-0.5">
+                        Automatically show related suggestions after
+                        responses
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={automaticSuggestions}
+                    onChange={(checked) => {
+                      setAutomaticSuggestions(checked);
+                      saveConfig('automaticSuggestions', checked);
+                    }}
+                    className={cn(
+                      automaticSuggestions
+                        ? 'bg-[#24A0ED]'
+                        : 'bg-light-200 dark:bg-dark-200',
+                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        automaticSuggestions
                           ? 'translate-x-6'
                           : 'translate-x-1',
                         'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',

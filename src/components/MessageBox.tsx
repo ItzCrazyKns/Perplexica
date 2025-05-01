@@ -4,6 +4,7 @@
 import React, { MutableRefObject, useEffect, useState } from 'react';
 import { Message } from './ChatWindow';
 import { cn } from '@/lib/utils';
+import { getSuggestions } from '@/lib/actions';
 import {
   BookCopy,
   Disc3,
@@ -11,10 +12,12 @@ import {
   StopCircle,
   Layers3,
   Plus,
+  Sparkles,
 } from 'lucide-react';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import Copy from './MessageActions/Copy';
 import Rewrite from './MessageActions/Rewrite';
+import ModelInfoButton from './MessageActions/ModelInfo';
 import MessageSources from './MessageSources';
 import SearchImages from './SearchImages';
 import SearchVideos from './SearchVideos';
@@ -42,10 +45,36 @@ const MessageBox = ({
   dividerRef?: MutableRefObject<HTMLDivElement | null>;
   isLast: boolean;
   rewrite: (messageId: string) => void;
-  sendMessage: (message: string) => void;
+  sendMessage: (
+    message: string,
+    options?: {
+      messageId?: string;
+      rewriteIndex?: number;
+      suggestions?: string[];
+    },
+  ) => void;
 }) => {
   const [parsedMessage, setParsedMessage] = useState(message.content);
   const [speechMessage, setSpeechMessage] = useState(message.content);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [autoSuggestions, setAutoSuggestions] = useState(
+    localStorage.getItem('autoSuggestions')
+  );
+
+  const handleLoadSuggestions = async () => {
+    if (loadingSuggestions || (message?.suggestions && message.suggestions.length > 0)) return;
+
+    setLoadingSuggestions(true);
+    try {
+      const suggestions = await getSuggestions([...history]);
+      // We need to update the message.suggestions property through parent component
+      sendMessage('', { messageId: message.messageId, suggestions });
+    } catch (error) {
+      console.error('Error loading suggestions:', error);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
 
   useEffect(() => {
     const citationRegex = /\[([^\]]+)\]/g;
@@ -105,6 +134,18 @@ const MessageBox = ({
     setParsedMessage(processedMessage);
   }, [message.content, message.sources, message.role]);
 
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setAutoSuggestions(localStorage.getItem('autoSuggestions'));
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
 
   const markdownOverrides: MarkdownToJSX.Options = {
@@ -149,6 +190,7 @@ const MessageBox = ({
               </div>
             )}
             <div className="flex flex-col space-y-2">
+              {' '}
               <div className="flex flex-row items-center space-x-2">
                 <Disc3
                   className={cn(
@@ -160,8 +202,10 @@ const MessageBox = ({
                 <h3 className="text-black dark:text-white font-medium text-xl">
                   Answer
                 </h3>
+                {message.metadata?.modelStats && (
+                  <ModelInfoButton modelStats={message.metadata.modelStats} />
+                )}
               </div>
-
               <Markdown
                 className={cn(
                   'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
@@ -200,18 +244,36 @@ const MessageBox = ({
                   </div>
                 </div>
               )}
-              {isLast &&
-                message.suggestions &&
-                message.suggestions.length > 0 &&
-                message.role === 'assistant' &&
-                !loading && (
-                  <>
-                    <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
-                    <div className="flex flex-col space-y-3 text-black dark:text-white">
-                      <div className="flex flex-row items-center space-x-2 mt-4">
-                        <Layers3 />
-                        <h3 className="text-xl font-medium">Related</h3>
-                      </div>
+              {isLast && message.role === 'assistant' && !loading && (
+                <>
+                  <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
+                  <div className="flex flex-col space-y-3 text-black dark:text-white">
+                    <div className="flex flex-row items-center space-x-2 mt-4">
+                      <Layers3 />
+                      <h3 className="text-xl font-medium">Related</h3>{' '}
+                      {(!autoSuggestions || autoSuggestions === 'false') && (!message.suggestions ||
+                      message.suggestions.length === 0) ? (
+                        <div className="bg-light-secondary dark:bg-dark-secondary">
+                          <button
+                            onClick={handleLoadSuggestions}
+                            disabled={loadingSuggestions}
+                            className="px-4 py-2 flex flex-row items-center justify-center space-x-2 rounded-lg bg-light-secondary dark:bg-dark-secondary hover:bg-light-200 dark:hover:bg-dark-200 transition duration-200 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white"
+                          >
+                            {loadingSuggestions ? (
+                              <div className="w-4 h-4 border-2 border-t-transparent border-gray-400 dark:border-gray-500 rounded-full animate-spin" />
+                            ) : (
+                              <Sparkles size={16} />
+                            )}
+                            <span>
+                              {loadingSuggestions
+                                ? 'Loading suggestions...'
+                                : 'Load suggestions'}
+                            </span>
+                          </button>
+                        </div>
+                      ) : null}
+                    </div>
+                    {message.suggestions && message.suggestions.length > 0 ? (
                       <div className="flex flex-col space-y-3">
                         {message.suggestions.map((suggestion, i) => (
                           <div
@@ -236,9 +298,10 @@ const MessageBox = ({
                           </div>
                         ))}
                       </div>
-                    </div>
-                  </>
-                )}
+                    ) : null}
+                  </div>
+                </>
+              )}
             </div>
           </div>
           <div className="lg:sticky lg:top-20 flex flex-col items-center space-y-3 w-full lg:w-3/12 z-30 h-full pb-4">
