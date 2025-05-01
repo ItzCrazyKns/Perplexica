@@ -15,6 +15,7 @@ import NextError from 'next/error';
 
 export type ModelStats = {
   modelName: string;
+  responseTime?: number;
 };
 
 export type MessageMetadata = {

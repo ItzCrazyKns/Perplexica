@@ -54,12 +54,18 @@ type Body = {
   systemInstructions: string;
 };
 
+type ModelStats = {
+  modelName: string;
+  responseTime?: number;
+};
+
 const handleEmitterEvents = async (
   stream: EventEmitter,
   writer: WritableStreamDefaultWriter,
   encoder: TextEncoder,
   aiMessageId: string,
   chatId: string,
+  startTime: number,
 ) => {
   let recievedMessage = '';
   let sources: any[] = [];
@@ -92,7 +98,7 @@ const handleEmitterEvents = async (
       sources = parsedData.data;
     }
   });
-  let modelStats = {
+  let modelStats: ModelStats = {
     modelName: '',
   };
 
@@ -104,6 +110,14 @@ const handleEmitterEvents = async (
   });
 
   stream.on('end', () => {
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+    
+    modelStats = {
+      ...modelStats,
+      responseTime: duration,
+    };
+
     writer.write(
       encoder.encode(
         JSON.stringify({
@@ -196,6 +210,7 @@ const handleHistorySave = async (
 
 export const POST = async (req: Request) => {
   try {
+    const startTime = Date.now();
     const body = (await req.json()) as Body;
     const { message } = body;
 
@@ -304,7 +319,7 @@ export const POST = async (req: Request) => {
     const writer = responseStream.writable.getWriter();
     const encoder = new TextEncoder();
 
-    handleEmitterEvents(stream, writer, encoder, aiMessageId, message.chatId);
+    handleEmitterEvents(stream, writer, encoder, aiMessageId, message.chatId, startTime);
     handleHistorySave(message, humanMessageId, body.focusMode, body.files);
 
     return new Response(responseStream.readable, {
