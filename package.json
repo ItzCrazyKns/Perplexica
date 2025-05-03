@@ -4,7 +4,7 @@
   "license": "MIT",
   "author": "ItzCrazyKns",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "npm run db:push && next build",
     "start": "next start",
     "lint": "next lint",

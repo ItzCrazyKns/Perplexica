@@ -278,7 +278,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
   }, []);
 
   const [loading, setLoading] = useState(false);
-  const [messageAppeared, setMessageAppeared] = useState(false);
+  const [scrollTrigger, setScrollTrigger] = useState(0);
 
   const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -351,6 +351,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
       suggestions?: string[];
     },
   ) => {
+    setScrollTrigger(x => x === 0 ? -1 : 0);
     // Special case: If we're just updating an existing message with suggestions
     if (options?.suggestions && options.messageId) {
       setMessages((prev) =>
@@ -371,7 +372,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
 
     setLoading(true);
-    setMessageAppeared(false);
 
     let sources: Document[] | undefined = undefined;
     let recievedMessage = '';
@@ -389,6 +389,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
         messages.length > 2 ? rewriteIndex - 1 : 0,
       );
       setChatHistory(messageChatHistory);
+
+      setScrollTrigger(prev => prev + 1);
     }
 
     const messageId =
@@ -427,8 +429,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
             },
           ]);
           added = true;
+          setScrollTrigger(prev => prev + 1);
         }
-        setMessageAppeared(true);
       }
 
       if (data.type === 'message') {
@@ -461,7 +463,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         );
 
         recievedMessage += data.data;
-        setMessageAppeared(true);
+        setScrollTrigger(prev => prev + 1);
       }
 
       if (data.type === 'messageEnd') {
@@ -486,6 +488,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         );
 
         setLoading(false);
+        setScrollTrigger(prev => prev + 1);
 
         const lastMsg = messagesRef.current[messagesRef.current.length - 1];
 
@@ -634,7 +637,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
               loading={loading}
               messages={messages}
               sendMessage={sendMessage}
-              messageAppeared={messageAppeared}
+              scrollTrigger={scrollTrigger}
               rewrite={rewrite}
               fileIds={fileIds}
               setFileIds={setFileIds}
