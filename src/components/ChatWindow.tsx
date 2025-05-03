@@ -351,7 +351,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
       suggestions?: string[];
     },
   ) => {
-    setScrollTrigger(x => x === 0 ? -1 : 0);
+    setScrollTrigger((x) => (x === 0 ? -1 : 0));
     // Special case: If we're just updating an existing message with suggestions
     if (options?.suggestions && options.messageId) {
       setMessages((prev) =>
@@ -390,7 +390,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
       );
       setChatHistory(messageChatHistory);
 
-      setScrollTrigger(prev => prev + 1);
+      setScrollTrigger((prev) => prev + 1);
     }
 
     const messageId =
@@ -429,7 +429,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
             },
           ]);
           added = true;
-          setScrollTrigger(prev => prev + 1);
+          setScrollTrigger((prev) => prev + 1);
         }
       }
 
@@ -463,7 +463,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         );
 
         recievedMessage += data.data;
-        setScrollTrigger(prev => prev + 1);
+        setScrollTrigger((prev) => prev + 1);
       }
 
       if (data.type === 'messageEnd') {
@@ -488,7 +488,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         );
 
         setLoading(false);
-        setScrollTrigger(prev => prev + 1);
+        setScrollTrigger((prev) => prev + 1);
 
         const lastMsg = messagesRef.current[messagesRef.current.length - 1];
 

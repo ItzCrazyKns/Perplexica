@@ -58,15 +58,15 @@ const Chat = ({
 
     // Initial check
     checkIsAtBottom();
-    
+
     // Add scroll event listener
     window.addEventListener('scroll', checkIsAtBottom);
-    
+
     return () => {
       window.removeEventListener('scroll', checkIsAtBottom);
     };
   }, []);
-  
+
   // Detect wheel and touch events to identify user's scrolling direction
   useEffect(() => {
     const checkIsAtBottom = () => {
@@ -78,7 +78,7 @@ const Chat = ({
       if (atBottom) {
         setManuallyScrolledUp(false);
       }
-      
+
       setIsAtBottom(atBottom);
     };
 
@@ -91,16 +91,16 @@ const Chat = ({
         checkIsAtBottom();
       }
     };
-    
+
     const handleTouchStart = (e: TouchEvent) => {
       // Immediately stop auto-scrolling on any touch interaction
       setManuallyScrolledUp(true);
     };
-    
+
     // Add event listeners
     window.addEventListener('wheel', handleWheel, { passive: true });
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    
+
     return () => {
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('touchstart', handleTouchStart);
@@ -126,7 +126,7 @@ const Chat = ({
   // Scroll when user sends a message
   useEffect(() => {
     const scroll = () => {
-      messageEnd.current?.scrollIntoView({behavior: 'smooth'});
+      messageEnd.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     if (messages.length === 1) {
@@ -140,7 +140,7 @@ const Chat = ({
       setManuallyScrolledUp(false); // Reset manually scrolled flag when user sends a message
     }
   }, [messages]);
-  
+
   // Auto-scroll for assistant responses only if user is at bottom and hasn't manually scrolled up
   useEffect(() => {
     const position = window.innerHeight + window.scrollY;
@@ -180,14 +180,14 @@ const Chat = ({
       })}
       {loading && <MessageBoxLoading />}
       <div ref={messageEnd} className="h-0" />
-      
+
       {dividerWidth > 0 && (
         <div
           className="bottom-24 lg:bottom-10 fixed z-40"
           style={{ width: dividerWidth }}
         >
           {/* Scroll to bottom button - appears above the MessageInput when user has scrolled up */}
-          {(manuallyScrolledUp && !isAtBottom) && (
+          {manuallyScrolledUp && !isAtBottom && (
             <div className="absolute -top-14 right-2 z-10">
               <button
                 onClick={() => {
@@ -198,8 +198,18 @@ const Chat = ({
                 className="bg-[#24A0ED] text-white hover:bg-opacity-85 transition duration-100 rounded-full px-4 py-2 shadow-lg flex items-center justify-center"
                 aria-label="Scroll to bottom"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" transform="rotate(180 10 10)" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-1"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                    clipRule="evenodd"
+                    transform="rotate(180 10 10)"
+                  />
                 </svg>
                 <span className="text-sm">Scroll to bottom</span>
               </button>
