@@ -5,12 +5,13 @@ import MessageInput from './MessageInput';
 import { File, Message } from './ChatWindow';
 import MessageBox from './MessageBox';
 import MessageBoxLoading from './MessageBoxLoading';
+import { check } from 'drizzle-orm/gel-core';
 
 const Chat = ({
   loading,
   messages,
   sendMessage,
-  messageAppeared,
+  scrollTrigger,
   rewrite,
   fileIds,
   setFileIds,
@@ -29,7 +30,7 @@ const Chat = ({
     },
   ) => void;
   loading: boolean;
-  messageAppeared: boolean;
+  scrollTrigger: number;
   rewrite: (messageId: string) => void;
   fileIds: string[];
   setFileIds: (fileIds: string[]) => void;
@@ -39,8 +40,72 @@ const Chat = ({
   setOptimizationMode: (mode: string) => void;
 }) => {
   const [dividerWidth, setDividerWidth] = useState(0);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [manuallyScrolledUp, setManuallyScrolledUp] = useState(false);
   const dividerRef = useRef<HTMLDivElement | null>(null);
   const messageEnd = useRef<HTMLDivElement | null>(null);
+  const SCROLL_THRESHOLD = 200; // pixels from bottom to consider "at bottom"
+
+  // Check if user is at bottom of page
+  useEffect(() => {
+    const checkIsAtBottom = () => {
+      const position = window.innerHeight + window.scrollY;
+      const height = document.body.scrollHeight;
+      const atBottom = position >= height - SCROLL_THRESHOLD;
+
+      setIsAtBottom(atBottom);
+    };
+
+    // Initial check
+    checkIsAtBottom();
+
+    // Add scroll event listener
+    window.addEventListener('scroll', checkIsAtBottom);
+
+    return () => {
+      window.removeEventListener('scroll', checkIsAtBottom);
+    };
+  }, []);
+
+  // Detect wheel and touch events to identify user's scrolling direction
+  useEffect(() => {
+    const checkIsAtBottom = () => {
+      const position = window.innerHeight + window.scrollY;
+      const height = document.body.scrollHeight;
+      const atBottom = position >= height - SCROLL_THRESHOLD;
+
+      // If user scrolls to bottom, reset the manuallyScrolledUp flag
+      if (atBottom) {
+        setManuallyScrolledUp(false);
+      }
+
+      setIsAtBottom(atBottom);
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      // Positive deltaY means scrolling down, negative means scrolling up
+      if (e.deltaY < 0) {
+        // User is scrolling up
+        setManuallyScrolledUp(true);
+      } else if (e.deltaY > 0) {
+        checkIsAtBottom();
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      // Immediately stop auto-scrolling on any touch interaction
+      setManuallyScrolledUp(true);
+    };
+
+    // Add event listeners
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('touchstart', handleTouchStart);
+    };
+  }, [isAtBottom]);
 
   useEffect(() => {
     const updateDividerWidth = () => {
@@ -58,6 +123,7 @@ const Chat = ({
     };
   });
 
+  // Scroll when user sends a message
   useEffect(() => {
     const scroll = () => {
       messageEnd.current?.scrollIntoView({ behavior: 'smooth' });
@@ -67,10 +133,26 @@ const Chat = ({
       document.title = `${messages[0].content.substring(0, 30)} - Perplexica`;
     }
 
-    if (messages[messages.length - 1]?.role == 'user') {
+    // Always scroll when user sends a message
+    if (messages[messages.length - 1]?.role === 'user') {
       scroll();
+      setIsAtBottom(true); // Reset to true when user sends a message
+      setManuallyScrolledUp(false); // Reset manually scrolled flag when user sends a message
     }
   }, [messages]);
+
+  // Auto-scroll for assistant responses only if user is at bottom and hasn't manually scrolled up
+  useEffect(() => {
+    const position = window.innerHeight + window.scrollY;
+    const height = document.body.scrollHeight;
+    const atBottom = position >= height - SCROLL_THRESHOLD;
+    console.log('scrollTrigger', scrollTrigger);
+    setIsAtBottom(atBottom);
+
+    if (isAtBottom && !manuallyScrolledUp && messages.length > 0) {
+      messageEnd.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [scrollTrigger, isAtBottom, messages.length, manuallyScrolledUp]);
 
   return (
     <div className="flex flex-col space-y-6 pt-8 pb-44 lg:pb-32 sm:mx-4 md:mx-8">
@@ -96,13 +178,44 @@ const Chat = ({
           </Fragment>
         );
       })}
-      {loading && !messageAppeared && <MessageBoxLoading />}
+      {loading && <MessageBoxLoading />}
       <div ref={messageEnd} className="h-0" />
+
       {dividerWidth > 0 && (
         <div
           className="bottom-24 lg:bottom-10 fixed z-40"
           style={{ width: dividerWidth }}
         >
+          {/* Scroll to bottom button - appears above the MessageInput when user has scrolled up */}
+          {manuallyScrolledUp && !isAtBottom && (
+            <div className="absolute -top-14 right-2 z-10">
+              <button
+                onClick={() => {
+                  setManuallyScrolledUp(false);
+                  setIsAtBottom(true);
+                  messageEnd.current?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="bg-[#24A0ED] text-white hover:bg-opacity-85 transition duration-100 rounded-full px-4 py-2 shadow-lg flex items-center justify-center"
+                aria-label="Scroll to bottom"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-1"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                    clipRule="evenodd"
+                    transform="rotate(180 10 10)"
+                  />
+                </svg>
+                <span className="text-sm">Scroll to bottom</span>
+              </button>
+            </div>
+          )}
+
           <MessageInput
             loading={loading}
             sendMessage={sendMessage}
