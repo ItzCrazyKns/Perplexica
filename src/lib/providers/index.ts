@@ -96,7 +96,14 @@ export const getAvailableChatModelProviders = async () => {
   for (const provider in chatModelProviders) {
     const providerModels = await chatModelProviders[provider]();
     if (Object.keys(providerModels).length > 0) {
-      models[provider] = providerModels;
+      // Sort models alphabetically by their keys
+      const sortedModels: Record<string, ChatModel> = {};
+      Object.keys(providerModels)
+        .sort()
+        .forEach((key) => {
+          sortedModels[key] = providerModels[key];
+        });
+      models[provider] = sortedModels;
     }
   }
 
@@ -131,7 +138,14 @@ export const getAvailableEmbeddingModelProviders = async () => {
   for (const provider in embeddingModelProviders) {
     const providerModels = await embeddingModelProviders[provider]();
     if (Object.keys(providerModels).length > 0) {
-      models[provider] = providerModels;
+      // Sort embedding models alphabetically by their keys
+      const sortedModels: Record<string, EmbeddingModel> = {};
+      Object.keys(providerModels)
+        .sort()
+        .forEach((key) => {
+          sortedModels[key] = providerModels[key];
+        });
+      models[provider] = sortedModels;
     }
   }
 

@@ -531,6 +531,15 @@ const ChatWindow = ({ id }: { id?: string }) => {
     const ollamaContextWindow =
       localStorage.getItem('ollamaContextWindow') || '2048';
 
+    // Get the latest model selection from localStorage
+    const currentChatModelProvider = localStorage.getItem('chatModelProvider');
+    const currentChatModel = localStorage.getItem('chatModel');
+
+    // Use the most current model selection from localStorage, falling back to the state if not available
+    const modelProvider =
+      currentChatModelProvider || chatModelProvider.provider;
+    const modelName = currentChatModel || chatModelProvider.name;
+
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {
@@ -549,8 +558,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
         optimizationMode: optimizationMode,
         history: messageChatHistory,
         chatModel: {
-          name: chatModelProvider.name,
-          provider: chatModelProvider.provider,
+          name: modelName,
+          provider: modelProvider,
           ...(chatModelProvider.provider === 'ollama' && {
             ollamaContextWindow: parseInt(ollamaContextWindow),
           }),
@@ -645,6 +654,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
               setFiles={setFiles}
               optimizationMode={optimizationMode}
               setOptimizationMode={setOptimizationMode}
+              focusMode={focusMode}
+              setFocusMode={setFocusMode}
             />
           </>
         ) : (
