@@ -56,12 +56,12 @@ const Optimization = ({
             OptimizationModes.find((mode) => mode.key === optimizationMode)
               ?.icon
           }
-          <p className="text-xs font-medium">
+          {/* <p className="text-xs font-medium hidden lg:block">
             {
               OptimizationModes.find((mode) => mode.key === optimizationMode)
                 ?.title
             }
-          </p>
+          </p> */}
           <ChevronDown size={20} />
         </div>
       </PopoverButton>

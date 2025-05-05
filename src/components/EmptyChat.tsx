@@ -1,8 +1,8 @@
 import { Settings } from 'lucide-react';
-import EmptyChatMessageInput from './EmptyChatMessageInput';
 import { useState } from 'react';
 import { File } from './ChatWindow';
 import Link from 'next/link';
+import MessageInput from './MessageInput';
 
 const EmptyChat = ({
   sendMessage,
@@ -38,7 +38,9 @@ const EmptyChat = ({
         <h2 className="text-black/70 dark:text-white/70 text-3xl font-medium -mt-8">
           Research begins here.
         </h2>
-        <EmptyChatMessageInput
+        <MessageInput
+          firstMessage={true}
+          loading={false}
           sendMessage={sendMessage}
           focusMode={focusMode}
           setFocusMode={setFocusMode}

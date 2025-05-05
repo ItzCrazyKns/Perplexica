@@ -19,6 +19,8 @@ const Chat = ({
   setFiles,
   optimizationMode,
   setOptimizationMode,
+  focusMode,
+  setFocusMode,
 }: {
   messages: Message[];
   sendMessage: (
@@ -38,13 +40,15 @@ const Chat = ({
   setFiles: (files: File[]) => void;
   optimizationMode: string;
   setOptimizationMode: (mode: string) => void;
+  focusMode: string;
+  setFocusMode: (mode: string) => void;
 }) => {
   const [dividerWidth, setDividerWidth] = useState(0);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [manuallyScrolledUp, setManuallyScrolledUp] = useState(false);
   const dividerRef = useRef<HTMLDivElement | null>(null);
   const messageEnd = useRef<HTMLDivElement | null>(null);
-  const SCROLL_THRESHOLD = 200; // pixels from bottom to consider "at bottom"
+  const SCROLL_THRESHOLD = 250; // pixels from bottom to consider "at bottom"
 
   // Check if user is at bottom of page
   useEffect(() => {
@@ -146,7 +150,6 @@ const Chat = ({
     const position = window.innerHeight + window.scrollY;
     const height = document.body.scrollHeight;
     const atBottom = position >= height - SCROLL_THRESHOLD;
-    console.log('scrollTrigger', scrollTrigger);
     setIsAtBottom(atBottom);
 
     if (isAtBottom && !manuallyScrolledUp && messages.length > 0) {
@@ -155,7 +158,7 @@ const Chat = ({
   }, [scrollTrigger, isAtBottom, messages.length, manuallyScrolledUp]);
 
   return (
-    <div className="flex flex-col space-y-6 pt-8 pb-44 lg:pb-32 sm:mx-4 md:mx-8">
+    <div className="flex flex-col space-y-6 pt-8 pb-48 sm:mx-4 md:mx-8">
       {messages.map((msg, i) => {
         const isLast = i === messages.length - 1;
 
@@ -217,6 +220,7 @@ const Chat = ({
           )}
 
           <MessageInput
+            firstMessage={messages.length === 0}
             loading={loading}
             sendMessage={sendMessage}
             fileIds={fileIds}
@@ -225,6 +229,8 @@ const Chat = ({
             setFiles={setFiles}
             optimizationMode={optimizationMode}
             setOptimizationMode={setOptimizationMode}
+            focusMode={focusMode}
+            setFocusMode={setFocusMode}
           />
         </div>
       )}
