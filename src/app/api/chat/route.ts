@@ -1,27 +1,23 @@
-import prompts from '@/lib/prompts';
-import MetaSearchAgent from '@/lib/search/metaSearchAgent';
-import crypto from 'crypto';
-import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
-import { EventEmitter } from 'stream';
-import {
-  chatModelProviders,
-  embeddingModelProviders,
-  getAvailableChatModelProviders,
-  getAvailableEmbeddingModelProviders,
-} from '@/lib/providers';
-import db from '@/lib/db';
-import { chats, messages as messagesSchema } from '@/lib/db/schema';
-import { and, eq, gt } from 'drizzle-orm';
-import { getFileDetails } from '@/lib/utils/files';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { ChatOpenAI } from '@langchain/openai';
 import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
 } from '@/lib/config';
-import { ChatOllama } from '@langchain/ollama';
+import db from '@/lib/db';
+import { chats, messages as messagesSchema } from '@/lib/db/schema';
+import {
+  getAvailableChatModelProviders,
+  getAvailableEmbeddingModelProviders
+} from '@/lib/providers';
 import { searchHandlers } from '@/lib/search';
+import { getFileDetails } from '@/lib/utils/files';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
+import { ChatOllama } from '@langchain/ollama';
+import { ChatOpenAI } from '@langchain/openai';
+import crypto from 'crypto';
+import { and, eq, gte } from 'drizzle-orm';
+import { EventEmitter } from 'stream';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -202,7 +198,7 @@ const handleHistorySave = async (
       .delete(messagesSchema)
       .where(
         and(
-          gt(messagesSchema.id, messageExists.id),
+          gte(messagesSchema.id, messageExists.id),
           eq(messagesSchema.chatId, message.chatId),
         ),
       )
