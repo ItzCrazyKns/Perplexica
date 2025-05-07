@@ -65,6 +65,7 @@ const handleEmitterEvents = async (
 ) => {
   let recievedMessage = '';
   let sources: any[] = [];
+  let searchQuery: string | undefined;
 
   stream.on('data', (data) => {
     const parsedData = JSON.parse(data);
@@ -81,11 +82,17 @@ const handleEmitterEvents = async (
 
       recievedMessage += parsedData.data;
     } else if (parsedData.type === 'sources') {
+      // Capture the search query if available
+      if (parsedData.searchQuery) {
+        searchQuery = parsedData.searchQuery;
+      }
+
       writer.write(
         encoder.encode(
           JSON.stringify({
             type: 'sources',
             data: parsedData.data,
+            searchQuery: parsedData.searchQuery,
             messageId: aiMessageId,
           }) + '\n',
         ),
@@ -120,6 +127,7 @@ const handleEmitterEvents = async (
           type: 'messageEnd',
           messageId: aiMessageId,
           modelStats: modelStats,
+          searchQuery: searchQuery,
         }) + '\n',
       ),
     );
@@ -134,6 +142,7 @@ const handleEmitterEvents = async (
         metadata: JSON.stringify({
           createdAt: new Date(),
           ...(sources && sources.length > 0 && { sources }),
+          ...(searchQuery && { searchQuery }),
           modelStats: modelStats,
         }),
       })
