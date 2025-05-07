@@ -55,6 +55,7 @@ type BasicChainInput = {
 class MetaSearchAgent implements MetaSearchAgentType {
   private config: Config;
   private strParser = new StringOutputParser();
+  private searchQuery?: string;
 
   constructor(config: Config) {
     this.config = config;
@@ -226,7 +227,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
               }),
           );
 
-          return { query: question, docs: documents };
+          return { query: question, docs: documents, searchQuery: question };
         }
       }),
     ]);
@@ -264,6 +265,11 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
             query = searchRetrieverResult.query;
             docs = searchRetrieverResult.docs;
+            
+            // Store the search query in the context for emitting to the client
+            if (searchRetrieverResult.searchQuery) {
+              this.searchQuery = searchRetrieverResult.searchQuery;
+            }
           }
 
           const sortedDocs = await this.rerankDocs(
@@ -441,10 +447,24 @@ class MetaSearchAgent implements MetaSearchAgentType {
         event.event === 'on_chain_end' &&
         event.name === 'FinalSourceRetriever'
       ) {
-        emitter.emit(
-          'data',
-          JSON.stringify({ type: 'sources', data: event.data.output }),
-        );
+        // Add searchQuery to the sources data if it exists
+        const sourcesData = event.data.output;
+        // @ts-ignore - we added searchQuery property
+        if (this.searchQuery) {
+          emitter.emit(
+            'data',
+            JSON.stringify({ 
+              type: 'sources', 
+              data: sourcesData,
+              searchQuery: this.searchQuery 
+            }),
+          );
+        } else {
+          emitter.emit(
+            'data',
+            JSON.stringify({ type: 'sources', data: sourcesData }),
+          );
+        }
       }
       if (
         event.event === 'on_chain_stream' &&
