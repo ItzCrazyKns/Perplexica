@@ -254,7 +254,7 @@ const ModelSelector = ({
                             {isExpanded && (
                               <div className="pl-6">
                                 {provider.models.map((modelOption) => (
-                                  <button
+                                  <PopoverButton
                                     key={`${modelOption.provider}-${modelOption.model}`}
                                     className={cn(
                                       'w-full text-left px-4 py-2 text-sm flex items-center',
@@ -283,7 +283,7 @@ const ModelSelector = ({
                                           Active
                                         </div>
                                       )}
-                                  </button>
+                                  </PopoverButton>
                                 ))}
                               </div>
                             )}
