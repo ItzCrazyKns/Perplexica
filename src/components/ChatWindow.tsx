@@ -28,6 +28,7 @@ export type Message = {
   sources?: Document[];
   modelStats?: ModelStats;
   searchQuery?: string;
+  searchUrl?: string;
 };
 
 export interface File {
@@ -417,7 +418,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
       if (data.type === 'sources') {
         sources = data.data;
-        const searchQuery = data.searchQuery;
         if (!added) {
           setMessages((prevMessages) => [
             ...prevMessages,
@@ -427,7 +427,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
               chatId: chatId!,
               role: 'assistant',
               sources: sources,
-              searchQuery: searchQuery,
+              searchQuery: data.searchQuery,
+              searchUrl: data.searchUrl,
               createdAt: new Date(),
             },
           ]);
@@ -486,6 +487,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
                 modelStats: data.modelStats || null,
                 // Make sure the searchQuery is preserved (if available in the message data)
                 searchQuery: message.searchQuery || data.searchQuery,
+                searchUrl: message.searchUrl || data.searchUrl,
               };
             }
             return message;
