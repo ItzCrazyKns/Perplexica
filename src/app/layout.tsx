@@ -26,6 +26,14 @@ export default function RootLayout({
 }>) {
   return (
     <html className="h-full" lang="en" suppressHydrationWarning>
+      <head>
+        <link
+          rel="search"
+          type="application/opensearchdescription+xml"
+          title="Perplexica Search"
+          href="/opensearch.xml"
+        />
+      </head>
       <body className={cn('h-full', montserrat.className)}>
         <ThemeProvider>
           <Sidebar>{children}</Sidebar>

@@ -280,8 +280,23 @@ const MessageBox = ({
                 </div>
                 {message.searchQuery && (
                   <div className="mb-2 text-sm bg-light-secondary dark:bg-dark-secondary rounded-lg p-3">
-                    <span className="font-medium text-black/70 dark:text-white/70">Search query:</span>{' '}
-                    <span className="text-black dark:text-white">{message.searchQuery}</span>
+                    <span className="font-medium text-black/70 dark:text-white/70">
+                      Search query:
+                    </span>{' '}
+                    {message.searchUrl ? (
+                      <a
+                        href={message.searchUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="dark:text-white text-black hover:underline"
+                      >
+                        {message.searchQuery}
+                      </a>
+                    ) : (
+                      <span className="text-black dark:text-white">
+                        {message.searchQuery}
+                      </span>
+                    )}
                   </div>
                 )}
                 <MessageSources sources={message.sources} />

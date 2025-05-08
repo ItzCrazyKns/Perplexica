@@ -56,6 +56,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
   private config: Config;
   private strParser = new StringOutputParser();
   private searchQuery?: string;
+  private searxngUrl?: string;
 
   constructor(config: Config) {
     this.config = config;
@@ -81,6 +82,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
         let question = this.config.summarizer
           ? await questionOutputParser.parse(input)
           : input;
+        console.log('question', question);
 
         if (question === 'not_needed') {
           return { query: '', docs: [] };
@@ -206,12 +208,15 @@ class MetaSearchAgent implements MetaSearchAgentType {
         } else {
           question = question.replace(/<think>.*?<\/think>/g, '');
 
-          const res = await searchSearxng(question, {
+          const searxngResult = await searchSearxng(question, {
             language: 'en',
             engines: this.config.activeEngines,
           });
 
-          const documents = res.results.map(
+          // Store the SearXNG URL for later use in emitting to the client
+          this.searxngUrl = searxngResult.searchUrl;
+
+          const documents = searxngResult.results.map(
             (result) =>
               new Document({
                 pageContent:
@@ -265,7 +270,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
             query = searchRetrieverResult.query;
             docs = searchRetrieverResult.docs;
-            
+
             // Store the search query in the context for emitting to the client
             if (searchRetrieverResult.searchQuery) {
               this.searchQuery = searchRetrieverResult.searchQuery;
@@ -447,16 +452,15 @@ class MetaSearchAgent implements MetaSearchAgentType {
         event.event === 'on_chain_end' &&
         event.name === 'FinalSourceRetriever'
       ) {
-        // Add searchQuery to the sources data if it exists
         const sourcesData = event.data.output;
-        // @ts-ignore - we added searchQuery property
         if (this.searchQuery) {
           emitter.emit(
             'data',
-            JSON.stringify({ 
-              type: 'sources', 
+            JSON.stringify({
+              type: 'sources',
               data: sourcesData,
-              searchQuery: this.searchQuery 
+              searchQuery: this.searchQuery,
+              searchUrl: this.searxngUrl,
             }),
           );
         } else {

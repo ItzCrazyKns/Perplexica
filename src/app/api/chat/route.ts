@@ -7,7 +7,7 @@ import db from '@/lib/db';
 import { chats, messages as messagesSchema } from '@/lib/db/schema';
 import {
   getAvailableChatModelProviders,
-  getAvailableEmbeddingModelProviders
+  getAvailableEmbeddingModelProviders,
 } from '@/lib/providers';
 import { searchHandlers } from '@/lib/search';
 import { getFileDetails } from '@/lib/utils/files';
@@ -66,6 +66,7 @@ const handleEmitterEvents = async (
   let recievedMessage = '';
   let sources: any[] = [];
   let searchQuery: string | undefined;
+  let searchUrl: string | undefined;
 
   stream.on('data', (data) => {
     const parsedData = JSON.parse(data);
@@ -86,6 +87,9 @@ const handleEmitterEvents = async (
       if (parsedData.searchQuery) {
         searchQuery = parsedData.searchQuery;
       }
+      if (parsedData.searchUrl) {
+        searchUrl = parsedData.searchUrl;
+      }
 
       writer.write(
         encoder.encode(
@@ -94,6 +98,7 @@ const handleEmitterEvents = async (
             data: parsedData.data,
             searchQuery: parsedData.searchQuery,
             messageId: aiMessageId,
+            searchUrl: searchUrl,
           }) + '\n',
         ),
       );
@@ -128,6 +133,7 @@ const handleEmitterEvents = async (
           messageId: aiMessageId,
           modelStats: modelStats,
           searchQuery: searchQuery,
+          searchUrl: searchUrl,
         }) + '\n',
       ),
     );
@@ -144,6 +150,7 @@ const handleEmitterEvents = async (
           ...(sources && sources.length > 0 && { sources }),
           ...(searchQuery && { searchQuery }),
           modelStats: modelStats,
+          ...(searchUrl && { searchUrl }),
         }),
       })
       .execute();
