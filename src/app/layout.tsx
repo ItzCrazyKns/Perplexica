@@ -31,7 +31,7 @@ export default function RootLayout({
           rel="search"
           type="application/opensearchdescription+xml"
           title="Perplexica Search"
-          href="/opensearch.xml"
+          href="/api/opensearch"
         />
       </head>
       <body className={cn('h-full', montserrat.className)}>
