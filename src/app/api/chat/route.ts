@@ -7,7 +7,7 @@ import db from '@/lib/db';
 import { chats, messages as messagesSchema } from '@/lib/db/schema';
 import {
   getAvailableChatModelProviders,
-  getAvailableEmbeddingModelProviders
+  getAvailableEmbeddingModelProviders,
 } from '@/lib/providers';
 import { searchHandlers } from '@/lib/search';
 import { getFileDetails } from '@/lib/utils/files';

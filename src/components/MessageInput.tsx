@@ -86,7 +86,7 @@ const MessageInput = ({
     setMessage('');
   };
 
- return (
+  return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
@@ -107,7 +107,7 @@ const MessageInput = ({
           onChange={(e) => setMessage(e.target.value)}
           minRows={2}
           className="bg-transparent placeholder:text-black/50 dark:placeholder:text-white/50 text-sm text-black dark:text-white resize-none focus:outline-none w-full max-h-24 lg:max-h-36 xl:max-h-48"
-          placeholder={firstMessage ? "Ask anything..." :"Ask a follow-up"}
+          placeholder={firstMessage ? 'Ask anything...' : 'Ask a follow-up'}
         />
         <div className="flex flex-row items-center justify-between mt-4">
           <div className="flex flex-row items-center space-x-2 lg:space-x-4">
@@ -134,7 +134,11 @@ const MessageInput = ({
               className="bg-[#24A0ED] text-white disabled:text-black/50 dark:disabled:text-white/50 disabled:bg-[#e0e0dc] dark:disabled:bg-[#ececec21] hover:bg-opacity-85 transition duration-100 rounded-full p-2"
               type="submit"
             >
-              {firstMessage ? <ArrowRight className="bg-background" size={17} /> : <ArrowUp className="bg-background" size={17} />}
+              {firstMessage ? (
+                <ArrowRight className="bg-background" size={17} />
+              ) : (
+                <ArrowUp className="bg-background" size={17} />
+              )}
             </button>
           </div>
         </div>

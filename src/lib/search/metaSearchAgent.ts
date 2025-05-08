@@ -265,7 +265,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
             query = searchRetrieverResult.query;
             docs = searchRetrieverResult.docs;
-            
+
             // Store the search query in the context for emitting to the client
             if (searchRetrieverResult.searchQuery) {
               this.searchQuery = searchRetrieverResult.searchQuery;
@@ -453,10 +453,10 @@ class MetaSearchAgent implements MetaSearchAgentType {
         if (this.searchQuery) {
           emitter.emit(
             'data',
-            JSON.stringify({ 
-              type: 'sources', 
+            JSON.stringify({
+              type: 'sources',
               data: sourcesData,
-              searchQuery: this.searchQuery 
+              searchQuery: this.searchQuery,
             }),
           );
         } else {
