@@ -41,9 +41,10 @@ Want to know more about its architecture and how it works? You can read it [here
 - **Two Main Modes:**
   - **Copilot Mode:** (In development) Boosts search by generating different queries to find more relevant internet sources. Like normal search instead of just using the context by SearxNG, it visits the top matches and tries to find relevant sources to the user's query directly from the page.
   - **Normal Mode:** Processes your query and performs a web search.
-- **Focus Modes:** Special modes to better answer specific types of questions. Perplexica currently has 6 focus modes:
+- **Focus Modes:** Special modes to better answer specific types of questions. Perplexica currently has 7 focus modes:
   - **All Mode:** Searches the entire web to find the best results.
-  - **Writing Assistant Mode:** Helpful for writing tasks that do not require searching the web.
+  - **Local Research Mode:** Research and interact with local files with citations.
+  - **Chat Mode:** Have a truly creative conversation without web search.
   - **Academic Search Mode:** Finds articles and papers, ideal for academic research.
   - **YouTube Search Mode:** Finds YouTube videos based on the search query.
   - **Wolfram Alpha Search Mode:** Answers queries that need calculations or data analysis using Wolfram Alpha.
@@ -138,6 +139,40 @@ For more details, check out the full documentation [here](https://github.com/Itz
 ## Expose Perplexica to network
 
 Perplexica runs on Next.js and handles all API requests. It works right away on the same network and stays accessible even with port forwarding.
+
+### Running Behind a Reverse Proxy
+
+When running Perplexica behind a reverse proxy (like Nginx, Apache, or Traefik), follow these steps to ensure proper functionality:
+
+1. **Configure the BASE_URL setting**:
+
+   - In `config.toml`, set the `BASE_URL` parameter under the `[GENERAL]` section to your public-facing URL (e.g., `https://perplexica.yourdomain.com`)
+
+2. **Ensure proper headers forwarding**:
+
+   - Your reverse proxy should forward the following headers:
+     - `X-Forwarded-Host`
+     - `X-Forwarded-Proto`
+     - `X-Forwarded-Port` (if using non-standard ports)
+
+3. **Example Nginx configuration**:
+
+   ```nginx
+   server {
+     listen 80;
+     server_name perplexica.yourdomain.com;
+
+     location / {
+       proxy_pass http://localhost:3000;
+       proxy_set_header Host $host;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+       proxy_set_header X-Forwarded-Proto $scheme;
+       proxy_set_header X-Forwarded-Host $host;
+     }
+   }
+   ```
+
+This ensures that OpenSearch descriptions, browser integrations, and all URLs work properly when accessing Perplexica through your reverse proxy.
 
 ## One-Click Deployment
 

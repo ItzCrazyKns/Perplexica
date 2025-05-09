@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@headlessui/react';
 import ThemeSwitcher from '@/components/theme/Switcher';
-import { ImagesIcon, VideoIcon } from 'lucide-react';
+import { ImagesIcon, VideoIcon, Layers3 } from 'lucide-react';
 import Link from 'next/link';
 import { PROVIDER_METADATA } from '@/lib/providers';
 
@@ -26,6 +26,7 @@ interface SettingsType {
   customOpenaiApiKey: string;
   customOpenaiApiUrl: string;
   customOpenaiModelName: string;
+  ollamaContextWindow: number;
 }
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -144,10 +145,14 @@ const Page = () => {
     string | null
   >(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [automaticImageSearch, setAutomaticImageSearch] = useState(false);
-  const [automaticVideoSearch, setAutomaticVideoSearch] = useState(false);
+  const [automaticSuggestions, setAutomaticSuggestions] = useState(true);
   const [systemInstructions, setSystemInstructions] = useState<string>('');
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
+  const [contextWindowSize, setContextWindowSize] = useState(2048);
+  const [isCustomContextWindow, setIsCustomContextWindow] = useState(false);
+  const predefinedContextSizes = [
+    1024, 2048, 3072, 4096, 8192, 16384, 32768, 65536, 131072,
+  ];
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -159,6 +164,7 @@ const Page = () => {
       });
 
       const data = (await res.json()) as SettingsType;
+
       setConfig(data);
 
       const chatModelProvidersKeys = Object.keys(data.chatModelProviders || {});
@@ -201,11 +207,15 @@ const Page = () => {
       setChatModels(data.chatModelProviders || {});
       setEmbeddingModels(data.embeddingModelProviders || {});
 
-      setAutomaticImageSearch(
-        localStorage.getItem('autoImageSearch') === 'true',
+      setAutomaticSuggestions(
+        localStorage.getItem('autoSuggestions') !== 'false', // default to true if not set
       );
-      setAutomaticVideoSearch(
-        localStorage.getItem('autoVideoSearch') === 'true',
+      const storedContextWindow = parseInt(
+        localStorage.getItem('ollamaContextWindow') ?? '2048',
+      );
+      setContextWindowSize(storedContextWindow);
+      setIsCustomContextWindow(
+        !predefinedContextSizes.includes(storedContextWindow),
       );
 
       setSystemInstructions(localStorage.getItem('systemInstructions')!);
@@ -354,10 +364,8 @@ const Page = () => {
         setConfig(data);
       }
 
-      if (key === 'automaticImageSearch') {
-        localStorage.setItem('autoImageSearch', value.toString());
-      } else if (key === 'automaticVideoSearch') {
-        localStorage.setItem('autoVideoSearch', value.toString());
+      if (key === 'automaticSuggestions') {
+        localStorage.setItem('autoSuggestions', value.toString());
       } else if (key === 'chatModelProvider') {
         localStorage.setItem('chatModelProvider', value);
       } else if (key === 'chatModel') {
@@ -366,6 +374,8 @@ const Page = () => {
         localStorage.setItem('embeddingModelProvider', value);
       } else if (key === 'embeddingModel') {
         localStorage.setItem('embeddingModel', value);
+      } else if (key === 'ollamaContextWindow') {
+        localStorage.setItem('ollamaContextWindow', value.toString());
       } else if (key === 'systemInstructions') {
         localStorage.setItem('systemInstructions', value);
       }
@@ -430,29 +440,28 @@ const Page = () => {
                 <div className="flex items-center justify-between p-3 bg-light-secondary dark:bg-dark-secondary rounded-lg hover:bg-light-200 dark:hover:bg-dark-200 transition-colors">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-light-200 dark:bg-dark-200 rounded-lg">
-                      <ImagesIcon
+                      <Layers3
                         size={18}
                         className="text-black/70 dark:text-white/70"
                       />
                     </div>
                     <div>
                       <p className="text-sm text-black/90 dark:text-white/90 font-medium">
-                        Automatic Image Search
+                        Automatic Suggestions
                       </p>
                       <p className="text-xs text-black/60 dark:text-white/60 mt-0.5">
-                        Automatically search for relevant images in chat
-                        responses
+                        Automatically show related suggestions after responses
                       </p>
                     </div>
                   </div>
                   <Switch
-                    checked={automaticImageSearch}
+                    checked={automaticSuggestions}
                     onChange={(checked) => {
-                      setAutomaticImageSearch(checked);
-                      saveConfig('automaticImageSearch', checked);
+                      setAutomaticSuggestions(checked);
+                      saveConfig('automaticSuggestions', checked);
                     }}
                     className={cn(
-                      automaticImageSearch
+                      automaticSuggestions
                         ? 'bg-[#24A0ED]'
                         : 'bg-light-200 dark:bg-dark-200',
                       'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
@@ -460,49 +469,7 @@ const Page = () => {
                   >
                     <span
                       className={cn(
-                        automaticImageSearch
-                          ? 'translate-x-6'
-                          : 'translate-x-1',
-                        'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
-                      )}
-                    />
-                  </Switch>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-light-secondary dark:bg-dark-secondary rounded-lg hover:bg-light-200 dark:hover:bg-dark-200 transition-colors">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-light-200 dark:bg-dark-200 rounded-lg">
-                      <VideoIcon
-                        size={18}
-                        className="text-black/70 dark:text-white/70"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-sm text-black/90 dark:text-white/90 font-medium">
-                        Automatic Video Search
-                      </p>
-                      <p className="text-xs text-black/60 dark:text-white/60 mt-0.5">
-                        Automatically search for relevant videos in chat
-                        responses
-                      </p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={automaticVideoSearch}
-                    onChange={(checked) => {
-                      setAutomaticVideoSearch(checked);
-                      saveConfig('automaticVideoSearch', checked);
-                    }}
-                    className={cn(
-                      automaticVideoSearch
-                        ? 'bg-[#24A0ED]'
-                        : 'bg-light-200 dark:bg-dark-200',
-                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        automaticVideoSearch
+                        automaticSuggestions
                           ? 'translate-x-6'
                           : 'translate-x-1',
                         'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
@@ -599,6 +566,78 @@ const Page = () => {
                                 ];
                           })()}
                         />
+                        {selectedChatModelProvider === 'ollama' && (
+                          <div className="flex flex-col space-y-1">
+                            <p className="text-black/70 dark:text-white/70 text-sm">
+                              Chat Context Window Size
+                            </p>
+                            <Select
+                              value={
+                                isCustomContextWindow
+                                  ? 'custom'
+                                  : contextWindowSize.toString()
+                              }
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                if (value === 'custom') {
+                                  setIsCustomContextWindow(true);
+                                } else {
+                                  setIsCustomContextWindow(false);
+                                  const numValue = parseInt(value);
+                                  setContextWindowSize(numValue);
+                                  setConfig((prev) => ({
+                                    ...prev!,
+                                    ollamaContextWindow: numValue,
+                                  }));
+                                  saveConfig('ollamaContextWindow', numValue);
+                                }
+                              }}
+                              options={[
+                                ...predefinedContextSizes.map((size) => ({
+                                  value: size.toString(),
+                                  label: `${size.toLocaleString()} tokens`,
+                                })),
+                                { value: 'custom', label: 'Custom...' },
+                              ]}
+                            />
+                            {isCustomContextWindow && (
+                              <div className="mt-2">
+                                <Input
+                                  type="number"
+                                  min={512}
+                                  value={contextWindowSize}
+                                  placeholder="Custom context window size (minimum 512)"
+                                  isSaving={savingStates['ollamaContextWindow']}
+                                  onChange={(e) => {
+                                    // Allow any value to be typed
+                                    const value =
+                                      parseInt(e.target.value) ||
+                                      contextWindowSize;
+                                    setContextWindowSize(value);
+                                  }}
+                                  onSave={(value) => {
+                                    // Validate only when saving
+                                    const numValue = Math.max(
+                                      512,
+                                      parseInt(value) || 2048,
+                                    );
+                                    setContextWindowSize(numValue);
+                                    setConfig((prev) => ({
+                                      ...prev!,
+                                      ollamaContextWindow: numValue,
+                                    }));
+                                    saveConfig('ollamaContextWindow', numValue);
+                                  }}
+                                />
+                              </div>
+                            )}
+                            <p className="text-xs text-black/60 dark:text-white/60 mt-0.5">
+                              {isCustomContextWindow
+                                ? 'Adjust the context window size for Ollama models (minimum 512 tokens)'
+                                : 'Adjust the context window size for Ollama models'}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
                 </div>

@@ -21,6 +21,10 @@ class LineOutputParser extends BaseOutputParser<string> {
   async parse(text: string): Promise<string> {
     text = text.trim() || '';
 
+    // First, remove all <think>...</think> blocks to avoid parsing tags inside thinking content
+    // This might be a little aggressive. Prompt massaging might be all we need, but this is a guarantee and should rarely mess anything up.
+    text = this.removeThinkingBlocks(text);
+
     const regex = /^(\s*(-|\*|\d+\.\s|\d+\)\s|\u2022)\s*)+/;
     const startKeyIndex = text.indexOf(`<${this.key}>`);
     const endKeyIndex = text.indexOf(`</${this.key}>`);
@@ -38,6 +42,17 @@ class LineOutputParser extends BaseOutputParser<string> {
       .replace(regex, '');
 
     return line;
+  }
+
+  /**
+   * Removes all content within <think>...</think> blocks
+   * @param text The input text containing thinking blocks
+   * @returns The text with all thinking blocks removed
+   */
+  private removeThinkingBlocks(text: string): string {
+    // Use regex to identify and remove all <think>...</think> blocks
+    // Using the 's' flag to make dot match newlines
+    return text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
   }
 
   getFormatInstructions(): string {

@@ -20,11 +20,20 @@ export const searchHandlers: Record<string, MetaSearchAgent> = {
     searchWeb: true,
     summarizer: false,
   }),
-  writingAssistant: new MetaSearchAgent({
+  localResearch: new MetaSearchAgent({
     activeEngines: [],
     queryGeneratorPrompt: '',
-    responsePrompt: prompts.writingAssistantPrompt,
+    responsePrompt: prompts.localResearchPrompt,
     rerank: true,
+    rerankThreshold: 0,
+    searchWeb: false,
+    summarizer: false,
+  }),
+  chat: new MetaSearchAgent({
+    activeEngines: [],
+    queryGeneratorPrompt: '',
+    responsePrompt: prompts.chatPrompt,
+    rerank: false,
     rerankThreshold: 0,
     searchWeb: false,
     summarizer: false,

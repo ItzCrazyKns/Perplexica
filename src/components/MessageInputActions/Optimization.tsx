@@ -1,4 +1,4 @@
-import { ChevronDown, Sliders, Star, Zap } from 'lucide-react';
+import { ChevronDown, Minimize2, Sliders, Star, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Popover,
@@ -7,7 +7,6 @@ import {
   Transition,
 } from '@headlessui/react';
 import { Fragment } from 'react';
-
 const OptimizationModes = [
   {
     key: 'speed',
@@ -41,8 +40,13 @@ const Optimization = ({
   optimizationMode: string;
   setOptimizationMode: (mode: string) => void;
 }) => {
+  const handleOptimizationChange = (mode: string) => {
+    setOptimizationMode(mode);
+    localStorage.setItem('optimizationMode', mode);
+  };
+
   return (
-    <Popover className="relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
+    <Popover className="relative">
       <PopoverButton
         type="button"
         className="p-2 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
@@ -52,12 +56,12 @@ const Optimization = ({
             OptimizationModes.find((mode) => mode.key === optimizationMode)
               ?.icon
           }
-          <p className="text-xs font-medium">
+          {/* <p className="text-xs font-medium hidden lg:block">
             {
               OptimizationModes.find((mode) => mode.key === optimizationMode)
                 ?.title
             }
-          </p>
+          </p> */}
           <ChevronDown size={20} />
         </div>
       </PopoverButton>
@@ -70,11 +74,11 @@ const Optimization = ({
         leaveFrom="opacity-100 translate-y-0"
         leaveTo="opacity-0 translate-y-1"
       >
-        <PopoverPanel className="absolute z-10 w-64 md:w-[250px] right-0">
-          <div className="flex flex-col gap-2 bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-full p-4 max-h-[200px] md:max-h-none overflow-y-auto">
+        <PopoverPanel className="absolute z-10 bottom-[100%] mb-2 left-1/2 transform -translate-x-1/2">
+          <div className="flex flex-col gap-2 bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-max max-w-[300px] p-4 max-h-[200px] md:max-h-none overflow-y-auto">
             {OptimizationModes.map((mode, i) => (
               <PopoverButton
-                onClick={() => setOptimizationMode(mode.key)}
+                onClick={() => handleOptimizationChange(mode.key)}
                 key={i}
                 disabled={mode.key === 'quality'}
                 className={cn(

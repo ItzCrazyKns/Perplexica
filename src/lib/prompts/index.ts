@@ -11,7 +11,8 @@ import {
   wolframAlphaSearchResponsePrompt,
   wolframAlphaSearchRetrieverPrompt,
 } from './wolframAlpha';
-import { writingAssistantPrompt } from './writingAssistant';
+import { localResearchPrompt } from './localResearch';
+import { chatPrompt } from './chat';
 import {
   youtubeSearchResponsePrompt,
   youtubeSearchRetrieverPrompt,
@@ -26,7 +27,8 @@ export default {
   redditSearchRetrieverPrompt,
   wolframAlphaSearchResponsePrompt,
   wolframAlphaSearchRetrieverPrompt,
-  writingAssistantPrompt,
+  localResearchPrompt,
+  chatPrompt,
   youtubeSearchResponsePrompt,
   youtubeSearchRetrieverPrompt,
 };
