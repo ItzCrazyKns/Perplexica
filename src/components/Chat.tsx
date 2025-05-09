@@ -1,11 +1,10 @@
 'use client';
 
 import { Fragment, useEffect, useRef, useState } from 'react';
-import MessageInput from './MessageInput';
 import { File, Message } from './ChatWindow';
 import MessageBox from './MessageBox';
 import MessageBoxLoading from './MessageBoxLoading';
-import { check } from 'drizzle-orm/gel-core';
+import MessageInput from './MessageInput';
 
 const Chat = ({
   loading,
@@ -43,11 +42,11 @@ const Chat = ({
   focusMode: string;
   setFocusMode: (mode: string) => void;
 }) => {
-  const [dividerWidth, setDividerWidth] = useState(0);
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [manuallyScrolledUp, setManuallyScrolledUp] = useState(false);
-  const dividerRef = useRef<HTMLDivElement | null>(null);
+  const [inputStyle, setInputStyle] = useState<React.CSSProperties>({});
   const messageEnd = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const SCROLL_THRESHOLD = 250; // pixels from bottom to consider "at bottom"
 
   // Check if user is at bottom of page
@@ -111,22 +110,6 @@ const Chat = ({
     };
   }, [isAtBottom]);
 
-  useEffect(() => {
-    const updateDividerWidth = () => {
-      if (dividerRef.current) {
-        setDividerWidth(dividerRef.current.scrollWidth);
-      }
-    };
-
-    updateDividerWidth();
-
-    window.addEventListener('resize', updateDividerWidth);
-
-    return () => {
-      window.removeEventListener('resize', updateDividerWidth);
-    };
-  });
-
   // Scroll when user sends a message
   useEffect(() => {
     const scroll = () => {
@@ -157,8 +140,32 @@ const Chat = ({
     }
   }, [scrollTrigger, isAtBottom, messages.length, manuallyScrolledUp]);
 
+  // Sync input width with main container width
+  useEffect(() => {
+    const updateInputStyle = () => {
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setInputStyle({
+          width: rect.width,
+          left: rect.left,
+          right: window.innerWidth - rect.right,
+        });
+      }
+    };
+
+    // Initial calculation
+    updateInputStyle();
+
+    // Update on resize
+    window.addEventListener('resize', updateInputStyle);
+
+    return () => {
+      window.removeEventListener('resize', updateInputStyle);
+    };
+  }, []);
+
   return (
-    <div className="flex flex-col space-y-6 pt-8 pb-48 sm:mx-4 md:mx-8">
+    <div ref={containerRef} className="space-y-6 pt-8 pb-48 sm:mx-4 md:mx-8">
       {messages.map((msg, i) => {
         const isLast = i === messages.length - 1;
 
@@ -170,7 +177,6 @@ const Chat = ({
               messageIndex={i}
               history={messages}
               loading={loading}
-              dividerRef={isLast ? dividerRef : undefined}
               isLast={isLast}
               rewrite={rewrite}
               sendMessage={sendMessage}
@@ -182,58 +188,52 @@ const Chat = ({
         );
       })}
       {loading && <MessageBoxLoading />}
-      <div ref={messageEnd} className="h-0" />
-
-      {dividerWidth > 0 && (
-        <div
-          className="bottom-24 lg:bottom-10 fixed z-40"
-          style={{ width: dividerWidth }}
-        >
-          {/* Scroll to bottom button - appears above the MessageInput when user has scrolled up */}
-          {manuallyScrolledUp && !isAtBottom && (
-            <div className="absolute -top-14 right-2 z-10">
-              <button
-                onClick={() => {
-                  setManuallyScrolledUp(false);
-                  setIsAtBottom(true);
-                  messageEnd.current?.scrollIntoView({ behavior: 'smooth' });
-                }}
-                className="bg-[#24A0ED] text-white hover:bg-opacity-85 transition duration-100 rounded-full px-4 py-2 shadow-lg flex items-center justify-center"
-                aria-label="Scroll to bottom"
+      <div className="fixed bottom-24 lg:bottom-10 z-40" style={inputStyle}>
+        {/* Scroll to bottom button - appears above the MessageInput when user has scrolled up */}
+        {manuallyScrolledUp && !isAtBottom && (
+          <div className="absolute -top-14 right-2 z-10">
+            <button
+              onClick={() => {
+                setManuallyScrolledUp(false);
+                setIsAtBottom(true);
+                messageEnd.current?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="bg-[#24A0ED] text-white hover:bg-opacity-85 transition duration-100 rounded-full px-4 py-2 shadow-lg flex items-center justify-center"
+              aria-label="Scroll to bottom"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 mr-1"
+                viewBox="0 0 20 20"
+                fill="currentColor"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-1"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
-                    clipRule="evenodd"
-                    transform="rotate(180 10 10)"
-                  />
-                </svg>
-                <span className="text-sm">Scroll to bottom</span>
-              </button>
-            </div>
-          )}
+                <path
+                  fillRule="evenodd"
+                  d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                  clipRule="evenodd"
+                  transform="rotate(180 10 10)"
+                />
+              </svg>
+              <span className="text-sm">Scroll to bottom</span>
+            </button>
+          </div>
+        )}
 
-          <MessageInput
-            firstMessage={messages.length === 0}
-            loading={loading}
-            sendMessage={sendMessage}
-            fileIds={fileIds}
-            setFileIds={setFileIds}
-            files={files}
-            setFiles={setFiles}
-            optimizationMode={optimizationMode}
-            setOptimizationMode={setOptimizationMode}
-            focusMode={focusMode}
-            setFocusMode={setFocusMode}
-          />
-        </div>
-      )}
+        <MessageInput
+          firstMessage={messages.length === 0}
+          loading={loading}
+          sendMessage={sendMessage}
+          fileIds={fileIds}
+          setFileIds={setFileIds}
+          files={files}
+          setFiles={setFiles}
+          optimizationMode={optimizationMode}
+          setOptimizationMode={setOptimizationMode}
+          focusMode={focusMode}
+          setFocusMode={setFocusMode}
+        />
+      </div>
+      <div ref={messageEnd} className="h-0" />
     </div>
   );
 };
