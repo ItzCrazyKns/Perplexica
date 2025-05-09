@@ -26,38 +26,44 @@ function generateOpenSearchResponse(origin: string): NextResponse {
 export async function GET(request: Request) {
   // Check if a BASE_URL is explicitly configured
   const configBaseUrl = getBaseUrl();
-  
+
   // If BASE_URL is configured, use it, otherwise detect from request
   if (configBaseUrl) {
     // Remove any trailing slashes for consistency
     let origin = configBaseUrl.replace(/\/+$/, '');
     return generateOpenSearchResponse(origin);
   }
-  
+
   // Detect the correct origin, taking into account reverse proxy headers
   const url = new URL(request.url);
   let origin = url.origin;
-  
+
   // Extract headers
   const headers = Object.fromEntries(request.headers);
-  
+
   // Check for X-Forwarded-Host and related headers to handle reverse proxies
   if (headers['x-forwarded-host']) {
     // Determine protocol: prefer X-Forwarded-Proto, fall back to original or https
-    const protocol = headers['x-forwarded-proto'] || url.protocol.replace(':', '');
+    const protocol =
+      headers['x-forwarded-proto'] || url.protocol.replace(':', '');
     // Build the correct public-facing origin
     origin = `${protocol}://${headers['x-forwarded-host']}`;
-    
+
     // Handle non-standard ports if specified in X-Forwarded-Port
     if (headers['x-forwarded-port']) {
       const port = headers['x-forwarded-port'];
       // Don't append standard ports (80 for HTTP, 443 for HTTPS)
-      if (!((protocol === 'http' && port === '80') || (protocol === 'https' && port === '443'))) {
+      if (
+        !(
+          (protocol === 'http' && port === '80') ||
+          (protocol === 'https' && port === '443')
+        )
+      ) {
         origin = `${origin}:${port}`;
       }
     }
   }
-  
+
   // Generate and return the OpenSearch response
   return generateOpenSearchResponse(origin);
 }

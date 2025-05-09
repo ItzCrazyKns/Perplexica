@@ -59,17 +59,6 @@ const checkConfig = async (
     let embeddingModel = localStorage.getItem('embeddingModel');
     let embeddingModelProvider = localStorage.getItem('embeddingModelProvider');
 
-    const autoImageSearch = localStorage.getItem('autoImageSearch');
-    const autoVideoSearch = localStorage.getItem('autoVideoSearch');
-
-    if (!autoImageSearch) {
-      localStorage.setItem('autoImageSearch', 'true');
-    }
-
-    if (!autoVideoSearch) {
-      localStorage.setItem('autoVideoSearch', 'false');
-    }
-
     const providers = await fetch(`/api/models`, {
       headers: {
         'Content-Type': 'application/json',
@@ -499,21 +488,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
         const lastMsg = messagesRef.current[messagesRef.current.length - 1];
 
-        const autoImageSearch = localStorage.getItem('autoImageSearch');
-        const autoVideoSearch = localStorage.getItem('autoVideoSearch');
         const autoSuggestions = localStorage.getItem('autoSuggestions');
-
-        if (autoImageSearch === 'true') {
-          document
-            .getElementById(`search-images-${lastMsg.messageId}`)
-            ?.click();
-        }
-
-        if (autoVideoSearch === 'true') {
-          document
-            .getElementById(`search-videos-${lastMsg.messageId}`)
-            ?.click();
-        }
 
         if (
           lastMsg.role === 'assistant' &&

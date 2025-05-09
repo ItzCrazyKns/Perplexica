@@ -39,11 +39,11 @@ const ModelInfoButton: React.FC<ModelInfoButtonProps> = ({ modelStats }) => {
     <div className="relative">
       <button
         ref={buttonRef}
-        className="p-1 ml-1 text-black/50 dark:text-white/50 rounded-full hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white"
+        className="p-1 ml-1 text-black/70 dark:text-white/70 rounded-full hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white"
         onClick={() => setShowPopover(!showPopover)}
         aria-label="Show model information"
       >
-        <Info size={14} />
+        <Info size={18} />
       </button>
       {showPopover && (
         <div
