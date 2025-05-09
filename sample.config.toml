@@ -1,6 +1,7 @@
 [GENERAL]
 SIMILARITY_MEASURE = "cosine" # "cosine" or "dot"
 KEEP_ALIVE = "5m" # How long to keep Ollama models loaded into memory. (Instead of using -1 use "-1m")
+BASE_URL = "" # Optional. When set, overrides detected URL for OpenSearch and other public URLs
 
 [MODELS.OPENAI]
 API_KEY = ""

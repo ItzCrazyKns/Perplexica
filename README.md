@@ -140,6 +140,37 @@ For more details, check out the full documentation [here](https://github.com/Itz
 
 Perplexica runs on Next.js and handles all API requests. It works right away on the same network and stays accessible even with port forwarding.
 
+### Running Behind a Reverse Proxy
+
+When running Perplexica behind a reverse proxy (like Nginx, Apache, or Traefik), follow these steps to ensure proper functionality:
+
+1. **Configure the BASE_URL setting**: 
+   - In `config.toml`, set the `BASE_URL` parameter under the `[GENERAL]` section to your public-facing URL (e.g., `https://perplexica.yourdomain.com`)
+
+2. **Ensure proper headers forwarding**:
+   - Your reverse proxy should forward the following headers:
+     - `X-Forwarded-Host` 
+     - `X-Forwarded-Proto` 
+     - `X-Forwarded-Port` (if using non-standard ports)
+
+3. **Example Nginx configuration**:
+   ```nginx
+   server {
+     listen 80;
+     server_name perplexica.yourdomain.com;
+     
+     location / {
+       proxy_pass http://localhost:3000;
+       proxy_set_header Host $host;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+       proxy_set_header X-Forwarded-Proto $scheme;
+       proxy_set_header X-Forwarded-Host $host;
+     }
+   }
+   ```
+
+This ensures that OpenSearch descriptions, browser integrations, and all URLs work properly when accessing Perplexica through your reverse proxy.
+
 ## One-Click Deployment
 
 [![Deploy to Sealos](https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg)](https://usw.sealos.io/?openapp=system-template%3FtemplateName%3Dperplexica)
