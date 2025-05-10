@@ -25,15 +25,27 @@ const SearchImages = ({
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [slides, setSlides] = useState<any[]>([]);
-  const hasLoadedRef = useRef(false);
+  const [displayLimit, setDisplayLimit] = useState(10); // Initially show only 10 images
+  const loadedMessageIdsRef = useRef<Set<string>>(new Set());
+
+  // Function to show more images when the Show More button is clicked
+  const handleShowMore = () => {
+    // If we're already showing all images, don't do anything
+    if (images && displayLimit >= images.length) return;
+    
+    // Otherwise, increase the display limit by 10, or show all images
+    setDisplayLimit(prev => images ? Math.min(prev + 10, images.length) : prev);
+  };
 
   useEffect(() => {
     // Skip fetching if images are already loaded for this message
-    if (hasLoadedRef.current) {
+    if (loadedMessageIdsRef.current.has(messageId)) {
       return;
     }
 
     const fetchImages = async () => {
+      // Mark as loaded to prevent refetching
+      loadedMessageIdsRef.current.add(messageId);
       setLoading(true);
 
       const chatModelProvider = localStorage.getItem('chatModelProvider');
@@ -80,8 +92,7 @@ const SearchImages = ({
         if (onImagesLoaded && images.length > 0) {
           onImagesLoaded(images.length);
         }
-        // Mark as loaded to prevent refetching
-        hasLoadedRef.current = true;
+        
       } catch (error) {
         console.error('Error fetching images:', error);
       } finally {
@@ -91,11 +102,7 @@ const SearchImages = ({
 
     fetchImages();
 
-    // Reset the loading state when component unmounts
-    return () => {
-      hasLoadedRef.current = false;
-    };
-  }, [query, messageId]);
+  }, [query, messageId, chatHistory, onImagesLoaded]);
 
   return (
     <>
@@ -111,8 +118,8 @@ const SearchImages = ({
       )}
       {images !== null && images.length > 0 && (
         <>
-          <div className="grid grid-cols-2 gap-2">
-            {images.map((image, i) => (
+          <div className="grid grid-cols-2 gap-2" key={`image-results-${messageId}`}>
+            {images.slice(0, displayLimit).map((image, i) => (
               <img
                 onClick={() => {
                   setOpen(true);
@@ -129,6 +136,17 @@ const SearchImages = ({
               />
             ))}
           </div>
+          {images.length > displayLimit && (
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={handleShowMore}
+                className="px-4 py-2 bg-light-secondary dark:bg-dark-secondary hover:bg-light-200 dark:hover:bg-dark-200 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white rounded-md transition duration-200 flex items-center space-x-2"
+              >
+                <span>Show More Images</span> 
+                <span className="text-sm opacity-75">({displayLimit} of {images.length})</span>
+              </button>
+            </div>
+          )}
           <Lightbox open={open} close={() => setOpen(false)} slides={slides} />
         </>
       )}

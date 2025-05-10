@@ -45,6 +45,7 @@ interface Config {
   queryGeneratorPrompt: string;
   responsePrompt: string;
   activeEngines: string[];
+  additionalSearchCriteria?: string;
 }
 
 type BasicChainInput = {
@@ -70,19 +71,19 @@ class MetaSearchAgent implements MetaSearchAgentType {
       llm,
       this.strParser,
       RunnableLambda.from(async (input: string) => {
+        //console.log(`LLM response for initial web search:"${input}"`);
         const linksOutputParser = new LineListOutputParser({
           key: 'links',
         });
 
         const questionOutputParser = new LineOutputParser({
-          key: 'question',
+          key: 'answer',
         });
 
         const links = await linksOutputParser.parse(input);
-        let question = this.config.summarizer
-          ? await questionOutputParser.parse(input)
-          : input;
-        console.log('question', question);
+        let question = await questionOutputParser.parse(input);
+
+        //console.log('question', question);
 
         if (question === 'not_needed') {
           return { query: '', docs: [] };
@@ -206,7 +207,10 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
           return { query: question, docs: docs };
         } else {
-          question = question.replace(/<think>.*?<\/think>/g, '');
+          
+          if (this.config.additionalSearchCriteria) {
+            question = `${question} ${this.config.additionalSearchCriteria}`;
+          }
 
           const searxngResult = await searchSearxng(question, {
             language: 'en',
@@ -245,6 +249,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     optimizationMode: 'speed' | 'balanced' | 'quality',
     systemInstructions: string,
   ) {
+   
     return RunnableSequence.from([
       RunnableMap.from({
         systemInstructions: () => systemInstructions,
@@ -262,10 +267,11 @@ class MetaSearchAgent implements MetaSearchAgentType {
           if (this.config.searchWeb) {
             const searchRetrieverChain =
               await this.createSearchRetrieverChain(llm);
-
+            var date = new Date().toISOString();
             const searchRetrieverResult = await searchRetrieverChain.invoke({
               chat_history: processedHistory,
               query,
+              date,
             });
 
             query = searchRetrieverResult.query;
