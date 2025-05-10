@@ -377,7 +377,7 @@ const MessageTabs = ({
                 'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
                 'prose-code:bg-transparent prose-code:p-0 prose-code:text-inherit prose-code:font-normal prose-code:before:content-none prose-code:after:content-none',
                 'prose-pre:bg-transparent prose-pre:border-0 prose-pre:m-0 prose-pre:p-0',
-                'max-w-none break-words px-4 text-white',
+                'max-w-none break-words px-4 text-black dark:text-white',
               )}
               options={markdownOverrides}
             >
