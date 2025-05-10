@@ -40,12 +40,22 @@ const Searchvideos = ({
   const [open, setOpen] = useState(false);
   const [slides, setSlides] = useState<VideoSlide[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [displayLimit, setDisplayLimit] = useState(10); // Initially show only 10 videos
   const videoRefs = useRef<(HTMLIFrameElement | null)[]>([]);
-  const hasLoadedRef = useRef(false);
+  const loadedMessageIdsRef = useRef<Set<string>>(new Set());
+
+  // Function to show more videos when the Show More button is clicked
+  const handleShowMore = () => {
+    // If we're already showing all videos, don't do anything
+    if (videos && displayLimit >= videos.length) return;
+    
+    // Otherwise, increase the display limit by 10, or show all videos
+    setDisplayLimit(prev => videos ? Math.min(prev + 10, videos.length) : prev);
+  };
 
   useEffect(() => {
     // Skip fetching if videos are already loaded for this message
-    if (hasLoadedRef.current) {
+    if (loadedMessageIdsRef.current.has(messageId)) {
       return;
     }
 
@@ -99,7 +109,7 @@ const Searchvideos = ({
           onVideosLoaded(videos.length);
         }
         // Mark as loaded to prevent refetching
-        hasLoadedRef.current = true;
+        loadedMessageIdsRef.current.add(messageId);
       } catch (error) {
         console.error('Error fetching videos:', error);
       } finally {
@@ -109,11 +119,7 @@ const Searchvideos = ({
 
     fetchVideos();
 
-    // Reset the loading state when component unmounts
-    return () => {
-      hasLoadedRef.current = false;
-    };
-  }, [query, messageId]);
+  }, [query, messageId, chatHistory, onVideosLoaded]);
 
   return (
     <>
@@ -129,8 +135,8 @@ const Searchvideos = ({
       )}
       {videos !== null && videos.length > 0 && (
         <>
-          <div className="grid grid-cols-2 gap-2">
-            {videos.map((video, i) => (
+          <div className="grid grid-cols-2 gap-2" key={`video-results-${messageId}`}>
+            {videos.slice(0, displayLimit).map((video, i) => (
               <div
                 onClick={() => {
                   setOpen(true);
@@ -155,6 +161,17 @@ const Searchvideos = ({
               </div>
             ))}
           </div>
+          {videos.length > displayLimit && (
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={handleShowMore}
+                className="px-4 py-2 bg-light-secondary dark:bg-dark-secondary hover:bg-light-200 dark:hover:bg-dark-200 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white rounded-md transition duration-200 flex items-center space-x-2"
+              >
+                <span>Show More Videos</span> 
+                <span className="text-sm opacity-75">({displayLimit} of {videos.length})</span>
+              </button>
+            </div>
+          )}
           <Lightbox
             open={open}
             close={() => setOpen(false)}

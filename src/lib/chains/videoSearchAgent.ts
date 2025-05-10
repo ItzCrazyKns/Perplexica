@@ -6,30 +6,74 @@ import {
 import { PromptTemplate } from '@langchain/core/prompts';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
-import { StringOutputParser } from '@langchain/core/output_parsers';
+import LineOutputParser from '../outputParsers/lineOutputParser';
 import { searchSearxng } from '../searxng';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const VideoSearchChainPrompt = `
-  You will be given a conversation below and a follow up question. You need to rephrase the follow-up question so it is a standalone question that can be used by the LLM to search Youtube for videos.
-  You need to make sure the rephrased question agrees with the conversation and is relevant to the conversation.
+# Instructions
+- You will be given a question from a user and a conversation history
+- Rephrase the question based on the conversation so it is a standalone question that can be used to search Youtube for videos
+- Ensure the rephrased question agrees with the conversation and is relevant to the conversation
+- If you are thinking or reasoning, use <think> tags to indicate your thought process
+- If you are thinking or reasoning, do not use <answer> and </answer> tags in your thinking. Those tags should only be used in the final output
+- Use the provided date to ensure the rephrased question is relevant to the current date and time if applicable
+
+# Data locations
+- The history is contained in the <conversation> tag after the <examples> below
+- The user question is contained in the <question> tag after the <examples> below
+- Output your answer in an <answer> tag
+- Current date & time in ISO format (UTC timezone) is: {date}
+- Do not include any other text in your answer
   
-  Example:
-  1. Follow up question: How does a car work?
-  Rephrased: How does a car work?
-  
-  2. Follow up question: What is the theory of relativity?
-  Rephrased: What is theory of relativity
-  
-  3. Follow up question: How does an AC work?
-  Rephrased: How does an AC work
-  
-  Conversation:
-  {chat_history}
-  
-  Follow up question: {query}
-  Rephrased question:
-  `;
+<examples>
+## Example 1 input
+<conversation>
+  Who won the last F1 race?\nAyrton Senna won the Monaco Grand Prix. It was a tight race with lots of overtakes. Alain Prost was in the lead for most of the race until the last lap when Senna overtook them.
+</conversation>
+<question>
+  What were the highlights of the race?
+</question>
+
+## Example 1 output
+<answer>
+  F1 Monaco Grand Prix highlights
+</answer>
+
+## Example 2 input
+<conversation>
+  What is the theory of relativity?
+</conversation>
+<question>
+  What is the theory of relativity?
+</question>
+
+## Example 2 output
+<answer>
+  What is the theory of relativity?
+</answer>
+
+## Example 3 input
+<conversation>
+  I'm looking for a nice vacation spot. Where do you suggest?\nI suggest you go to Hawaii. It's a beautiful place with lots of beaches and activities to do.\nI love the beach! What are some activities I can do there?\nYou can go surfing, snorkeling, or just relax on the beach.
+</conversation>
+<question>
+  What are some activities I can do in Hawaii?
+</question>
+
+## Example 3 output
+<answer>
+  Activities to do in Hawaii
+</answer>
+</examples>
+
+<conversation>
+{chat_history}
+</conversation>
+<question>
+{query}
+</question>
+`;
 
 type VideoSearchChainInput = {
   chat_history: BaseMessage[];
@@ -43,7 +87,9 @@ interface VideoSearchResult {
   iframe_src: string;
 }
 
-const strParser = new StringOutputParser();
+const answerParser = new LineOutputParser({
+  key: 'answer',
+});
 
 const createVideoSearchChain = (llm: BaseChatModel) => {
   return RunnableSequence.from([
@@ -54,14 +100,13 @@ const createVideoSearchChain = (llm: BaseChatModel) => {
       query: (input: VideoSearchChainInput) => {
         return input.query;
       },
+      date: () => new Date().toISOString(),
     }),
     PromptTemplate.fromTemplate(VideoSearchChainPrompt),
     llm,
-    strParser,
-    RunnableLambda.from(async (input: string) => {
-      input = input.replace(/<think>.*?<\/think>/g, '');
-
-      const res = await searchSearxng(input, {
+    answerParser,
+    RunnableLambda.from(async (searchQuery: string) => {
+      const res = await searchSearxng(searchQuery, {
         engines: ['youtube'],
       });
 
@@ -83,7 +128,7 @@ const createVideoSearchChain = (llm: BaseChatModel) => {
         }
       });
 
-      return videos.slice(0, 10);
+      return videos;
     }),
   ]);
 };
