@@ -64,6 +64,6 @@ export const searchHandlers: Record<string, MetaSearchAgent> = {
     rerankThreshold: 0.3,
     searchWeb: true,
     summarizer: false,
-    additionalSearchCriteria: "site:reddit.com",
+    additionalSearchCriteria: 'site:reddit.com',
   }),
 };

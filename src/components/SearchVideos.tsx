@@ -48,9 +48,11 @@ const Searchvideos = ({
   const handleShowMore = () => {
     // If we're already showing all videos, don't do anything
     if (videos && displayLimit >= videos.length) return;
-    
+
     // Otherwise, increase the display limit by 10, or show all videos
-    setDisplayLimit(prev => videos ? Math.min(prev + 10, videos.length) : prev);
+    setDisplayLimit((prev) =>
+      videos ? Math.min(prev + 10, videos.length) : prev,
+    );
   };
 
   useEffect(() => {
@@ -118,7 +120,6 @@ const Searchvideos = ({
     };
 
     fetchVideos();
-
   }, [query, messageId, chatHistory, onVideosLoaded]);
 
   return (
@@ -135,7 +136,10 @@ const Searchvideos = ({
       )}
       {videos !== null && videos.length > 0 && (
         <>
-          <div className="grid grid-cols-2 gap-2" key={`video-results-${messageId}`}>
+          <div
+            className="grid grid-cols-2 gap-2"
+            key={`video-results-${messageId}`}
+          >
             {videos.slice(0, displayLimit).map((video, i) => (
               <div
                 onClick={() => {
@@ -167,8 +171,10 @@ const Searchvideos = ({
                 onClick={handleShowMore}
                 className="px-4 py-2 bg-light-secondary dark:bg-dark-secondary hover:bg-light-200 dark:hover:bg-dark-200 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white rounded-md transition duration-200 flex items-center space-x-2"
               >
-                <span>Show More Videos</span> 
-                <span className="text-sm opacity-75">({displayLimit} of {videos.length})</span>
+                <span>Show More Videos</span>
+                <span className="text-sm opacity-75">
+                  ({displayLimit} of {videos.length})
+                </span>
               </button>
             </div>
           )}
