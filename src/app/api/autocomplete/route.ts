@@ -59,7 +59,6 @@ export async function GET(request: Request) {
     const suggestions = await response.json();
 
     // Return the suggestions in the expected format
-    console.log('SearXNG autocompleter response:', suggestions);
     return new NextResponse(JSON.stringify(suggestions), {
       headers: {
         'Content-Type': 'application/x-suggestions+json',
