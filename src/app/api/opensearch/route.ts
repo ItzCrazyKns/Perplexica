@@ -13,6 +13,7 @@ function generateOpenSearchResponse(origin: string): NextResponse {
   <InputEncoding>UTF-8</InputEncoding>
   <Image width="16" height="16" type="image/x-icon">${origin}/favicon.ico</Image>
   <Url type="text/html" template="${origin}/?q={searchTerms}"/>
+  <Url rel="suggestions" type="application/x-suggestions+json" template="${origin}/api/autocomplete?q={searchTerms}"/>
   <Url type="application/opensearchdescription+xml" rel="self" template="${origin}/api/opensearch"/>
 </OpenSearchDescription>`;
 

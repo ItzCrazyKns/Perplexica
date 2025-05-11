@@ -207,7 +207,6 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
           return { query: question, docs: docs };
         } else {
-          
           if (this.config.additionalSearchCriteria) {
             question = `${question} ${this.config.additionalSearchCriteria}`;
           }
@@ -249,7 +248,6 @@ class MetaSearchAgent implements MetaSearchAgentType {
     optimizationMode: 'speed' | 'balanced' | 'quality',
     systemInstructions: string,
   ) {
-   
     return RunnableSequence.from([
       RunnableMap.from({
         systemInstructions: () => systemInstructions,
