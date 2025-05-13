@@ -1,81 +1,8 @@
 import { cn } from '@/lib/utils';
-import { CheckCheck, CopyIcon } from 'lucide-react';
+import { Check, Pencil, X } from 'lucide-react';
 import { useState } from 'react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { Message } from './ChatWindow';
 import MessageTabs from './MessageTabs';
-import ThinkBox from './ThinkBox';
-
-const ThinkTagProcessor = ({ children }: { children: React.ReactNode }) => {
-  return <ThinkBox content={children as string} />;
-};
-
-const CodeBlock = ({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) => {
-  // Extract language from className (format could be "language-javascript" or "lang-javascript")
-  let language = '';
-  if (className) {
-    if (className.startsWith('language-')) {
-      language = className.replace('language-', '');
-    } else if (className.startsWith('lang-')) {
-      language = className.replace('lang-', '');
-    }
-  }
-
-  const content = children as string;
-
-  const [isCopied, setIsCopied] = useState(false);
-
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(content);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
-  };
-
-  console.log('Code block language:', language, 'Class name:', className); // For debugging
-
-  return (
-    <div className="rounded-md overflow-hidden my-4 relative group border border-dark-secondary">
-      <div className="flex justify-between items-center px-4 py-2 bg-dark-200 border-b border-dark-secondary text-xs text-white/70 font-mono">
-        <span>{language}</span>
-        <button
-          onClick={handleCopyCode}
-          className="p-1 rounded-md hover:bg-dark-secondary transition duration-200"
-          aria-label="Copy code to clipboard"
-        >
-          {isCopied ? (
-            <CheckCheck size={14} className="text-green-500" />
-          ) : (
-            <CopyIcon size={14} className="text-white/70" />
-          )}
-        </button>
-      </div>
-      <SyntaxHighlighter
-        language={language || 'text'}
-        style={oneDark}
-        customStyle={{
-          margin: 0,
-          padding: '1rem',
-          borderRadius: 0,
-          backgroundColor: '#1c1c1c',
-        }}
-        wrapLines={true}
-        wrapLongLines={true}
-        showLineNumbers={language !== '' && content.split('\n').length > 1}
-        useInlineStyles={true}
-        PreTag="div"
-      >
-        {content}
-      </SyntaxHighlighter>
-    </div>
-  );
-};
 
 const MessageBox = ({
   message,
@@ -85,6 +12,7 @@ const MessageBox = ({
   isLast,
   rewrite,
   sendMessage,
+  handleEditMessage,
 }: {
   message: Message;
   messageIndex: number;
@@ -100,7 +28,29 @@ const MessageBox = ({
       suggestions?: string[];
     },
   ) => void;
+  handleEditMessage: (messageId: string, content: string) => void;
 }) => {
+  // Local state for editing functionality
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState('');
+
+  // Initialize editing
+  const startEditMessage = () => {
+    setIsEditing(true);
+    setEditedContent(message.content);
+  };
+
+  // Cancel editing
+  const cancelEditMessage = () => {
+    setIsEditing(false);
+    setEditedContent('');
+  };
+
+  // Save edits
+  const saveEditMessage = () => {
+    handleEditMessage(message.messageId, editedContent);
+    setIsEditing(false);
+  };
   return (
     <div>
       {message.role === 'user' && (
@@ -111,9 +61,51 @@ const MessageBox = ({
             'break-words',
           )}
         >
-          <h2 className="text-black dark:text-white font-medium text-3xl lg:w-9/12">
-            {message.content}
-          </h2>
+          {isEditing ? (
+            <div className="w-full">
+              <textarea
+                className="w-full p-3 text-lg bg-light-100 dark:bg-dark-100 rounded-lg border border-light-secondary dark:border-dark-secondary text-black dark:text-white focus:outline-none focus:border-[#24A0ED] transition duration-200 min-h-[120px] font-medium"
+                value={editedContent}
+                onChange={(e) => setEditedContent(e.target.value)}
+                autoFocus
+              />
+              <div className="flex flex-row space-x-2 mt-3 justify-end">
+                <button
+                  onClick={cancelEditMessage}
+                  className="p-2 rounded-full bg-light-secondary dark:bg-dark-secondary hover:bg-light-200 dark:hover:bg-dark-200 transition duration-200 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white"
+                  aria-label="Cancel"
+                  title="Cancel"
+                >
+                  <X size={18} />
+                </button>
+                <button
+                  onClick={saveEditMessage}
+                  className="p-2 rounded-full bg-[#24A0ED] hover:bg-[#1a8ad3] transition duration-200 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Save changes"
+                  title="Save changes"
+                  disabled={!editedContent.trim()}
+                >
+                  <Check size={18} className="text-white" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center">
+                <h2 className="text-black dark:text-white font-medium text-3xl">
+                  {message.content}
+                </h2>
+                <button
+                  onClick={startEditMessage}
+                  className="ml-3 p-2 rounded-xl bg-light-secondary dark:bg-dark-secondary text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white flex-shrink-0"
+                  aria-label="Edit message"
+                  title="Edit message"
+                >
+                  <Pencil size={18} />
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 

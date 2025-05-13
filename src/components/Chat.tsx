@@ -20,6 +20,7 @@ const Chat = ({
   setOptimizationMode,
   focusMode,
   setFocusMode,
+  handleEditMessage,
 }: {
   messages: Message[];
   sendMessage: (
@@ -41,6 +42,7 @@ const Chat = ({
   setOptimizationMode: (mode: string) => void;
   focusMode: string;
   setFocusMode: (mode: string) => void;
+  handleEditMessage: (messageId: string, content: string) => void;
 }) => {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [manuallyScrolledUp, setManuallyScrolledUp] = useState(false);
@@ -180,6 +182,7 @@ const Chat = ({
               isLast={isLast}
               rewrite={rewrite}
               sendMessage={sendMessage}
+              handleEditMessage={handleEditMessage}
             />
             {!isLast && msg.role === 'assistant' && (
               <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />

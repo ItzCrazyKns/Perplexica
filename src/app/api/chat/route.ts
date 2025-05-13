@@ -16,7 +16,7 @@ import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 import { ChatOllama } from '@langchain/ollama';
 import { ChatOpenAI } from '@langchain/openai';
 import crypto from 'crypto';
-import { and, eq, gte } from 'drizzle-orm';
+import { and, eq, gt } from 'drizzle-orm';
 import { EventEmitter } from 'stream';
 
 export const runtime = 'nodejs';
@@ -211,10 +211,20 @@ const handleHistorySave = async (
       .execute();
   } else {
     await db
+      .update(messagesSchema)
+      .set({
+        content: message.content,
+        metadata: JSON.stringify({
+          createdAt: new Date(),
+        }),
+      })
+      .where(eq(messagesSchema.messageId, humanMessageId))
+      .execute();
+    await db
       .delete(messagesSchema)
       .where(
         and(
-          gte(messagesSchema.id, messageExists.id),
+          gt(messagesSchema.id, messageExists.id),
           eq(messagesSchema.chatId, message.chatId),
         ),
       )

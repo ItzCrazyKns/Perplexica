@@ -338,8 +338,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
     message: string,
     options?: {
       messageId?: string;
-      rewriteIndex?: number;
       suggestions?: string[];
+      editMode?: boolean;
     },
   ) => {
     setScrollTrigger((x) => (x === 0 ? -1 : 0));
@@ -369,16 +369,16 @@ const ChatWindow = ({ id }: { id?: string }) => {
     let added = false;
     let messageChatHistory = chatHistory;
 
-    if (options?.rewriteIndex !== undefined) {
-      const rewriteIndex = options.rewriteIndex;
+    // If the user is editing or rewriting a message, we need to remove the messages after it
+    const rewriteIndex = messages.findIndex(
+      (msg) => msg.messageId === options?.messageId,
+    );
+    if (rewriteIndex !== -1) {
       setMessages((prev) => {
-        return [...prev.slice(0, messages.length > 2 ? rewriteIndex - 1 : 0)];
+        return [...prev.slice(0, rewriteIndex)];
       });
 
-      messageChatHistory = chatHistory.slice(
-        0,
-        messages.length > 2 ? rewriteIndex - 1 : 0,
-      );
+      messageChatHistory = chatHistory.slice(0, rewriteIndex);
       setChatHistory(messageChatHistory);
 
       setScrollTrigger((prev) => prev + 1);
@@ -587,9 +587,26 @@ const ChatWindow = ({ id }: { id?: string }) => {
     );
     if (messageIndex == -1) return;
     sendMessage(messages[messageIndex - 1].content, {
-      messageId: messageId,
-      rewriteIndex: messageIndex,
+      messageId: messages[messageIndex - 1].messageId,
     });
+  };
+
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    // Get the index of the message being edited
+    const messageIndex = messages.findIndex(
+      (msg) => msg.messageId === messageId,
+    );
+    if (messageIndex === -1) return;
+
+    try {
+      sendMessage(newContent, {
+        messageId,
+        editMode: true,
+      });
+    } catch (error) {
+      console.error('Error updating message:', error);
+      toast.error('Failed to update message');
+    }
   };
 
   useEffect(() => {
@@ -638,6 +655,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
               setOptimizationMode={setOptimizationMode}
               focusMode={focusMode}
               setFocusMode={setFocusMode}
+              handleEditMessage={handleEditMessage}
             />
           </>
         ) : (
