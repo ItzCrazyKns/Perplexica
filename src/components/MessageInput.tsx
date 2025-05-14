@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUp } from 'lucide-react';
+import { ArrowRight, ArrowUp, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 import { File } from './ChatWindow';
@@ -19,6 +19,7 @@ const MessageInput = ({
   focusMode,
   setFocusMode,
   firstMessage,
+  onCancel,
 }: {
   sendMessage: (message: string) => void;
   loading: boolean;
@@ -31,6 +32,7 @@ const MessageInput = ({
   focusMode: string;
   setFocusMode: (mode: string) => void;
   firstMessage: boolean;
+  onCancel?: () => void;
 }) => {
   const [message, setMessage] = useState('');
   const [selectedModel, setSelectedModel] = useState<{
@@ -129,17 +131,33 @@ const MessageInput = ({
               optimizationMode={optimizationMode}
               setOptimizationMode={setOptimizationMode}
             />
-            <button
-              disabled={message.trim().length === 0}
-              className="bg-[#24A0ED] text-white disabled:text-black/50 dark:disabled:text-white/50 disabled:bg-[#e0e0dc] dark:disabled:bg-[#ececec21] hover:bg-opacity-85 transition duration-100 rounded-full p-2"
-              type="submit"
-            >
-              {firstMessage ? (
-                <ArrowRight className="bg-background" size={17} />
-              ) : (
-                <ArrowUp className="bg-background" size={17} />
-              )}
-            </button>
+            {loading ? (
+              <button
+                type="button"
+                className="bg-red-700 text-white hover:bg-red-800 transition duration-100 rounded-full p-2 relative group"
+                onClick={onCancel}
+                aria-label="Cancel"
+              >
+                {loading && (
+                  <div className="absolute inset-0 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                )}
+                <span className="relative flex items-center justify-center w-[17px] h-[17px]">
+                  <Square size={17} className="text-white" />
+                </span>
+              </button>
+            ) : (
+              <button
+                disabled={message.trim().length === 0}
+                className="bg-[#24A0ED] text-white disabled:text-black/50 dark:disabled:text-white/50 disabled:bg-[#e0e0dc] dark:disabled:bg-[#ececec21] hover:bg-opacity-85 transition duration-100 rounded-full p-2"
+                type="submit"
+              >
+                {firstMessage ? (
+                  <ArrowRight className="bg-background" size={17} />
+                ) : (
+                  <ArrowUp className="bg-background" size={17} />
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>

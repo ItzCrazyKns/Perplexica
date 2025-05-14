@@ -124,6 +124,8 @@ export const POST = async (req: Request) => {
     if (!searchHandler) {
       return Response.json({ message: 'Invalid focus mode' }, { status: 400 });
     }
+    const abortController = new AbortController();
+    const { signal } = abortController;
 
     const emitter = await searchHandler.searchAndAnswer(
       body.query,
@@ -133,6 +135,7 @@ export const POST = async (req: Request) => {
       body.optimizationMode,
       [],
       body.systemInstructions || '',
+      signal,
     );
 
     if (!body.stream) {
@@ -179,9 +182,6 @@ export const POST = async (req: Request) => {
     }
 
     const encoder = new TextEncoder();
-
-    const abortController = new AbortController();
-    const { signal } = abortController;
 
     const stream = new ReadableStream({
       start(controller) {

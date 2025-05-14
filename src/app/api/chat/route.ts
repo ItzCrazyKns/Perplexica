@@ -18,6 +18,10 @@ import { ChatOpenAI } from '@langchain/openai';
 import crypto from 'crypto';
 import { and, eq, gt } from 'drizzle-orm';
 import { EventEmitter } from 'stream';
+import {
+  registerCancelToken,
+  cleanupCancelToken,
+} from './cancel/route';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -62,6 +66,7 @@ const handleEmitterEvents = async (
   aiMessageId: string,
   chatId: string,
   startTime: number,
+  userMessageId: string,
 ) => {
   let recievedMessage = '';
   let sources: any[] = [];
@@ -138,6 +143,9 @@ const handleEmitterEvents = async (
       ),
     );
     writer.close();
+
+    // Clean up the abort controller reference
+    cleanupCancelToken(userMessageId);
 
     db.insert(messagesSchema)
       .values({
@@ -329,6 +337,28 @@ export const POST = async (req: Request) => {
       );
     }
 
+    const responseStream = new TransformStream();
+    const writer = responseStream.writable.getWriter();
+    const encoder = new TextEncoder();
+
+    // --- Cancellation logic ---
+    const abortController = new AbortController();
+    registerCancelToken(message.messageId, abortController);
+
+    abortController.signal.addEventListener('abort', () => {
+      console.log('Stream aborted, sending cancel event');
+      writer.write(
+        encoder.encode(
+          JSON.stringify({
+            type: 'error',
+            data: 'Request cancelled by user',
+          }),
+        ),
+      );
+      cleanupCancelToken(message.messageId);
+    });
+
+    // Pass the abort signal to the search handler
     const stream = await handler.searchAndAnswer(
       message.content,
       history,
@@ -337,11 +367,8 @@ export const POST = async (req: Request) => {
       body.optimizationMode,
       body.files,
       body.systemInstructions,
+      abortController.signal,
     );
-
-    const responseStream = new TransformStream();
-    const writer = responseStream.writable.getWriter();
-    const encoder = new TextEncoder();
 
     handleEmitterEvents(
       stream,
@@ -350,7 +377,9 @@ export const POST = async (req: Request) => {
       aiMessageId,
       message.chatId,
       startTime,
+      message.messageId,
     );
+
     handleHistorySave(message, humanMessageId, body.focusMode, body.files);
 
     return new Response(responseStream.readable, {
