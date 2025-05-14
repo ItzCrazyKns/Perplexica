@@ -50,6 +50,9 @@ const Chat = ({
   const messageEnd = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const SCROLL_THRESHOLD = 250; // pixels from bottom to consider "at bottom"
+  const [currentMessageId, setCurrentMessageId] = useState<string | undefined>(
+    undefined,
+  );
 
   // Check if user is at bottom of page
   useEffect(() => {
@@ -166,6 +169,33 @@ const Chat = ({
     };
   }, []);
 
+  // Track the last user messageId when loading starts
+  useEffect(() => {
+    if (loading) {
+      // Find the last user message
+      const lastUserMsg = [...messages]
+        .reverse()
+        .find((m) => m.role === 'user');
+      setCurrentMessageId(lastUserMsg?.messageId);
+    } else {
+      setCurrentMessageId(undefined);
+    }
+  }, [loading, messages]);
+
+  // Cancel handler
+  const handleCancel = async () => {
+    if (!currentMessageId) return;
+    try {
+      await fetch('/api/chat/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messageId: currentMessageId }),
+      });
+    } catch (e) {
+      // Optionally handle error
+    }
+  };
+
   return (
     <div ref={containerRef} className="space-y-6 pt-8 pb-48 sm:mx-4 md:mx-8">
       {messages.map((msg, i) => {
@@ -234,6 +264,7 @@ const Chat = ({
           setOptimizationMode={setOptimizationMode}
           focusMode={focusMode}
           setFocusMode={setFocusMode}
+          onCancel={handleCancel}
         />
       </div>
       <div ref={messageEnd} className="h-0" />

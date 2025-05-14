@@ -67,6 +67,7 @@ const MessageBox = ({
                 className="w-full p-3 text-lg bg-light-100 dark:bg-dark-100 rounded-lg border border-light-secondary dark:border-dark-secondary text-black dark:text-white focus:outline-none focus:border-[#24A0ED] transition duration-200 min-h-[120px] font-medium"
                 value={editedContent}
                 onChange={(e) => setEditedContent(e.target.value)}
+                placeholder="Edit your message..."
                 autoFocus
               />
               <div className="flex flex-row space-x-2 mt-3 justify-end">
