@@ -13,6 +13,11 @@ import { Settings } from 'lucide-react';
 import Link from 'next/link';
 import NextError from 'next/error';
 
+export type ModelStats = {
+  modelName: string;
+  responseTime?: number;
+};
+
 export type Message = {
   messageId: string;
   chatId: string;
@@ -21,6 +26,9 @@ export type Message = {
   role: 'user' | 'assistant';
   suggestions?: string[];
   sources?: Document[];
+  modelStats?: ModelStats;
+  searchQuery?: string;
+  searchUrl?: string;
 };
 
 export interface File {
@@ -50,17 +58,6 @@ const checkConfig = async (
     let chatModelProvider = localStorage.getItem('chatModelProvider');
     let embeddingModel = localStorage.getItem('embeddingModel');
     let embeddingModelProvider = localStorage.getItem('embeddingModelProvider');
-
-    const autoImageSearch = localStorage.getItem('autoImageSearch');
-    const autoVideoSearch = localStorage.getItem('autoVideoSearch');
-
-    if (!autoImageSearch) {
-      localStorage.setItem('autoImageSearch', 'true');
-    }
-
-    if (!autoVideoSearch) {
-      localStorage.setItem('autoVideoSearch', 'false');
-    }
 
     const providers = await fetch(`/api/models`, {
       headers: {
@@ -272,7 +269,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
   }, []);
 
   const [loading, setLoading] = useState(false);
-  const [messageAppeared, setMessageAppeared] = useState(false);
+  const [scrollTrigger, setScrollTrigger] = useState(0);
 
   const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -286,6 +283,16 @@ const ChatWindow = ({ id }: { id?: string }) => {
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
   const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    const savedOptimizationMode = localStorage.getItem('optimizationMode');
+
+    if (savedOptimizationMode !== null) {
+      setOptimizationMode(savedOptimizationMode);
+    } else {
+      localStorage.setItem('optimizationMode', optimizationMode);
+    }
+  }, []);
 
   useEffect(() => {
     if (
@@ -327,7 +334,28 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
   }, [isMessagesLoaded, isConfigReady]);
 
-  const sendMessage = async (message: string, messageId?: string) => {
+  const sendMessage = async (
+    message: string,
+    options?: {
+      messageId?: string;
+      suggestions?: string[];
+      editMode?: boolean;
+    },
+  ) => {
+    setScrollTrigger((x) => (x === 0 ? -1 : 0));
+    // Special case: If we're just updating an existing message with suggestions
+    if (options?.suggestions && options.messageId) {
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.messageId === options.messageId) {
+            return { ...msg, suggestions: options.suggestions };
+          }
+          return msg;
+        }),
+      );
+      return;
+    }
+
     if (loading) return;
     if (!isConfigReady) {
       toast.error('Cannot send message before the configuration is ready');
@@ -335,13 +363,29 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
 
     setLoading(true);
-    setMessageAppeared(false);
 
     let sources: Document[] | undefined = undefined;
     let recievedMessage = '';
     let added = false;
+    let messageChatHistory = chatHistory;
 
-    messageId = messageId ?? crypto.randomBytes(7).toString('hex');
+    // If the user is editing or rewriting a message, we need to remove the messages after it
+    const rewriteIndex = messages.findIndex(
+      (msg) => msg.messageId === options?.messageId,
+    );
+    if (rewriteIndex !== -1) {
+      setMessages((prev) => {
+        return [...prev.slice(0, rewriteIndex)];
+      });
+
+      messageChatHistory = chatHistory.slice(0, rewriteIndex);
+      setChatHistory(messageChatHistory);
+
+      setScrollTrigger((prev) => prev + 1);
+    }
+
+    const messageId =
+      options?.messageId ?? crypto.randomBytes(7).toString('hex');
 
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -372,12 +416,14 @@ const ChatWindow = ({ id }: { id?: string }) => {
               chatId: chatId!,
               role: 'assistant',
               sources: sources,
+              searchQuery: data.searchQuery,
+              searchUrl: data.searchUrl,
               createdAt: new Date(),
             },
           ]);
           added = true;
+          setScrollTrigger((prev) => prev + 1);
         }
-        setMessageAppeared(true);
       }
 
       if (data.type === 'message') {
@@ -391,6 +437,9 @@ const ChatWindow = ({ id }: { id?: string }) => {
               role: 'assistant',
               sources: sources,
               createdAt: new Date(),
+              modelStats: {
+                modelName: data.modelName,
+              },
             },
           ]);
           added = true;
@@ -407,7 +456,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         );
 
         recievedMessage += data.data;
-        setMessageAppeared(true);
+        setScrollTrigger((prev) => prev + 1);
       }
 
       if (data.type === 'messageEnd') {
@@ -417,30 +466,36 @@ const ChatWindow = ({ id }: { id?: string }) => {
           ['assistant', recievedMessage],
         ]);
 
+        // Always update the message, adding modelStats if available
+        setMessages((prev) =>
+          prev.map((message) => {
+            if (message.messageId === data.messageId) {
+              return {
+                ...message,
+                // Include model stats if available, otherwise null
+                modelStats: data.modelStats || null,
+                // Make sure the searchQuery is preserved (if available in the message data)
+                searchQuery: message.searchQuery || data.searchQuery,
+                searchUrl: message.searchUrl || data.searchUrl,
+              };
+            }
+            return message;
+          }),
+        );
+
         setLoading(false);
+        setScrollTrigger((prev) => prev + 1);
 
         const lastMsg = messagesRef.current[messagesRef.current.length - 1];
 
-        const autoImageSearch = localStorage.getItem('autoImageSearch');
-        const autoVideoSearch = localStorage.getItem('autoVideoSearch');
-
-        if (autoImageSearch === 'true') {
-          document
-            .getElementById(`search-images-${lastMsg.messageId}`)
-            ?.click();
-        }
-
-        if (autoVideoSearch === 'true') {
-          document
-            .getElementById(`search-videos-${lastMsg.messageId}`)
-            ?.click();
-        }
+        const autoSuggestions = localStorage.getItem('autoSuggestions');
 
         if (
           lastMsg.role === 'assistant' &&
           lastMsg.sources &&
           lastMsg.sources.length > 0 &&
-          !lastMsg.suggestions
+          !lastMsg.suggestions &&
+          autoSuggestions !== 'false' // Default to true if not set
         ) {
           const suggestions = await getSuggestions(messagesRef.current);
           setMessages((prev) =>
@@ -454,6 +509,18 @@ const ChatWindow = ({ id }: { id?: string }) => {
         }
       }
     };
+
+    const ollamaContextWindow =
+      localStorage.getItem('ollamaContextWindow') || '2048';
+
+    // Get the latest model selection from localStorage
+    const currentChatModelProvider = localStorage.getItem('chatModelProvider');
+    const currentChatModel = localStorage.getItem('chatModel');
+
+    // Use the most current model selection from localStorage, falling back to the state if not available
+    const modelProvider =
+      currentChatModelProvider || chatModelProvider.provider;
+    const modelName = currentChatModel || chatModelProvider.name;
 
     const res = await fetch('/api/chat', {
       method: 'POST',
@@ -471,10 +538,13 @@ const ChatWindow = ({ id }: { id?: string }) => {
         files: fileIds,
         focusMode: focusMode,
         optimizationMode: optimizationMode,
-        history: chatHistory,
+        history: messageChatHistory,
         chatModel: {
-          name: chatModelProvider.name,
-          provider: chatModelProvider.provider,
+          name: modelName,
+          provider: modelProvider,
+          ...(chatModelProvider.provider === 'ollama' && {
+            ollamaContextWindow: parseInt(ollamaContextWindow),
+          }),
         },
         embeddingModel: {
           name: embeddingModelProvider.name,
@@ -512,20 +582,31 @@ const ChatWindow = ({ id }: { id?: string }) => {
   };
 
   const rewrite = (messageId: string) => {
-    const index = messages.findIndex((msg) => msg.messageId === messageId);
-
-    if (index === -1) return;
-
-    const message = messages[index - 1];
-
-    setMessages((prev) => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
+    const messageIndex = messages.findIndex(
+      (msg) => msg.messageId === messageId,
+    );
+    if (messageIndex == -1) return;
+    sendMessage(messages[messageIndex - 1].content, {
+      messageId: messages[messageIndex - 1].messageId,
     });
-    setChatHistory((prev) => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
-    });
+  };
 
-    sendMessage(message.content, message.messageId);
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    // Get the index of the message being edited
+    const messageIndex = messages.findIndex(
+      (msg) => msg.messageId === messageId,
+    );
+    if (messageIndex === -1) return;
+
+    try {
+      sendMessage(newContent, {
+        messageId,
+        editMode: true,
+      });
+    } catch (error) {
+      console.error('Error updating message:', error);
+      toast.error('Failed to update message');
+    }
   };
 
   useEffect(() => {
@@ -564,12 +645,17 @@ const ChatWindow = ({ id }: { id?: string }) => {
               loading={loading}
               messages={messages}
               sendMessage={sendMessage}
-              messageAppeared={messageAppeared}
+              scrollTrigger={scrollTrigger}
               rewrite={rewrite}
               fileIds={fileIds}
               setFileIds={setFileIds}
               files={files}
               setFiles={setFiles}
+              optimizationMode={optimizationMode}
+              setOptimizationMode={setOptimizationMode}
+              focusMode={focusMode}
+              setFocusMode={setFocusMode}
+              handleEditMessage={handleEditMessage}
             />
           </>
         ) : (

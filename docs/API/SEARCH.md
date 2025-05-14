@@ -55,7 +55,7 @@ The API accepts a JSON object in the request body, where you define the focus mo
 
 - **`focusMode`** (string, required): Specifies which focus mode to use. Available modes:
 
-  - `webSearch`, `academicSearch`, `writingAssistant`, `wolframAlphaSearch`, `youtubeSearch`, `redditSearch`.
+  - `webSearch`, `academicSearch`, `localResearch`, `chat`, `wolframAlphaSearch`, `youtubeSearch`, `redditSearch`.
 
 - **`optimizationMode`** (string, optional): Specifies the optimization mode to control the balance between performance and quality. Available modes:
 

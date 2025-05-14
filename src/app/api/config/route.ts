@@ -1,5 +1,6 @@
 import {
   getAnthropicApiKey,
+  getBaseUrl,
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
@@ -60,6 +61,7 @@ export const GET = async (req: Request) => {
     config['customOpenaiApiUrl'] = getCustomOpenaiApiUrl();
     config['customOpenaiApiKey'] = getCustomOpenaiApiKey();
     config['customOpenaiModelName'] = getCustomOpenaiModelName();
+    config['baseUrl'] = getBaseUrl();
 
     return Response.json({ ...config }, { status: 200 });
   } catch (err) {

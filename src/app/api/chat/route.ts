@@ -1,26 +1,27 @@
-import prompts from '@/lib/prompts';
-import MetaSearchAgent from '@/lib/search/metaSearchAgent';
-import crypto from 'crypto';
-import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
-import { EventEmitter } from 'stream';
-import {
-  chatModelProviders,
-  embeddingModelProviders,
-  getAvailableChatModelProviders,
-  getAvailableEmbeddingModelProviders,
-} from '@/lib/providers';
-import db from '@/lib/db';
-import { chats, messages as messagesSchema } from '@/lib/db/schema';
-import { and, eq, gt } from 'drizzle-orm';
-import { getFileDetails } from '@/lib/utils/files';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { ChatOpenAI } from '@langchain/openai';
 import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
 } from '@/lib/config';
+import db from '@/lib/db';
+import { chats, messages as messagesSchema } from '@/lib/db/schema';
+import {
+  getAvailableChatModelProviders,
+  getAvailableEmbeddingModelProviders,
+} from '@/lib/providers';
 import { searchHandlers } from '@/lib/search';
+import { getFileDetails } from '@/lib/utils/files';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
+import { ChatOllama } from '@langchain/ollama';
+import { ChatOpenAI } from '@langchain/openai';
+import crypto from 'crypto';
+import { and, eq, gt } from 'drizzle-orm';
+import { EventEmitter } from 'stream';
+import {
+  registerCancelToken,
+  cleanupCancelToken,
+} from './cancel/route';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,6 +35,7 @@ type Message = {
 type ChatModel = {
   provider: string;
   name: string;
+  ollamaContextWindow?: number;
 };
 
 type EmbeddingModel = {
@@ -52,15 +54,24 @@ type Body = {
   systemInstructions: string;
 };
 
+type ModelStats = {
+  modelName: string;
+  responseTime?: number;
+};
+
 const handleEmitterEvents = async (
   stream: EventEmitter,
   writer: WritableStreamDefaultWriter,
   encoder: TextEncoder,
   aiMessageId: string,
   chatId: string,
+  startTime: number,
+  userMessageId: string,
 ) => {
   let recievedMessage = '';
   let sources: any[] = [];
+  let searchQuery: string | undefined;
+  let searchUrl: string | undefined;
 
   stream.on('data', (data) => {
     const parsedData = JSON.parse(data);
@@ -77,12 +88,22 @@ const handleEmitterEvents = async (
 
       recievedMessage += parsedData.data;
     } else if (parsedData.type === 'sources') {
+      // Capture the search query if available
+      if (parsedData.searchQuery) {
+        searchQuery = parsedData.searchQuery;
+      }
+      if (parsedData.searchUrl) {
+        searchUrl = parsedData.searchUrl;
+      }
+
       writer.write(
         encoder.encode(
           JSON.stringify({
             type: 'sources',
             data: parsedData.data,
+            searchQuery: parsedData.searchQuery,
             messageId: aiMessageId,
+            searchUrl: searchUrl,
           }) + '\n',
         ),
       );
@@ -90,16 +111,41 @@ const handleEmitterEvents = async (
       sources = parsedData.data;
     }
   });
+  let modelStats: ModelStats = {
+    modelName: '',
+  };
+
+  stream.on('stats', (data) => {
+    const parsedData = JSON.parse(data);
+    if (parsedData.type === 'modelStats') {
+      modelStats = parsedData.data;
+    }
+  });
+
   stream.on('end', () => {
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+
+    modelStats = {
+      ...modelStats,
+      responseTime: duration,
+    };
+
     writer.write(
       encoder.encode(
         JSON.stringify({
           type: 'messageEnd',
           messageId: aiMessageId,
+          modelStats: modelStats,
+          searchQuery: searchQuery,
+          searchUrl: searchUrl,
         }) + '\n',
       ),
     );
     writer.close();
+
+    // Clean up the abort controller reference
+    cleanupCancelToken(userMessageId);
 
     db.insert(messagesSchema)
       .values({
@@ -110,6 +156,9 @@ const handleEmitterEvents = async (
         metadata: JSON.stringify({
           createdAt: new Date(),
           ...(sources && sources.length > 0 && { sources }),
+          ...(searchQuery && { searchQuery }),
+          modelStats: modelStats,
+          ...(searchUrl && { searchUrl }),
         }),
       })
       .execute();
@@ -170,6 +219,16 @@ const handleHistorySave = async (
       .execute();
   } else {
     await db
+      .update(messagesSchema)
+      .set({
+        content: message.content,
+        metadata: JSON.stringify({
+          createdAt: new Date(),
+        }),
+      })
+      .where(eq(messagesSchema.messageId, humanMessageId))
+      .execute();
+    await db
       .delete(messagesSchema)
       .where(
         and(
@@ -183,6 +242,7 @@ const handleHistorySave = async (
 
 export const POST = async (req: Request) => {
   try {
+    const startTime = Date.now();
     const body = (await req.json()) as Body;
     const { message } = body;
 
@@ -232,6 +292,11 @@ export const POST = async (req: Request) => {
       }) as unknown as BaseChatModel;
     } else if (chatModelProvider && chatModel) {
       llm = chatModel.model;
+
+      // Set context window size for Ollama models
+      if (llm instanceof ChatOllama && body.chatModel?.provider === 'ollama') {
+        llm.numCtx = body.chatModel.ollamaContextWindow || 2048;
+      }
     }
 
     if (!llm) {
@@ -272,6 +337,28 @@ export const POST = async (req: Request) => {
       );
     }
 
+    const responseStream = new TransformStream();
+    const writer = responseStream.writable.getWriter();
+    const encoder = new TextEncoder();
+
+    // --- Cancellation logic ---
+    const abortController = new AbortController();
+    registerCancelToken(message.messageId, abortController);
+
+    abortController.signal.addEventListener('abort', () => {
+      console.log('Stream aborted, sending cancel event');
+      writer.write(
+        encoder.encode(
+          JSON.stringify({
+            type: 'error',
+            data: 'Request cancelled by user',
+          }),
+        ),
+      );
+      cleanupCancelToken(message.messageId);
+    });
+
+    // Pass the abort signal to the search handler
     const stream = await handler.searchAndAnswer(
       message.content,
       history,
@@ -280,13 +367,19 @@ export const POST = async (req: Request) => {
       body.optimizationMode,
       body.files,
       body.systemInstructions,
+      abortController.signal,
     );
 
-    const responseStream = new TransformStream();
-    const writer = responseStream.writable.getWriter();
-    const encoder = new TextEncoder();
+    handleEmitterEvents(
+      stream,
+      writer,
+      encoder,
+      aiMessageId,
+      message.chatId,
+      startTime,
+      message.messageId,
+    );
 
-    handleEmitterEvents(stream, writer, encoder, aiMessageId, message.chatId);
     handleHistorySave(message, humanMessageId, body.focusMode, body.files);
 
     return new Response(responseStream.readable, {

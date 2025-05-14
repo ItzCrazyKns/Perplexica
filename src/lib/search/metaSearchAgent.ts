@@ -1,6 +1,7 @@
-import { ChatOpenAI } from '@langchain/openai';
-import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import type { Embeddings } from '@langchain/core/embeddings';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { BaseMessage } from '@langchain/core/messages';
+import { StringOutputParser } from '@langchain/core/output_parsers';
 import {
   ChatPromptTemplate,
   MessagesPlaceholder,
@@ -11,19 +12,18 @@ import {
   RunnableMap,
   RunnableSequence,
 } from '@langchain/core/runnables';
-import { BaseMessage } from '@langchain/core/messages';
-import { StringOutputParser } from '@langchain/core/output_parsers';
-import LineListOutputParser from '../outputParsers/listLineOutputParser';
-import LineOutputParser from '../outputParsers/lineOutputParser';
-import { getDocumentsFromLinks } from '../utils/documents';
-import { Document } from 'langchain/document';
-import { searchSearxng } from '../searxng';
-import path from 'node:path';
-import fs from 'node:fs';
-import computeSimilarity from '../utils/computeSimilarity';
-import formatChatHistoryAsString from '../utils/formatHistory';
-import eventEmitter from 'events';
 import { StreamEvent } from '@langchain/core/tracers/log_stream';
+import { ChatOpenAI } from '@langchain/openai';
+import eventEmitter from 'events';
+import { Document } from 'langchain/document';
+import fs from 'node:fs';
+import path from 'node:path';
+import LineOutputParser from '../outputParsers/lineOutputParser';
+import LineListOutputParser from '../outputParsers/listLineOutputParser';
+import { searchSearxng } from '../searxng';
+import computeSimilarity from '../utils/computeSimilarity';
+import { getDocumentsFromLinks } from '../utils/documents';
+import formatChatHistoryAsString from '../utils/formatHistory';
 
 export interface MetaSearchAgentType {
   searchAndAnswer: (
@@ -34,6 +34,7 @@ export interface MetaSearchAgentType {
     optimizationMode: 'speed' | 'balanced' | 'quality',
     fileIds: string[],
     systemInstructions: string,
+    signal: AbortSignal,
   ) => Promise<eventEmitter>;
 }
 
@@ -45,6 +46,7 @@ interface Config {
   queryGeneratorPrompt: string;
   responsePrompt: string;
   activeEngines: string[];
+  additionalSearchCriteria?: string;
 }
 
 type BasicChainInput = {
@@ -55,6 +57,8 @@ type BasicChainInput = {
 class MetaSearchAgent implements MetaSearchAgentType {
   private config: Config;
   private strParser = new StringOutputParser();
+  private searchQuery?: string;
+  private searxngUrl?: string;
 
   constructor(config: Config) {
     this.config = config;
@@ -68,18 +72,19 @@ class MetaSearchAgent implements MetaSearchAgentType {
       llm,
       this.strParser,
       RunnableLambda.from(async (input: string) => {
+        //console.log(`LLM response for initial web search:"${input}"`);
         const linksOutputParser = new LineListOutputParser({
           key: 'links',
         });
 
         const questionOutputParser = new LineOutputParser({
-          key: 'question',
+          key: 'answer',
         });
 
         const links = await linksOutputParser.parse(input);
-        let question = this.config.summarizer
-          ? await questionOutputParser.parse(input)
-          : input;
+        let question = await questionOutputParser.parse(input);
+
+        //console.log('question', question);
 
         if (question === 'not_needed') {
           return { query: '', docs: [] };
@@ -203,14 +208,19 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
           return { query: question, docs: docs };
         } else {
-          question = question.replace(/<think>.*?<\/think>/g, '');
+          if (this.config.additionalSearchCriteria) {
+            question = `${question} ${this.config.additionalSearchCriteria}`;
+          }
 
-          const res = await searchSearxng(question, {
+          const searxngResult = await searchSearxng(question, {
             language: 'en',
             engines: this.config.activeEngines,
           });
 
-          const documents = res.results.map(
+          // Store the SearXNG URL for later use in emitting to the client
+          this.searxngUrl = searxngResult.searchUrl;
+
+          const documents = searxngResult.results.map(
             (result) =>
               new Document({
                 pageContent:
@@ -226,7 +236,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
               }),
           );
 
-          return { query: question, docs: documents };
+          return { query: question, docs: documents, searchQuery: question };
         }
       }),
     ]);
@@ -238,6 +248,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'balanced' | 'quality',
     systemInstructions: string,
+    signal: AbortSignal,
   ) {
     return RunnableSequence.from([
       RunnableMap.from({
@@ -245,37 +256,58 @@ class MetaSearchAgent implements MetaSearchAgentType {
         query: (input: BasicChainInput) => input.query,
         chat_history: (input: BasicChainInput) => input.chat_history,
         date: () => new Date().toISOString(),
-        context: RunnableLambda.from(async (input: BasicChainInput) => {
-          const processedHistory = formatChatHistoryAsString(
-            input.chat_history,
-          );
+        context: RunnableLambda.from(
+          async (
+            input: BasicChainInput,
+            options?: { signal?: AbortSignal },
+          ) => {
+            // Check if the request was aborted
+            if (options?.signal?.aborted || signal?.aborted) {
+              console.log('Request cancelled by user');
+              throw new Error('Request cancelled by user');
+            }
 
-          let docs: Document[] | null = null;
-          let query = input.query;
+            const processedHistory = formatChatHistoryAsString(
+              input.chat_history,
+            );
 
-          if (this.config.searchWeb) {
-            const searchRetrieverChain =
-              await this.createSearchRetrieverChain(llm);
+            let docs: Document[] | null = null;
+            let query = input.query;
 
-            const searchRetrieverResult = await searchRetrieverChain.invoke({
-              chat_history: processedHistory,
+            if (this.config.searchWeb) {
+              const searchRetrieverChain =
+                await this.createSearchRetrieverChain(llm);
+              var date = new Date().toISOString();
+
+              const searchRetrieverResult = await searchRetrieverChain.invoke(
+                {
+                  chat_history: processedHistory,
+                  query,
+                  date,
+                },
+                { signal: options?.signal },
+              );
+
+              query = searchRetrieverResult.query;
+              docs = searchRetrieverResult.docs;
+
+              // Store the search query in the context for emitting to the client
+              if (searchRetrieverResult.searchQuery) {
+                this.searchQuery = searchRetrieverResult.searchQuery;
+              }
+            }
+
+            const sortedDocs = await this.rerankDocs(
               query,
-            });
+              docs ?? [],
+              fileIds,
+              embeddings,
+              optimizationMode,
+            );
 
-            query = searchRetrieverResult.query;
-            docs = searchRetrieverResult.docs;
-          }
-
-          const sortedDocs = await this.rerankDocs(
-            query,
-            docs ?? [],
-            fileIds,
-            embeddings,
-            optimizationMode,
-          );
-
-          return sortedDocs;
-        })
+            return sortedDocs;
+          },
+        )
           .withConfig({
             runName: 'FinalSourceRetriever',
           })
@@ -434,17 +466,39 @@ class MetaSearchAgent implements MetaSearchAgentType {
   private async handleStream(
     stream: AsyncGenerator<StreamEvent, any, any>,
     emitter: eventEmitter,
+    llm: BaseChatModel,
+    signal: AbortSignal,
   ) {
+    if (signal.aborted) {
+      return;
+    }
+
     for await (const event of stream) {
+      if (signal.aborted) {
+        return;
+      }
+
       if (
         event.event === 'on_chain_end' &&
         event.name === 'FinalSourceRetriever'
       ) {
-        ``;
-        emitter.emit(
-          'data',
-          JSON.stringify({ type: 'sources', data: event.data.output }),
-        );
+        const sourcesData = event.data.output;
+        if (this.searchQuery) {
+          emitter.emit(
+            'data',
+            JSON.stringify({
+              type: 'sources',
+              data: sourcesData,
+              searchQuery: this.searchQuery,
+              searchUrl: this.searxngUrl,
+            }),
+          );
+        } else {
+          emitter.emit(
+            'data',
+            JSON.stringify({ type: 'sources', data: sourcesData }),
+          );
+        }
       }
       if (
         event.event === 'on_chain_stream' &&
@@ -459,6 +513,50 @@ class MetaSearchAgent implements MetaSearchAgentType {
         event.event === 'on_chain_end' &&
         event.name === 'FinalResponseGenerator'
       ) {
+        // Get model name safely with better detection
+        let modelName = 'Unknown';
+        try {
+          // @ts-ignore - Different LLM implementations have different properties
+          if (llm.modelName) {
+            // @ts-ignore
+            modelName = llm.modelName;
+            // @ts-ignore
+          } else if (llm._llm && llm._llm.modelName) {
+            // @ts-ignore
+            modelName = llm._llm.modelName;
+            // @ts-ignore
+          } else if (llm.model && llm.model.modelName) {
+            // @ts-ignore
+            modelName = llm.model.modelName;
+          } else if ('model' in llm) {
+            // @ts-ignore
+            const model = llm.model;
+            if (typeof model === 'string') {
+              modelName = model;
+              // @ts-ignore
+            } else if (model && model.modelName) {
+              // @ts-ignore
+              modelName = model.modelName;
+            }
+          } else if (llm.constructor && llm.constructor.name) {
+            // Last resort: use the class name
+            modelName = llm.constructor.name;
+          }
+        } catch (e) {
+          console.error('Failed to get model name:', e);
+        }
+
+        // Send model info before ending
+        emitter.emit(
+          'stats',
+          JSON.stringify({
+            type: 'modelStats',
+            data: {
+              modelName,
+            },
+          }),
+        );
+
         emitter.emit('end');
       }
     }
@@ -472,6 +570,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     optimizationMode: 'speed' | 'balanced' | 'quality',
     fileIds: string[],
     systemInstructions: string,
+    signal: AbortSignal,
   ) {
     const emitter = new eventEmitter();
 
@@ -481,6 +580,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
       embeddings,
       optimizationMode,
       systemInstructions,
+      signal,
     );
 
     const stream = answeringChain.streamEvents(
@@ -490,10 +590,12 @@ class MetaSearchAgent implements MetaSearchAgentType {
       },
       {
         version: 'v1',
+        // Pass the abort signal to the LLM streaming chain
+        signal,
       },
     );
 
-    this.handleStream(stream, emitter);
+    this.handleStream(stream, emitter, llm, signal);
 
     return emitter;
   }

@@ -13,12 +13,14 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
+import { ChatOllama } from '@langchain/ollama';
 
 interface chatModel {
   provider: string;
   name: string;
   customOpenAIKey?: string;
   customOpenAIBaseURL?: string;
+  ollamaContextWindow?: number;
 }
 
 interface embeddingModel {
@@ -97,6 +99,10 @@ export const POST = async (req: Request) => {
         .model as unknown as BaseChatModel | undefined;
     }
 
+    if (llm instanceof ChatOllama && body.chatModel?.provider === 'ollama') {
+      llm.numCtx = body.chatModel.ollamaContextWindow || 2048;
+    }
+
     if (
       embeddingModelProviders[embeddingModelProvider] &&
       embeddingModelProviders[embeddingModelProvider][embeddingModel]
@@ -118,6 +124,8 @@ export const POST = async (req: Request) => {
     if (!searchHandler) {
       return Response.json({ message: 'Invalid focus mode' }, { status: 400 });
     }
+    const abortController = new AbortController();
+    const { signal } = abortController;
 
     const emitter = await searchHandler.searchAndAnswer(
       body.query,
@@ -127,6 +135,7 @@ export const POST = async (req: Request) => {
       body.optimizationMode,
       [],
       body.systemInstructions || '',
+      signal,
     );
 
     if (!body.stream) {
@@ -173,9 +182,6 @@ export const POST = async (req: Request) => {
     }
 
     const encoder = new TextEncoder();
-
-    const abortController = new AbortController();
-    const { signal } = abortController;
 
     const stream = new ReadableStream({
       start(controller) {
