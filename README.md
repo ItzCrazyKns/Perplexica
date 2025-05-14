@@ -1,6 +1,6 @@
 # 🚀 Perplexica - An AI-powered search engine 🔎 <!-- omit in toc -->
 
-[![Discord](https://dcbadge.vercel.app/api/server/26aArMy8tT?style=flat&compact=true)](https://discord.gg/26aArMy8tT)
+*This is a fork of [ItzCrazyKns/Perplexica](https://github.com/ItzCrazyKns/Perplexica) with additional features and improvements.*
 
 ![preview](.assets/perplexica-screenshot.png?)
 
@@ -15,11 +15,16 @@
   - [Ollama Connection Errors](#ollama-connection-errors)
 - [Using as a Search Engine](#using-as-a-search-engine)
 - [Using Perplexica's API](#using-perplexicas-api)
-- [Expose Perplexica to a network](#expose-perplexica-to-network)
+- [Expose Perplexica to network](#expose-perplexica-to-network)
+  - [Running Behind a Reverse Proxy](#running-behind-a-reverse-proxy)
 - [One-Click Deployment](#one-click-deployment)
 - [Upcoming Features](#upcoming-features)
+- [Fork Improvements](#fork-improvements)
+  - [UI Improvements](#ui-improvements)
+  - [Search and Integration Enhancements](#search-and-integration-enhancements)
+  - [AI Functionality](#ai-functionality)
+  - [Bug Fixes](#bug-fixes)
 - [Support Us](#support-us)
-  - [Donations](#donations)
 - [Contribution](#contribution)
 - [Help and Support](#help-and-support)
 
@@ -190,17 +195,41 @@ This ensures that OpenSearch descriptions, browser integrations, and all URLs wo
 - [x] Adding Discover
 - [ ] Finalizing Copilot Mode
 
+## Fork Improvements
+
+This fork adds several enhancements to the original Perplexica project:
+
+### UI Improvements
+- ✅ Tabbed interface for message results
+- ✅ Added message editing capability
+- ✅ Ability to select AI models directly while chatting without opening settings
+- ✅ Change focus mode at any time during chat sessions
+- ✅ Auto-scrolling
+- ✅ Syntax highlighting for code blocks
+- ✅ Display search query with the response
+- ✅ Improved styling for all screen sizes
+- ✅ Added model statistics showing model name and response time
+
+### Search and Integration Enhancements
+- ✅ OpenSearch support with dynamic XML generation
+  - Added BASE_URL config to support reverse proxy deployments
+  - Added autocomplete functionality proxied to SearxNG
+- ✅ Enhanced Reddit focus mode to work around SearxNG limitations
+
+### AI Functionality
+- ✅ True chat mode implementation (moved writing mode to local research mode)
+- ✅ Enhanced system prompts for more reliable and relevant results
+- ✅ Better parsing for reasoning models
+- ✅ User customizable context window for Ollama models
+- ✅ Toggle for automatic suggestions
+
+### Bug Fixes
+- ✅ Improved history rewriting
+
 ## Support Us
 
 If you find Perplexica useful, consider giving us a star on GitHub. This helps more people discover Perplexica and supports the development of new features. Your support is greatly appreciated.
 
-### Donations
-
-We also accept donations to help sustain our project. If you would like to contribute, you can use the following options to donate. Thank you for your support!
-
-| Ethereum                                              |
-| ----------------------------------------------------- |
-| Address: `0xB025a84b2F269570Eb8D4b05DEdaA41D8525B6DD` |
 
 ## Contribution
 
@@ -208,6 +237,6 @@ Perplexica is built on the idea that AI and large language models should be easy
 
 ## Help and Support
 
-If you have any questions or feedback, please feel free to reach out to us. You can create an issue on GitHub or join our Discord server. There, you can connect with other users, share your experiences and reviews, and receive more personalized help. [Click here](https://discord.gg/EFwsmQDgAu) to join the Discord server. To discuss matters outside of regular support, feel free to contact me on Discord at `itzcrazykns`.
+If you have any questions or feedback, please feel free to reach out to us. You can create an issue on GitHub to get support or report bugs.
 
 Thank you for exploring Perplexica, the AI-powered search engine designed to enhance your search experience. We are constantly working to improve Perplexica and expand its capabilities. We value your feedback and contributions which help us make Perplexica even better. Don't forget to check back for updates and new features!
