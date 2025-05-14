@@ -21,7 +21,7 @@ import { EventEmitter } from 'stream';
 import {
   registerCancelToken,
   cleanupCancelToken,
-} from './cancel/route';
+} from '@/lib/cancel-tokens';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
