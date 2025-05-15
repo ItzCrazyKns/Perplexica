@@ -6,11 +6,13 @@ export const webSearchRetrieverPrompt = `
 - Only add additional information or change the meaning of the question if it is necessary for clarity or relevance to the conversation
 - Condense the question to its essence and remove any unnecessary details
 - Ensure the question is grammatically correct and free of spelling errors
-- If it is a simple writing task or a greeting (unless the greeting contains a question after it) like Hi, Hello, How are you, etc. than a question then you need to return \`not_needed\` as the response in the <answer> XML block
+- If it is a simple writing task or a greeting (unless the greeting contains a question after it) like Hi, Hello, How are you, etc. instead of a question then you need to return \`not_needed\` as the response in the <answer> XML block
 - If the user includes URLs or a PDF in their question, return the URLs or PDF links inside the <links> XML block and the question inside the <answer> XML block
 - If the user wants to you to summarize the webpage or the PDF, return summarize inside the <answer> XML block in place of a question and the URLs to summarize in the <links> XML block
 - If you are a thinking or reasoning AI, do not use <answer> and </answer> or <links> and </links> tags in your thinking. Those tags should only be used in the final output
 - If applicable, use the provided date to ensure the rephrased question is relevant to the current date and time
+  - This includes but is not limited to things like sports scores, standings, weather, current events, etc.
+- If the user requests limiting to a specific website, include that in the rephrased question with the format \`'site:example.com'\`, be sure to include the quotes. Only do this if the limiting is explicitly mentioned in the question
 
 # Data
 - The history is contained in the <conversation> tag after the <examples> below
@@ -22,99 +24,135 @@ export const webSearchRetrieverPrompt = `
 There are several examples attached for your reference inside the below examples XML block
 
 <examples>
-## Example 1 input
-<conversation>
-Who won the last F1 race?\nAyrton Senna won the Monaco Grand Prix. It was a tight race with lots of overtakes. Alain Prost was in the lead for most of the race until the last lap when Senna overtook them.
-</conversation>
-<question>
-What were the highlights of the race?
-</question>
+<example>
+    <input>
+        <conversation>
+        Who won the last F1 race?\nAyrton Senna won the Monaco Grand Prix. It was a tight race with lots of overtakes.
+        </conversation>
+        <question>
+        What were the highlights of the race?
+        </question>
+    </input>
+    <output>
+        <answer>
+        F1 Monaco Grand Prix highlights
+        </answer>
+    </output>
+</example>
 
-## Example 1 output
-<answer>
-F1 Monaco Grand Prix highlights
-</answer>
+<example>
+    <input>
+        <conversation>
+        </conversation>
+        <question>
+        What is the capital of France
+        </question>
+    </input>
+    <output>
+        <answer>
+        Capital of France
+        </answer>
+    </output>
+</example>
 
-## Example 2 input
-<conversation>
-</conversation>
-<question>
-What is the capital of France
-</question>
+<example>
+    <input>
+        <conversation>
+        </conversation>
+        <question>
+        Hi, how are you?
+        </question>
+    </input>
+    <output>
+        <answer>
+        not_needed
+        </answer>
+    </output>
+</example>
 
-## Example 2 output
-<answer>
-Capital of France
-</answer>
+<example>
+    <input>
+        <conversation>
+        What is the capital of New York?\nThe capital of New York is Albany.\nWhat year was the capital established?\nThe capital of New York was established in 1797.
+        </conversation>
+        <question>
+        What is the weather like there? Use weather.com
+        </question>
+    </input>
+    <output>
+        <answer>
+        Weather in Albany, New York {date} 'site:weather.com'
+        </answer>
+    </output>
+</example>
 
-## Example 3 input
-<conversation>
-</conversation>
-<question>
-Hi, how are you?
-</question>
+<example>
+    <input>
+        <conversation>
+        </conversation>
+        <question>
+        Can you tell me what is X from https://example.com
+        </question>
+    </input>
+    <output>
+        <answer>
+        Can you tell me what is X
+        </answer>
+        <links>
+        https://example.com
+        </links>
+    </output>
+</example>
 
-## Example 3 output
-<answer>
-not_needed
-</answer>
+<example>
+    <input>
+        <conversation>
+        </conversation>
+        <question>
+        Summarize the content from https://example.com
+        </question>
+    </input>
+    <output>
+        <answer>
+        summarize
+        </answer>
+        <links>
+        https://example.com
+        </links>
+    </output>
+</example>
 
-## Example 4 input
-<conversation>
-</conversation>
-<question>
-Can you tell me what is X from https://example.com
-</question>
+<example>
+    <input>
+        <conversation>
+        </conversation>
+        <question>
+        Get the current F1 constructor standings and return the results in a table
+        </question>
+    </input>
+    <output>
+        ## Example 6 output
+        <answer>
+        {date} F1 constructor standings
+        </answer>
+    </output>
+</example>
 
-## Example 4 output
-<answer>
-Can you tell me what is X
-</answer>
-
-<links>
-https://example.com
-</links>
-
-## Example 5 input
-<conversation>
-</conversation>
-<question>
-Summarize the content from https://example.com
-</question>
-
-## Example 5 output
-<answer>
-summarize
-</answer>
-
-<links>
-https://example.com
-</links>
-
-## Example 6 input
-<conversation>
-</conversation>
-<question>
-Get the current F1 constructor standings and return the results in a table
-</question>
-
-## Example 6 output
-<answer>
-{date} F1 constructor standings
-</answer>
-
-## Example 7 input
-<conversation>
-</conversation>
-<question>
-What are the top 10 restaurants in New York? Show the results in a table and include a short description of each restaurant
-</question>
-
-## Example 7 output
-<answer>
-Top 10 restaurants in New York on {date}
-</answer>
-
+<example>
+    <input>
+        <conversation>
+        </conversation>
+        <question>
+        What are the top 10 restaurants in New York? Show the results in a table and include a short description of each restaurant. Only include results from yelp.com
+        </question>
+    </input>
+    <output>
+        ## Example 7 output
+        <answer>
+        Top 10 restaurants in New York on {date} 'site:yelp.com'
+        </answer>
+    </output>
+</example>
 </examples>
 
 Everything below is the part of the actual conversation
