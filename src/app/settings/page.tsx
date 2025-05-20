@@ -1,6 +1,6 @@
 'use client';
 
-import { Settings as SettingsIcon, ArrowLeft, Loader2 } from 'lucide-react';
+import { Settings as SettingsIcon, ArrowLeft, Loader2, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@headlessui/react';
@@ -117,12 +117,24 @@ const Select = ({
 const SettingsSection = ({
   title,
   children,
+  tooltip,
 }: {
   title: string;
   children: React.ReactNode;
+  tooltip?: string;
 }) => (
   <div className="flex flex-col space-y-4 p-4 bg-light-secondary/50 dark:bg-dark-secondary/50 rounded-xl border border-light-200 dark:border-dark-200">
-    <h2 className="text-black/90 dark:text-white/90 font-medium">{title}</h2>
+    <div className="flex items-center gap-2">
+      <h2 className="text-black/90 dark:text-white/90 font-medium">{title}</h2>
+      {tooltip && (
+        <div className="relative group">
+          <Info size={16} className="text-black/70 dark:text-white/70 cursor-help" />
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-black/90 dark:bg-white/90 text-white dark:text-black text-xs rounded-lg opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity">
+            {tooltip}
+          </div>
+        </div>
+      )}
+    </div>
     {children}
   </div>
 );
@@ -226,7 +238,7 @@ const Page = () => {
     fetchConfig();
   }, []);
 
-  const saveConfig = async (key: string, value: any) => {
+  const saveConfig = async (key: string, value: any) => {    
     setSavingStates((prev) => ({ ...prev, [key]: true }));
 
     try {
@@ -671,7 +683,7 @@ const Page = () => {
                         Custom OpenAI API Key
                       </p>
                       <Input
-                        type="text"
+                        type="password"
                         placeholder="Custom OpenAI API Key"
                         value={config.customOpenaiApiKey}
                         isSaving={savingStates['customOpenaiApiKey']}
@@ -786,14 +798,17 @@ const Page = () => {
               )}
             </SettingsSection>
 
-            <SettingsSection title="API Keys">
+            <SettingsSection 
+              title="API Keys" 
+              tooltip="API Key values can be viewed in the config.toml file"
+            >
               <div className="flex flex-col space-y-4">
                 <div className="flex flex-col space-y-1">
                   <p className="text-black/70 dark:text-white/70 text-sm">
                     OpenAI API Key
                   </p>
                   <Input
-                    type="text"
+                    type="password"
                     placeholder="OpenAI API Key"
                     value={config.openaiApiKey}
                     isSaving={savingStates['openaiApiKey']}
@@ -831,7 +846,7 @@ const Page = () => {
                     GROQ API Key
                   </p>
                   <Input
-                    type="text"
+                    type="password"
                     placeholder="GROQ API Key"
                     value={config.groqApiKey}
                     isSaving={savingStates['groqApiKey']}
@@ -850,7 +865,7 @@ const Page = () => {
                     Anthropic API Key
                   </p>
                   <Input
-                    type="text"
+                    type="password"
                     placeholder="Anthropic API key"
                     value={config.anthropicApiKey}
                     isSaving={savingStates['anthropicApiKey']}
@@ -869,7 +884,7 @@ const Page = () => {
                     Gemini API Key
                   </p>
                   <Input
-                    type="text"
+                    type="password"
                     placeholder="Gemini API key"
                     value={config.geminiApiKey}
                     isSaving={savingStates['geminiApiKey']}
@@ -888,7 +903,7 @@ const Page = () => {
                     Deepseek API Key
                   </p>
                   <Input
-                    type="text"
+                    type="password"
                     placeholder="Deepseek API Key"
                     value={config.deepseekApiKey}
                     isSaving={savingStates['deepseekApiKey']}
