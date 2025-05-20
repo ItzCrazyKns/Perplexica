@@ -75,20 +75,13 @@ const Focus = ({
         type="button"
         className=" text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
       >
-        {focusMode !== 'webSearch' ? (
-          <div className="flex flex-row items-center space-x-1">
-            {focusModes.find((mode) => mode.key === focusMode)?.icon}
-            <p className="text-xs font-medium hidden lg:block">
-              {focusModes.find((mode) => mode.key === focusMode)?.title}
-            </p>
-            <ChevronDown size={20} className="-translate-x-1" />
-          </div>
-        ) : (
-          <div className="flex flex-row items-center space-x-1">
-            <ScanEye size={20} />
-            <p className="text-xs font-medium hidden lg:block">Focus</p>
-          </div>
-        )}
+        <div className="flex flex-row items-center space-x-1">
+          {focusModes.find((mode) => mode.key === focusMode)?.icon}
+          <p className="text-xs font-medium hidden lg:block">
+            {focusModes.find((mode) => mode.key === focusMode)?.title}
+          </p>
+          <ChevronDown size={20} className="-translate-x-1" />
+        </div>
       </PopoverButton>
       <Transition
         as={Fragment}
