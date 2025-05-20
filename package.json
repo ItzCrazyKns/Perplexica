@@ -32,7 +32,7 @@
     "compute-dot": "^1.1.0",
     "drizzle-orm": "^0.40.1",
     "html-to-text": "^9.0.5",
-    "langchain": "^0.1.30",
+    "langchain": "^0.3.26",
     "lucide-react": "^0.363.0",
     "markdown-to-jsx": "^7.7.2",
     "next": "^15.2.2",
