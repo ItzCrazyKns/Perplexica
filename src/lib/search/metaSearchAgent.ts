@@ -339,8 +339,6 @@ class MetaSearchAgent implements MetaSearchAgentType {
               signal,
             );
 
-            console.log('Ranked docs:', sortedDocs);
-
             this.emitProgress(emitter, 100, `Done`);
             return sortedDocs;
           },
