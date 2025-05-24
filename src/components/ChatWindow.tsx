@@ -29,6 +29,11 @@ export type Message = {
   modelStats?: ModelStats;
   searchQuery?: string;
   searchUrl?: string;
+  progress?: {
+    message: string;
+    current: number;
+    total: number;
+  };
 };
 
 export interface File {
@@ -270,6 +275,11 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const [loading, setLoading] = useState(false);
   const [scrollTrigger, setScrollTrigger] = useState(0);
+  const [analysisProgress, setAnalysisProgress] = useState<{
+    message: string;
+    current: number;
+    total: number;
+  } | null>(null);
 
   const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -405,6 +415,11 @@ const ChatWindow = ({ id }: { id?: string }) => {
         return;
       }
 
+      if (data.type === 'progress') {
+        setAnalysisProgress(data.data);
+        return;
+      }
+
       if (data.type === 'sources') {
         sources = data.data;
         if (!added) {
@@ -460,6 +475,9 @@ const ChatWindow = ({ id }: { id?: string }) => {
       }
 
       if (data.type === 'messageEnd') {
+        // Clear analysis progress
+        setAnalysisProgress(null);
+
         setChatHistory((prevHistory) => [
           ...prevHistory,
           ['human', message],
@@ -656,6 +674,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
               focusMode={focusMode}
               setFocusMode={setFocusMode}
               handleEditMessage={handleEditMessage}
+              analysisProgress={analysisProgress}
             />
           </>
         ) : (

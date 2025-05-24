@@ -22,8 +22,9 @@ import LineOutputParser from '../outputParsers/lineOutputParser';
 import LineListOutputParser from '../outputParsers/listLineOutputParser';
 import { searchSearxng } from '../searxng';
 import computeSimilarity from '../utils/computeSimilarity';
-import { getDocumentsFromLinks } from '../utils/documents';
+import { getDocumentsFromLinks, getWebContent } from '../utils/documents';
 import formatChatHistoryAsString from '../utils/formatHistory';
+import { getModelName } from '../utils/modelUtils';
 
 export interface MetaSearchAgentType {
   searchAndAnswer: (
@@ -64,8 +65,34 @@ class MetaSearchAgent implements MetaSearchAgentType {
     this.config = config;
   }
 
-  private async createSearchRetrieverChain(llm: BaseChatModel) {
+  /**
+   * Emit a progress event with the given percentage and message
+   */
+  private emitProgress(
+    emitter: eventEmitter,
+    percentage: number,
+    message: string,
+  ) {
+    emitter.emit(
+      'progress',
+      JSON.stringify({
+        type: 'progress',
+        data: {
+          message,
+          current: percentage,
+          total: 100,
+        },
+      }),
+    );
+  }
+
+  private async createSearchRetrieverChain(
+    llm: BaseChatModel,
+    emitter: eventEmitter,
+  ) {
     (llm as unknown as ChatOpenAI).temperature = 0;
+
+    this.emitProgress(emitter, 10, `Building search query`);
 
     return RunnableSequence.from([
       PromptTemplate.fromTemplate(this.config.queryGeneratorPrompt),
@@ -130,6 +157,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
               docGroups[docIndex].metadata.totalDocs += 1;
             }
           });
+
+          this.emitProgress(emitter, 20, `Summarizing content`);
 
           await Promise.all(
             docGroups.map(async (doc) => {
@@ -208,6 +237,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
           return { query: question, docs: docs };
         } else {
+          this.emitProgress(emitter, 20, `Searching the web`);
           if (this.config.additionalSearchCriteria) {
             question = `${question} ${this.config.additionalSearchCriteria}`;
           }
@@ -249,6 +279,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     optimizationMode: 'speed' | 'balanced' | 'quality',
     systemInstructions: string,
     signal: AbortSignal,
+    emitter: eventEmitter,
   ) {
     return RunnableSequence.from([
       RunnableMap.from({
@@ -276,7 +307,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
             if (this.config.searchWeb) {
               const searchRetrieverChain =
-                await this.createSearchRetrieverChain(llm);
+                await this.createSearchRetrieverChain(llm, emitter);
               var date = new Date().toISOString();
 
               const searchRetrieverResult = await searchRetrieverChain.invoke(
@@ -303,8 +334,14 @@ class MetaSearchAgent implements MetaSearchAgentType {
               fileIds,
               embeddings,
               optimizationMode,
+              llm,
+              emitter,
+              signal,
             );
 
+            console.log('Ranked docs:', sortedDocs);
+
+            this.emitProgress(emitter, 100, `Done`);
             return sortedDocs;
           },
         )
@@ -331,9 +368,16 @@ class MetaSearchAgent implements MetaSearchAgentType {
     fileIds: string[],
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'balanced' | 'quality',
-  ) {
+    llm: BaseChatModel,
+    emitter: eventEmitter,
+    signal: AbortSignal,
+  ): Promise<Document[]> {
     if (docs.length === 0 && fileIds.length === 0) {
       return docs;
+    }
+
+    if (query.toLocaleLowerCase() === 'summarize') {
+      return docs.slice(0, 15);
     }
 
     const filesData = fileIds
@@ -360,107 +404,216 @@ class MetaSearchAgent implements MetaSearchAgentType {
       })
       .flat();
 
-    if (query.toLocaleLowerCase() === 'summarize') {
-      return docs.slice(0, 15);
-    }
-
-    const docsWithContent = docs.filter(
+    let docsWithContent = docs.filter(
       (doc) => doc.pageContent && doc.pageContent.length > 0,
     );
 
-    if (optimizationMode === 'speed' || this.config.rerank === false) {
-      if (filesData.length > 0) {
-        const [queryEmbedding] = await Promise.all([
-          embeddings.embedQuery(query),
-        ]);
+    const queryEmbedding = await embeddings.embedQuery(query);
 
+    const getRankedDocs = async (
+      queryEmbedding: number[],
+      includeFiles: boolean,
+      includeNonFileDocs: boolean,
+      maxDocs: number,
+    ) => {
+      let docsToRank = includeNonFileDocs ? docsWithContent : [];
+
+      if (includeFiles) {
+        // Add file documents to the ranking
         const fileDocs = filesData.map((fileData) => {
           return new Document({
             pageContent: fileData.content,
             metadata: {
               title: fileData.fileName,
               url: `File`,
+              embeddings: fileData.embeddings,
             },
           });
         });
+        docsToRank.push(...fileDocs);
+      }
 
-        const similarity = filesData.map((fileData, i) => {
-          const sim = computeSimilarity(queryEmbedding, fileData.embeddings);
-
+      const similarity = await Promise.all(
+        docsToRank.map(async (doc, i) => {
+          const sim = computeSimilarity(
+            queryEmbedding,
+            doc.metadata?.embeddings
+              ? doc.metadata?.embeddings
+              : (await embeddings.embedDocuments([doc.pageContent]))[0],
+          );
           return {
             index: i,
             similarity: sim,
           };
-        });
+        }),
+      );
 
-        let sortedDocs = similarity
-          .filter(
-            (sim) => sim.similarity > (this.config.rerankThreshold ?? 0.3),
-          )
-          .sort((a, b) => b.similarity - a.similarity)
-          .slice(0, 15)
-          .map((sim) => fileDocs[sim.index]);
+      let rankedDocs = similarity
+        .filter((sim) => sim.similarity > (this.config.rerankThreshold ?? 0.3))
+        .sort((a, b) => b.similarity - a.similarity)
+        .map((sim) => docsToRank[sim.index]);
 
-        sortedDocs =
-          docsWithContent.length > 0 ? sortedDocs.slice(0, 8) : sortedDocs;
+      rankedDocs =
+        docsToRank.length > 0 ? rankedDocs.slice(0, maxDocs) : rankedDocs;
+      return rankedDocs;
+    };
+
+    if (optimizationMode === 'speed' || this.config.rerank === false) {
+      this.emitProgress(emitter, 50, `Ranking sources`);
+      if (filesData.length > 0) {
+        const sortedFiles = await getRankedDocs(queryEmbedding, true, false, 8);
 
         return [
-          ...sortedDocs,
-          ...docsWithContent.slice(0, 15 - sortedDocs.length),
+          ...sortedFiles,
+          ...docsWithContent.slice(0, 15 - sortedFiles.length),
         ];
       } else {
         return docsWithContent.slice(0, 15);
       }
     } else if (optimizationMode === 'balanced') {
-      const [docEmbeddings, queryEmbedding] = await Promise.all([
-        embeddings.embedDocuments(
-          docsWithContent.map((doc) => doc.pageContent),
-        ),
-        embeddings.embedQuery(query),
-      ]);
+      this.emitProgress(emitter, 40, `Ranking sources`);
+      let sortedDocs = await getRankedDocs(queryEmbedding, true, true, 10);
 
-      docsWithContent.push(
-        ...filesData.map((fileData) => {
-          return new Document({
-            pageContent: fileData.content,
-            metadata: {
-              title: fileData.fileName,
-              url: `File`,
-            },
+      this.emitProgress(emitter, 60, `Enriching sources`);
+      sortedDocs = await Promise.all(
+        sortedDocs.map(async (doc) => {
+          const webContent = await getWebContent(doc.metadata.url);
+          const chunks =
+            webContent?.pageContent
+              .match(/.{1,500}/g)
+              ?.map((chunk) => chunk.trim()) || [];
+          const chunkEmbeddings = await embeddings.embedDocuments(chunks);
+          const similarities = chunkEmbeddings.map((chunkEmbedding) => {
+            return computeSimilarity(queryEmbedding, chunkEmbedding);
           });
+
+          const topChunks = similarities
+            .map((similarity, index) => ({ similarity, index }))
+            .sort((a, b) => b.similarity - a.similarity)
+            .slice(0, 5)
+            .map((chunk) => chunks[chunk.index]);
+          const excerpt = topChunks.join('\n\n');
+
+          let newDoc = {
+            ...doc,
+            pageContent: excerpt
+              ? `${excerpt}\n\n${doc.pageContent}`
+              : doc.pageContent,
+          };
+          return newDoc;
         }),
       );
 
-      docEmbeddings.push(...filesData.map((fileData) => fileData.embeddings));
+      return sortedDocs;
+    } else if (optimizationMode === 'quality') {
+      this.emitProgress(emitter, 30, 'Ranking sources...');
 
-      const similarity = docEmbeddings.map((docEmbedding, i) => {
-        const sim = computeSimilarity(queryEmbedding, docEmbedding);
+      // Get the top ranked web results for detailed analysis based off their preview embeddings
+      const topWebResults = await getRankedDocs(
+        queryEmbedding,
+        false,
+        true,
+        30,
+      );
 
-        return {
-          index: i,
-          similarity: sim,
-        };
+      const summaryParser = new LineOutputParser({
+        key: 'summary',
       });
 
-      const sortedDocs = similarity
-        .filter((sim) => sim.similarity > (this.config.rerankThreshold ?? 0.3))
-        .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, 15)
-        .map((sim) => docsWithContent[sim.index]);
+      // Get full content and generate detailed summaries for top results sequentially
+      const enhancedDocs: Document[] = [];
+      const maxEnhancedDocs = 5;
+      for (let i = 0; i < topWebResults.length; i++) {
+        if (signal.aborted) {
+          return [];
+        }
+        if (enhancedDocs.length >= maxEnhancedDocs) {
+          break; // Limit to 5 documents
+        }
+        const result = topWebResults[i];
 
-      return sortedDocs;
+        this.emitProgress(
+          emitter,
+          enhancedDocs.length * 10 + 40,
+          `Deep analyzing sources: ${enhancedDocs.length + 1}/${maxEnhancedDocs}`,
+        );
+
+        try {
+          const url = result.metadata.url;
+          const webContent = await getWebContent(url, true);
+
+          if (webContent) {
+            // Generate a detailed summary using the LLM
+            const summary = await llm.invoke(`
+              You are a web content summarizer, tasked with creating a detailed, accurate summary of content from a webpage
+              Your summary should:
+              - Be thorough and comprehensive, capturing all key points
+              - Format the content using markdown, including headings, lists, and tables
+              - Include specific details, numbers, and quotes when relevant
+              - Be concise and to the point, avoiding unnecessary fluff
+              - Answer the user's query, which is: ${query}
+              - Output your answer in an XML format, with the summary inside the \`summary\` XML tag
+              - If the content is not relevant to the query, respond with "not_needed" to start the summary tag, followed by a one line description of why the source is not needed
+                - E.g. "not_needed: There is relevant information in the source, but it doesn't contain specifics about X"
+                - Make sure the reason the source is not needed is very specific and detailed
+              - Include useful links to external resources, if applicable
+
+              Here is the content to summarize:
+              ${webContent.metadata.html ? webContent.metadata.html : webContent.pageContent}
+            `);
+
+            const summarizedContent = await summaryParser.parse(
+              summary.content as string,
+            );
+
+            if (
+              summarizedContent.toLocaleLowerCase().startsWith('not_needed')
+            ) {
+              console.log(
+                `LLM response for URL "${url}" indicates it's not needed:`,
+                summarizedContent,
+              );
+              continue; // Skip this document if not needed
+            }
+
+            //console.log(`LLM response for URL "${url}":`, summarizedContent);
+            enhancedDocs.push(
+              new Document({
+                pageContent: summarizedContent,
+                metadata: {
+                  ...webContent.metadata,
+                  url: url,
+                },
+              }),
+            );
+          }
+        } catch (error) {
+          console.error(`Error processing URL ${result.metadata.url}:`, error);
+        }
+      }
+
+      // Add relevant file documents
+      const fileDocs = await getRankedDocs(queryEmbedding, true, false, 5);
+
+      return [...enhancedDocs, ...fileDocs];
     }
 
     return [];
   }
 
   private processDocs(docs: Document[]) {
-    return docs
+    const fullDocs = docs
       .map(
         (_, index) =>
-          `${index + 1}. ${docs[index].metadata.title} ${docs[index].pageContent}`,
+          `<${index + 1}>\n
+<title>${docs[index].metadata.title}</title>\n
+${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + docs[index].metadata.url + '</url>\n'}
+<content>\n${docs[index].pageContent}\n</content>\n
+</${index + 1}>\n`,
       )
       .join('\n');
+    // console.log('Processed docs:', fullDocs);
+    return fullDocs;
   }
 
   private async handleStream(
@@ -513,38 +666,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
         event.event === 'on_chain_end' &&
         event.name === 'FinalResponseGenerator'
       ) {
-        // Get model name safely with better detection
-        let modelName = 'Unknown';
-        try {
-          // @ts-ignore - Different LLM implementations have different properties
-          if (llm.modelName) {
-            // @ts-ignore
-            modelName = llm.modelName;
-            // @ts-ignore
-          } else if (llm._llm && llm._llm.modelName) {
-            // @ts-ignore
-            modelName = llm._llm.modelName;
-            // @ts-ignore
-          } else if (llm.model && llm.model.modelName) {
-            // @ts-ignore
-            modelName = llm.model.modelName;
-          } else if ('model' in llm) {
-            // @ts-ignore
-            const model = llm.model;
-            if (typeof model === 'string') {
-              modelName = model;
-              // @ts-ignore
-            } else if (model && model.modelName) {
-              // @ts-ignore
-              modelName = model.modelName;
-            }
-          } else if (llm.constructor && llm.constructor.name) {
-            // Last resort: use the class name
-            modelName = llm.constructor.name;
-          }
-        } catch (e) {
-          console.error('Failed to get model name:', e);
-        }
+        const modelName = getModelName(llm);
 
         // Send model info before ending
         emitter.emit(
@@ -581,6 +703,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
       optimizationMode,
       systemInstructions,
       signal,
+      emitter,
     );
 
     const stream = answeringChain.streamEvents(

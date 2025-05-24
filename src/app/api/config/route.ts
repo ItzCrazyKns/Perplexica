@@ -53,7 +53,7 @@ export const GET = async (req: Request) => {
 
     // Helper function to obfuscate API keys
     const protectApiKey = (key: string | null | undefined) => {
-      return key ? "protected" : key;
+      return key ? 'protected' : key;
     };
 
     // Obfuscate all API keys in the response
@@ -85,39 +85,57 @@ export const POST = async (req: Request) => {
   try {
     const config = await req.json();
 
-    const getUpdatedProtectedValue = (newValue: string, currentConfig: string) => {
+    const getUpdatedProtectedValue = (
+      newValue: string,
+      currentConfig: string,
+    ) => {
       if (newValue === 'protected') {
         return currentConfig;
       }
       return newValue;
-    }
+    };
 
     const updatedConfig = {
       MODELS: {
         OPENAI: {
-          API_KEY: getUpdatedProtectedValue(config.openaiApiKey, getOpenaiApiKey()),
+          API_KEY: getUpdatedProtectedValue(
+            config.openaiApiKey,
+            getOpenaiApiKey(),
+          ),
         },
         GROQ: {
           API_KEY: getUpdatedProtectedValue(config.groqApiKey, getGroqApiKey()),
         },
         ANTHROPIC: {
-          API_KEY: getUpdatedProtectedValue(config.anthropicApiKey, getAnthropicApiKey()),
+          API_KEY: getUpdatedProtectedValue(
+            config.anthropicApiKey,
+            getAnthropicApiKey(),
+          ),
         },
         GEMINI: {
-          API_KEY: getUpdatedProtectedValue(config.geminiApiKey, getGeminiApiKey()),
+          API_KEY: getUpdatedProtectedValue(
+            config.geminiApiKey,
+            getGeminiApiKey(),
+          ),
         },
         OLLAMA: {
           API_URL: config.ollamaApiUrl,
         },
         DEEPSEEK: {
-          API_KEY: getUpdatedProtectedValue(config.deepseekApiKey, getDeepseekApiKey()),
+          API_KEY: getUpdatedProtectedValue(
+            config.deepseekApiKey,
+            getDeepseekApiKey(),
+          ),
         },
         LM_STUDIO: {
           API_URL: config.lmStudioApiUrl,
         },
         CUSTOM_OPENAI: {
           API_URL: config.customOpenaiApiUrl,
-          API_KEY: getUpdatedProtectedValue(config.customOpenaiApiKey, getCustomOpenaiApiKey()),
+          API_KEY: getUpdatedProtectedValue(
+            config.customOpenaiApiKey,
+            getCustomOpenaiApiKey(),
+          ),
           MODEL_NAME: config.customOpenaiModelName,
         },
       },

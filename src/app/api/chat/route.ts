@@ -18,10 +18,7 @@ import { ChatOpenAI } from '@langchain/openai';
 import crypto from 'crypto';
 import { and, eq, gt } from 'drizzle-orm';
 import { EventEmitter } from 'stream';
-import {
-  registerCancelToken,
-  cleanupCancelToken,
-} from '@/lib/cancel-tokens';
+import { registerCancelToken, cleanupCancelToken } from '@/lib/cancel-tokens';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -114,6 +111,21 @@ const handleEmitterEvents = async (
   let modelStats: ModelStats = {
     modelName: '',
   };
+
+  stream.on('progress', (data) => {
+    const parsedData = JSON.parse(data);
+    if (parsedData.type === 'progress') {
+      writer.write(
+        encoder.encode(
+          JSON.stringify({
+            type: 'progress',
+            data: parsedData.data,
+            messageId: aiMessageId,
+          }) + '\n',
+        ),
+      );
+    }
+  });
 
   stream.on('stats', (data) => {
     const parsedData = JSON.parse(data);

@@ -22,6 +22,7 @@
     "@langchain/ollama": "^0.2.0",
     "@langchain/openai": "^0.0.25",
     "@langchain/textsplitters": "^0.1.0",
+    "@mozilla/readability": "^0.6.0",
     "@tailwindcss/typography": "^0.5.12",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@xenova/transformers": "^2.17.2",
@@ -32,6 +33,7 @@
     "compute-dot": "^1.1.0",
     "drizzle-orm": "^0.40.1",
     "html-to-text": "^9.0.5",
+    "jsdom": "^26.1.0",
     "langchain": "^0.3.26",
     "lucide-react": "^0.363.0",
     "markdown-to-jsx": "^7.7.2",
@@ -52,6 +54,7 @@
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
     "@types/html-to-text": "^9.0.4",
+    "@types/jsdom": "^21.1.7",
     "@types/node": "^20",
     "@types/pdf-parse": "^1.1.4",
     "@types/react": "^18",

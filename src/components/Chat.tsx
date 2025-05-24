@@ -21,6 +21,7 @@ const Chat = ({
   focusMode,
   setFocusMode,
   handleEditMessage,
+  analysisProgress,
 }: {
   messages: Message[];
   sendMessage: (
@@ -43,6 +44,11 @@ const Chat = ({
   focusMode: string;
   setFocusMode: (mode: string) => void;
   handleEditMessage: (messageId: string, content: string) => void;
+  analysisProgress: {
+    message: string;
+    current: number;
+    total: number;
+  } | null;
 }) => {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [manuallyScrolledUp, setManuallyScrolledUp] = useState(false);
@@ -220,7 +226,7 @@ const Chat = ({
           </Fragment>
         );
       })}
-      {loading && <MessageBoxLoading />}
+      {loading && <MessageBoxLoading progress={analysisProgress} />}
       <div className="fixed bottom-24 lg:bottom-10 z-40" style={inputStyle}>
         {/* Scroll to bottom button - appears above the MessageInput when user has scrolled up */}
         {manuallyScrolledUp && !isAtBottom && (

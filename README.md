@@ -1,6 +1,6 @@
 # 🚀 Perplexica - An AI-powered search engine 🔎 <!-- omit in toc -->
 
-*This is a fork of [ItzCrazyKns/Perplexica](https://github.com/ItzCrazyKns/Perplexica) with additional features and improvements.*
+_This is a fork of [ItzCrazyKns/Perplexica](https://github.com/ItzCrazyKns/Perplexica) with additional features and improvements._
 
 ![preview](.assets/perplexica-screenshot.png?)
 
@@ -200,6 +200,7 @@ This ensures that OpenSearch descriptions, browser integrations, and all URLs wo
 This fork adds several enhancements to the original Perplexica project:
 
 ### UI Improvements
+
 - ✅ Tabbed interface for message results
 - ✅ Added message editing capability
 - ✅ Ability to select AI models directly while chatting without opening settings
@@ -209,27 +210,34 @@ This fork adds several enhancements to the original Perplexica project:
 - ✅ Display search query with the response
 - ✅ Improved styling for all screen sizes
 - ✅ Added model statistics showing model name and response time
+- ✅ Shows progress during processing
+- ✅ Secures API keys by not showing them in the UI
 
 ### Search and Integration Enhancements
+
 - ✅ OpenSearch support with dynamic XML generation
   - Added BASE_URL config to support reverse proxy deployments
   - Added autocomplete functionality proxied to SearxNG
 - ✅ Enhanced Reddit focus mode to work around SearxNG limitations
+- ✅ Adds Quality mode that uses the full content of web pages to answer queries
+  - Enhances Balanced mode which uses relevant excerpts of web content to answer queries
 
 ### AI Functionality
+
 - ✅ True chat mode implementation (moved writing mode to local research mode)
 - ✅ Enhanced system prompts for more reliable and relevant results
 - ✅ Better parsing for reasoning models
 - ✅ User customizable context window for Ollama models
 - ✅ Toggle for automatic suggestions
+- ✅ Added support for latest Anthropic models
 
 ### Bug Fixes
+
 - ✅ Improved history rewriting
 
 ## Support Us
 
 If you find Perplexica useful, consider giving us a star on GitHub. This helps more people discover Perplexica and supports the development of new features. Your support is greatly appreciated.
-
 
 ## Contribution
 

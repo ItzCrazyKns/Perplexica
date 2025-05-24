@@ -1,6 +1,11 @@
 'use client';
 
-import { Settings as SettingsIcon, ArrowLeft, Loader2, Info } from 'lucide-react';
+import {
+  Settings as SettingsIcon,
+  ArrowLeft,
+  Loader2,
+  Info,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@headlessui/react';
@@ -128,7 +133,10 @@ const SettingsSection = ({
       <h2 className="text-black/90 dark:text-white/90 font-medium">{title}</h2>
       {tooltip && (
         <div className="relative group">
-          <Info size={16} className="text-black/70 dark:text-white/70 cursor-help" />
+          <Info
+            size={16}
+            className="text-black/70 dark:text-white/70 cursor-help"
+          />
           <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-black/90 dark:bg-white/90 text-white dark:text-black text-xs rounded-lg opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity">
             {tooltip}
           </div>
@@ -238,7 +246,7 @@ const Page = () => {
     fetchConfig();
   }, []);
 
-  const saveConfig = async (key: string, value: any) => {    
+  const saveConfig = async (key: string, value: any) => {
     setSavingStates((prev) => ({ ...prev, [key]: true }));
 
     try {
@@ -798,8 +806,8 @@ const Page = () => {
               )}
             </SettingsSection>
 
-            <SettingsSection 
-              title="API Keys" 
+            <SettingsSection
+              title="API Keys"
               tooltip="API Key values can be viewed in the config.toml file"
             >
               <div className="flex flex-col space-y-4">
