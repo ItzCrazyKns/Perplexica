@@ -472,8 +472,14 @@ class MetaSearchAgent implements MetaSearchAgentType {
       }
     } else if (optimizationMode === 'balanced') {
       this.emitProgress(emitter, 40, `Ranking sources`);
-      let sortedDocs = await getRankedDocs(queryEmbedding, true, true, 10);
+      // Get the top ranked attached files, if any
+      let sortedDocs = await getRankedDocs(queryEmbedding, true, false, 8);
 
+      sortedDocs = [
+        ...sortedDocs,
+        ...docsWithContent.slice(0, 15 - sortedDocs.length),
+      ];
+      
       this.emitProgress(emitter, 60, `Enriching sources`);
       sortedDocs = await Promise.all(
         sortedDocs.map(async (doc) => {
@@ -508,14 +514,6 @@ class MetaSearchAgent implements MetaSearchAgentType {
     } else if (optimizationMode === 'quality') {
       this.emitProgress(emitter, 30, 'Ranking sources...');
 
-      // Get the top ranked web results for detailed analysis based off their preview embeddings
-      const topWebResults = await getRankedDocs(
-        queryEmbedding,
-        false,
-        true,
-        30,
-      );
-
       const summaryParser = new LineOutputParser({
         key: 'summary',
       });
@@ -523,14 +521,14 @@ class MetaSearchAgent implements MetaSearchAgentType {
       // Get full content and generate detailed summaries for top results sequentially
       const enhancedDocs: Document[] = [];
       const maxEnhancedDocs = 5;
-      for (let i = 0; i < topWebResults.length; i++) {
+      for (let i = 0; i < docsWithContent.length; i++) {
         if (signal.aborted) {
           return [];
         }
         if (enhancedDocs.length >= maxEnhancedDocs) {
           break; // Limit to 5 documents
         }
-        const result = topWebResults[i];
+        const result = docsWithContent[i];
 
         this.emitProgress(
           emitter,
@@ -593,7 +591,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
       }
 
       // Add relevant file documents
-      const fileDocs = await getRankedDocs(queryEmbedding, true, false, 5);
+      const fileDocs = await getRankedDocs(queryEmbedding, true, false, 8);
 
       return [...enhancedDocs, ...fileDocs];
     }
