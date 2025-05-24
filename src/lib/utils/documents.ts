@@ -3,8 +3,9 @@ import { htmlToText } from 'html-to-text';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { Document } from '@langchain/core/documents';
 import pdfParse from 'pdf-parse';
-import { JSDOM } from 'jsdom';
+import { Configuration, Dataset, PlaywrightCrawler } from 'crawlee';
 import { Readability } from '@mozilla/readability';
+import { JSDOM } from 'jsdom';
 import fetch from 'node-fetch';
 
 export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
@@ -101,12 +102,114 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
   return docs;
 };
 
+interface CrawledContent {
+  text: string;
+  title: string;
+  html?: string;
+}
+
+/**
+ * Fetches web content from a given URL using Crawlee and Playwright. Parses it using Readability.
+ * Returns a Document object containing the parsed text and metadata.
+ *
+ * @param url - The URL to fetch content from.
+ * @param getHtml - Whether to include the HTML content in the metadata.
+ * @returns A Promise that resolves to a Document object or null if parsing fails.
+ */
 export const getWebContent = async (
   url: string,
   getHtml: boolean = false,
 ): Promise<Document | null> => {
+  let crawledContent: CrawledContent | null = null;
+  const crawler = new PlaywrightCrawler({
+      async requestHandler({ page }) {
+        // Wait for the content to load
+        await page.waitForLoadState('networkidle', {timeout: 10000});
+
+        // Allow some time for dynamic content to load
+        await page.waitForTimeout(3000);
+
+        console.log(`Crawling URL: ${url}`);
+
+        // Get the page title
+        const title = await page.title();
+
+        try {
+          // Use Readability to parse the page content
+          const content = await page.content();
+          const dom = new JSDOM(content, { url });
+          const reader = new Readability(dom.window.document, { charThreshold: 25 }).parse();
+          const crawleeContent: CrawledContent = {
+            text: reader?.textContent || '',
+            title,
+            html: getHtml ? reader?.content || await page.content() : undefined,
+          };
+
+          crawledContent = crawleeContent;
+        } catch (error) {
+          console.error(`Failed to parse content with Readability for URL: ${url}`, error);
+        }
+
+      },
+      maxRequestsPerCrawl: 1,
+      maxRequestRetries: 2,
+      retryOnBlocked: true,
+      maxSessionRotations: 3,
+    }, new Configuration({ persistStorage: false }));
+
   try {
-    const response = await fetch(url, { timeout: 5000 });
+    await crawler.run([url]);
+
+    if (!crawledContent) {
+      console.warn(`Failed to parse article content for URL: ${url}`);
+      return null;
+    }
+
+    const content = crawledContent as CrawledContent;
+
+    // Normalize the text content
+    const normalizedText = content?.text
+      ?.split('\n')
+      .map((line: string) => line.trim())
+      .filter((line: string) => line.length > 0)
+      .join('\n') || '';
+
+    // Create a Document with the parsed content
+    const returnDoc = new Document({
+      pageContent: normalizedText,
+      metadata: {
+        html: content?.html,
+        title: content?.title,
+        url: url,
+      },
+    });
+
+
+    console.log(`Got content with Crawlee and Readability, URL: ${url}, Text Length: ${returnDoc.pageContent.length}, html Length: ${returnDoc.metadata.html?.length || 0}`);
+    return returnDoc;
+
+  } catch (error) {
+    console.error(`Error fetching/parsing URL ${url}:`, error);
+    return null;
+  } finally {
+    await crawler.teardown();
+  }
+};
+
+/**
+ * Fetches web content from a given URL and parses it using Readability.
+ * Returns a Document object containing the parsed text and metadata.
+ *
+ * @param {string} url - The URL to fetch content from.
+ * @param {boolean} getHtml - Whether to include the HTML content in the metadata.
+ * @returns {Promise<Document | null>} A Promise that resolves to a Document object or null if parsing fails.
+ */
+export const getWebContentLite = async (
+  url: string,
+  getHtml: boolean = false,
+): Promise<Document | null> => {
+  try {
+    const response = await fetch(url, {timeout: 5000});
     const html = await response.text();
 
     // Create a DOM from the fetched HTML
@@ -124,7 +227,6 @@ export const getWebContent = async (
       return null;
     }
 
-    // Normalize the text content by removing extra spaces and newlines. Iterate through the lines one by one and throw out the ones that are empty or contain only whitespace.
     const normalizedText =
       article?.textContent
         ?.split('\n')
@@ -139,12 +241,6 @@ export const getWebContent = async (
         html: getHtml ? article.content : undefined,
         title: article.title || originalTitle,
         url: url,
-        excerpt: article.excerpt || undefined,
-        byline: article.byline || undefined,
-        siteName: article.siteName || undefined,
-        readingTime: article.length
-          ? Math.ceil(article.length / 1000)
-          : undefined,
       },
     });
   } catch (error) {

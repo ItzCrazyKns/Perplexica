@@ -14,6 +14,8 @@ services:
     build:
       context: .
       dockerfile: app.dockerfile
+      platforms:
+        - linux/amd64
     environment:
       - SEARXNG_API_URL=http://searxng:8080
     ports:

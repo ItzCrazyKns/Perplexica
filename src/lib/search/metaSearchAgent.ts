@@ -22,7 +22,7 @@ import LineOutputParser from '../outputParsers/lineOutputParser';
 import LineListOutputParser from '../outputParsers/listLineOutputParser';
 import { searchSearxng } from '../searxng';
 import computeSimilarity from '../utils/computeSimilarity';
-import { getDocumentsFromLinks, getWebContent } from '../utils/documents';
+import { getDocumentsFromLinks, getWebContent, getWebContentLite } from '../utils/documents';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { getModelName } from '../utils/modelUtils';
 
@@ -483,7 +483,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
       this.emitProgress(emitter, 60, `Enriching sources`);
       sortedDocs = await Promise.all(
         sortedDocs.map(async (doc) => {
-          const webContent = await getWebContent(doc.metadata.url);
+          const webContent = await getWebContentLite(doc.metadata.url);
           const chunks =
             webContent?.pageContent
               .match(/.{1,500}/g)
@@ -610,7 +610,7 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
 </${index + 1}>\n`,
       )
       .join('\n');
-    // console.log('Processed docs:', fullDocs);
+    console.log('Processed docs:', fullDocs);
     return fullDocs;
   }
 

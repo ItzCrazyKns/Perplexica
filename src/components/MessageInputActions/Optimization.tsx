@@ -11,19 +11,19 @@ const OptimizationModes = [
   {
     key: 'speed',
     title: 'Speed',
-    description: 'Prioritize speed and get the quickest possible answer.',
+    description: 'Prioritize speed and get the quickest possible answer. Minimum effort retrieving web content.',
     icon: <Zap size={20} className="text-[#FF9800]" />,
   },
   {
     key: 'balanced',
     title: 'Balanced',
-    description: 'Find the right balance between speed and accuracy',
+    description: 'Find the right balance between speed and accuracy. Medium effort retrieving web content.',
     icon: <Sliders size={20} className="text-[#4CAF50]" />,
   },
   {
     key: 'quality',
     title: 'Quality',
-    description: 'Get the most thorough and accurate answer',
+    description: 'Get the most thorough and accurate answer. High effort retrieving web content. Requires a good AI model. May take a long time.',
     icon: (
       <Star
         size={16}
