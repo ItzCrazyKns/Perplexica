@@ -22,7 +22,11 @@ import LineOutputParser from '../outputParsers/lineOutputParser';
 import LineListOutputParser from '../outputParsers/listLineOutputParser';
 import { searchSearxng } from '../searxng';
 import computeSimilarity from '../utils/computeSimilarity';
-import { getDocumentsFromLinks, getWebContent, getWebContentLite } from '../utils/documents';
+import {
+  getDocumentsFromLinks,
+  getWebContent,
+  getWebContentLite,
+} from '../utils/documents';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { getModelName } from '../utils/modelUtils';
 
@@ -99,70 +103,71 @@ class MetaSearchAgent implements MetaSearchAgentType {
       llm,
       this.strParser,
       RunnableLambda.from(async (input: string) => {
-        //console.log(`LLM response for initial web search:"${input}"`);
-        const linksOutputParser = new LineListOutputParser({
-          key: 'links',
-        });
-
-        const questionOutputParser = new LineOutputParser({
-          key: 'answer',
-        });
-
-        const links = await linksOutputParser.parse(input);
-        let question = await questionOutputParser.parse(input);
-
-        //console.log('question', question);
-
-        if (question === 'not_needed') {
-          return { query: '', docs: [] };
-        }
-
-        if (links.length > 0) {
-          if (question.length === 0) {
-            question = 'summarize';
-          }
-
-          let docs: Document[] = [];
-
-          const linkDocs = await getDocumentsFromLinks({ links });
-
-          const docGroups: Document[] = [];
-
-          linkDocs.map((doc) => {
-            const URLDocExists = docGroups.find(
-              (d) =>
-                d.metadata.url === doc.metadata.url &&
-                d.metadata.totalDocs < 10,
-            );
-
-            if (!URLDocExists) {
-              docGroups.push({
-                ...doc,
-                metadata: {
-                  ...doc.metadata,
-                  totalDocs: 1,
-                },
-              });
-            }
-
-            const docIndex = docGroups.findIndex(
-              (d) =>
-                d.metadata.url === doc.metadata.url &&
-                d.metadata.totalDocs < 10,
-            );
-
-            if (docIndex !== -1) {
-              docGroups[docIndex].pageContent =
-                docGroups[docIndex].pageContent + `\n\n` + doc.pageContent;
-              docGroups[docIndex].metadata.totalDocs += 1;
-            }
+        try {
+          //console.log(`LLM response for initial web search:"${input}"`);
+          const linksOutputParser = new LineListOutputParser({
+            key: 'links',
           });
 
-          this.emitProgress(emitter, 20, `Summarizing content`);
+          const questionOutputParser = new LineOutputParser({
+            key: 'answer',
+          });
 
-          await Promise.all(
-            docGroups.map(async (doc) => {
-              const res = await llm.invoke(`
+          const links = await linksOutputParser.parse(input);
+          let question = await questionOutputParser.parse(input);
+
+          //console.log('question', question);
+
+          if (question === 'not_needed') {
+            return { query: '', docs: [] };
+          }
+
+          if (links.length > 0) {
+            if (question.length === 0) {
+              question = 'summarize';
+            }
+
+            let docs: Document[] = [];
+
+            const linkDocs = await getDocumentsFromLinks({ links });
+
+            const docGroups: Document[] = [];
+
+            linkDocs.map((doc) => {
+              const URLDocExists = docGroups.find(
+                (d) =>
+                  d.metadata.url === doc.metadata.url &&
+                  d.metadata.totalDocs < 10,
+              );
+
+              if (!URLDocExists) {
+                docGroups.push({
+                  ...doc,
+                  metadata: {
+                    ...doc.metadata,
+                    totalDocs: 1,
+                  },
+                });
+              }
+
+              const docIndex = docGroups.findIndex(
+                (d) =>
+                  d.metadata.url === doc.metadata.url &&
+                  d.metadata.totalDocs < 10,
+              );
+
+              if (docIndex !== -1) {
+                docGroups[docIndex].pageContent =
+                  docGroups[docIndex].pageContent + `\n\n` + doc.pageContent;
+                docGroups[docIndex].metadata.totalDocs += 1;
+              }
+            });
+
+            this.emitProgress(emitter, 20, `Summarizing content`);
+
+            await Promise.all(
+              docGroups.map(async (doc) => {
+                const res = await llm.invoke(`
             You are a web search summarizer, tasked with summarizing a piece of text retrieved from a web search. Your job is to summarize the 
             text into a detailed, 2-4 paragraph explanation that captures the main ideas and provides a comprehensive answer to the query.
             If the query is \"summarize\", you should provide a detailed summary of the text. If the query is a specific question, you should answer it in the summary.
@@ -223,50 +228,55 @@ class MetaSearchAgent implements MetaSearchAgentType {
             Make sure to answer the query in the summary.
           `);
 
-              const document = new Document({
-                pageContent: res.content as string,
-                metadata: {
-                  title: doc.metadata.title,
-                  url: doc.metadata.url,
-                },
-              });
+                const document = new Document({
+                  pageContent: res.content as string,
+                  metadata: {
+                    title: doc.metadata.title,
+                    url: doc.metadata.url,
+                  },
+                });
 
-              docs.push(document);
-            }),
-          );
-
-          return { query: question, docs: docs };
-        } else {
-          this.emitProgress(emitter, 20, `Searching the web`);
-          if (this.config.additionalSearchCriteria) {
-            question = `${question} ${this.config.additionalSearchCriteria}`;
-          }
-
-          const searxngResult = await searchSearxng(question, {
-            language: 'en',
-            engines: this.config.activeEngines,
-          });
-
-          // Store the SearXNG URL for later use in emitting to the client
-          this.searxngUrl = searxngResult.searchUrl;
-
-          const documents = searxngResult.results.map(
-            (result) =>
-              new Document({
-                pageContent:
-                  result.content ||
-                  (this.config.activeEngines.includes('youtube')
-                    ? result.title
-                    : '') /* Todo: Implement transcript grabbing using Youtubei (source: https://www.npmjs.com/package/youtubei) */,
-                metadata: {
-                  title: result.title,
-                  url: result.url,
-                  ...(result.img_src && { img_src: result.img_src }),
-                },
+                docs.push(document);
               }),
-          );
+            );
 
-          return { query: question, docs: documents, searchQuery: question };
+            return { query: question, docs: docs };
+          } else {
+            if (this.config.additionalSearchCriteria) {
+              question = `${question} ${this.config.additionalSearchCriteria}`;
+            }
+            this.emitProgress(emitter, 20, `Searching the web: "${question}"`);
+
+            const searxngResult = await searchSearxng(question, {
+              language: 'en',
+              engines: this.config.activeEngines,
+            });
+
+            // Store the SearXNG URL for later use in emitting to the client
+            this.searxngUrl = searxngResult.searchUrl;
+
+            const documents = searxngResult.results.map(
+              (result) =>
+                new Document({
+                  pageContent:
+                    result.content ||
+                    (this.config.activeEngines.includes('youtube')
+                      ? result.title
+                      : '') /* Todo: Implement transcript grabbing using Youtubei (source: https://www.npmjs.com/package/youtubei) */,
+                  metadata: {
+                    title: result.title,
+                    url: result.url,
+                    ...(result.img_src && { img_src: result.img_src }),
+                  },
+                }),
+            );
+
+            return { query: question, docs: documents, searchQuery: question };
+          }
+        } catch (error) {
+          console.error('Error in search retriever chain:', error);
+          emitter.emit('error', JSON.stringify({ data: error }));
+          throw error;
         }
       }),
     ]);
@@ -358,6 +368,103 @@ class MetaSearchAgent implements MetaSearchAgentType {
     ]).withConfig({
       runName: 'FinalResponseGenerator',
     });
+  }
+
+  private async checkIfEnoughInformation(
+    docs: Document[],
+    query: string,
+    llm: BaseChatModel,
+    emitter: eventEmitter,
+  ): Promise<boolean> {
+    const formattedDocs = this.processDocs(docs);
+
+    const response =
+      await llm.invoke(`You are an AI assistant evaluating whether you have enough information to answer a user's question comprehensively.
+
+Based on the following sources, determine if you have sufficient information to provide a detailed, accurate answer to the query: "${query}"
+
+Sources:
+${formattedDocs}
+
+Look for:
+1. Key facts and details directly relevant to the query
+2. Multiple perspectives or sources if the topic is complex
+3. Up-to-date information if the query requires current data
+4. Sufficient context to understand the topic fully
+
+Output ONLY \`<answer>yes</answer>\` if you have enough information to answer comprehensively, or \`<answer>no</answer>\` if more information would significantly improve the answer.`);
+
+    const answerParser = new LineOutputParser({
+      key: 'answer',
+    });
+    const responseText = await answerParser.parse(
+      (response.content as string).trim().toLowerCase(),
+    );
+    if (responseText !== 'yes') {
+      console.log(
+        `LLM response for checking if we have enough information: "${response.content}"`,
+      );
+    } else {
+      console.log(
+        'LLM response indicates we have enough information to answer the query.',
+      );
+    }
+    return responseText === 'yes';
+  }
+
+  private async processSource(
+    doc: Document,
+    query: string,
+    llm: BaseChatModel,
+    summaryParser: LineOutputParser,
+  ): Promise<Document | null> {
+    try {
+      const url = doc.metadata.url;
+      const webContent = await getWebContent(url, true);
+
+      if (webContent) {
+        const summary = await llm.invoke(`
+You are a web content summarizer, tasked with creating a detailed, accurate summary of content from a webpage
+Your summary should:
+- Be thorough and comprehensive, capturing all key points
+- Format the content using markdown, including headings, lists, and tables
+- Include specific details, numbers, and quotes when relevant
+- Be concise and to the point, avoiding unnecessary fluff
+- Answer the user's query, which is: ${query}
+- Output your answer in an XML format, with the summary inside the \`summary\` XML tag
+- If the content is not relevant to the query, respond with "not_needed" to start the summary tag, followed by a one line description of why the source is not needed
+  - E.g. "not_needed: There is relevant information in the source, but it doesn't contain specifics about X"
+  - Make sure the reason the source is not needed is very specific and detailed
+- Include useful links to external resources, if applicable
+
+Here is the content to summarize:
+${webContent.metadata.html ? webContent.metadata.html : webContent.pageContent}
+        `);
+
+        const summarizedContent = await summaryParser.parse(
+          summary.content as string,
+        );
+
+        if (summarizedContent.toLocaleLowerCase().startsWith('not_needed')) {
+          console.log(
+            `LLM response for URL "${url}" indicates it's not needed:`,
+            summarizedContent,
+          );
+          return null;
+        }
+
+        return new Document({
+          pageContent: summarizedContent,
+          metadata: {
+            ...webContent.metadata,
+            url: url,
+          },
+        });
+      }
+    } catch (error) {
+      console.error(`Error processing URL ${doc.metadata.url}:`, error);
+    }
+    return null;
   }
 
   private async rerankDocs(
@@ -477,7 +584,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
         ...sortedDocs,
         ...docsWithContent.slice(0, 15 - sortedDocs.length),
       ];
-      
+
       this.emitProgress(emitter, 60, `Enriching sources`);
       sortedDocs = await Promise.all(
         sortedDocs.map(async (doc) => {
@@ -510,84 +617,63 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
       return sortedDocs;
     } else if (optimizationMode === 'quality') {
-      this.emitProgress(emitter, 30, 'Ranking sources...');
-
       const summaryParser = new LineOutputParser({
         key: 'summary',
       });
 
-      // Get full content and generate detailed summaries for top results sequentially
       const enhancedDocs: Document[] = [];
       const maxEnhancedDocs = 5;
-      for (let i = 0; i < docsWithContent.length; i++) {
+
+      // Process sources one by one until we have enough information or hit the max
+      for (
+        let i = 0;
+        i < docsWithContent.length && enhancedDocs.length < maxEnhancedDocs;
+        i++
+      ) {
         if (signal.aborted) {
           return [];
         }
-        if (enhancedDocs.length >= maxEnhancedDocs) {
-          break; // Limit to 5 documents
-        }
-        const result = docsWithContent[i];
+
+        const currentProgress = enhancedDocs.length * 10 + 40;
 
         this.emitProgress(
           emitter,
-          enhancedDocs.length * 10 + 40,
-          `Deep analyzing sources: ${enhancedDocs.length + 1}/${maxEnhancedDocs}`,
+          currentProgress,
+          `Deep analyzing: ${enhancedDocs.length} relevant sources found so far`,
         );
 
-        try {
-          const url = result.metadata.url;
-          const webContent = await getWebContent(url, true);
+        const result = docsWithContent[i];
+        const processedDoc = await this.processSource(
+          result,
+          query,
+          llm,
+          summaryParser,
+        );
 
-          if (webContent) {
-            // Generate a detailed summary using the LLM
-            const summary = await llm.invoke(`
-              You are a web content summarizer, tasked with creating a detailed, accurate summary of content from a webpage
-              Your summary should:
-              - Be thorough and comprehensive, capturing all key points
-              - Format the content using markdown, including headings, lists, and tables
-              - Include specific details, numbers, and quotes when relevant
-              - Be concise and to the point, avoiding unnecessary fluff
-              - Answer the user's query, which is: ${query}
-              - Output your answer in an XML format, with the summary inside the \`summary\` XML tag
-              - If the content is not relevant to the query, respond with "not_needed" to start the summary tag, followed by a one line description of why the source is not needed
-                - E.g. "not_needed: There is relevant information in the source, but it doesn't contain specifics about X"
-                - Make sure the reason the source is not needed is very specific and detailed
-              - Include useful links to external resources, if applicable
+        if (processedDoc) {
+          enhancedDocs.push(processedDoc);
 
-              Here is the content to summarize:
-              ${webContent.metadata.html ? webContent.metadata.html : webContent.pageContent}
-            `);
-
-            const summarizedContent = await summaryParser.parse(
-              summary.content as string,
+          // After getting initial 2 sources or adding a new one, check if we have enough info
+          if (enhancedDocs.length >= 2) {
+            this.emitProgress(
+              emitter,
+              currentProgress,
+              `Checking if we have enough information to answer the query`,
             );
-
-            if (
-              summarizedContent.toLocaleLowerCase().startsWith('not_needed')
-            ) {
-              console.log(
-                `LLM response for URL "${url}" indicates it's not needed:`,
-                summarizedContent,
-              );
-              continue; // Skip this document if not needed
+            const hasEnoughInfo = await this.checkIfEnoughInformation(
+              enhancedDocs,
+              query,
+              llm,
+              emitter,
+            );
+            if (hasEnoughInfo) {
+              break;
             }
-
-            //console.log(`LLM response for URL "${url}":`, summarizedContent);
-            enhancedDocs.push(
-              new Document({
-                pageContent: summarizedContent,
-                metadata: {
-                  ...webContent.metadata,
-                  url: url,
-                },
-              }),
-            );
           }
-        } catch (error) {
-          console.error(`Error processing URL ${result.metadata.url}:`, error);
         }
       }
 
+      this.emitProgress(emitter, 95, `Ranking attached files`);
       // Add relevant file documents
       const fileDocs = await getRankedDocs(queryEmbedding, true, false, 8);
 

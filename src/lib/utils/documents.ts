@@ -121,10 +121,11 @@ export const getWebContent = async (
   getHtml: boolean = false,
 ): Promise<Document | null> => {
   let crawledContent: CrawledContent | null = null;
-  const crawler = new PlaywrightCrawler({
+  const crawler = new PlaywrightCrawler(
+    {
       async requestHandler({ page }) {
         // Wait for the content to load
-        await page.waitForLoadState('networkidle', {timeout: 10000});
+        await page.waitForLoadState('networkidle', { timeout: 10000 });
 
         // Allow some time for dynamic content to load
         await page.waitForTimeout(3000);
@@ -138,24 +139,32 @@ export const getWebContent = async (
           // Use Readability to parse the page content
           const content = await page.content();
           const dom = new JSDOM(content, { url });
-          const reader = new Readability(dom.window.document, { charThreshold: 25 }).parse();
+          const reader = new Readability(dom.window.document, {
+            charThreshold: 25,
+          }).parse();
           const crawleeContent: CrawledContent = {
             text: reader?.textContent || '',
             title,
-            html: getHtml ? reader?.content || await page.content() : undefined,
+            html: getHtml
+              ? reader?.content || (await page.content())
+              : undefined,
           };
 
           crawledContent = crawleeContent;
         } catch (error) {
-          console.error(`Failed to parse content with Readability for URL: ${url}`, error);
+          console.error(
+            `Failed to parse content with Readability for URL: ${url}`,
+            error,
+          );
         }
-
       },
       maxRequestsPerCrawl: 1,
       maxRequestRetries: 2,
       retryOnBlocked: true,
       maxSessionRotations: 3,
-    }, new Configuration({ persistStorage: false }));
+    },
+    new Configuration({ persistStorage: false }),
+  );
 
   try {
     await crawler.run([url]);
@@ -168,11 +177,12 @@ export const getWebContent = async (
     const content = crawledContent as CrawledContent;
 
     // Normalize the text content
-    const normalizedText = content?.text
-      ?.split('\n')
-      .map((line: string) => line.trim())
-      .filter((line: string) => line.length > 0)
-      .join('\n') || '';
+    const normalizedText =
+      content?.text
+        ?.split('\n')
+        .map((line: string) => line.trim())
+        .filter((line: string) => line.length > 0)
+        .join('\n') || '';
 
     // Create a Document with the parsed content
     const returnDoc = new Document({
@@ -184,10 +194,10 @@ export const getWebContent = async (
       },
     });
 
-
-    console.log(`Got content with Crawlee and Readability, URL: ${url}, Text Length: ${returnDoc.pageContent.length}, html Length: ${returnDoc.metadata.html?.length || 0}`);
+    console.log(
+      `Got content with Crawlee and Readability, URL: ${url}, Text Length: ${returnDoc.pageContent.length}, html Length: ${returnDoc.metadata.html?.length || 0}`,
+    );
     return returnDoc;
-
   } catch (error) {
     console.error(`Error fetching/parsing URL ${url}:`, error);
     return null;
@@ -209,7 +219,7 @@ export const getWebContentLite = async (
   getHtml: boolean = false,
 ): Promise<Document | null> => {
   try {
-    const response = await fetch(url, {timeout: 5000});
+    const response = await fetch(url, { timeout: 5000 });
     const html = await response.text();
 
     // Create a DOM from the fetched HTML
