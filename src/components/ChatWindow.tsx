@@ -33,6 +33,7 @@ export type Message = {
     message: string;
     current: number;
     total: number;
+    subMessage?: string;
   };
 };
 
@@ -279,6 +280,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     message: string;
     current: number;
     total: number;
+    subMessage?: string;
   } | null>(null);
 
   const [chatHistory, setChatHistory] = useState<[string, string][]>([]);

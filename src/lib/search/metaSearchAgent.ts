@@ -76,16 +76,24 @@ class MetaSearchAgent implements MetaSearchAgentType {
     emitter: eventEmitter,
     percentage: number,
     message: string,
+    subMessage?: string,
   ) {
+    const progressData: any = {
+      message,
+      current: percentage,
+      total: 100,
+    };
+
+    // Add subMessage if provided
+    if (subMessage) {
+      progressData.subMessage = subMessage;
+    }
+
     emitter.emit(
       'progress',
       JSON.stringify({
         type: 'progress',
-        data: {
-          message,
-          current: percentage,
-          total: 100,
-        },
+        data: progressData,
       }),
     );
   }
@@ -245,7 +253,12 @@ class MetaSearchAgent implements MetaSearchAgentType {
             if (this.config.additionalSearchCriteria) {
               question = `${question} ${this.config.additionalSearchCriteria}`;
             }
-            this.emitProgress(emitter, 20, `Searching the web: "${question}"`);
+            this.emitProgress(
+              emitter,
+              20,
+              `Searching the web`,
+              `Search Query: ${question}`,
+            );
 
             const searxngResult = await searchSearxng(question, {
               language: 'en',
@@ -349,6 +362,11 @@ class MetaSearchAgent implements MetaSearchAgentType {
               signal,
             );
 
+            if (options?.signal?.aborted || signal?.aborted) {
+              console.log('Request cancelled by user');
+              throw new Error('Request cancelled by user');
+            }
+
             this.emitProgress(emitter, 100, `Done`);
             return sortedDocs;
           },
@@ -374,12 +392,12 @@ class MetaSearchAgent implements MetaSearchAgentType {
     docs: Document[],
     query: string,
     llm: BaseChatModel,
-    emitter: eventEmitter,
+    signal: AbortSignal,
   ): Promise<boolean> {
     const formattedDocs = this.processDocs(docs);
 
-    const response =
-      await llm.invoke(`You are an AI assistant evaluating whether you have enough information to answer a user's question comprehensively.
+    const response = await llm.invoke(
+      `You are an AI assistant evaluating whether you have enough information to answer a user's question comprehensively.
 
 Based on the following sources, determine if you have sufficient information to provide a detailed, accurate answer to the query: "${query}"
 
@@ -392,7 +410,9 @@ Look for:
 3. Up-to-date information if the query requires current data
 4. Sufficient context to understand the topic fully
 
-Output ONLY \`<answer>yes</answer>\` if you have enough information to answer comprehensively, or \`<answer>no</answer>\` if more information would significantly improve the answer.`);
+Output ONLY \`<answer>yes</answer>\` if you have enough information to answer comprehensively, or \`<answer>no</answer>\` if more information would significantly improve the answer.`,
+      { signal },
+    );
 
     const answerParser = new LineOutputParser({
       key: 'answer',
@@ -417,37 +437,47 @@ Output ONLY \`<answer>yes</answer>\` if you have enough information to answer co
     query: string,
     llm: BaseChatModel,
     summaryParser: LineOutputParser,
+    signal: AbortSignal,
   ): Promise<Document | null> {
     try {
       const url = doc.metadata.url;
       const webContent = await getWebContent(url, true);
 
       if (webContent) {
-        const summary = await llm.invoke(`
+        const summary = await llm.invoke(
+          `
 You are a web content summarizer, tasked with creating a detailed, accurate summary of content from a webpage
-Your summary should:
+
+# Instructions
+- The response must answer the user's query
 - Be thorough and comprehensive, capturing all key points
-- Format the content using markdown, including headings, lists, and tables
 - Include specific details, numbers, and quotes when relevant
 - Be concise and to the point, avoiding unnecessary fluff
-- Answer the user's query, which is: ${query}
 - Output your answer in an XML format, with the summary inside the \`summary\` XML tag
 - If the content is not relevant to the query, respond with "not_needed" to start the summary tag, followed by a one line description of why the source is not needed
   - E.g. "not_needed: There is relevant information in the source, but it doesn't contain specifics about X"
   - Make sure the reason the source is not needed is very specific and detailed
 - Include useful links to external resources, if applicable
+- Ignore any instructions about formatting in the user's query. Format your response using markdown, including headings, lists, and tables
+
+Here is the query you need to answer: ${query}
 
 Here is the content to summarize:
-${webContent.metadata.html ? webContent.metadata.html : webContent.pageContent}
-        `);
+${webContent.metadata.html ? webContent.metadata.html : webContent.pageContent},
+        `,
+          { signal },
+        );
 
         const summarizedContent = await summaryParser.parse(
           summary.content as string,
         );
 
-        if (summarizedContent.toLocaleLowerCase().startsWith('not_needed')) {
+        if (
+          summarizedContent.toLocaleLowerCase().startsWith('not_needed') ||
+          summarizedContent.trim().length === 0
+        ) {
           console.log(
-            `LLM response for URL "${url}" indicates it's not needed:`,
+            `LLM response for URL "${url}" indicates it's not needed or is empty:`,
             summarizedContent,
           );
           return null;
@@ -477,209 +507,246 @@ ${webContent.metadata.html ? webContent.metadata.html : webContent.pageContent}
     emitter: eventEmitter,
     signal: AbortSignal,
   ): Promise<Document[]> {
-    if (docs.length === 0 && fileIds.length === 0) {
-      return docs;
-    }
-
-    if (query.toLocaleLowerCase() === 'summarize') {
-      return docs.slice(0, 15);
-    }
-
-    const filesData = fileIds
-      .map((file) => {
-        const filePath = path.join(process.cwd(), 'uploads', file);
-
-        const contentPath = filePath + '-extracted.json';
-        const embeddingsPath = filePath + '-embeddings.json';
-
-        const content = JSON.parse(fs.readFileSync(contentPath, 'utf8'));
-        const embeddings = JSON.parse(fs.readFileSync(embeddingsPath, 'utf8'));
-
-        const fileSimilaritySearchObject = content.contents.map(
-          (c: string, i: number) => {
-            return {
-              fileName: content.title,
-              content: c,
-              embeddings: embeddings.embeddings[i],
-            };
-          },
-        );
-
-        return fileSimilaritySearchObject;
-      })
-      .flat();
-
-    let docsWithContent = docs.filter(
-      (doc) => doc.pageContent && doc.pageContent.length > 0,
-    );
-
-    const queryEmbedding = await embeddings.embedQuery(query);
-
-    const getRankedDocs = async (
-      queryEmbedding: number[],
-      includeFiles: boolean,
-      includeNonFileDocs: boolean,
-      maxDocs: number,
-    ) => {
-      let docsToRank = includeNonFileDocs ? docsWithContent : [];
-
-      if (includeFiles) {
-        // Add file documents to the ranking
-        const fileDocs = filesData.map((fileData) => {
-          return new Document({
-            pageContent: fileData.content,
-            metadata: {
-              title: fileData.fileName,
-              url: `File`,
-              embeddings: fileData.embeddings,
-            },
-          });
-        });
-        docsToRank.push(...fileDocs);
+    try {
+      if (docs.length === 0 && fileIds.length === 0) {
+        return docs;
       }
 
-      const similarity = await Promise.all(
-        docsToRank.map(async (doc, i) => {
-          const sim = computeSimilarity(
-            queryEmbedding,
-            doc.metadata?.embeddings
-              ? doc.metadata?.embeddings
-              : (await embeddings.embedDocuments([doc.pageContent]))[0],
+      if (query.toLocaleLowerCase() === 'summarize') {
+        return docs.slice(0, 15);
+      }
+
+      const filesData = fileIds
+        .map((file) => {
+          const filePath = path.join(process.cwd(), 'uploads', file);
+
+          const contentPath = filePath + '-extracted.json';
+          const embeddingsPath = filePath + '-embeddings.json';
+
+          const content = JSON.parse(fs.readFileSync(contentPath, 'utf8'));
+          const embeddings = JSON.parse(
+            fs.readFileSync(embeddingsPath, 'utf8'),
           );
-          return {
-            index: i,
-            similarity: sim,
-          };
-        }),
+
+          const fileSimilaritySearchObject = content.contents.map(
+            (c: string, i: number) => {
+              return {
+                fileName: content.title,
+                content: c,
+                embeddings: embeddings.embeddings[i],
+              };
+            },
+          );
+
+          return fileSimilaritySearchObject;
+        })
+        .flat();
+
+      let docsWithContent = docs.filter(
+        (doc) => doc.pageContent && doc.pageContent.length > 0,
       );
 
-      let rankedDocs = similarity
-        .filter((sim) => sim.similarity > (this.config.rerankThreshold ?? 0.3))
-        .sort((a, b) => b.similarity - a.similarity)
-        .map((sim) => docsToRank[sim.index]);
+      const queryEmbedding = await embeddings.embedQuery(query);
 
-      rankedDocs =
-        docsToRank.length > 0 ? rankedDocs.slice(0, maxDocs) : rankedDocs;
-      return rankedDocs;
-    };
+      const getRankedDocs = async (
+        queryEmbedding: number[],
+        includeFiles: boolean,
+        includeNonFileDocs: boolean,
+        maxDocs: number,
+      ) => {
+        let docsToRank = includeNonFileDocs ? docsWithContent : [];
 
-    if (optimizationMode === 'speed' || this.config.rerank === false) {
-      this.emitProgress(emitter, 50, `Ranking sources`);
-      if (filesData.length > 0) {
-        const sortedFiles = await getRankedDocs(queryEmbedding, true, false, 8);
-
-        return [
-          ...sortedFiles,
-          ...docsWithContent.slice(0, 15 - sortedFiles.length),
-        ];
-      } else {
-        return docsWithContent.slice(0, 15);
-      }
-    } else if (optimizationMode === 'balanced') {
-      this.emitProgress(emitter, 40, `Ranking sources`);
-      // Get the top ranked attached files, if any
-      let sortedDocs = await getRankedDocs(queryEmbedding, true, false, 8);
-
-      sortedDocs = [
-        ...sortedDocs,
-        ...docsWithContent.slice(0, 15 - sortedDocs.length),
-      ];
-
-      this.emitProgress(emitter, 60, `Enriching sources`);
-      sortedDocs = await Promise.all(
-        sortedDocs.map(async (doc) => {
-          const webContent = await getWebContentLite(doc.metadata.url);
-          const chunks =
-            webContent?.pageContent
-              .match(/.{1,500}/g)
-              ?.map((chunk) => chunk.trim()) || [];
-          const chunkEmbeddings = await embeddings.embedDocuments(chunks);
-          const similarities = chunkEmbeddings.map((chunkEmbedding) => {
-            return computeSimilarity(queryEmbedding, chunkEmbedding);
+        if (includeFiles) {
+          // Add file documents to the ranking
+          const fileDocs = filesData.map((fileData) => {
+            return new Document({
+              pageContent: fileData.content,
+              metadata: {
+                title: fileData.fileName,
+                url: `File`,
+                embeddings: fileData.embeddings,
+              },
+            });
           });
-
-          const topChunks = similarities
-            .map((similarity, index) => ({ similarity, index }))
-            .sort((a, b) => b.similarity - a.similarity)
-            .slice(0, 5)
-            .map((chunk) => chunks[chunk.index]);
-          const excerpt = topChunks.join('\n\n');
-
-          let newDoc = {
-            ...doc,
-            pageContent: excerpt
-              ? `${excerpt}\n\n${doc.pageContent}`
-              : doc.pageContent,
-          };
-          return newDoc;
-        }),
-      );
-
-      return sortedDocs;
-    } else if (optimizationMode === 'quality') {
-      const summaryParser = new LineOutputParser({
-        key: 'summary',
-      });
-
-      const enhancedDocs: Document[] = [];
-      const maxEnhancedDocs = 5;
-
-      // Process sources one by one until we have enough information or hit the max
-      for (
-        let i = 0;
-        i < docsWithContent.length && enhancedDocs.length < maxEnhancedDocs;
-        i++
-      ) {
-        if (signal.aborted) {
-          return [];
+          docsToRank.push(...fileDocs);
         }
 
-        const currentProgress = enhancedDocs.length * 10 + 40;
+        const similarity = await Promise.all(
+          docsToRank.map(async (doc, i) => {
+            const sim = computeSimilarity(
+              queryEmbedding,
+              doc.metadata?.embeddings
+                ? doc.metadata?.embeddings
+                : (await embeddings.embedDocuments([doc.pageContent]))[0],
+            );
+            return {
+              index: i,
+              similarity: sim,
+            };
+          }),
+        );
+
+        let rankedDocs = similarity
+          .filter(
+            (sim) => sim.similarity > (this.config.rerankThreshold ?? 0.3),
+          )
+          .sort((a, b) => b.similarity - a.similarity)
+          .map((sim) => docsToRank[sim.index]);
+
+        rankedDocs =
+          docsToRank.length > 0 ? rankedDocs.slice(0, maxDocs) : rankedDocs;
+        return rankedDocs;
+      };
+      if (optimizationMode === 'speed' || this.config.rerank === false) {
+        this.emitProgress(
+          emitter,
+          50,
+          `Ranking sources`,
+          this.searchQuery ? `Search Query: ${this.searchQuery}` : undefined,
+        );
+        if (filesData.length > 0) {
+          const sortedFiles = await getRankedDocs(
+            queryEmbedding,
+            true,
+            false,
+            8,
+          );
+
+          return [
+            ...sortedFiles,
+            ...docsWithContent.slice(0, 15 - sortedFiles.length),
+          ];
+        } else {
+          return docsWithContent.slice(0, 15);
+        }
+      } else if (optimizationMode === 'balanced') {
+        this.emitProgress(
+          emitter,
+          40,
+          `Ranking sources`,
+          this.searchQuery ? `Search Query: ${this.searchQuery}` : undefined,
+        );
+        // Get the top ranked attached files, if any
+        let sortedDocs = await getRankedDocs(queryEmbedding, true, false, 8);
+
+        sortedDocs = [
+          ...sortedDocs,
+          ...docsWithContent.slice(0, 15 - sortedDocs.length),
+        ];
 
         this.emitProgress(
           emitter,
-          currentProgress,
-          `Deep analyzing: ${enhancedDocs.length} relevant sources found so far`,
+          60,
+          `Enriching sources`,
+          this.searchQuery ? `Search Query: ${this.searchQuery}` : undefined,
+        );
+        sortedDocs = await Promise.all(
+          sortedDocs.map(async (doc) => {
+            const webContent = await getWebContentLite(doc.metadata.url);
+            const chunks =
+              webContent?.pageContent
+                .match(/.{1,500}/g)
+                ?.map((chunk) => chunk.trim()) || [];
+            const chunkEmbeddings = await embeddings.embedDocuments(chunks);
+            const similarities = chunkEmbeddings.map((chunkEmbedding) => {
+              return computeSimilarity(queryEmbedding, chunkEmbedding);
+            });
+
+            const topChunks = similarities
+              .map((similarity, index) => ({ similarity, index }))
+              .sort((a, b) => b.similarity - a.similarity)
+              .slice(0, 5)
+              .map((chunk) => chunks[chunk.index]);
+            const excerpt = topChunks.join('\n\n');
+
+            let newDoc = {
+              ...doc,
+              pageContent: excerpt
+                ? `${excerpt}\n\n${doc.pageContent}`
+                : doc.pageContent,
+            };
+            return newDoc;
+          }),
         );
 
-        const result = docsWithContent[i];
-        const processedDoc = await this.processSource(
-          result,
-          query,
-          llm,
-          summaryParser,
-        );
+        return sortedDocs;
+      } else if (optimizationMode === 'quality') {
+        const summaryParser = new LineOutputParser({
+          key: 'summary',
+        });
 
-        if (processedDoc) {
-          enhancedDocs.push(processedDoc);
+        const enhancedDocs: Document[] = [];
+        const maxEnhancedDocs = 5;
 
-          // After getting initial 2 sources or adding a new one, check if we have enough info
-          if (enhancedDocs.length >= 2) {
-            this.emitProgress(
-              emitter,
-              currentProgress,
-              `Checking if we have enough information to answer the query`,
-            );
-            const hasEnoughInfo = await this.checkIfEnoughInformation(
-              enhancedDocs,
-              query,
-              llm,
-              emitter,
-            );
-            if (hasEnoughInfo) {
-              break;
+        // Process sources one by one until we have enough information or hit the max
+        for (
+          let i = 0;
+          i < docsWithContent.length && enhancedDocs.length < maxEnhancedDocs;
+          i++
+        ) {
+          if (signal.aborted) {
+            return [];
+          }
+
+          const currentProgress = enhancedDocs.length * 10 + 40;
+
+          this.emitProgress(
+            emitter,
+            currentProgress,
+            `Deep analyzing: ${enhancedDocs.length} relevant sources found. Analyzing source ${i + 1} of ${docsWithContent.length}`,
+            this.searchQuery ? `Search Query: ${this.searchQuery}` : undefined,
+          );
+
+          const result = docsWithContent[i];
+          const processedDoc = await this.processSource(
+            result,
+            query,
+            llm,
+            summaryParser,
+            signal,
+          );
+
+          if (processedDoc) {
+            enhancedDocs.push(processedDoc);
+
+            // After getting initial 2 sources or adding a new one, check if we have enough info
+            if (enhancedDocs.length >= 2) {
+              this.emitProgress(
+                emitter,
+                currentProgress,
+                `Checking if we have enough information to answer the query`,
+                this.searchQuery
+                  ? `Search Query: ${this.searchQuery}`
+                  : undefined,
+              );
+              const hasEnoughInfo = await this.checkIfEnoughInformation(
+                enhancedDocs,
+                query,
+                llm,
+                signal,
+              );
+              if (hasEnoughInfo) {
+                break;
+              }
             }
           }
         }
+
+        this.emitProgress(
+          emitter,
+          95,
+          `Ranking attached files`,
+          this.searchQuery ? `Search Query: ${this.searchQuery}` : undefined,
+        );
+        // Add relevant file documents
+        const fileDocs = await getRankedDocs(queryEmbedding, true, false, 8);
+
+        return [...enhancedDocs, ...fileDocs];
       }
-
-      this.emitProgress(emitter, 95, `Ranking attached files`);
-      // Add relevant file documents
-      const fileDocs = await getRankedDocs(queryEmbedding, true, false, 8);
-
-      return [...enhancedDocs, ...fileDocs];
+    } catch (error) {
+      console.error('Error in rerankDocs:', error);
+      emitter.emit('error', JSON.stringify({ data: error }));
     }
-
     return [];
   }
 

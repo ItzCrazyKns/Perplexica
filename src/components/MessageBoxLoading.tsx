@@ -3,6 +3,7 @@ interface MessageBoxLoadingProps {
     message: string;
     current: number;
     total: number;
+    subMessage?: string;
   } | null;
 }
 
@@ -12,12 +13,22 @@ const MessageBoxLoading = ({ progress }: MessageBoxLoadingProps) => {
       {progress && progress.current !== progress.total ? (
         <div className="bg-light-primary dark:bg-dark-primary rounded-lg p-4">
           <div className="flex flex-col space-y-3">
-            <p className="text-sm text-black/70 dark:text-white/70">
+            <p className="text-base font-semibold text-black dark:text-white">
               {progress.message}
             </p>
+            {progress.subMessage && (
+              <p
+                className="text-xs text-black/40 dark:text-white/40 mt-1"
+                title={progress.subMessage}
+              >
+                {progress.subMessage}
+              </p>
+            )}
             <div className="w-full bg-light-secondary dark:bg-dark-secondary rounded-full h-2 overflow-hidden">
               <div
-                className="h-full bg-[#24A0ED] transition-all duration-300 ease-in-out"
+                className={`h-full bg-[#24A0ED] transition-all duration-300 ease-in-out ${
+                  progress.current === progress.total ? '' : 'animate-pulse'
+                }`}
                 style={{
                   width: `${(progress.current / progress.total) * 100}%`,
                 }}
