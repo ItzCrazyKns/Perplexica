@@ -677,6 +677,7 @@ ${webContent.metadata.html ? webContent.metadata.html : webContent.pageContent},
 
         const enhancedDocs: Document[] = [];
         const maxEnhancedDocs = 5;
+        const startDate = new Date();
 
         // Process sources one by one until we have enough information or hit the max
         for (
@@ -708,26 +709,29 @@ ${webContent.metadata.html ? webContent.metadata.html : webContent.pageContent},
 
           if (processedDoc) {
             enhancedDocs.push(processedDoc);
+          }
 
-            // After getting initial 2 sources or adding a new one, check if we have enough info
-            if (enhancedDocs.length >= 2) {
-              this.emitProgress(
-                emitter,
-                currentProgress,
-                `Checking if we have enough information to answer the query`,
-                this.searchQuery
-                  ? `Search Query: ${this.searchQuery}`
-                  : undefined,
-              );
-              const hasEnoughInfo = await this.checkIfEnoughInformation(
-                enhancedDocs,
-                query,
-                llm,
-                signal,
-              );
-              if (hasEnoughInfo) {
-                break;
-              }
+          // After getting sources for 60 seconds, or at least 2 sources or adding a new one, check if we have enough info
+          if (
+            new Date().getTime() - startDate.getTime() > 60000 &&
+            enhancedDocs.length >= 2
+          ) {
+            this.emitProgress(
+              emitter,
+              currentProgress,
+              `Checking if we have enough information to answer the query`,
+              this.searchQuery
+                ? `Search Query: ${this.searchQuery}`
+                : undefined,
+            );
+            const hasEnoughInfo = await this.checkIfEnoughInformation(
+              enhancedDocs,
+              query,
+              llm,
+              signal,
+            );
+            if (hasEnoughInfo) {
+              break;
             }
           }
         }
