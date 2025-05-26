@@ -244,7 +244,7 @@ const Page = () => {
     };
 
     fetchConfig();
-  }, []);
+  });
 
   const saveConfig = async (key: string, value: any) => {
     setSavingStates((prev) => ({ ...prev, [key]: true }));

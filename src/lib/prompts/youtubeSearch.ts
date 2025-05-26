@@ -65,5 +65,5 @@ export const youtubeSearchResponsePrompt = `
     {context}
     </context>
 
-    Current date & time in ISO format (UTC timezone) is: {date}.
+    Current date is: {date}.
 `;

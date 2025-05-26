@@ -8,6 +8,7 @@ import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import LineOutputParser from '../outputParsers/lineOutputParser';
 import { searchSearxng } from '../searxng';
+import { formatDateForLLM } from '../utils';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const imageSearchChainPrompt = `
@@ -23,7 +24,7 @@ const imageSearchChainPrompt = `
 - The history is contained in the <conversation> tag after the <examples> below
 - The user question is contained in the <question> tag after the <examples> below
 - Output your answer in an <answer> tag
-- Current date & time in ISO format (UTC timezone) is: {date}
+- Current date is: {date}
 - Do not include any other text in your answer
   
 <examples>
@@ -99,7 +100,7 @@ const createImageSearchChain = (llm: BaseChatModel) => {
       query: (input: ImageSearchChainInput) => {
         return input.query;
       },
-      date: () => new Date().toISOString(),
+      date: () => formatDateForLLM(),
     }),
     PromptTemplate.fromTemplate(imageSearchChainPrompt),
     llm,

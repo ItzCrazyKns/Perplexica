@@ -65,5 +65,5 @@ export const redditSearchResponsePrompt = `
     {context}
     </context>
 
-    Current date & time in ISO format (UTC timezone) is: {date}.
+    Current date is: {date}.
 `;

@@ -304,7 +304,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     } else {
       localStorage.setItem('optimizationMode', optimizationMode);
     }
-  }, []);
+  }, [optimizationMode]);
 
   useEffect(() => {
     if (

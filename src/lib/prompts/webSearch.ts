@@ -19,7 +19,7 @@ export const webSearchRetrieverPrompt = `
 - The history is contained in the <conversation> tag after the <examples> below
 - The user question is contained in the <question> tag after the <examples> below
 - You must always return the rephrased question inside an <answer> XML block, if there are no links in the follow-up question then don't insert a <links> XML block in your response
-- Current date & time in ISO format (UTC timezone) is: {date}
+- Current date is: {date}
 - Do not include any other text in your answer
 
 There are several examples attached for your reference inside the below examples XML block
@@ -212,5 +212,5 @@ export const webSearchResponsePrompt = `
     {context}
     </context>
 
-    Current date & time in ISO format (UTC timezone) is: {date}.
+    Current date is: {date}.
 `;

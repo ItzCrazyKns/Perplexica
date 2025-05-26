@@ -29,6 +29,7 @@ import {
 } from '../utils/documents';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { getModelName } from '../utils/modelUtils';
+import { formatDateForLLM } from '../utils';
 
 export interface MetaSearchAgentType {
   searchAndAnswer: (
@@ -309,7 +310,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
         systemInstructions: () => systemInstructions,
         query: (input: BasicChainInput) => input.query,
         chat_history: (input: BasicChainInput) => input.chat_history,
-        date: () => new Date().toISOString(),
+        date: () => formatDateForLLM(),
         context: RunnableLambda.from(
           async (
             input: BasicChainInput,
@@ -331,7 +332,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
             if (this.config.searchWeb) {
               const searchRetrieverChain =
                 await this.createSearchRetrieverChain(llm, emitter);
-              var date = new Date().toISOString();
+              var date = formatDateForLLM();
 
               const searchRetrieverResult = await searchRetrieverChain.invoke(
                 {

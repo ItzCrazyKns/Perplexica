@@ -25,3 +25,16 @@ export const formatTimeDifference = (
   else
     return `${Math.floor(diffInSeconds / 31536000)} year${Math.floor(diffInSeconds / 31536000) !== 1 ? 's' : ''}`;
 };
+
+/**
+ * Format a date for LLM prompts to only include month, day, and year
+ * @param date - The date to format (defaults to current date)
+ * @returns Formatted date string in "Month DD, YYYY" format
+ */
+export const formatDateForLLM = (date: Date = new Date()): string => {
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};

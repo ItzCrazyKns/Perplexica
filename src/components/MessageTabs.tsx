@@ -17,7 +17,7 @@ import {
   Volume2,
 } from 'lucide-react';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { useSpeech } from 'react-text-to-speech';
@@ -145,7 +145,7 @@ const MessageTabs = ({
   };
 
   // Load suggestions handling
-  const handleLoadSuggestions = async () => {
+  const handleLoadSuggestions = useCallback(async () => {
     if (
       loadingSuggestions ||
       (message?.suggestions && message.suggestions.length > 0)
@@ -162,7 +162,7 @@ const MessageTabs = ({
     } finally {
       setLoadingSuggestions(false);
     }
-  };
+  }, [loadingSuggestions, message, chatHistory, sendMessage]);
 
   // Process message content
   useEffect(() => {
@@ -234,7 +234,7 @@ const MessageTabs = ({
     ) {
       handleLoadSuggestions();
     }
-  }, [isLast, loading, message.role]);
+  }, [isLast, loading, message.role, handleLoadSuggestions]);
 
   // Markdown formatting options
   const markdownOverrides: MarkdownToJSX.Options = {
