@@ -25,11 +25,18 @@ COPY --from=builder /home/perplexica/.next/static ./public/_next/static
 COPY --from=builder /home/perplexica/.next/standalone ./
 COPY --from=builder /home/perplexica/data ./data
 
+# Copy files needed for database migrations at runtime
+COPY drizzle.config.ts ./
+COPY src/lib/db/schema.ts ./src/lib/db/
+COPY docker-entrypoint.sh ./
+COPY package.json ./
+
 RUN mkdir /home/perplexica/uploads && \
+    chmod +x /home/perplexica/docker-entrypoint.sh && \
     npx -y playwright install chromium --with-deps && \
-    npm install playwright && \
+    npm install playwright drizzle-kit && \
     apt-get update && \
     apt-get install -y procps && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-CMD ["node", "server.js"]
+CMD ["./docker-entrypoint.sh"]
