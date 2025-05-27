@@ -291,6 +291,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const [focusMode, setFocusMode] = useState('webSearch');
   const [optimizationMode, setOptimizationMode] = useState('speed');
+  const [systemPromptIds, setSystemPromptIds] = useState<string[]>([]);
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
@@ -570,7 +571,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
           name: embeddingModelProvider.name,
           provider: embeddingModelProvider.provider,
         },
-        systemInstructions: localStorage.getItem('systemInstructions'),
+        selectedSystemPromptIds: systemPromptIds || [],
       }),
     });
 
@@ -677,6 +678,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
               setFocusMode={setFocusMode}
               handleEditMessage={handleEditMessage}
               analysisProgress={analysisProgress}
+              systemPromptIds={systemPromptIds}
+              setSystemPromptIds={setSystemPromptIds}
             />
           </>
         ) : (
@@ -686,6 +689,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
             setFocusMode={setFocusMode}
             optimizationMode={optimizationMode}
             setOptimizationMode={setOptimizationMode}
+            systemPromptIds={systemPromptIds}
+            setSystemPromptIds={setSystemPromptIds}
             fileIds={fileIds}
             setFileIds={setFileIds}
             files={files}

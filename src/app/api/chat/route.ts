@@ -1,3 +1,4 @@
+import { cleanupCancelToken, registerCancelToken } from '@/lib/cancel-tokens';
 import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
@@ -11,6 +12,7 @@ import {
 } from '@/lib/providers';
 import { searchHandlers } from '@/lib/search';
 import { getFileDetails } from '@/lib/utils/files';
+import { getSystemPrompts } from '@/lib/utils/prompts';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 import { ChatOllama } from '@langchain/ollama';
@@ -18,7 +20,6 @@ import { ChatOpenAI } from '@langchain/openai';
 import crypto from 'crypto';
 import { and, eq, gt } from 'drizzle-orm';
 import { EventEmitter } from 'stream';
-import { registerCancelToken, cleanupCancelToken } from '@/lib/cancel-tokens';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,6 +50,7 @@ type Body = {
   chatModel: ChatModel;
   embeddingModel: EmbeddingModel;
   systemInstructions: string;
+  selectedSystemPromptIds: string[];
 };
 
 type ModelStats = {
@@ -256,7 +258,7 @@ export const POST = async (req: Request) => {
   try {
     const startTime = Date.now();
     const body = (await req.json()) as Body;
-    const { message } = body;
+    const { message, selectedSystemPromptIds } = body;
 
     if (message.content === '') {
       return Response.json(
@@ -349,6 +351,14 @@ export const POST = async (req: Request) => {
       );
     }
 
+    let systemInstructionsContent = '';
+    let personaInstructionsContent = '';
+
+    // Retrieve system prompts from database using shared utility
+    const promptData = await getSystemPrompts(selectedSystemPromptIds);
+    systemInstructionsContent = promptData.systemInstructions;
+    personaInstructionsContent = promptData.personaInstructions;
+
     const responseStream = new TransformStream();
     const writer = responseStream.writable.getWriter();
     const encoder = new TextEncoder();
@@ -378,8 +388,9 @@ export const POST = async (req: Request) => {
       embedding,
       body.optimizationMode,
       body.files,
-      body.systemInstructions,
+      systemInstructionsContent,
       abortController.signal,
+      personaInstructionsContent,
     );
 
     handleEmitterEvents(

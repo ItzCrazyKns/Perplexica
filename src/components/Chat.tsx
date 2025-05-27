@@ -22,6 +22,8 @@ const Chat = ({
   setFocusMode,
   handleEditMessage,
   analysisProgress,
+  systemPromptIds,
+  setSystemPromptIds,
 }: {
   messages: Message[];
   sendMessage: (
@@ -49,6 +51,8 @@ const Chat = ({
     current: number;
     total: number;
   } | null;
+  systemPromptIds: string[];
+  setSystemPromptIds: (ids: string[]) => void;
 }) => {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [manuallyScrolledUp, setManuallyScrolledUp] = useState(false);
@@ -271,6 +275,8 @@ const Chat = ({
           focusMode={focusMode}
           setFocusMode={setFocusMode}
           onCancel={handleCancel}
+          systemPromptIds={systemPromptIds}
+          setSystemPromptIds={setSystemPromptIds}
         />
       </div>
       <div ref={messageEnd} className="h-0" />

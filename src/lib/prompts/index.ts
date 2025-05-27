@@ -18,7 +18,7 @@ import {
   youtubeSearchRetrieverPrompt,
 } from './youtubeSearch';
 
-export default {
+const prompts = {
   webSearchResponsePrompt,
   webSearchRetrieverPrompt,
   academicSearchResponsePrompt,
@@ -32,3 +32,5 @@ export default {
   youtubeSearchResponsePrompt,
   youtubeSearchRetrieverPrompt,
 };
+
+export default prompts;

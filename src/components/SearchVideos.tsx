@@ -71,6 +71,20 @@ const Searchvideos = ({
       const ollamaContextWindow =
         localStorage.getItem('ollamaContextWindow') || '2048';
 
+      // Get selected system prompt IDs from localStorage
+      const storedPromptIds = localStorage.getItem('selectedSystemPromptIds');
+      let selectedSystemPromptIds: string[] = [];
+      if (storedPromptIds) {
+        try {
+          selectedSystemPromptIds = JSON.parse(storedPromptIds);
+        } catch (e) {
+          console.error(
+            'Failed to parse selectedSystemPromptIds from localStorage',
+            e,
+          );
+        }
+      }
+
       try {
         const res = await fetch(`/api/videos`, {
           method: 'POST',
@@ -91,6 +105,7 @@ const Searchvideos = ({
                 ollamaContextWindow: parseInt(ollamaContextWindow),
               }),
             },
+            selectedSystemPromptIds: selectedSystemPromptIds,
           }),
         });
 

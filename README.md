@@ -220,6 +220,7 @@ This fork adds several enhancements to the original Perplexica project:
   - Added autocomplete functionality proxied to SearxNG
 - ✅ Enhanced Reddit focus mode to work around SearxNG limitations
 - ✅ Adds Quality mode that uses the full content of web pages to answer queries
+  - See the [README.md](docs/architecture/README.md) in the docs architecture directory for more info
   - Enhances Balanced mode which uses relevant excerpts of web content to answer queries
 
 ### AI Functionality
@@ -230,6 +231,7 @@ This fork adds several enhancements to the original Perplexica project:
 - ✅ User customizable context window for Ollama models
 - ✅ Toggle for automatic suggestions
 - ✅ Added support for latest Anthropic models
+- ✅ Adds support for multiple user-customizable system prompt enhancement and personas so you can tailor output to your needs
 
 ### Bug Fixes
 

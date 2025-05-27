@@ -10,6 +10,8 @@ const EmptyChat = ({
   setFocusMode,
   optimizationMode,
   setOptimizationMode,
+  systemPromptIds,
+  setSystemPromptIds,
   fileIds,
   setFileIds,
   files,
@@ -20,6 +22,8 @@ const EmptyChat = ({
   setFocusMode: (mode: string) => void;
   optimizationMode: string;
   setOptimizationMode: (mode: string) => void;
+  systemPromptIds: string[];
+  setSystemPromptIds: (ids: string[]) => void;
   fileIds: string[];
   setFileIds: (fileIds: string[]) => void;
   files: File[];
@@ -49,6 +53,8 @@ const EmptyChat = ({
           fileIds={fileIds}
           setFileIds={setFileIds}
           files={files}
+          systemPromptIds={systemPromptIds}
+          setSystemPromptIds={setSystemPromptIds}
           setFiles={setFiles}
         />
       </div>

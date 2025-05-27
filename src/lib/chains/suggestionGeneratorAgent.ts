@@ -45,13 +45,20 @@ const outputParser = new ListLineOutputParser({
   key: 'suggestions',
 });
 
-const createSuggestionGeneratorChain = (llm: BaseChatModel) => {
+const createSuggestionGeneratorChain = (
+  llm: BaseChatModel,
+  systemInstructions?: string,
+) => {
+  const systemPrompt = systemInstructions ? `${systemInstructions}\n\n` : '';
+
+  const fullPrompt = `${systemPrompt}${suggestionGeneratorPrompt}`;
+
   return RunnableSequence.from([
     RunnableMap.from({
       chat_history: (input: SuggestionGeneratorInput) =>
         formatChatHistoryAsString(input.chat_history),
     }),
-    PromptTemplate.fromTemplate(suggestionGeneratorPrompt),
+    PromptTemplate.fromTemplate(fullPrompt),
     llm,
     outputParser,
   ]);
@@ -60,9 +67,13 @@ const createSuggestionGeneratorChain = (llm: BaseChatModel) => {
 const generateSuggestions = (
   input: SuggestionGeneratorInput,
   llm: BaseChatModel,
+  systemInstructions?: string,
 ) => {
   (llm as unknown as ChatOpenAI).temperature = 0;
-  const suggestionGeneratorChain = createSuggestionGeneratorChain(llm);
+  const suggestionGeneratorChain = createSuggestionGeneratorChain(
+    llm,
+    systemInstructions,
+  );
   return suggestionGeneratorChain.invoke(input);
 };
 

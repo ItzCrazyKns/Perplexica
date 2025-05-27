@@ -91,7 +91,14 @@ const outputParser = new LineOutputParser({
   key: 'answer',
 });
 
-const createImageSearchChain = (llm: BaseChatModel) => {
+const createImageSearchChain = (
+  llm: BaseChatModel,
+  systemInstructions?: string,
+) => {
+  const systemPrompt = systemInstructions ? `${systemInstructions}\n\n` : '';
+
+  const fullPrompt = `${systemPrompt}${imageSearchChainPrompt}`;
+
   return RunnableSequence.from([
     RunnableMap.from({
       chat_history: (input: ImageSearchChainInput) => {
@@ -102,7 +109,7 @@ const createImageSearchChain = (llm: BaseChatModel) => {
       },
       date: () => formatDateForLLM(),
     }),
-    PromptTemplate.fromTemplate(imageSearchChainPrompt),
+    PromptTemplate.fromTemplate(fullPrompt),
     llm,
     outputParser,
     RunnableLambda.from(async (searchQuery: string) => {
@@ -130,8 +137,9 @@ const createImageSearchChain = (llm: BaseChatModel) => {
 const handleImageSearch = (
   input: ImageSearchChainInput,
   llm: BaseChatModel,
+  systemInstructions?: string,
 ) => {
-  const imageSearchChain = createImageSearchChain(llm);
+  const imageSearchChain = createImageSearchChain(llm, systemInstructions);
   return imageSearchChain.invoke(input);
 };
 

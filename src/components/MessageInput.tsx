@@ -6,6 +6,7 @@ import Attach from './MessageInputActions/Attach';
 import Focus from './MessageInputActions/Focus';
 import ModelSelector from './MessageInputActions/ModelSelector';
 import Optimization from './MessageInputActions/Optimization';
+import SystemPromptSelector from './MessageInputActions/SystemPromptSelector'; // Import new component
 
 const MessageInput = ({
   sendMessage,
@@ -20,8 +21,16 @@ const MessageInput = ({
   setFocusMode,
   firstMessage,
   onCancel,
+  systemPromptIds,
+  setSystemPromptIds,
 }: {
-  sendMessage: (message: string) => void;
+  sendMessage: (
+    message: string,
+    options?: {
+      messageId?: string; // For rewrites/edits
+      selectedSystemPromptIds?: string[];
+    },
+  ) => void;
   loading: boolean;
   fileIds: string[];
   setFileIds: (fileIds: string[]) => void;
@@ -33,6 +42,8 @@ const MessageInput = ({
   setFocusMode: (mode: string) => void;
   firstMessage: boolean;
   onCancel?: () => void;
+  systemPromptIds: string[];
+  setSystemPromptIds: (ids: string[]) => void;
 }) => {
   const [message, setMessage] = useState('');
   const [selectedModel, setSelectedModel] = useState<{
@@ -51,7 +62,35 @@ const MessageInput = ({
         model: chatModel,
       });
     }
-  }, []);
+
+    const storedPromptIds = localStorage.getItem('selectedSystemPromptIds');
+    if (storedPromptIds) {
+      try {
+        const parsedIds = JSON.parse(storedPromptIds);
+        if (Array.isArray(parsedIds)) {
+          setSystemPromptIds(parsedIds);
+        }
+      } catch (e) {
+        console.error(
+          'Failed to parse selectedSystemPromptIds from localStorage',
+          e,
+        );
+        localStorage.removeItem('selectedSystemPromptIds'); // Clear corrupted data
+      }
+    }
+  }, [setSystemPromptIds]);
+
+  useEffect(() => {
+    if (systemPromptIds.length > 0) {
+      localStorage.setItem(
+        'selectedSystemPromptIds',
+        JSON.stringify(systemPromptIds),
+      );
+    } else {
+      // Remove from localStorage if no prompts are selected to keep it clean
+      localStorage.removeItem('selectedSystemPromptIds');
+    }
+  }, [systemPromptIds]);
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -112,21 +151,24 @@ const MessageInput = ({
           placeholder={firstMessage ? 'Ask anything...' : 'Ask a follow-up'}
         />
         <div className="flex flex-row items-center justify-between mt-4">
-          <div className="flex flex-row items-center space-x-2 lg:space-x-4">
+          <div className="flex flex-row items-center space-x-2">
             <Focus focusMode={focusMode} setFocusMode={setFocusMode} />
             <Attach
               fileIds={fileIds}
               setFileIds={setFileIds}
               files={files}
               setFiles={setFiles}
-              showText={firstMessage}
             />
+          </div>
+          <div className="flex flex-row items-center space-x-2">
             <ModelSelector
               selectedModel={selectedModel}
               setSelectedModel={setSelectedModel}
             />
-          </div>
-          <div className="flex flex-row items-center space-x-1 sm:space-x-4">
+            <SystemPromptSelector
+              selectedPromptIds={systemPromptIds}
+              onSelectedPromptIdsChange={setSystemPromptIds}
+            />
             <Optimization
               optimizationMode={optimizationMode}
               setOptimizationMode={setOptimizationMode}

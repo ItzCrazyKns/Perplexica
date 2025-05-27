@@ -41,6 +41,7 @@ export interface MetaSearchAgentType {
     fileIds: string[],
     systemInstructions: string,
     signal: AbortSignal,
+    personaInstructions?: string,
   ) => Promise<eventEmitter>;
 }
 
@@ -101,6 +102,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
   private async createSearchRetrieverChain(
     llm: BaseChatModel,
+    systemInstructions: string,
     emitter: eventEmitter,
   ) {
     (llm as unknown as ChatOpenAI).temperature = 0;
@@ -176,8 +178,12 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
             await Promise.all(
               docGroups.map(async (doc) => {
-                const res = await llm.invoke(`
-            You are a web search summarizer, tasked with summarizing a piece of text retrieved from a web search. Your job is to summarize the 
+                const systemPrompt = systemInstructions
+                  ? `${systemInstructions}\n\n`
+                  : '';
+
+                const res =
+                  await llm.invoke(`${systemPrompt}You are a web search summarizer, tasked with summarizing a piece of text retrieved from a web search. Your job is to summarize the 
             text into a detailed, 2-4 paragraph explanation that captures the main ideas and provides a comprehensive answer to the query.
             If the query is \"summarize\", you should provide a detailed summary of the text. If the query is a specific question, you should answer it in the summary.
             
@@ -235,7 +241,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
             </text>
 
             Make sure to answer the query in the summary.
-          `);
+          `); //TODO: Pass signal for cancellation
 
                 const document = new Document({
                   pageContent: res.content as string,
@@ -304,6 +310,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     systemInstructions: string,
     signal: AbortSignal,
     emitter: eventEmitter,
+    personaInstructions?: string,
   ) {
     return RunnableSequence.from([
       RunnableMap.from({
@@ -331,7 +338,11 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
             if (this.config.searchWeb) {
               const searchRetrieverChain =
-                await this.createSearchRetrieverChain(llm, emitter);
+                await this.createSearchRetrieverChain(
+                  llm,
+                  systemInstructions,
+                  emitter,
+                );
               var date = formatDateForLLM();
 
               const searchRetrieverResult = await searchRetrieverChain.invoke(
@@ -339,6 +350,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
                   chat_history: processedHistory,
                   query,
                   date,
+                  systemInstructions,
                 },
                 { signal: options?.signal },
               );
@@ -359,6 +371,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
               embeddings,
               optimizationMode,
               llm,
+              systemInstructions,
               emitter,
               signal,
             );
@@ -377,8 +390,14 @@ class MetaSearchAgent implements MetaSearchAgentType {
           })
           .pipe(this.processDocs),
       }),
+      // TODO: this doesn't seem like a very good way to pass persona instructions. Should do this better.
       ChatPromptTemplate.fromMessages([
-        ['system', this.config.responsePrompt],
+        [
+          'system',
+          personaInstructions
+            ? `${this.config.responsePrompt}\n\nAdditional formatting/style instructions:\n${personaInstructions}`
+            : this.config.responsePrompt,
+        ],
         new MessagesPlaceholder('chat_history'),
         ['user', '{query}'],
       ]),
@@ -393,12 +412,15 @@ class MetaSearchAgent implements MetaSearchAgentType {
     docs: Document[],
     query: string,
     llm: BaseChatModel,
+    systemInstructions: string,
     signal: AbortSignal,
   ): Promise<boolean> {
     const formattedDocs = this.processDocs(docs);
 
+    const systemPrompt = systemInstructions ? `${systemInstructions}\n\n` : '';
+
     const response = await llm.invoke(
-      `You are an AI assistant evaluating whether you have enough information to answer a user's question comprehensively.
+      `${systemPrompt}You are an AI assistant evaluating whether you have enough information to answer a user's question comprehensively.
 
 Based on the following sources, determine if you have sufficient information to provide a detailed, accurate answer to the query: "${query}"
 
@@ -438,6 +460,7 @@ Output ONLY \`<answer>yes</answer>\` if you have enough information to answer co
     query: string,
     llm: BaseChatModel,
     summaryParser: LineOutputParser,
+    systemInstructions: string,
     signal: AbortSignal,
   ): Promise<Document | null> {
     try {
@@ -445,9 +468,12 @@ Output ONLY \`<answer>yes</answer>\` if you have enough information to answer co
       const webContent = await getWebContent(url, true);
 
       if (webContent) {
+        const systemPrompt = systemInstructions
+          ? `${systemInstructions}\n\n`
+          : '';
+
         const summary = await llm.invoke(
-          `
-You are a web content summarizer, tasked with creating a detailed, accurate summary of content from a webpage
+          `${systemPrompt}You are a web content summarizer, tasked with creating a detailed, accurate summary of content from a webpage
 
 # Instructions
 - The response must answer the user's query
@@ -505,6 +531,7 @@ ${webContent.metadata.html ? webContent.metadata.html : webContent.pageContent},
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'balanced' | 'quality',
     llm: BaseChatModel,
+    systemInstructions: string,
     emitter: eventEmitter,
     signal: AbortSignal,
   ): Promise<Document[]> {
@@ -705,6 +732,7 @@ ${webContent.metadata.html ? webContent.metadata.html : webContent.pageContent},
             query,
             llm,
             summaryParser,
+            systemInstructions,
             signal,
           );
 
@@ -729,6 +757,7 @@ ${webContent.metadata.html ? webContent.metadata.html : webContent.pageContent},
               enhancedDocs,
               query,
               llm,
+              systemInstructions,
               signal,
             );
             if (hasEnoughInfo) {
@@ -847,6 +876,7 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
     fileIds: string[],
     systemInstructions: string,
     signal: AbortSignal,
+    personaInstructions?: string,
   ) {
     const emitter = new eventEmitter();
 
@@ -858,6 +888,7 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
       systemInstructions,
       signal,
       emitter,
+      personaInstructions,
     );
 
     const stream = answeringChain.streamEvents(

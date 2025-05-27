@@ -92,7 +92,14 @@ const answerParser = new LineOutputParser({
   key: 'answer',
 });
 
-const createVideoSearchChain = (llm: BaseChatModel) => {
+const createVideoSearchChain = (
+  llm: BaseChatModel,
+  systemInstructions?: string,
+) => {
+  const systemPrompt = systemInstructions ? `${systemInstructions}\n\n` : '';
+
+  const fullPrompt = `${systemPrompt}${VideoSearchChainPrompt}`;
+
   return RunnableSequence.from([
     RunnableMap.from({
       chat_history: (input: VideoSearchChainInput) => {
@@ -103,7 +110,7 @@ const createVideoSearchChain = (llm: BaseChatModel) => {
       },
       date: () => formatDateForLLM(),
     }),
-    PromptTemplate.fromTemplate(VideoSearchChainPrompt),
+    PromptTemplate.fromTemplate(fullPrompt),
     llm,
     answerParser,
     RunnableLambda.from(async (searchQuery: string) => {
@@ -137,8 +144,9 @@ const createVideoSearchChain = (llm: BaseChatModel) => {
 const handleVideoSearch = (
   input: VideoSearchChainInput,
   llm: BaseChatModel,
+  systemInstructions?: string,
 ) => {
-  const VideoSearchChain = createVideoSearchChain(llm);
+  const VideoSearchChain = createVideoSearchChain(llm, systemInstructions);
   return VideoSearchChain.invoke(input);
 };
 

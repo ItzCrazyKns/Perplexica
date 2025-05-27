@@ -5,6 +5,7 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { getAvailableChatModelProviders } from '@/lib/providers';
+import { getSystemInstructionsOnly } from '@/lib/utils/prompts';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 import { ChatOllama } from '@langchain/ollama';
@@ -20,6 +21,7 @@ interface VideoSearchBody {
   query: string;
   chatHistory: any[];
   chatModel?: ChatModel;
+  selectedSystemPromptIds?: string[];
 }
 
 export const POST = async (req: Request) => {
@@ -70,12 +72,29 @@ export const POST = async (req: Request) => {
       return Response.json({ error: 'Invalid chat model' }, { status: 400 });
     }
 
+    let systemInstructions = '';
+    if (
+      body.selectedSystemPromptIds &&
+      body.selectedSystemPromptIds.length > 0
+    ) {
+      try {
+        const retrievedInstructions = await getSystemInstructionsOnly(
+          body.selectedSystemPromptIds,
+        );
+        systemInstructions = retrievedInstructions;
+      } catch (error) {
+        console.error('Error retrieving system prompts:', error);
+        // Continue with existing systemInstructions as fallback
+      }
+    }
+
     const videos = await handleVideoSearch(
       {
         chat_history: chatHistory,
         query: body.query,
       },
       llm,
+      systemInstructions,
     );
 
     return Response.json({ videos }, { status: 200 });

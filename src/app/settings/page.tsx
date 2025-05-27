@@ -5,8 +5,13 @@ import {
   ArrowLeft,
   Loader2,
   Info,
+  Trash2,
+  Edit3,
+  PlusCircle,
+  Save,
+  X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@headlessui/react';
 import ThemeSwitcher from '@/components/theme/Switcher';
@@ -39,7 +44,12 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   onSave?: (value: string) => void;
 }
 
-const Input = ({ className, isSaving, onSave, ...restProps }: InputProps) => {
+const InputComponent = ({
+  className,
+  isSaving,
+  onSave,
+  ...restProps
+}: InputProps) => {
   return (
     <div className="relative">
       <input
@@ -68,7 +78,7 @@ interface TextareaProps extends React.InputHTMLAttributes<HTMLTextAreaElement> {
   onSave?: (value: string) => void;
 }
 
-const Textarea = ({
+const TextareaComponent = ({
   className,
   isSaving,
   onSave,
@@ -127,27 +137,75 @@ const SettingsSection = ({
   title: string;
   children: React.ReactNode;
   tooltip?: string;
-}) => (
-  <div className="flex flex-col space-y-4 p-4 bg-light-secondary/50 dark:bg-dark-secondary/50 rounded-xl border border-light-200 dark:border-dark-200">
-    <div className="flex items-center gap-2">
-      <h2 className="text-black/90 dark:text-white/90 font-medium">{title}</h2>
-      {tooltip && (
-        <div className="relative group">
-          <Info
-            size={16}
-            className="text-black/70 dark:text-white/70 cursor-help"
-          />
-          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 px-3 py-2 bg-black/90 dark:bg-white/90 text-white dark:text-black text-xs rounded-lg opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity">
-            {tooltip}
-          </div>
-        </div>
-      )}
-    </div>
-    {children}
-  </div>
-);
+}) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-const Page = () => {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        tooltipRef.current &&
+        !tooltipRef.current.contains(event.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setShowTooltip(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <div className="flex flex-col space-y-4 p-4 bg-light-secondary/50 dark:bg-dark-secondary/50 rounded-xl border border-light-200 dark:border-dark-200">
+      <div className="flex items-center gap-2">
+        <h2 className="text-black/90 dark:text-white/90 font-medium">
+          {title}
+        </h2>
+        {tooltip && (
+          <div className="relative">
+            <button
+              ref={buttonRef}
+              className="p-1 text-black/70 dark:text-white/70 rounded-full hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white"
+              onClick={() => setShowTooltip(!showTooltip)}
+              aria-label="Show section information"
+            >
+              <Info size={16} />
+            </button>
+            {showTooltip && (
+              <div
+                ref={tooltipRef}
+                className="absolute z-10 left-6 top-0 w-96 rounded-md shadow-lg bg-white dark:bg-dark-secondary border border-light-200 dark:border-dark-200"
+              >
+                <div className="py-2 px-3">
+                  <div className="space-y-1 text-xs text-black dark:text-white">
+                    {tooltip.split('\\n').map((line, index) => (
+                      <div key={index}>{line}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+};
+
+interface SystemPrompt {
+  id: string;
+  name: string;
+  content: string;
+  type: 'system' | 'persona';
+}
+
+export default function SettingsPage() {
   const [config, setConfig] = useState<SettingsType | null>(null);
   const [chatModels, setChatModels] = useState<Record<string, any>>({});
   const [embeddingModels, setEmbeddingModels] = useState<Record<string, any>>(
@@ -166,13 +224,23 @@ const Page = () => {
   >(null);
   const [isLoading, setIsLoading] = useState(false);
   const [automaticSuggestions, setAutomaticSuggestions] = useState(true);
-  const [systemInstructions, setSystemInstructions] = useState<string>('');
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
   const [contextWindowSize, setContextWindowSize] = useState(2048);
   const [isCustomContextWindow, setIsCustomContextWindow] = useState(false);
   const predefinedContextSizes = [
     1024, 2048, 3072, 4096, 8192, 16384, 32768, 65536, 131072,
   ];
+
+  const [userSystemPrompts, setUserSystemPrompts] = useState<SystemPrompt[]>(
+    [],
+  );
+  const [editingPrompt, setEditingPrompt] = useState<SystemPrompt | null>(null);
+  const [newPromptName, setNewPromptName] = useState('');
+  const [newPromptContent, setNewPromptContent] = useState('');
+  const [newPromptType, setNewPromptType] = useState<'system' | 'persona'>(
+    'system',
+  );
+  const [isAddingNewPrompt, setIsAddingNewPrompt] = useState(false);
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -238,13 +306,30 @@ const Page = () => {
         !predefinedContextSizes.includes(storedContextWindow),
       );
 
-      setSystemInstructions(localStorage.getItem('systemInstructions')!);
-
       setIsLoading(false);
     };
 
     fetchConfig();
-  });
+
+    const fetchSystemPrompts = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/api/system-prompts');
+        if (response.ok) {
+          const prompts = await response.json();
+          setUserSystemPrompts(prompts);
+        } else {
+          console.error('Failed to load system prompts.');
+        }
+      } catch (error) {
+        console.error('Error loading system prompts.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSystemPrompts();
+  }, []);
 
   const saveConfig = async (key: string, value: any) => {
     setSavingStates((prev) => ({ ...prev, [key]: true }));
@@ -396,8 +481,6 @@ const Page = () => {
         localStorage.setItem('embeddingModel', value);
       } else if (key === 'ollamaContextWindow') {
         localStorage.setItem('ollamaContextWindow', value.toString());
-      } else if (key === 'systemInstructions') {
-        localStorage.setItem('systemInstructions', value);
       }
     } catch (err) {
       console.error('Failed to save:', err);
@@ -406,6 +489,83 @@ const Page = () => {
       setTimeout(() => {
         setSavingStates((prev) => ({ ...prev, [key]: false }));
       }, 500);
+    }
+  };
+
+  const handleAddOrUpdateSystemPrompt = async () => {
+    const currentPrompt = editingPrompt || {
+      name: newPromptName,
+      content: newPromptContent,
+      type: newPromptType,
+    };
+    if (!currentPrompt.name.trim() || !currentPrompt.content.trim()) {
+      console.error('Prompt name and content cannot be empty.');
+      return;
+    }
+
+    const url = editingPrompt
+      ? `/api/system-prompts/${editingPrompt.id}`
+      : '/api/system-prompts';
+    const method = editingPrompt ? 'PUT' : 'POST';
+    const body = JSON.stringify({
+      name: currentPrompt.name,
+      content: currentPrompt.content,
+      type: currentPrompt.type,
+    });
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      });
+
+      if (response.ok) {
+        const savedPrompt = await response.json();
+        if (editingPrompt) {
+          setUserSystemPrompts(
+            userSystemPrompts.map((p) =>
+              p.id === savedPrompt.id ? savedPrompt : p,
+            ),
+          );
+          setEditingPrompt(null);
+        } else {
+          setUserSystemPrompts([...userSystemPrompts, savedPrompt]);
+          setNewPromptName('');
+          setNewPromptContent('');
+          setNewPromptType('system');
+          setIsAddingNewPrompt(false);
+        }
+        console.log(`System prompt ${editingPrompt ? 'updated' : 'added'}.`);
+      } else {
+        const errorData = await response.json();
+        console.error(
+          errorData.error ||
+            `Failed to ${editingPrompt ? 'update' : 'add'} prompt.`,
+        );
+      }
+    } catch (error) {
+      console.error(`Error ${editingPrompt ? 'updating' : 'adding'} prompt.`);
+    }
+  };
+
+  const handleDeleteSystemPrompt = async (promptId: string) => {
+    if (!confirm('Are you sure you want to delete this prompt?')) return;
+    try {
+      const response = await fetch(`/api/system-prompts/${promptId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setUserSystemPrompts(
+          userSystemPrompts.filter((p) => p.id !== promptId),
+        );
+        console.log('System prompt deleted.');
+      } else {
+        const errorData = await response.json();
+        console.error(errorData.error || 'Failed to delete prompt.');
+      }
+    } catch (error) {
+      console.error('Error deleting prompt.');
     }
   };
 
@@ -500,16 +660,340 @@ const Page = () => {
               </div>
             </SettingsSection>
 
-            <SettingsSection title="System Instructions">
+            {/* TODO: Refactor into reusable components */}
+            <SettingsSection
+              title="System Prompts"
+              tooltip="System prompts will be added to EVERY request in the AI model.\nUSE EXTREME CAUTION, as they can significantly alter the AI's behavior and responses.\nA typical safe prompt might be: '/no_think', to disable thinking in models that support it.\n\nProviding formatting instructions or specific behaviors could lead to unexpected results."
+            >
               <div className="flex flex-col space-y-4">
-                <Textarea
-                  value={systemInstructions}
-                  isSaving={savingStates['systemInstructions']}
-                  onChange={(e) => {
-                    setSystemInstructions(e.target.value);
-                  }}
-                  onSave={(value) => saveConfig('systemInstructions', value)}
-                />
+                {userSystemPrompts
+                  .filter((prompt) => prompt.type === 'system')
+                  .map((prompt) => (
+                    <div
+                      key={prompt.id}
+                      className="p-3 border border-light-secondary dark:border-dark-secondary rounded-md bg-light-100 dark:bg-dark-100"
+                    >
+                      {editingPrompt && editingPrompt.id === prompt.id ? (
+                        <div className="space-y-3">
+                          <InputComponent
+                            type="text"
+                            value={editingPrompt.name}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLInputElement>,
+                            ) =>
+                              setEditingPrompt({
+                                ...editingPrompt,
+                                name: e.target.value,
+                              })
+                            }
+                            placeholder="Prompt Name"
+                            className="text-black dark:text-white bg-white dark:bg-dark-secondary"
+                          />
+                          <Select
+                            value={editingPrompt.type}
+                            onChange={(e) =>
+                              setEditingPrompt({
+                                ...editingPrompt,
+                                type: e.target.value as 'system' | 'persona',
+                              })
+                            }
+                            options={[
+                              { value: 'system', label: 'System Prompt' },
+                              { value: 'persona', label: 'Persona Prompt' },
+                            ]}
+                            className="text-black dark:text-white bg-white dark:bg-dark-secondary"
+                          />
+                          <TextareaComponent
+                            value={editingPrompt.content}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLTextAreaElement>,
+                            ) =>
+                              setEditingPrompt({
+                                ...editingPrompt,
+                                content: e.target.value,
+                              })
+                            }
+                            placeholder="Prompt Content"
+                            className="min-h-[100px] text-black dark:text-white bg-white dark:bg-dark-secondary"
+                          />
+                          <div className="flex space-x-2 justify-end">
+                            <button
+                              onClick={() => setEditingPrompt(null)}
+                              className="px-3 py-2 text-sm rounded-md bg-light-secondary hover:bg-light-200 dark:bg-dark-secondary dark:hover:bg-dark-200 text-black/80 dark:text-white/80 flex items-center gap-1.5"
+                            >
+                              <X size={16} />
+                              Cancel
+                            </button>
+                            <button
+                              onClick={handleAddOrUpdateSystemPrompt}
+                              className="px-3 py-2 text-sm rounded-md bg-[#24A0ED] hover:bg-[#1f8cdb] text-white flex items-center gap-1.5"
+                            >
+                              <Save size={16} />
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex justify-between items-start">
+                          <div className="flex-grow">
+                            <h4 className="font-semibold text-black/90 dark:text-white/90">
+                              {prompt.name}
+                            </h4>
+                            <p
+                              className="text-sm text-black/70 dark:text-white/70 mt-1 whitespace-pre-wrap overflow-hidden text-ellipsis"
+                              style={{
+                                maxHeight: '3.6em',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                              }}
+                            >
+                              {prompt.content}
+                            </p>
+                          </div>
+                          <div className="flex space-x-1 flex-shrink-0 ml-2">
+                            <button
+                              onClick={() => setEditingPrompt({ ...prompt })}
+                              title="Edit"
+                              className="p-1.5 rounded-md hover:bg-light-200 dark:hover:bg-dark-200 text-black/70 dark:text-white/70"
+                            >
+                              <Edit3 size={18} />
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleDeleteSystemPrompt(prompt.id)
+                              }
+                              title="Delete"
+                              className="p-1.5 rounded-md hover:bg-light-200 dark:hover:bg-dark-200 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-500"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                {isAddingNewPrompt && newPromptType === 'system' && (
+                  <div className="p-3 border border-dashed border-light-secondary dark:border-dark-secondary rounded-md space-y-3 bg-light-100 dark:bg-dark-100">
+                    <InputComponent
+                      type="text"
+                      value={newPromptName}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setNewPromptName(e.target.value)
+                      }
+                      placeholder="System Prompt Name"
+                      className="text-black dark:text-white bg-white dark:bg-dark-secondary"
+                    />
+                    <TextareaComponent
+                      value={newPromptContent}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        setNewPromptContent(e.target.value)
+                      }
+                      placeholder="System prompt content (e.g., '/nothink')"
+                      className="min-h-[100px] text-black dark:text-white bg-white dark:bg-dark-secondary"
+                    />
+                    <div className="flex space-x-2 justify-end">
+                      <button
+                        onClick={() => {
+                          setIsAddingNewPrompt(false);
+                          setNewPromptName('');
+                          setNewPromptContent('');
+                          setNewPromptType('system');
+                        }}
+                        className="px-3 py-2 text-sm rounded-md bg-light-secondary hover:bg-light-200 dark:bg-dark-secondary dark:hover:bg-dark-200 text-black/80 dark:text-white/80 flex items-center gap-1.5"
+                      >
+                        <X size={16} />
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleAddOrUpdateSystemPrompt}
+                        className="px-3 py-2 text-sm rounded-md bg-[#24A0ED] hover:bg-[#1f8cdb] text-white flex items-center gap-1.5"
+                      >
+                        <Save size={16} />
+                        Add System Prompt
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {!isAddingNewPrompt && (
+                  <button
+                    onClick={() => {
+                      setIsAddingNewPrompt(true);
+                      setNewPromptType('system');
+                    }}
+                    className="self-start px-3 py-2 text-sm rounded-md border border-light-200 dark:border-dark-200 hover:bg-light-200 dark:hover:bg-dark-200 text-black/80 dark:text-white/80 flex items-center gap-1.5"
+                  >
+                    <PlusCircle size={18} /> Add System Prompt
+                  </button>
+                )}
+              </div>
+            </SettingsSection>
+
+            <SettingsSection
+              title="Persona Prompts"
+              tooltip="Persona prompts will only be applied to the final response.\nThey can define the personality and character traits for the AI assistant.\nSuch as: 'You are a pirate that speaks in riddles.'\n\nThey could be used to provide structured output instructions\nSuch as: 'Provide answers formatted with bullet points and tables.'"
+            >
+              <div className="flex flex-col space-y-4">
+                {userSystemPrompts
+                  .filter((prompt) => prompt.type === 'persona')
+                  .map((prompt) => (
+                    <div
+                      key={prompt.id}
+                      className="p-3 border border-light-secondary dark:border-dark-secondary rounded-md bg-light-100 dark:bg-dark-100"
+                    >
+                      {editingPrompt && editingPrompt.id === prompt.id ? (
+                        <div className="space-y-3">
+                          <InputComponent
+                            type="text"
+                            value={editingPrompt.name}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLInputElement>,
+                            ) =>
+                              setEditingPrompt({
+                                ...editingPrompt,
+                                name: e.target.value,
+                              })
+                            }
+                            placeholder="Prompt Name"
+                            className="text-black dark:text-white bg-white dark:bg-dark-secondary"
+                          />
+                          <Select
+                            value={editingPrompt.type}
+                            onChange={(e) =>
+                              setEditingPrompt({
+                                ...editingPrompt,
+                                type: e.target.value as 'system' | 'persona',
+                              })
+                            }
+                            options={[
+                              { value: 'system', label: 'System Prompt' },
+                              { value: 'persona', label: 'Persona Prompt' },
+                            ]}
+                            className="text-black dark:text-white bg-white dark:bg-dark-secondary"
+                          />
+                          <TextareaComponent
+                            value={editingPrompt.content}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLTextAreaElement>,
+                            ) =>
+                              setEditingPrompt({
+                                ...editingPrompt,
+                                content: e.target.value,
+                              })
+                            }
+                            placeholder="Prompt Content"
+                            className="min-h-[100px] text-black dark:text-white bg-white dark:bg-dark-secondary"
+                          />
+                          <div className="flex space-x-2 justify-end">
+                            <button
+                              onClick={() => setEditingPrompt(null)}
+                              className="px-3 py-2 text-sm rounded-md bg-light-secondary hover:bg-light-200 dark:bg-dark-secondary dark:hover:bg-dark-200 text-black/80 dark:text-white/80 flex items-center gap-1.5"
+                            >
+                              <X size={16} />
+                              Cancel
+                            </button>
+                            <button
+                              onClick={handleAddOrUpdateSystemPrompt}
+                              className="px-3 py-2 text-sm rounded-md bg-[#24A0ED] hover:bg-[#1f8cdb] text-white flex items-center gap-1.5"
+                            >
+                              <Save size={16} />
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex justify-between items-start">
+                          <div className="flex-grow">
+                            <h4 className="font-semibold text-black/90 dark:text-white/90">
+                              {prompt.name}
+                            </h4>
+                            <p
+                              className="text-sm text-black/70 dark:text-white/70 mt-1 whitespace-pre-wrap overflow-hidden text-ellipsis"
+                              style={{
+                                maxHeight: '3.6em',
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                              }}
+                            >
+                              {prompt.content}
+                            </p>
+                          </div>
+                          <div className="flex space-x-1 flex-shrink-0 ml-2">
+                            <button
+                              onClick={() => setEditingPrompt({ ...prompt })}
+                              title="Edit"
+                              className="p-1.5 rounded-md hover:bg-light-200 dark:hover:bg-dark-200 text-black/70 dark:text-white/70"
+                            >
+                              <Edit3 size={18} />
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleDeleteSystemPrompt(prompt.id)
+                              }
+                              title="Delete"
+                              className="p-1.5 rounded-md hover:bg-light-200 dark:hover:bg-dark-200 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-500"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                {isAddingNewPrompt && newPromptType === 'persona' && (
+                  <div className="p-3 border border-dashed border-light-secondary dark:border-dark-secondary rounded-md space-y-3 bg-light-100 dark:bg-dark-100">
+                    <InputComponent
+                      type="text"
+                      value={newPromptName}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setNewPromptName(e.target.value)
+                      }
+                      placeholder="Persona Prompt Name"
+                      className="text-black dark:text-white bg-white dark:bg-dark-secondary"
+                    />
+                    <TextareaComponent
+                      value={newPromptContent}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                        setNewPromptContent(e.target.value)
+                      }
+                      placeholder="Persona prompt content (e.g., You are a helpful assistant that speaks like a pirate and uses nautical metaphors.)"
+                      className="min-h-[100px] text-black dark:text-white bg-white dark:bg-dark-secondary"
+                    />
+                    <div className="flex space-x-2 justify-end">
+                      <button
+                        onClick={() => {
+                          setIsAddingNewPrompt(false);
+                          setNewPromptName('');
+                          setNewPromptContent('');
+                          setNewPromptType('system');
+                        }}
+                        className="px-3 py-2 text-sm rounded-md bg-light-secondary hover:bg-light-200 dark:bg-dark-secondary dark:hover:bg-dark-200 text-black/80 dark:text-white/80 flex items-center gap-1.5"
+                      >
+                        <X size={16} />
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleAddOrUpdateSystemPrompt}
+                        className="px-3 py-2 text-sm rounded-md bg-[#24A0ED] hover:bg-[#1f8cdb] text-white flex items-center gap-1.5"
+                      >
+                        <Save size={16} />
+                        Add Persona Prompt
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {!isAddingNewPrompt && (
+                  <button
+                    onClick={() => {
+                      setIsAddingNewPrompt(true);
+                      setNewPromptType('persona');
+                    }}
+                    className="self-start px-3 py-2 text-sm rounded-md border border-light-200 dark:border-dark-200 hover:bg-light-200 dark:hover:bg-dark-200 text-black/80 dark:text-white/80 flex items-center gap-1.5"
+                  >
+                    <PlusCircle size={18} /> Add Persona Prompt
+                  </button>
+                )}
               </div>
             </SettingsSection>
 
@@ -622,7 +1106,7 @@ const Page = () => {
                             />
                             {isCustomContextWindow && (
                               <div className="mt-2">
-                                <Input
+                                <InputComponent
                                   type="number"
                                   min={512}
                                   value={contextWindowSize}
@@ -670,7 +1154,7 @@ const Page = () => {
                       <p className="text-black/70 dark:text-white/70 text-sm">
                         Model Name
                       </p>
-                      <Input
+                      <InputComponent
                         type="text"
                         placeholder="Model name"
                         value={config.customOpenaiModelName}
@@ -690,7 +1174,7 @@ const Page = () => {
                       <p className="text-black/70 dark:text-white/70 text-sm">
                         Custom OpenAI API Key
                       </p>
-                      <Input
+                      <InputComponent
                         type="password"
                         placeholder="Custom OpenAI API Key"
                         value={config.customOpenaiApiKey}
@@ -710,7 +1194,7 @@ const Page = () => {
                       <p className="text-black/70 dark:text-white/70 text-sm">
                         Custom OpenAI Base URL
                       </p>
-                      <Input
+                      <InputComponent
                         type="text"
                         placeholder="Custom OpenAI Base URL"
                         value={config.customOpenaiApiUrl}
@@ -815,7 +1299,7 @@ const Page = () => {
                   <p className="text-black/70 dark:text-white/70 text-sm">
                     OpenAI API Key
                   </p>
-                  <Input
+                  <InputComponent
                     type="password"
                     placeholder="OpenAI API Key"
                     value={config.openaiApiKey}
@@ -834,7 +1318,7 @@ const Page = () => {
                   <p className="text-black/70 dark:text-white/70 text-sm">
                     Ollama API URL
                   </p>
-                  <Input
+                  <InputComponent
                     type="text"
                     placeholder="Ollama API URL"
                     value={config.ollamaApiUrl}
@@ -853,7 +1337,7 @@ const Page = () => {
                   <p className="text-black/70 dark:text-white/70 text-sm">
                     GROQ API Key
                   </p>
-                  <Input
+                  <InputComponent
                     type="password"
                     placeholder="GROQ API Key"
                     value={config.groqApiKey}
@@ -872,7 +1356,7 @@ const Page = () => {
                   <p className="text-black/70 dark:text-white/70 text-sm">
                     Anthropic API Key
                   </p>
-                  <Input
+                  <InputComponent
                     type="password"
                     placeholder="Anthropic API key"
                     value={config.anthropicApiKey}
@@ -891,7 +1375,7 @@ const Page = () => {
                   <p className="text-black/70 dark:text-white/70 text-sm">
                     Gemini API Key
                   </p>
-                  <Input
+                  <InputComponent
                     type="password"
                     placeholder="Gemini API key"
                     value={config.geminiApiKey}
@@ -910,7 +1394,7 @@ const Page = () => {
                   <p className="text-black/70 dark:text-white/70 text-sm">
                     Deepseek API Key
                   </p>
-                  <Input
+                  <InputComponent
                     type="password"
                     placeholder="Deepseek API Key"
                     value={config.deepseekApiKey}
@@ -929,7 +1413,7 @@ const Page = () => {
                   <p className="text-black/70 dark:text-white/70 text-sm">
                     LM Studio API URL
                   </p>
-                  <Input
+                  <InputComponent
                     type="text"
                     placeholder="LM Studio API URL"
                     value={config.lmStudioApiUrl}
@@ -950,6 +1434,4 @@ const Page = () => {
       )}
     </div>
   );
-};
-
-export default Page;
+}

@@ -12,13 +12,11 @@ import { File as FileType } from '../ChatWindow';
 const Attach = ({
   fileIds,
   setFileIds,
-  showText,
   files,
   setFiles,
 }: {
   fileIds: string[];
   setFileIds: (fileIds: string[]) => void;
-  showText?: boolean;
   files: FileType[];
   setFiles: (files: FileType[]) => void;
 }) => {
@@ -164,8 +162,7 @@ const Attach = ({
       type="button"
       onClick={() => fileInputRef.current.click()}
       className={cn(
-        'flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white',
-        showText ? '' : 'p-2',
+        'flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white p-2',
       )}
     >
       <input
@@ -177,9 +174,6 @@ const Attach = ({
         hidden
       />
       <Paperclip size="18" />
-      {showText && (
-        <p className="text-xs font-medium pl-[1px] hidden lg:block">Attach</p>
-      )}
     </button>
   );
 };
