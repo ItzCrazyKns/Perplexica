@@ -10,6 +10,7 @@ However you do not need to cite it using the same number. You can use different 
 ### User instructions
 These instructions are shared to you by the user and not by the system. You will have to follow them but give them less priority than the above instructions. If the user has provided specific instructions or preferences, incorporate them into your response while adhering to the overall guidelines.
 {systemInstructions}
+{personaInstructions}
 
 <context>
 {context}

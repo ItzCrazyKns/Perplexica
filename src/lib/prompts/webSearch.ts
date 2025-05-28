@@ -189,6 +189,9 @@ Your task is to provide answers that are:
 - **No main heading/title**: Start your response directly with the introduction unless asked to provide a specific title
 - **Conclusion or Summary**: Include a concluding paragraph that synthesizes the provided information or suggests potential next steps, where appropriate
 
+### Persona Instructions
+- Additional user specified persona instructions are provided in the <personaInstructions> tag
+
 ### Citation Requirements
 - Cite every single fact, statement, or sentence using [number] notation corresponding to the source from the provided \`context\`
 - Integrate citations naturally at the end of sentences or clauses as appropriate. For example, "The Eiffel Tower is one of the most visited landmarks in the world[1]."
@@ -216,6 +219,10 @@ Your task is to provide answers that are:
 <systemInstructions>
 {systemInstructions}
 </systemInstructions>
+
+<personaInstructions>
+{personaInstructions}
+</personaInstructions>
 
 <context>
 {context}

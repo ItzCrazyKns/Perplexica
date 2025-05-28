@@ -318,6 +318,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
         query: (input: BasicChainInput) => input.query,
         chat_history: (input: BasicChainInput) => input.chat_history,
         date: () => formatDateForLLM(),
+        personaInstructions: () => personaInstructions || '',
         context: RunnableLambda.from(
           async (
             input: BasicChainInput,
@@ -390,13 +391,9 @@ class MetaSearchAgent implements MetaSearchAgentType {
           })
           .pipe(this.processDocs),
       }),
-      // TODO: this doesn't seem like a very good way to pass persona instructions. Should do this better.
       ChatPromptTemplate.fromMessages([
         [
-          'system',
-          personaInstructions
-            ? `${this.config.responsePrompt}\n\nAdditional formatting/style instructions:\n${personaInstructions}`
-            : this.config.responsePrompt,
+          'system', this.config.responsePrompt,
         ],
         new MessagesPlaceholder('chat_history'),
         ['user', '{query}'],
