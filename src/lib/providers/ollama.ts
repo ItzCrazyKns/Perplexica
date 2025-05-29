@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getKeepAlive, getOllamaApiEndpoint } from '../config';
+import { getKeepAlive, getOllamaApiEndpoint, getOllamaApiKey, getOllamaModelName } from '../config';
 import { ChatModel, EmbeddingModel } from '.';
 
 export const PROVIDER_INFO = {
@@ -8,6 +8,20 @@ export const PROVIDER_INFO = {
 };
 import { ChatOllama } from '@langchain/community/chat_models/ollama';
 import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
+import { get } from 'http';
+
+const getOllamaHttpHeaders = (): Record<string, string> => {
+  const result: Record<string, string> = {};
+
+  if (getOllamaApiKey()) {
+    result["Authorization"] = `Bearer ${getOllamaApiKey()}`;
+  }
+  if (process.env.OLLAMA_API_KEY) {
+    result["Authorization"] = `Bearer ${process.env.OLLAMA_API_KEY}`;
+  }
+
+  return result;
+};
 
 export const loadOllamaChatModels = async () => {
   const ollamaApiEndpoint = getOllamaApiEndpoint();
@@ -18,6 +32,7 @@ export const loadOllamaChatModels = async () => {
     const res = await axios.get(`${ollamaApiEndpoint}/api/tags`, {
       headers: {
         'Content-Type': 'application/json',
+        ...getOllamaHttpHeaders(),
       },
     });
 
@@ -26,6 +41,9 @@ export const loadOllamaChatModels = async () => {
     const chatModels: Record<string, ChatModel> = {};
 
     models.forEach((model: any) => {
+      if (getOllamaModelName() && !model.model.startsWith(getOllamaModelName())) {
+        return; // Skip models that do not match the configured model name
+      }
       chatModels[model.model] = {
         displayName: model.name,
         model: new ChatOllama({
@@ -33,6 +51,7 @@ export const loadOllamaChatModels = async () => {
           model: model.model,
           temperature: 0.7,
           keepAlive: getKeepAlive(),
+          headers: getOllamaHttpHeaders(),
         }),
       };
     });
@@ -53,6 +72,7 @@ export const loadOllamaEmbeddingModels = async () => {
     const res = await axios.get(`${ollamaApiEndpoint}/api/tags`, {
       headers: {
         'Content-Type': 'application/json',
+        ...getOllamaHttpHeaders(),
       },
     });
 
@@ -66,6 +86,7 @@ export const loadOllamaEmbeddingModels = async () => {
         model: new OllamaEmbeddings({
           baseUrl: ollamaApiEndpoint,
           model: model.model,
+          headers: getOllamaHttpHeaders(),
         }),
       };
     });
