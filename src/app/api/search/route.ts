@@ -13,7 +13,7 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
-import { getSystemInstructionsOnly } from '@/lib/utils/prompts';
+import { getSystemPrompts } from '@/lib/utils/prompts';
 import { ChatOllama } from '@langchain/ollama';
 
 interface chatModel {
@@ -128,22 +128,7 @@ export const POST = async (req: Request) => {
     const abortController = new AbortController();
     const { signal } = abortController;
 
-    // Process system prompts from database if provided, otherwise use direct instructions
-    let systemInstructions = '';
-    if (
-      body.selectedSystemPromptIds &&
-      body.selectedSystemPromptIds.length > 0
-    ) {
-      try {
-        const promptInstructions = await getSystemInstructionsOnly(
-          body.selectedSystemPromptIds,
-        );
-        systemInstructions = promptInstructions || systemInstructions;
-      } catch (error) {
-        console.error('Error fetching system prompts:', error);
-        // Continue with fallback systemInstructions
-      }
-    }
+    const promptData = await getSystemPrompts(body.selectedSystemPromptIds || []);
 
     const emitter = await searchHandler.searchAndAnswer(
       body.query,
@@ -152,8 +137,9 @@ export const POST = async (req: Request) => {
       embeddings,
       body.optimizationMode,
       [],
-      systemInstructions,
+      promptData.systemInstructions,
       signal,
+      promptData.personaInstructions
     );
 
     if (!body.stream) {
