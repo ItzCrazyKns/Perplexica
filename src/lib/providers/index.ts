@@ -40,6 +40,10 @@ import {
   loadLMStudioEmbeddingsModels,
   PROVIDER_INFO as LMStudioInfo,
 } from './lmstudio';
+import {
+  loadOpenrouterChatModels,
+  PROVIDER_INFO as OpenRouterInfo,
+} from './openrouter';
 
 export const PROVIDER_METADATA = {
   openai: OpenAIInfo,
@@ -50,6 +54,7 @@ export const PROVIDER_METADATA = {
   transformers: TransformersInfo,
   deepseek: DeepseekInfo,
   lmstudio: LMStudioInfo,
+  openrouter: OpenRouterInfo,
   custom_openai: {
     key: 'custom_openai',
     displayName: 'Custom OpenAI',
@@ -77,6 +82,7 @@ export const chatModelProviders: Record<
   gemini: loadGeminiChatModels,
   deepseek: loadDeepseekChatModels,
   lmstudio: loadLMStudioChatModels,
+  openrouter: loadOpenrouterChatModels,
 };
 
 export const embeddingModelProviders: Record<

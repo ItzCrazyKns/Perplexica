@@ -28,6 +28,7 @@ interface SettingsType {
   };
   openaiApiKey: string;
   groqApiKey: string;
+  openrouterApiKey: string;
   anthropicApiKey: string;
   geminiApiKey: string;
   ollamaApiUrl: string;
@@ -1349,6 +1350,25 @@ export default function SettingsPage() {
                       }));
                     }}
                     onSave={(value) => saveConfig('groqApiKey', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    OpenRouter API Key
+                  </p>
+                  <InputComponent
+                    type="password"
+                    placeholder="OpenRouter API Key"
+                    value={config.openrouterApiKey}
+                    isSaving={savingStates['openrouterApiKey']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        openrouterApiKey: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('openrouterApiKey', value)}
                   />
                 </div>
 
