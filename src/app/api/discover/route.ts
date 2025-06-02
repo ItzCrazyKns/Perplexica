@@ -30,11 +30,11 @@ export const GET = async (req: Request) => {
             .map(async (_, i) => {
               return (
                 await searchSearxng(
-                  `site:${articleWebsites[i % articleWebsites.length]} ${
-                    topics[i % topics.length]
+                  `site:${articleWebsites[i % articleWebsites.length]} ${topics[i % topics.length]
                   }`,
                   {
-                    engines: ['bing news'],
+                    categories: ['news'],
+                    time_range: ['month'],
                     pageno: 1,
                   },
                 )
@@ -49,7 +49,7 @@ export const GET = async (req: Request) => {
       data = (
         await searchSearxng(
           `site:${articleWebsites[Math.floor(Math.random() * articleWebsites.length)]} ${topics[Math.floor(Math.random() * topics.length)]}`,
-          { engines: ['bing news'], pageno: 1 },
+          { categories: ['news'], time_range: ['month'], pageno: 1 },
         )
       ).results;
     }
