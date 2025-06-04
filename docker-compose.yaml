@@ -25,9 +25,9 @@ services:
       - MODELS_CUSTOM_OPENAI_API_KEY=""
       - MODELS_CUSTOM_OPENAI_API_URL=""
       - MODELS_CUSTOM_OPENAI_MODEL_NAME=""
-      - MODELS_OLLAMA_API_KEY=""            # Ollama API URL - http://host.docker.internal:11434
+      - MODELS_OLLAMA_API_URL=""            # Ollama API URL - http://host.docker.internal:11434
       - MODELS_DEEPSEEK_API_KEY=""
-      - MODELS_LM_STUDIO_API_KEY=""         # LM Studio API URL - http://host.docker.internal:1234
+      - MODELS_LM_STUDIO_API_URL=""         # LM Studio API URL - http://host.docker.internal:1234
       - API_ENDPOINTS_SEARXNG=""            # SearxNG API URL - http://localhost:32768
     ports:
       - 3000:3000
