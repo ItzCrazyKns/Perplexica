@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 CONFIG_TOML_FILE=/home/perplexica/config.toml
 
 TMP_FILE=${CONFIG_TOML_FILE}.tmp
@@ -45,5 +47,6 @@ mv "$TMP_FILE" "$CONFIG_TOML_FILE"
 
 echo "Config file updated successfully."
 
-# Start server
-node server.js
+node migrate.js
+
+exec node server.js

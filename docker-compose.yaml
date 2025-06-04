@@ -29,6 +29,7 @@ services:
       - MODELS_DEEPSEEK_API_KEY=""
       - MODELS_LM_STUDIO_API_URL=""         # LM Studio API URL - http://host.docker.internal:1234
       - API_ENDPOINTS_SEARXNG=""            # SearxNG API URL - http://localhost:32768
+      - DATA_DIR=/home/perplexica
     ports:
       - 3000:3000
     networks:
