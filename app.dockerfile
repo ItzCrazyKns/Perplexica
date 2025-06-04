@@ -24,12 +24,14 @@ COPY --from=builder /home/perplexica/.next/static ./public/_next/static
 
 COPY --from=builder /home/perplexica/.next/standalone ./
 COPY --from=builder /home/perplexica/data ./data
+
 COPY drizzle ./drizzle
 COPY --from=builder /home/perplexica/migrator/build ./build
 COPY --from=builder /home/perplexica/migrator/index.js ./migrate.js
 
 RUN mkdir /home/perplexica/uploads
 
+COPY sample.config.toml /home/perplexica/config.toml
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
-CMD ["./entrypoint.sh"]
+CMD ["bash", "./entrypoint.sh"]

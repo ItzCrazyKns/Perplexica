@@ -16,6 +16,19 @@ services:
       dockerfile: app.dockerfile
     environment:
       - SEARXNG_API_URL=http://searxng:8080
+      - GENERAL_SIMILARITY_MEASURE="cosine" # "cosine" or "dot"
+      - GENERAL_KEEP_ALIVE="5m"             # How long to keep Ollama models loaded into memory. (Instead of using -1 use "-1m")
+      - MODELS_OPENAI_API_KEY=""
+      - MODELS_GROQ_API_KEY=""
+      - MODELS_ANTHROPIC_API_KEY=""
+      - MODELS_GEMINI_API_KEY=""
+      - MODELS_CUSTOM_OPENAI_API_KEY=""
+      - MODELS_CUSTOM_OPENAI_API_URL=""
+      - MODELS_CUSTOM_OPENAI_MODEL_NAME=""
+      - MODELS_OLLAMA_API_URL=""            # Ollama API URL - http://host.docker.internal:11434
+      - MODELS_DEEPSEEK_API_KEY=""
+      - MODELS_LM_STUDIO_API_URL=""         # LM Studio API URL - http://host.docker.internal:1234
+      - API_ENDPOINTS_SEARXNG=""            # SearxNG API URL - http://localhost:32768
       - DATA_DIR=/home/perplexica
     ports:
       - 3000:3000
@@ -24,7 +37,6 @@ services:
     volumes:
       - backend-dbstore:/home/perplexica/data
       - uploads:/home/perplexica/uploads
-      - ./config.toml:/home/perplexica/config.toml
     restart: unless-stopped
 
 networks:

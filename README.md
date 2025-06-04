@@ -84,16 +84,18 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 3. After cloning, navigate to the directory containing the project files.
 
-4. Rename the `sample.config.toml` file to `config.toml`. For Docker setups, you need only fill in the following fields:
+4. Update environment variables in `docker-compose.yml` file to configure `config.toml`. 
 
-   - `OPENAI`: Your OpenAI API key. **You only need to fill this if you wish to use OpenAI's models**.
-   - `OLLAMA`: Your Ollama API URL. You should enter it as `http://host.docker.internal:PORT_NUMBER`. If you installed Ollama on port 11434, use `http://host.docker.internal:11434`. For other ports, adjust accordingly. **You need to fill this if you wish to use Ollama's models instead of OpenAI's**.
-   - `GROQ`: Your Groq API key. **You only need to fill this if you wish to use Groq's hosted models**.
-   - `ANTHROPIC`: Your Anthropic API key. **You only need to fill this if you wish to use Anthropic models**.
+Example: 
 
-     **Note**: You can change these after starting Perplexica from the settings dialog.
+Below section in `config.toml` can be configured using variables `MODELS_CUSTOM_OPENAI_API_KEY="sk-123456"`, `MODELS_CUSTOM_OPENAI_API_URL="http://localopenai:11134"` and `MODELS_CUSTOM_OPENAI_MODEL_NAME="meta-llama/llama-4"`
 
-   - `SIMILARITY_MEASURE`: The similarity measure to use (This is filled by default; you can leave it as is if you are unsure about it.)
+```toml
+[MODELS.CUSTOM_OPENAI]
+API_KEY = "sk-123456"
+API_URL = "http://localopenai:11134"
+MODEL_NAME = "meta-llama/llama-4"
+```
 
 5. Ensure you are in the directory containing the `docker-compose.yaml` file and execute:
 
