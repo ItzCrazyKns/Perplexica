@@ -33,8 +33,8 @@ COPY package.json ./
 
 RUN mkdir /home/perplexica/uploads && \
     chmod +x /home/perplexica/docker-entrypoint.sh && \
-    npx -y playwright install chromium --with-deps && \
     npm install playwright drizzle-kit && \
+    npx -y playwright install chromium --only-shell --with-deps && \
     apt-get update && \
     apt-get install -y procps && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
