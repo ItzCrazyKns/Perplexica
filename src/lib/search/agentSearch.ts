@@ -208,6 +208,7 @@ export class AgentSearch {
 - The content should completely address the query, providing detailed explanations, relevant facts, and necessary context
 - Use the content provided in the \`context\` tag, as well as the historical context of the conversation, to make your determination
 - If the context provides conflicting information, explain the discrepancies and what additional information is needed to resolve them
+- If the user is asking for a specific number of sources, ensure that we have enough sources to meet that requirement
 - Today's date is ${formatDateForLLM(new Date())}
 
 # Output Format
@@ -223,6 +224,7 @@ export class AgentSearch {
   - Avoid giving the same guidance more than once, and avoid repeating the same question multiple times
 - Respond with your answer in a <answer> XML tag
 - If you need more information, provide a detailed question in a <question> XML tag
+- If you need more information, provide a detailed one line reason why the content is not sufficient in a <reason> XML tag
 
 # Refinement History
 - The following questions have been asked to refine the search
@@ -238,6 +240,7 @@ ${state.searchInstructionHistory.map((question) => `  - ${question}`).join('\n')
 - If the content is not sufficient:
 <answer>need_more_info</answer>
 <question>A question that would help gather more specific information to answer the query?</question>
+<reason>A one line reason why the content is not sufficient</reason>
 
 # Context
 <context>
@@ -262,15 +265,21 @@ ${state.searchInstructionHistory.map((question) => `  - ${question}`).join('\n')
       // Parse the response to extract the analysis result
       const analysisOutputParser = new LineOutputParser({ key: 'answer' });
       const moreInfoOutputParser = new LineOutputParser({ key: 'question' });
+      const reasonOutputParser = new LineOutputParser({ key: 'reason' });
+
       const analysisResult = await analysisOutputParser.parse(
         response.content as string,
       );
       const moreInfoQuestion = await moreInfoOutputParser.parse(
         response.content as string,
       );
+      const reason = await reasonOutputParser.parse(
+        response.content as string,
+      );
 
       console.log('Analysis result:', analysisResult);
       console.log('More info question:', moreInfoQuestion);
+      console.log('Reason for insufficiency:', reason);
 
       if (analysisResult.startsWith('need_more_info')) {
         return new Command({
@@ -487,7 +496,7 @@ ${doc.metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + doc.metada
 
       const result = await workflow.invoke(initialState, {
         configurable: { thread_id: `agent_search_${Date.now()}` },
-        recursionLimit: 15,
+        recursionLimit: 20,
       });
 
       return result;

@@ -179,6 +179,7 @@ export const webSearchRetrieverAgentPrompt = `
 - Only add additional information or change the meaning of the question if it is necessary for clarity or relevance to the conversation such as adding a date or time for current events, or using historical content to augment the question with relevant context
 - Do not make up any new information like links or URLs
 - Condense the question to its essence and remove any unnecessary details
+- Search queries should be short and to the point, focusing on the main topic or question
 - Ensure the question is grammatically correct and free of spelling errors
 - If it is a simple writing task or a greeting (unless the greeting contains a question after it) like Hi, Hello, How are you, etc. instead of a question then you need to return \`not_needed\` as the response in the <answer> XML block
 - If you are a thinking or reasoning AI, do not use <answer> and </answer> or <links> and </links> tags in your thinking. Those tags should only be used in the final output
@@ -205,8 +206,26 @@ There are several examples attached for your reference inside the below examples
 <example>
     <input>
         <question>
+        What are the best ways to run Windows games on macOS with Apple Silicon? Get results from at least 3 sources.
+        </question>
+        <supervisor>
+        What are the top methods for running Windows games on macOS with Apple Silicon, and what are three reliable sources that detail these methods?
+        </supervisor>
+    </input>
+    <output>
+        <answer>
+        Run Windows games on macOS with Apple Silicon
+        </answer>
+    </output>
+</example>
+<example>
+    <input>
+        <question>
         What were the highlights of the race?
         </question>
+        <supervisor>
+        Find the highlights of the F1 Monaco Grand Prix.
+        </supervisor>
     </input>
     <output>
         <answer>
