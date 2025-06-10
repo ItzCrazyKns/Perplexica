@@ -1,18 +1,6 @@
-# GitHub Copilot Instructions for Perplexica
-
-This file provides context and guidance for GitHub Copilot when working with the Perplexica codebase.
-
-## Project Overview
+# Project Overview
 
 Perplexica is an open-source AI-powered search engine that uses advanced machine learning to provide intelligent search results. It combines web search capabilities with LLM-based processing to understand and answer user questions, similar to Perplexity AI but fully open source.
-
-## Key Components
-
-- **Frontend**: Next.js application with React components (in `/src/components` and `/src/app`)
-- **Backend Logic**: Node.js backend with API routes (in `/src/app/api`) and library code (in `/src/lib`)
-- **Search Engine**: Uses SearXNG as a metadata search engine
-- **LLM Integration**: Supports multiple models including OpenAI, Anthropic, Groq, Ollama (local models)
-- **Database**: SQLite database managed with Drizzle ORM
 
 ## Architecture
 
@@ -29,20 +17,24 @@ The system works through these main steps:
 - **Frontend**: React, Next.js, Tailwind CSS
 - **Backend**: Node.js
 - **Database**: SQLite with Drizzle ORM
-- **AI/ML**: LangChain for orchestration, various LLM providers
+- **AI/ML**: LangChain for orchestration, various LLM providers including OpenAI, Anthropic, Groq, Ollama (local models)
 - **Search**: SearXNG integration
 - **Embedding Models**: For re-ranking search results
 
 ## Project Structure
 
 - `/src/app`: Next.js app directory with page components and API routes
+  - `/src/app/api`: API endpoints for search and LLM interactions
 - `/src/components`: Reusable UI components
 - `/src/lib`: Backend functionality
-  - `/lib/search`: Search functionality and meta search agent
-  - `/lib/db`: Database schema and operations
-  - `/lib/providers`: LLM and embedding model integrations
-  - `/lib/prompts`: Prompt templates for LLMs
-  - `/lib/chains`: LangChain chains for various operations
+  - `lib/search`: Search functionality and meta search agent
+  - `lib/db`: Database schema and operations
+  - `lib/providers`: LLM and embedding model integrations
+  - `lib/prompts`: Prompt templates for LLMs
+  - `lib/chains`: LangChain chains for various operations
+  - `lib/agents`: LangGraph agents for advanced processing
+  - `lib/tools`: LangGraph tools for use by agents
+  - `lib/utils`: Utility functions and types including web content retrieval and processing
 
 ## Focus Modes
 
@@ -84,6 +76,8 @@ When working on this codebase, you might need to:
 - Update database schema in `/src/lib/db/schema.ts`
 - Create new prompt templates in `/src/lib/prompts`
 - Build new chains in `/src/lib/chains`
+- Implement new LangGraph agents in `/src/lib/agents`
+- Create new tools for LangGraph agents in `/src/lib/tools`
 
 ## AI Behavior
 
@@ -92,3 +86,5 @@ When working on this codebase, you might need to:
 - If you don't know the answer, ask for clarification
 - Do not add additional packages or dependencies unless explicitly requested
 - Only make changes to the code that are relevant to the task at hand
+- Do not create new files to test changes
+- Do not run the application unless asked

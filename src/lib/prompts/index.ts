@@ -6,7 +6,7 @@ const prompts = {
   webSearchResponsePrompt,
   webSearchRetrieverPrompt,
   localResearchPrompt,
-  chatPrompt
+  chatPrompt,
 };
 
 export default prompts;

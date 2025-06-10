@@ -1,12 +1,13 @@
-import axios from 'axios';
-import { htmlToText } from 'html-to-text';
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio';
+import { PlaywrightWebBaseLoader } from '@langchain/community/document_loaders/web/playwright';
 import { Document } from '@langchain/core/documents';
-import pdfParse from 'pdf-parse';
-import { Configuration, Dataset, PlaywrightCrawler } from 'crawlee';
 import { Readability } from '@mozilla/readability';
+import axios from 'axios';
 import { JSDOM } from 'jsdom';
+import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import fetch from 'node-fetch';
+import pdfParse from 'pdf-parse';
+import type { Browser, Page } from 'playwright';
 
 export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
   const splitter = new RecursiveCharacterTextSplitter();
@@ -21,13 +22,16 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
           : `https://${link}`;
 
       try {
-        const res = await axios.get(link, {
-          responseType: 'arraybuffer',
-        });
-
-        const isPdf = res.headers['content-type'] === 'application/pdf';
+        // First, check if it's a PDF
+        const headRes = await axios.head(link);
+        const isPdf = headRes.headers['content-type'] === 'application/pdf';
 
         if (isPdf) {
+          // Handle PDF files
+          const res = await axios.get(link, {
+            responseType: 'arraybuffer',
+          });
+
           const pdfText = await pdfParse(res.data);
           const parsedText = pdfText.text
             .replace(/(\r\n|\n|\r)/gm, ' ')
@@ -51,36 +55,29 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
           return;
         }
 
-        const parsedText = htmlToText(res.data.toString('utf8'), {
-          selectors: [
-            {
-              selector: 'a',
-              options: {
-                ignoreHref: true,
-              },
-            },
-          ],
-        })
-          .replace(/(\r\n|\n|\r)/gm, ' ')
-          .replace(/\s+/g, ' ')
-          .trim();
-
-        const splittedText = await splitter.splitText(parsedText);
-        const title = res.data
-          .toString('utf8')
-          .match(/<title.*>(.*?)<\/title>/)?.[1];
-
-        const linkDocs = splittedText.map((text) => {
-          return new Document({
-            pageContent: text,
-            metadata: {
-              title: title || link,
-              url: link,
-            },
-          });
+        // Handle web pages using CheerioWebBaseLoader
+        const loader = new CheerioWebBaseLoader(link, {
+          selector: 'body',
         });
 
-        docs.push(...linkDocs);
+        const webDocs = await loader.load();
+
+        if (webDocs && webDocs.length > 0) {
+          const webDoc = webDocs[0];
+          const splittedText = await splitter.splitText(webDoc.pageContent);
+
+          const linkDocs = splittedText.map((text) => {
+            return new Document({
+              pageContent: text,
+              metadata: {
+                title: webDoc.metadata.title || link,
+                url: link,
+              },
+            });
+          });
+
+          docs.push(...linkDocs);
+        }
       } catch (err) {
         console.error(
           'An error occurred while getting documents from links: ',
@@ -102,14 +99,9 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
   return docs;
 };
 
-interface CrawledContent {
-  text: string;
-  title: string;
-  html?: string;
-}
-
 /**
- * Fetches web content from a given URL using Crawlee and Playwright. Parses it using Readability.
+ * Fetches web content from a given URL using LangChain's PlaywrightWebBaseLoader.
+ * Parses it using Readability for better content extraction.
  * Returns a Document object containing the parsed text and metadata.
  *
  * @param url - The URL to fetch content from.
@@ -120,94 +112,89 @@ export const getWebContent = async (
   url: string,
   getHtml: boolean = false,
 ): Promise<Document | null> => {
-  let crawledContent: CrawledContent | null = null;
-  const crawler = new PlaywrightCrawler(
-    {
-      async requestHandler({ page }) {
-        // Wait for the content to load
+  try {
+    console.log(`Fetching content from URL: ${url}`);
+
+    const loader = new PlaywrightWebBaseLoader(url, {
+      launchOptions: {
+        headless: true,
+        timeout: 30000,
+      },
+      gotoOptions: {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000,
+      },
+      async evaluate(page: Page, browser: Browser) {
+        // Wait for the content to load properly
         await page.waitForLoadState('networkidle', { timeout: 10000 });
 
         // Allow some time for dynamic content to load
         await page.waitForTimeout(3000);
 
-        console.log(`Crawling URL: ${url}`);
-
-        // Get the page title
-        const title = await page.title();
-
-        try {
-          // Use Readability to parse the page content
-          const content = await page.content();
-          const dom = new JSDOM(content, { url });
-          const reader = new Readability(dom.window.document, {
-            charThreshold: 25,
-          }).parse();
-          const crawleeContent: CrawledContent = {
-            text: reader?.textContent || '',
-            title,
-            html: getHtml
-              ? reader?.content || (await page.content())
-              : undefined,
-          };
-
-          crawledContent = crawleeContent;
-        } catch (error) {
-          console.error(
-            `Failed to parse content with Readability for URL: ${url}`,
-            error,
-          );
-        }
+        return await page.content();
       },
-      maxRequestsPerCrawl: 1,
-      maxRequestRetries: 2,
-      retryOnBlocked: true,
-      maxSessionRotations: 3,
-    },
-    new Configuration({ persistStorage: false }),
-  );
+    });
 
-  try {
-    await crawler.run([url]);
+    const docs = await loader.load();
 
-    if (!crawledContent) {
-      console.warn(`Failed to parse article content for URL: ${url}`);
+    if (!docs || docs.length === 0) {
+      console.warn(`Failed to load content for URL: ${url}`);
       return null;
     }
 
-    const content = crawledContent as CrawledContent;
+    const doc = docs[0];
+
+    const dom = new JSDOM(doc.pageContent, { url });
+    const reader = new Readability(dom.window.document, { charThreshold: 25 });
+    const article = reader.parse();
 
     // Normalize the text content
     const normalizedText =
-      content?.text
+      article?.textContent
         ?.split('\n')
         .map((line: string) => line.trim())
         .filter((line: string) => line.length > 0)
         .join('\n') || '';
 
-    // Create a Document with the parsed content
     const returnDoc = new Document({
       pageContent: normalizedText,
       metadata: {
-        html: content?.html,
-        title: content?.title,
+        title: article?.title || doc.metadata.title || '',
         url: url,
+        html: getHtml ? article?.content : undefined,
       },
     });
 
     console.log(
-      `Got content with Crawlee and Readability, URL: ${url}, Text Length: ${returnDoc.pageContent.length}, html Length: ${returnDoc.metadata.html?.length || 0}`,
+      `Got content with LangChain Playwright, URL: ${url}, Text Length: ${returnDoc.pageContent.length}`,
     );
+
     return returnDoc;
   } catch (error) {
     console.error(`Error fetching/parsing URL ${url}:`, error);
+
+    // Fallback to CheerioWebBaseLoader for simpler content extraction
+    try {
+      console.log(`Fallback to Cheerio for URL: ${url}`);
+      const cheerioLoader = new CheerioWebBaseLoader(url);
+      const docs = await cheerioLoader.load();
+
+      if (docs && docs.length > 0) {
+        return docs[0];
+      }
+    } catch (fallbackError) {
+      console.error(
+        `Cheerio fallback also failed for URL ${url}:`,
+        fallbackError,
+      );
+    }
+
     return null;
-  } finally {
-    await crawler.teardown();
   }
 };
 
 /**
- * Fetches web content from a given URL and parses it using Readability.
+ * Fetches web content from a given URL using CheerioWebBaseLoader for faster, lighter extraction.
  * Returns a Document object containing the parsed text and metadata.
  *
  * @param {string} url - The URL to fetch content from.
@@ -219,42 +206,72 @@ export const getWebContentLite = async (
   getHtml: boolean = false,
 ): Promise<Document | null> => {
   try {
-    const response = await fetch(url, { timeout: 5000 });
-    const html = await response.text();
+    console.log(`Fetching content (lite) from URL: ${url}`);
 
-    // Create a DOM from the fetched HTML
-    const dom = new JSDOM(html, { url });
+    const loader = new CheerioWebBaseLoader(url);
 
-    // Get title before we modify the DOM
-    const originalTitle = dom.window.document.title;
+    const docs = await loader.load();
 
-    // Use Readability to parse the article content
-    const reader = new Readability(dom.window.document, { charThreshold: 25 });
-    const article = reader.parse();
-
-    if (!article) {
-      console.warn(`Failed to parse article content for URL: ${url}`);
+    if (!docs || docs.length === 0) {
+      console.warn(`Failed to load content for URL: ${url}`);
       return null;
     }
 
-    const normalizedText =
-      article?.textContent
-        ?.split('\n')
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0)
-        .join('\n') || '';
+    const doc = docs[0];
 
-    // Create a Document with the parsed content
+    // Try to use Readability for better content extraction if possible
+    if (getHtml) {
+      try {
+        const response = await fetch(url, { timeout: 5000 });
+        const html = await response.text();
+        const dom = new JSDOM(html, { url });
+        const originalTitle = dom.window.document.title;
+        const reader = new Readability(dom.window.document, {
+          charThreshold: 25,
+        });
+        const article = reader.parse();
+
+        if (article) {
+          const normalizedText =
+            article.textContent
+              ?.split('\n')
+              .map((line) => line.trim())
+              .filter((line) => line.length > 0)
+              .join('\n') || '';
+
+          return new Document({
+            pageContent: normalizedText,
+            metadata: {
+              html: article.content,
+              title: article.title || originalTitle,
+              url: url,
+            },
+          });
+        }
+      } catch (readabilityError) {
+        console.warn(
+          `Readability parsing failed for ${url}, using Cheerio fallback`,
+        );
+      }
+    }
+
+    // Normalize the text content from Cheerio
+    const normalizedText = doc.pageContent
+      .split('\n')
+      .map((line: string) => line.trim())
+      .filter((line: string) => line.length > 0)
+      .join('\n');
+
     return new Document({
-      pageContent: normalizedText || '',
+      pageContent: normalizedText,
       metadata: {
-        html: getHtml ? article.content : undefined,
-        title: article.title || originalTitle,
+        title: doc.metadata.title || 'Web Page',
         url: url,
+        html: getHtml ? doc.pageContent : undefined,
       },
     });
   } catch (error) {
-    console.error(`Error fetching/parsing URL ${url}:`); //, error);
+    console.error(`Error fetching/parsing URL ${url}:`, error);
     return null;
   }
 };

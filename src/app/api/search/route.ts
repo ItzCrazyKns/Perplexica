@@ -30,7 +30,7 @@ interface embeddingModel {
 }
 
 interface ChatRequestBody {
-  optimizationMode: 'speed' | 'balanced';
+  optimizationMode: 'speed' | 'balanced' | 'agent';
   focusMode: string;
   chatModel?: chatModel;
   embeddingModel?: embeddingModel;
@@ -128,7 +128,9 @@ export const POST = async (req: Request) => {
     const abortController = new AbortController();
     const { signal } = abortController;
 
-    const promptData = await getSystemPrompts(body.selectedSystemPromptIds || []);
+    const promptData = await getSystemPrompts(
+      body.selectedSystemPromptIds || [],
+    );
 
     const emitter = await searchHandler.searchAndAnswer(
       body.query,
@@ -139,7 +141,7 @@ export const POST = async (req: Request) => {
       [],
       promptData.systemInstructions,
       signal,
-      promptData.personaInstructions
+      promptData.personaInstructions,
     );
 
     if (!body.stream) {

@@ -61,7 +61,7 @@ The API accepts a JSON object in the request body, where you define the focus mo
 
   - `speed`: Prioritize speed and get the quickest possible answer. Minimum effort retrieving web content. - Only uses SearXNG result previews.
   - `balanced`: Find the right balance between speed and accuracy. Medium effort retrieving web content. - Uses web scraping technologies to retrieve partial content from full web pages.
-  - `quality`: Get the most thorough and accurate answer. High effort retrieving web content. Requires a good AI model. May take a long time. - Uses web scraping technologies to retrieve and summarize full web content.
+  - `agent`: Use an agentic workflow to answer complex multi-part questions. This mode requires a model that is trained for tool use.
 
 - **`query`** (string, required): The search query or question.
 

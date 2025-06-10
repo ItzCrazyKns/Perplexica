@@ -219,9 +219,9 @@ This fork adds several enhancements to the original Perplexica project:
   - Added BASE_URL config to support reverse proxy deployments
   - Added autocomplete functionality proxied to SearxNG
 - ✅ Enhanced Reddit focus mode to work around SearxNG limitations
-- ✅ Adds Quality mode that uses the full content of web pages to answer queries
+- ✅ Enhanced Balance mode that uses a headless web browser to retrieve web content and use relevant excerpts to enhance responses
+- ✅ Adds Agent mode that uses the full content of web pages to answer queries and an agentic flow to intelligently answer complex queries with accuracy
   - See the [README.md](docs/architecture/README.md) in the docs architecture directory for more info
-  - Enhances Balanced mode which uses relevant excerpts of web content to answer queries
 
 ### AI Functionality
 

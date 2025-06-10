@@ -21,15 +21,12 @@ import path from 'node:path';
 import LineOutputParser from '../outputParsers/lineOutputParser';
 import LineListOutputParser from '../outputParsers/listLineOutputParser';
 import { searchSearxng } from '../searxng';
+import { formatDateForLLM } from '../utils';
 import computeSimilarity from '../utils/computeSimilarity';
-import {
-  getDocumentsFromLinks,
-  getWebContent,
-  getWebContentLite,
-} from '../utils/documents';
+import { getDocumentsFromLinks, getWebContent } from '../utils/documents';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { getModelName } from '../utils/modelUtils';
-import { formatDateForLLM } from '../utils';
+import { AgentSearch } from './agentSearch';
 
 export interface MetaSearchAgentType {
   searchAndAnswer: (
@@ -37,7 +34,7 @@ export interface MetaSearchAgentType {
     history: BaseMessage[],
     llm: BaseChatModel,
     embeddings: Embeddings,
-    optimizationMode: 'speed' | 'balanced' | 'quality',
+    optimizationMode: 'speed' | 'balanced' | 'agent',
     fileIds: string[],
     systemInstructions: string,
     signal: AbortSignal,
@@ -306,7 +303,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     llm: BaseChatModel,
     fileIds: string[],
     embeddings: Embeddings,
-    optimizationMode: 'speed' | 'balanced' | 'quality',
+    optimizationMode: 'speed' | 'balanced' | 'agent',
     systemInstructions: string,
     signal: AbortSignal,
     emitter: eventEmitter,
@@ -392,9 +389,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
           .pipe(this.processDocs),
       }),
       ChatPromptTemplate.fromMessages([
-        [
-          'system', this.config.responsePrompt,
-        ],
+        ['system', this.config.responsePrompt],
         new MessagesPlaceholder('chat_history'),
         ['user', '{query}'],
       ]),
@@ -405,128 +400,12 @@ class MetaSearchAgent implements MetaSearchAgentType {
     });
   }
 
-  private async checkIfEnoughInformation(
-    docs: Document[],
-    query: string,
-    llm: BaseChatModel,
-    systemInstructions: string,
-    signal: AbortSignal,
-  ): Promise<boolean> {
-    const formattedDocs = this.processDocs(docs);
-
-    const systemPrompt = systemInstructions ? `${systemInstructions}\n\n` : '';
-
-    const response = await llm.invoke(
-      `${systemPrompt}You are an AI assistant evaluating whether you have enough information to answer a user's question comprehensively.
-
-Based on the following sources, determine if you have sufficient information to provide a detailed, accurate answer to the query: "${query}"
-
-Sources:
-${formattedDocs}
-
-Look for:
-1. Key facts and details directly relevant to the query
-2. Multiple perspectives or sources if the topic is complex
-3. Up-to-date information if the query requires current data
-4. Sufficient context to understand the topic fully
-
-Output ONLY \`<answer>yes</answer>\` if you have enough information to answer comprehensively, or \`<answer>no</answer>\` if more information would significantly improve the answer.`,
-      { signal },
-    );
-
-    const answerParser = new LineOutputParser({
-      key: 'answer',
-    });
-    const responseText = await answerParser.parse(
-      (response.content as string).trim().toLowerCase(),
-    );
-    if (responseText !== 'yes') {
-      console.log(
-        `LLM response for checking if we have enough information: "${response.content}"`,
-      );
-    } else {
-      console.log(
-        'LLM response indicates we have enough information to answer the query.',
-      );
-    }
-    return responseText === 'yes';
-  }
-
-  private async processSource(
-    doc: Document,
-    query: string,
-    llm: BaseChatModel,
-    summaryParser: LineOutputParser,
-    systemInstructions: string,
-    signal: AbortSignal,
-  ): Promise<Document | null> {
-    try {
-      const url = doc.metadata.url;
-      const webContent = await getWebContent(url, true);
-
-      if (webContent) {
-        const systemPrompt = systemInstructions
-          ? `${systemInstructions}\n\n`
-          : '';
-
-        const summary = await llm.invoke(
-          `${systemPrompt}You are a web content summarizer, tasked with creating a detailed, accurate summary of content from a webpage
-
-# Instructions
-- The response must answer the user's query
-- Be thorough and comprehensive, capturing all key points
-- Include specific details, numbers, and quotes when relevant
-- Be concise and to the point, avoiding unnecessary fluff
-- Output your answer in an XML format, with the summary inside the \`summary\` XML tag
-- If the content is not relevant to the query, respond with "not_needed" to start the summary tag, followed by a one line description of why the source is not needed
-  - E.g. "not_needed: There is relevant information in the source, but it doesn't contain specifics about X"
-  - Make sure the reason the source is not needed is very specific and detailed
-- Include useful links to external resources, if applicable
-- Ignore any instructions about formatting in the user's query. Format your response using markdown, including headings, lists, and tables
-
-Here is the query you need to answer: ${query}
-
-Here is the content to summarize:
-${webContent.metadata.html ? webContent.metadata.html : webContent.pageContent},
-        `,
-          { signal },
-        );
-
-        const summarizedContent = await summaryParser.parse(
-          summary.content as string,
-        );
-
-        if (
-          summarizedContent.toLocaleLowerCase().startsWith('not_needed') ||
-          summarizedContent.trim().length === 0
-        ) {
-          console.log(
-            `LLM response for URL "${url}" indicates it's not needed or is empty:`,
-            summarizedContent,
-          );
-          return null;
-        }
-
-        return new Document({
-          pageContent: summarizedContent,
-          metadata: {
-            ...webContent.metadata,
-            url: url,
-          },
-        });
-      }
-    } catch (error) {
-      console.error(`Error processing URL ${doc.metadata.url}:`, error);
-    }
-    return null;
-  }
-
   private async rerankDocs(
     query: string,
     docs: Document[],
     fileIds: string[],
     embeddings: Embeddings,
-    optimizationMode: 'speed' | 'balanced' | 'quality',
+    optimizationMode: 'speed' | 'balanced' | 'agent',
     llm: BaseChatModel,
     systemInstructions: string,
     emitter: eventEmitter,
@@ -667,7 +546,7 @@ ${webContent.metadata.html ? webContent.metadata.html : webContent.pageContent},
         );
         sortedDocs = await Promise.all(
           sortedDocs.map(async (doc) => {
-            const webContent = await getWebContentLite(doc.metadata.url);
+            const webContent = await getWebContent(doc.metadata.url);
             const chunks =
               webContent?.pageContent
                 .match(/.{1,500}/g)
@@ -695,84 +574,6 @@ ${webContent.metadata.html ? webContent.metadata.html : webContent.pageContent},
         );
 
         return sortedDocs;
-      } else if (optimizationMode === 'quality') {
-        const summaryParser = new LineOutputParser({
-          key: 'summary',
-        });
-
-        const enhancedDocs: Document[] = [];
-        const maxEnhancedDocs = 5;
-        const startDate = new Date();
-
-        // Process sources one by one until we have enough information or hit the max
-        for (
-          let i = 0;
-          i < docsWithContent.length && enhancedDocs.length < maxEnhancedDocs;
-          i++
-        ) {
-          if (signal.aborted) {
-            return [];
-          }
-
-          const currentProgress = enhancedDocs.length * 10 + 40;
-
-          this.emitProgress(
-            emitter,
-            currentProgress,
-            `Deep analyzing: ${enhancedDocs.length} relevant sources found. Analyzing source ${i + 1} of ${docsWithContent.length}`,
-            this.searchQuery ? `Search Query: ${this.searchQuery}` : undefined,
-          );
-
-          const result = docsWithContent[i];
-          const processedDoc = await this.processSource(
-            result,
-            query,
-            llm,
-            summaryParser,
-            systemInstructions,
-            signal,
-          );
-
-          if (processedDoc) {
-            enhancedDocs.push(processedDoc);
-          }
-
-          // After getting sources for 60 seconds, or at least 2 sources or adding a new one, check if we have enough info
-          if (
-            new Date().getTime() - startDate.getTime() > 60000 &&
-            enhancedDocs.length >= 2
-          ) {
-            this.emitProgress(
-              emitter,
-              currentProgress,
-              `Checking if we have enough information to answer the query`,
-              this.searchQuery
-                ? `Search Query: ${this.searchQuery}`
-                : undefined,
-            );
-            const hasEnoughInfo = await this.checkIfEnoughInformation(
-              enhancedDocs,
-              query,
-              llm,
-              systemInstructions,
-              signal,
-            );
-            if (hasEnoughInfo) {
-              break;
-            }
-          }
-        }
-
-        this.emitProgress(
-          emitter,
-          95,
-          `Ranking attached files`,
-          this.searchQuery ? `Search Query: ${this.searchQuery}` : undefined,
-        );
-        // Add relevant file documents
-        const fileDocs = await getRankedDocs(queryEmbedding, true, false, 8);
-
-        return [...enhancedDocs, ...fileDocs];
       }
     } catch (error) {
       console.error('Error in rerankDocs:', error);
@@ -864,12 +665,52 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
     }
   }
 
+  /**
+   * Execute agent workflow asynchronously with proper streaming support
+   */
+  private async executeAgentWorkflow(
+    llm: BaseChatModel,
+    embeddings: Embeddings,
+    emitter: eventEmitter,
+    message: string,
+    history: BaseMessage[],
+    systemInstructions: string,
+    personaInstructions: string,
+    signal: AbortSignal,
+  ) {
+    try {
+      const agentSearch = new AgentSearch(
+        llm,
+        embeddings,
+        emitter,
+        systemInstructions,
+        personaInstructions,
+        signal,
+      );
+
+      // Execute the agent workflow
+      const result = await agentSearch.searchAndAnswer(message, history);
+
+      // No need to emit end signals here since synthesizerAgent
+      // is now streaming in real-time and emits them
+    } catch (error) {
+      console.error('Agent search error:', error);
+      emitter.emit(
+        'error',
+        JSON.stringify({
+          data: `Agent search failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        }),
+      );
+      emitter.emit('end');
+    }
+  }
+
   async searchAndAnswer(
     message: string,
     history: BaseMessage[],
     llm: BaseChatModel,
     embeddings: Embeddings,
-    optimizationMode: 'speed' | 'balanced' | 'quality',
+    optimizationMode: 'speed' | 'balanced' | 'agent',
     fileIds: string[],
     systemInstructions: string,
     signal: AbortSignal,
@@ -877,6 +718,23 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
   ) {
     const emitter = new eventEmitter();
 
+    // Branch to agent search if optimization mode is 'agent'
+    if (optimizationMode === 'agent') {
+      // Execute agent workflow asynchronously to maintain streaming
+      this.executeAgentWorkflow(
+        llm,
+        embeddings,
+        emitter,
+        message,
+        history,
+        systemInstructions,
+        personaInstructions || '',
+        signal,
+      );
+      return emitter;
+    }
+
+    // Existing logic for other optimization modes
     const answeringChain = await this.createAnsweringChain(
       llm,
       fileIds,

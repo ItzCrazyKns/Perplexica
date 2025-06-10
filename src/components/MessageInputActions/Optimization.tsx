@@ -1,4 +1,4 @@
-import { ChevronDown, Minimize2, Sliders, Star, Zap } from 'lucide-react';
+import { ChevronDown, Minimize2, Sliders, Star, Zap, Bot } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Popover,
@@ -22,17 +22,24 @@ const OptimizationModes = [
       'Find the right balance between speed and accuracy. Medium effort retrieving web content.',
     icon: <Sliders size={20} className="text-[#4CAF50]" />,
   },
+  // {
+  //   key: 'quality',
+  //   title: 'Quality',
+  //   description:
+  //     'Get the most thorough and accurate answer. High effort retrieving web content. Requires a good AI model. May take a long time.',
+  //   icon: (
+  //     <Star
+  //       size={16}
+  //       className="text-[#2196F3] dark:text-[#BBDEFB] fill-[#BBDEFB] dark:fill-[#2196F3]"
+  //     />
+  //   ),
+  // },
   {
-    key: 'quality',
-    title: 'Quality',
+    key: 'agent',
+    title: 'Agent (Experimental)',
     description:
-      'Get the most thorough and accurate answer. High effort retrieving web content. Requires a good AI model. May take a long time.',
-    icon: (
-      <Star
-        size={16}
-        className="text-[#2196F3] dark:text-[#BBDEFB] fill-[#BBDEFB] dark:fill-[#2196F3]"
-      />
-    ),
+      'Use an agentic workflow to answer complex multi-part questions. This mode may take longer and is experimental. It uses large prompts and may not work with all models. Best with at least a 8b model that supports 32k context or more.',
+    icon: <Bot size={20} className="text-[#9C27B0]" />,
   },
 ];
 
