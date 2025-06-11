@@ -4,6 +4,7 @@ const articleWebsites = [
   'mashable.com',
   'theverge.com',
   'gizmodo.com',
+  'cnet.com',
   /* 'wired.com',
   'yahoo.com',
   'www.exchangewire.com',
