@@ -1,6 +1,7 @@
 import { Embeddings } from '@langchain/core/embeddings';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import {
+  AIMessage,
   BaseMessage,
   HumanMessage,
   SystemMessage,
@@ -166,7 +167,7 @@ export class AgentSearch {
         return new Command({
           goto: 'analyzer',
           update: {
-            messages: [new SystemMessage('No relevant documents found.')],
+            messages: [new AIMessage('No relevant documents found.')],
           },
         });
       }
@@ -177,14 +178,14 @@ export class AgentSearch {
       return new Command({
         goto: 'analyzer',
         update: {
-          messages: [new SystemMessage(responseMessage)],
+          messages: [new AIMessage(responseMessage)],
           relevantDocuments: documents,
           bannedUrls: bannedUrls,
         },
       });
     } catch (error) {
       console.error('Web search error:', error);
-      const errorMessage = new SystemMessage(
+      const errorMessage = new AIMessage(
         `Web search failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
 
@@ -208,8 +209,7 @@ export class AgentSearch {
 - The content should completely address the query, providing detailed explanations, relevant facts, and necessary context
 - Use the content provided in the \`context\` tag, as well as the historical context of the conversation, to make your determination
 - If the context provides conflicting information, explain the discrepancies and what additional information is needed to resolve them
-- If the user is asking for a specific number of sources, ensure that we have enough sources to meet that requirement
-- Today's date is ${formatDateForLLM(new Date())}
+- If the user is asking for a specific number of sources and the context does not provide enough, consider the content insufficient
 
 # Output Format
 - If the content is sufficient, respond with "good_content" in an <answer> XML tag
@@ -244,21 +244,21 @@ ${state.searchInstructionHistory.map((question) => `  - ${question}`).join('\n')
 
 # Context
 <context>
+Today's date is ${formatDateForLLM(new Date())}
 {context}
-</context>
-`;
+</context>`;
 
       const analysisPrompt = await ChatPromptTemplate.fromTemplate(
         analysisPromptTemplate,
       ).format({
         systemInstructions: this.systemInstructions,
         context: state.relevantDocuments
-          .map((doc) => doc.pageContent)
+          .map((doc, index) => `<source${index + 1}>${doc?.metadata?.title ? `<title>${doc?.metadata?.title}</title>` : ''}<content>${doc.pageContent}</content></source${index + 1}>`)
           .join('\n\n'),
       });
 
       const response = await this.llm.invoke(
-        [...state.messages, new SystemMessage(analysisPrompt)],
+        [...state.messages, new AIMessage(analysisPrompt)],
         { signal: this.signal },
       );
 
@@ -286,7 +286,7 @@ ${state.searchInstructionHistory.map((question) => `  - ${question}`).join('\n')
           goto: 'web_search',
           update: {
             messages: [
-              new SystemMessage(
+              new AIMessage(
                 `The following question can help refine the search: ${moreInfoQuestion}`,
               ),
             ],
@@ -300,7 +300,7 @@ ${state.searchInstructionHistory.map((question) => `  - ${question}`).join('\n')
         goto: 'synthesizer',
         update: {
           messages: [
-            new SystemMessage(
+            new AIMessage(
               `Analysis completed. We have sufficient information to answer the query.`,
             ),
           ],
@@ -308,7 +308,7 @@ ${state.searchInstructionHistory.map((question) => `  - ${question}`).join('\n')
       });
     } catch (error) {
       console.error('Analysis error:', error);
-      const errorMessage = new SystemMessage(
+      const errorMessage = new AIMessage(
         `Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
 
@@ -444,7 +444,7 @@ ${doc.metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + doc.metada
       });
     } catch (error) {
       console.error('Synthesis error:', error);
-      const errorMessage = new SystemMessage(
+      const errorMessage = new AIMessage(
         `Failed to synthesize answer: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
 
