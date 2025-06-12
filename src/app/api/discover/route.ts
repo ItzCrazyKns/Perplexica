@@ -1,6 +1,7 @@
 import { searchSearxng } from '@/lib/searxng';
 
 const articleWebsites = [
+  'cnet.com',
   'mashable.com',
   'theverge.com',
   'venturebeat.com',
