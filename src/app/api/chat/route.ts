@@ -110,6 +110,18 @@ const handleEmitterEvents = async (
       sources = parsedData.data;
     }
   });
+
+  stream.on('agent_action', (data) => {
+    writer.write(
+      encoder.encode(
+        JSON.stringify({
+          type: 'agent_action',
+          data: data.data,
+          messageId: userMessageId,
+        }) + '\n',
+      ),
+    );
+  });
   let modelStats: ModelStats = {
     modelName: '',
   };

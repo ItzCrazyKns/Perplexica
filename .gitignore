@@ -37,3 +37,6 @@ Thumbs.db
 # Db
 db.sqlite
 /searxng
+
+# AI stuff for planning and implementation
+.ai/

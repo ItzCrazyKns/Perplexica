@@ -33,7 +33,6 @@ The system works through these main steps:
   - `lib/prompts`: Prompt templates for LLMs
   - `lib/chains`: LangChain chains for various operations
   - `lib/agents`: LangGraph agents for advanced processing
-  - `lib/tools`: LangGraph tools for use by agents
   - `lib/utils`: Utility functions and types including web content retrieval and processing
 
 ## Focus Modes
@@ -77,7 +76,6 @@ When working on this codebase, you might need to:
 - Create new prompt templates in `/src/lib/prompts`
 - Build new chains in `/src/lib/chains`
 - Implement new LangGraph agents in `/src/lib/agents`
-- Create new tools for LangGraph agents in `/src/lib/tools`
 
 ## AI Behavior
 

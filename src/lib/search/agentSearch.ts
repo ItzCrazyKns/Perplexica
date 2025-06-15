@@ -22,7 +22,7 @@ import { webSearchRetrieverAgentPrompt } from '../prompts/webSearch';
 import { searchSearxng } from '../searxng';
 import { formatDateForLLM } from '../utils';
 import { getModelName } from '../utils/modelUtils';
-import { summarizeWebContent } from '../utils/summarizeWebContent';
+import { summarizeWebContent, SummarizeResult } from '../utils/summarizeWebContent';
 
 /**
  * State interface for the agent supervisor workflow
@@ -97,6 +97,21 @@ export class AgentSearch {
   private async webSearchAgent(
     state: typeof AgentState.State,
   ): Promise<Command> {
+    // Emit preparing web search event
+    this.emitter.emit('agent_action', {
+      type: 'agent_action',
+      data: {
+        action: 'PREPARING_SEARCH_QUERY',
+        // message: `Preparing search query`,
+        details: {
+          query: state.query,
+          searchInstructions: state.searchInstructions || state.query,
+          documentCount: state.relevantDocuments.length,
+          searchIterations: state.searchInstructionHistory.length
+        }
+      }
+    });
+
     const template = PromptTemplate.fromTemplate(webSearchRetrieverAgentPrompt);
     const prompt = await template.format({
       systemInstructions: this.systemInstructions,
@@ -118,9 +133,41 @@ export class AgentSearch {
 
     try {
       console.log(`Performing web search for query: "${searchQuery}"`);
+      
+      // Emit executing web search event
+      this.emitter.emit('agent_action', {
+        type: 'agent_action',
+        data: {
+          action: 'EXECUTING_WEB_SEARCH',
+          // message: `Searching the web for: '${searchQuery}'`,
+          details: {
+            query: state.query,
+            searchQuery: searchQuery,
+            documentCount: state.relevantDocuments.length,
+            searchIterations: state.searchInstructionHistory.length
+          }
+        }
+      });
+
       const searchResults = await searchSearxng(searchQuery, {
         language: 'en',
         engines: [],
+      });
+
+      // Emit web sources identified event
+      this.emitter.emit('agent_action', {
+        type: 'agent_action',
+        data: {
+          action: 'WEB_SOURCES_IDENTIFIED',
+          message: `Found ${searchResults.results.length} potential web sources`,
+          details: {
+            query: state.query,
+            searchQuery: searchQuery,
+            sourcesFound: searchResults.results.length,
+            documentCount: state.relevantDocuments.length,
+            searchIterations: state.searchInstructionHistory.length
+          }
+        }
       });
 
       let bannedUrls = state.bannedUrls || [];
@@ -130,6 +177,8 @@ export class AgentSearch {
       for (const result of searchResults.results) {
         if (bannedUrls.includes(result.url)) {
           console.log(`Skipping banned URL: ${result.url}`);
+          // Note: We don't emit an agent_action event for banned URLs as this is an internal
+          // optimization that should be transparent to the user
           continue; // Skip banned URLs
         }
         if (attemptedUrlCount >= 5) {
@@ -146,20 +195,72 @@ export class AgentSearch {
           break; // Limit to top 1 document
         }
 
-        const summary = await summarizeWebContent(
+        // Emit analyzing source event
+        this.emitter.emit('agent_action', {
+          type: 'agent_action',
+          data: {
+            action: 'ANALYZING_SOURCE',
+            message: `Analyzing content from: ${result.title || result.url}`,
+            details: {
+              query: state.query,
+              sourceUrl: result.url,
+              sourceTitle: result.title || 'Untitled',
+              documentCount: state.relevantDocuments.length,
+              searchIterations: state.searchInstructionHistory.length
+            }
+          }
+        });
+
+        const summaryResult = await summarizeWebContent(
           result.url,
           state.query,
           this.llm,
           this.systemInstructions,
           this.signal,
         );
-        if (summary) {
-          documents.push(summary);
+        
+        if (summaryResult.document) {
+          documents.push(summaryResult.document);
+          
+          // Emit context updated event
+          this.emitter.emit('agent_action', {
+            type: 'agent_action',
+            data: {
+              action: 'CONTEXT_UPDATED',
+              message: `Added information from ${summaryResult.document.metadata.title || result.url} to context`,
+              details: {
+                query: state.query,
+                sourceUrl: result.url,
+                sourceTitle: summaryResult.document.metadata.title || 'Untitled',
+                contentLength: summaryResult.document.pageContent.length,
+                documentCount: state.relevantDocuments.length + documents.length,
+                searchIterations: state.searchInstructionHistory.length
+              }
+            }
+          });
+          
           console.log(
-            `Summarized content from ${result.url} to ${summary.pageContent.length} characters. Content: ${summary.pageContent}`,
+            `Summarized content from ${result.url} to ${summaryResult.document.pageContent.length} characters. Content: ${summaryResult.document.pageContent}`,
           );
         } else {
           console.warn(`No relevant content found for URL: ${result.url}`);
+          
+          // Emit skipping irrelevant source event for non-relevant content
+          this.emitter.emit('agent_action', {
+            type: 'agent_action',
+            data: {
+              action: 'SKIPPING_IRRELEVANT_SOURCE',
+              message: `Source ${result.title || result.url} was not relevant - trying next`,
+              details: {
+                query: state.query,
+                sourceUrl: result.url,
+                sourceTitle: result.title || 'Untitled',
+                skipReason: summaryResult.notRelevantReason || 'Content was not relevant to the query',
+                documentCount: state.relevantDocuments.length + documents.length,
+                searchIterations: state.searchInstructionHistory.length
+              }
+            }
+          });
         }
       }
 
@@ -200,6 +301,20 @@ export class AgentSearch {
 
   private async analyzer(state: typeof AgentState.State): Promise<Command> {
     try {
+      // Emit initial analysis event
+      this.emitter.emit('agent_action', {
+        type: 'agent_action',
+        data: {
+          action: 'ANALYZING_CONTEXT',
+          message: 'Analyzing the context to see if we have enough information to answer the query',
+          details: {
+            documentCount: state.relevantDocuments.length,
+            query: state.query,
+            searchIterations: state.searchInstructionHistory.length
+          }
+        }
+      });
+
       console.log(
         `Analyzing ${state.relevantDocuments.length} documents for relevance...`,
       );
@@ -282,6 +397,22 @@ Today's date is ${formatDateForLLM(new Date())}
       console.log('Reason for insufficiency:', reason);
 
       if (analysisResult.startsWith('need_more_info')) {
+        // Emit reanalyzing event when we need more information
+        this.emitter.emit('agent_action', {
+          type: 'agent_action',
+          data: {
+            action: 'MORE_DATA_NEEDED',
+            message: 'Current context is insufficient - gathering more information',
+            details: {
+              reason: reason,
+              nextSearchQuery: moreInfoQuestion,
+              documentCount: state.relevantDocuments.length,
+              searchIterations: state.searchInstructionHistory.length,
+              query: state.query
+            }
+          }
+        });
+
         return new Command({
           goto: 'web_search',
           update: {
@@ -295,6 +426,20 @@ Today's date is ${formatDateForLLM(new Date())}
           },
         });
       }
+
+      // Emit information gathering complete event when we have sufficient information
+      this.emitter.emit('agent_action', {
+        type: 'agent_action',
+        data: {
+          action: 'INFORMATION_GATHERING_COMPLETE',
+          message: 'Sufficient information gathered - ready to synthesize response',
+          details: {
+            documentCount: state.relevantDocuments.length,
+            searchIterations: state.searchInstructionHistory.length,
+            query: state.query
+          }
+        }
+      });
 
       return new Command({
         goto: 'synthesizer',
@@ -328,6 +473,20 @@ Today's date is ${formatDateForLLM(new Date())}
     state: typeof AgentState.State,
   ): Promise<Command> {
     try {
+      // Emit synthesizing response event
+      this.emitter.emit('agent_action', {
+        type: 'agent_action',
+        data: {
+          action: 'SYNTHESIZING_RESPONSE',
+          message: 'Synthesizing final answer...',
+          details: {
+            query: state.query,
+            documentCount: state.relevantDocuments.length,
+            searchIterations: state.searchInstructionHistory.length
+          }
+        }
+      });
+
       const synthesisPrompt = `You are an expert information synthesizer. Based on the search results and analysis provided, create a comprehensive, well-structured answer to the user's query.
 
 ## Response Instructions

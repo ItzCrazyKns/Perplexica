@@ -5,6 +5,7 @@ import { File, Message } from './ChatWindow';
 import MessageBox from './MessageBox';
 import MessageBoxLoading from './MessageBoxLoading';
 import MessageInput from './MessageInput';
+import AgentActionDisplay from './AgentActionDisplay';
 
 const Chat = ({
   loading,
@@ -224,6 +225,25 @@ const Chat = ({
               sendMessage={sendMessage}
               handleEditMessage={handleEditMessage}
             />
+            {/* Show agent actions after user messages - either completed or in progress */}
+            {msg.role === 'user' && (
+              <>
+                {/* Show agent actions if they exist */}
+                {msg.agentActions && msg.agentActions.length > 0 && (
+                  <AgentActionDisplay
+                    messageId={msg.messageId}
+                    events={msg.agentActions}
+                  />
+                )}
+                {/* Show empty agent action display if this is the last user message and we're loading */}
+                {loading && isLast && (!msg.agentActions || msg.agentActions.length === 0) && (
+                  <AgentActionDisplay
+                    messageId={msg.messageId}
+                    events={[]}
+                  />
+                )}
+              </>
+            )}
             {!isLast && msg.role === 'assistant' && (
               <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
             )}

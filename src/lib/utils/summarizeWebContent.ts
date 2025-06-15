@@ -4,18 +4,23 @@ import LineOutputParser from '../outputParsers/lineOutputParser';
 import { formatDateForLLM } from '../utils';
 import { getWebContent } from './documents';
 
+export type SummarizeResult = {
+  document: Document | null;
+  notRelevantReason?: string;
+};
+
 export const summarizeWebContent = async (
   url: string,
   query: string,
   llm: BaseChatModel,
   systemInstructions: string,
   signal: AbortSignal,
-): Promise<Document | null> => {
+): Promise<SummarizeResult> => {
   try {
     // Helper function to summarize content and check relevance
     const summarizeContent = async (
       content: Document,
-    ): Promise<Document | null> => {
+    ): Promise<SummarizeResult> => {
       const systemPrompt = systemInstructions
         ? `${systemInstructions}\n\n`
         : '';
@@ -49,7 +54,7 @@ Here is the query you need to answer: ${query}
 
 Here is the content to summarize:
 ${i === 0 ? content.metadata.html : content.pageContent},
-        `,
+            `,
             { signal },
           );
           break;
@@ -63,7 +68,7 @@ ${i === 0 ? content.metadata.html : content.pageContent},
 
       if (!summary || !summary.content) {
         console.error(`No summary content returned for URL: ${url}`);
-        return null;
+        return { document: null, notRelevantReason: 'No summary content returned from LLM' };
       }
 
       const summaryParser = new LineOutputParser({ key: 'summary' });
@@ -79,16 +84,27 @@ ${i === 0 ? content.metadata.html : content.pageContent},
           `LLM response for URL "${url}" indicates it's not needed or is empty:`,
           summarizedContent,
         );
-        return null;
+        
+        // Extract the reason from the "not_needed" response
+        const reason = summarizedContent.startsWith('not_needed') 
+          ? summarizedContent.substring('not_needed:'.length).trim()
+          : summarizedContent.trim().length === 0 
+            ? 'Source content was empty or could not be processed'
+            : 'Source content was not relevant to the query';
+            
+        return { document: null, notRelevantReason: reason };
       }
 
-      return new Document({
-        pageContent: summarizedContent,
-        metadata: {
-          ...content.metadata,
-          url: url,
-        },
-      });
+      return { 
+        document: new Document({
+          pageContent: summarizedContent,
+          metadata: {
+            ...content.metadata,
+            url: url,
+          },
+        }),
+        notRelevantReason: undefined
+      };
     };
 
     // // First try the lite approach
@@ -121,9 +137,10 @@ ${i === 0 ? content.metadata.html : content.pageContent},
       return await summarizeContent(webContent);
     } else {
       console.log(`No valid content found for URL: ${url}`);
+      return { document: null, notRelevantReason: 'No valid content found at the URL' };
     }
   } catch (error) {
     console.error(`Error processing URL ${url}:`, error);
+    return { document: null, notRelevantReason: `Error processing URL: ${error instanceof Error ? error.message : 'Unknown error'}` };
   }
-  return null;
 };

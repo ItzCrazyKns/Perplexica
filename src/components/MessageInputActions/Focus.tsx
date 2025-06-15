@@ -24,12 +24,12 @@ const focusModes = [
     description: 'Searches across all of the internet',
     icon: <Globe size={20} />,
   },
-  {
-    key: 'academicSearch',
-    title: 'Academic',
-    description: 'Search in published academic papers',
-    icon: <SwatchBook size={20} />,
-  },
+  // {
+  //   key: 'academicSearch',
+  //   title: 'Academic',
+  //   description: 'Search in published academic papers',
+  //   icon: <SwatchBook size={20} />,
+  // },
   {
     key: 'chat',
     title: 'Chat',
@@ -42,24 +42,24 @@ const focusModes = [
     description: 'Research and interact with local files with citations',
     icon: <Pencil size={16} />,
   },
-  {
-    key: 'redditSearch',
-    title: 'Reddit',
-    description: 'Search for discussions and opinions',
-    icon: <SiReddit className="h-5 w-auto mr-0.5" />,
-  },
-  {
-    key: 'wolframAlphaSearch',
-    title: 'Wolfram Alpha',
-    description: 'Computational knowledge engine',
-    icon: <BadgePercent size={20} />,
-  },
-  {
-    key: 'youtubeSearch',
-    title: 'Youtube',
-    description: 'Search and watch videos',
-    icon: <SiYoutube className="h-5 w-auto mr-0.5" />,
-  },
+  // {
+  //   key: 'redditSearch',
+  //   title: 'Reddit',
+  //   description: 'Search for discussions and opinions',
+  //   icon: <SiReddit className="h-5 w-auto mr-0.5" />,
+  // },
+  // {
+  //   key: 'wolframAlphaSearch',
+  //   title: 'Wolfram Alpha',
+  //   description: 'Computational knowledge engine',
+  //   icon: <BadgePercent size={20} />,
+  // },
+  // {
+  //   key: 'youtubeSearch',
+  //   title: 'Youtube',
+  //   description: 'Search and watch videos',
+  //   icon: <SiYoutube className="h-5 w-auto mr-0.5" />,
+  // },
 ];
 
 const Focus = ({

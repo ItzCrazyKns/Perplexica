@@ -18,6 +18,13 @@ export type ModelStats = {
   responseTime?: number;
 };
 
+export type AgentActionEvent = {
+  action: string;
+  message: string;
+  details: Record<string, any>;
+  timestamp: Date;
+};
+
 export type Message = {
   messageId: string;
   chatId: string;
@@ -29,6 +36,7 @@ export type Message = {
   modelStats?: ModelStats;
   searchQuery?: string;
   searchUrl?: string;
+  agentActions?: AgentActionEvent[];
   progress?: {
     message: string;
     current: number;
@@ -420,6 +428,30 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
       if (data.type === 'progress') {
         setAnalysisProgress(data.data);
+        return;
+      }
+
+      if (data.type === 'agent_action') {
+        const agentActionEvent: AgentActionEvent = {
+          action: data.data.action,
+          message: data.data.message,
+          details: data.data.details || {},
+          timestamp: new Date(),
+        };
+
+        // Update the user message with agent actions
+        setMessages((prev) =>
+          prev.map((message) => {
+            if (message.messageId === data.messageId && message.role === 'user') {
+              const updatedActions = [
+                ...(message.agentActions || []),
+                agentActionEvent,
+              ];
+              return { ...message, agentActions: updatedActions };
+            }
+            return message;
+          }),
+        );
         return;
       }
 
