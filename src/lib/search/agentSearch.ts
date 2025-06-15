@@ -1,66 +1,23 @@
 import { Embeddings } from '@langchain/core/embeddings';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import {
-  AIMessage,
   BaseMessage,
   HumanMessage,
   SystemMessage,
 } from '@langchain/core/messages';
-import { ChatPromptTemplate, PromptTemplate } from '@langchain/core/prompts';
 import {
-  Annotation,
-  Command,
   END,
   MemorySaver,
   START,
   StateGraph,
 } from '@langchain/langgraph';
 import { EventEmitter } from 'events';
-import { Document } from 'langchain/document';
-import LineOutputParser from '../outputParsers/lineOutputParser';
-import { webSearchRetrieverAgentPrompt } from '../prompts/webSearch';
-import { searchSearxng } from '../searxng';
-import { formatDateForLLM } from '../utils';
-import { getModelName } from '../utils/modelUtils';
-import { summarizeWebContent, SummarizeResult } from '../utils/summarizeWebContent';
-
-/**
- * State interface for the agent supervisor workflow
- */
-export const AgentState = Annotation.Root({
-  messages: Annotation<BaseMessage[]>({
-    reducer: (x, y) => x.concat(y),
-    default: () => [],
-  }),
-  query: Annotation<string>({
-    reducer: (x, y) => y ?? x,
-    default: () => '',
-  }),
-  relevantDocuments: Annotation<Document[]>({
-    reducer: (x, y) => x.concat(y),
-    default: () => [],
-  }),
-  bannedUrls: Annotation<string[]>({
-    reducer: (x, y) => x.concat(y),
-    default: () => [],
-  }),
-  searchInstructionHistory: Annotation<string[]>({
-    reducer: (x, y) => x.concat(y),
-    default: () => [],
-  }),
-  searchInstructions: Annotation<string>({
-    reducer: (x, y) => y ?? x,
-    default: () => '',
-  }),
-  next: Annotation<string>({
-    reducer: (x, y) => y ?? x ?? END,
-    default: () => END,
-  }),
-  analysis: Annotation<string>({
-    reducer: (x, y) => y ?? x,
-    default: () => '',
-  }),
-});
+import { 
+  AgentState,
+  WebSearchAgent,
+  AnalyzerAgent,
+  SynthesizerAgent 
+} from '../agents';
 
 /**
  * Agent Search class implementing LangGraph Supervisor pattern
@@ -69,10 +26,10 @@ export class AgentSearch {
   private llm: BaseChatModel;
   private embeddings: Embeddings;
   private checkpointer: MemorySaver;
-  private emitter: EventEmitter;
-  private systemInstructions: string;
-  private personaInstructions: string;
   private signal: AbortSignal;
+  private webSearchAgent: WebSearchAgent;
+  private analyzerAgent: AnalyzerAgent;
+  private synthesizerAgent: SynthesizerAgent;
 
   constructor(
     llm: BaseChatModel,
@@ -85,535 +42,27 @@ export class AgentSearch {
     this.llm = llm;
     this.embeddings = embeddings;
     this.checkpointer = new MemorySaver();
-    this.emitter = emitter;
-    this.systemInstructions = systemInstructions;
-    this.personaInstructions = personaInstructions;
     this.signal = signal;
-  }
 
-  /**
-   * Web search agent node
-   */
-  private async webSearchAgent(
-    state: typeof AgentState.State,
-  ): Promise<Command> {
-    // Emit preparing web search event
-    this.emitter.emit('agent_action', {
-      type: 'agent_action',
-      data: {
-        action: 'PREPARING_SEARCH_QUERY',
-        // message: `Preparing search query`,
-        details: {
-          query: state.query,
-          searchInstructions: state.searchInstructions || state.query,
-          documentCount: state.relevantDocuments.length,
-          searchIterations: state.searchInstructionHistory.length
-        }
-      }
-    });
-
-    const template = PromptTemplate.fromTemplate(webSearchRetrieverAgentPrompt);
-    const prompt = await template.format({
-      systemInstructions: this.systemInstructions,
-      query: state.query,
-      date: formatDateForLLM(new Date()),
-      supervisor: state.searchInstructions,
-    });
-
-    const searchQueryResult = await this.llm.invoke(
-      [...state.messages, prompt],
-      { signal: this.signal },
+    // Initialize agents
+    this.webSearchAgent = new WebSearchAgent(
+      llm,
+      emitter,
+      systemInstructions,
+      signal
     );
-
-    // Parse the response to extract the search query with the lineoutputparser
-    const lineOutputParser = new LineOutputParser({ key: 'answer' });
-    const searchQuery = await lineOutputParser.parse(
-      searchQueryResult.content as string,
+    this.analyzerAgent = new AnalyzerAgent(
+      llm,
+      emitter,
+      systemInstructions,
+      signal
     );
-
-    try {
-      console.log(`Performing web search for query: "${searchQuery}"`);
-      
-      // Emit executing web search event
-      this.emitter.emit('agent_action', {
-        type: 'agent_action',
-        data: {
-          action: 'EXECUTING_WEB_SEARCH',
-          // message: `Searching the web for: '${searchQuery}'`,
-          details: {
-            query: state.query,
-            searchQuery: searchQuery,
-            documentCount: state.relevantDocuments.length,
-            searchIterations: state.searchInstructionHistory.length
-          }
-        }
-      });
-
-      const searchResults = await searchSearxng(searchQuery, {
-        language: 'en',
-        engines: [],
-      });
-
-      // Emit web sources identified event
-      this.emitter.emit('agent_action', {
-        type: 'agent_action',
-        data: {
-          action: 'WEB_SOURCES_IDENTIFIED',
-          message: `Found ${searchResults.results.length} potential web sources`,
-          details: {
-            query: state.query,
-            searchQuery: searchQuery,
-            sourcesFound: searchResults.results.length,
-            documentCount: state.relevantDocuments.length,
-            searchIterations: state.searchInstructionHistory.length
-          }
-        }
-      });
-
-      let bannedUrls = state.bannedUrls || [];
-      let attemptedUrlCount = 0;
-      // Summarize the top 2 search results
-      let documents: Document[] = [];
-      for (const result of searchResults.results) {
-        if (bannedUrls.includes(result.url)) {
-          console.log(`Skipping banned URL: ${result.url}`);
-          // Note: We don't emit an agent_action event for banned URLs as this is an internal
-          // optimization that should be transparent to the user
-          continue; // Skip banned URLs
-        }
-        if (attemptedUrlCount >= 5) {
-          console.warn(
-            'Too many attempts to summarize URLs, stopping further attempts.',
-          );
-          break; // Limit the number of attempts to summarize URLs
-        }
-        attemptedUrlCount++;
-
-        bannedUrls.push(result.url); // Add to banned URLs to avoid duplicates
-
-        if (documents.length >= 1) {
-          break; // Limit to top 1 document
-        }
-
-        // Emit analyzing source event
-        this.emitter.emit('agent_action', {
-          type: 'agent_action',
-          data: {
-            action: 'ANALYZING_SOURCE',
-            message: `Analyzing content from: ${result.title || result.url}`,
-            details: {
-              query: state.query,
-              sourceUrl: result.url,
-              sourceTitle: result.title || 'Untitled',
-              documentCount: state.relevantDocuments.length,
-              searchIterations: state.searchInstructionHistory.length
-            }
-          }
-        });
-
-        const summaryResult = await summarizeWebContent(
-          result.url,
-          state.query,
-          this.llm,
-          this.systemInstructions,
-          this.signal,
-        );
-        
-        if (summaryResult.document) {
-          documents.push(summaryResult.document);
-          
-          // Emit context updated event
-          this.emitter.emit('agent_action', {
-            type: 'agent_action',
-            data: {
-              action: 'CONTEXT_UPDATED',
-              message: `Added information from ${summaryResult.document.metadata.title || result.url} to context`,
-              details: {
-                query: state.query,
-                sourceUrl: result.url,
-                sourceTitle: summaryResult.document.metadata.title || 'Untitled',
-                contentLength: summaryResult.document.pageContent.length,
-                documentCount: state.relevantDocuments.length + documents.length,
-                searchIterations: state.searchInstructionHistory.length
-              }
-            }
-          });
-          
-          console.log(
-            `Summarized content from ${result.url} to ${summaryResult.document.pageContent.length} characters. Content: ${summaryResult.document.pageContent}`,
-          );
-        } else {
-          console.warn(`No relevant content found for URL: ${result.url}`);
-          
-          // Emit skipping irrelevant source event for non-relevant content
-          this.emitter.emit('agent_action', {
-            type: 'agent_action',
-            data: {
-              action: 'SKIPPING_IRRELEVANT_SOURCE',
-              message: `Source ${result.title || result.url} was not relevant - trying next`,
-              details: {
-                query: state.query,
-                sourceUrl: result.url,
-                sourceTitle: result.title || 'Untitled',
-                skipReason: summaryResult.notRelevantReason || 'Content was not relevant to the query',
-                documentCount: state.relevantDocuments.length + documents.length,
-                searchIterations: state.searchInstructionHistory.length
-              }
-            }
-          });
-        }
-      }
-
-      if (documents.length === 0) {
-        return new Command({
-          goto: 'analyzer',
-          update: {
-            messages: [new AIMessage('No relevant documents found.')],
-          },
-        });
-      }
-
-      const responseMessage = `Web search completed. ${documents.length === 0 && attemptedUrlCount < 5 ? 'This search query does not have enough relevant information. Try rephrasing your query or providing more context.' : `Found ${documents.length} results that are relevant to the query.`}`;
-      console.log(responseMessage);
-
-      return new Command({
-        goto: 'analyzer',
-        update: {
-          messages: [new AIMessage(responseMessage)],
-          relevantDocuments: documents,
-          bannedUrls: bannedUrls,
-        },
-      });
-    } catch (error) {
-      console.error('Web search error:', error);
-      const errorMessage = new AIMessage(
-        `Web search failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
-
-      return new Command({
-        goto: END,
-        update: {
-          messages: [errorMessage],
-        },
-      });
-    }
-  }
-
-  private async analyzer(state: typeof AgentState.State): Promise<Command> {
-    try {
-      // Emit initial analysis event
-      this.emitter.emit('agent_action', {
-        type: 'agent_action',
-        data: {
-          action: 'ANALYZING_CONTEXT',
-          message: 'Analyzing the context to see if we have enough information to answer the query',
-          details: {
-            documentCount: state.relevantDocuments.length,
-            query: state.query,
-            searchIterations: state.searchInstructionHistory.length
-          }
-        }
-      });
-
-      console.log(
-        `Analyzing ${state.relevantDocuments.length} documents for relevance...`,
-      );
-      const analysisPromptTemplate = `You are an expert content analyzer. Your task is to analyze the provided document and determine if we have enough relevant information to fully answer the user's query. If the content is not sufficient, you will suggest a more specific search query to gather additional information.
-# Instructions
-- Carefully analyze the content of the context provided and determine if it contains sufficient information to answer the user's query
-- The content should completely address the query, providing detailed explanations, relevant facts, and necessary context
-- Use the content provided in the \`context\` tag, as well as the historical context of the conversation, to make your determination
-- If the context provides conflicting information, explain the discrepancies and what additional information is needed to resolve them
-- If the user is asking for a specific number of sources and the context does not provide enough, consider the content insufficient
-
-# Output Format
-- If the content is sufficient, respond with "good_content" in an <answer> XML tag
-- If the content is not sufficient, respond with "need_more_info" in an <answer> XML tag and provide a detailed question that would help gather more specific information to answer the query in a <question> XML tag
-  - This question will be used to generate a web search query to gather more information and should be specific, actionable, and focused on the gaps in the current content
-  - This step will be repeated until sufficient information is gathered to answer the query. Do not try to answer the entire query at once
-  - It should be concise and avoid pleasantries or unnecessary details
-  - Break down the query into a smaller, more focused question that can be answered with a web search
-  - For example, if the query is asking about specific information from multiple locations, break the query into one smaller query for a single location
-  - If if the query is asking about a complex topic, break it down into a single smaller question that can be answered one at a time
-  - Avoid asking for general information or vague details; focus on specific, actionable questions that can lead to concrete answers
-  - Avoid giving the same guidance more than once, and avoid repeating the same question multiple times
-- Respond with your answer in a <answer> XML tag
-- If you need more information, provide a detailed question in a <question> XML tag
-- If you need more information, provide a detailed one line reason why the content is not sufficient in a <reason> XML tag
-
-# Refinement History
-- The following questions have been asked to refine the search
-${state.searchInstructionHistory.map((question) => `  - ${question}`).join('\n')}
-
-# System Instructions
-- The system instructions provided to you are:
-{systemInstructions}
-
-# Example Output
-- If the content is sufficient:
-<answer>good_content</answer>
-- If the content is not sufficient:
-<answer>need_more_info</answer>
-<question>A question that would help gather more specific information to answer the query?</question>
-<reason>A one line reason why the content is not sufficient</reason>
-
-# Context
-<context>
-Today's date is ${formatDateForLLM(new Date())}
-{context}
-</context>`;
-
-      const analysisPrompt = await ChatPromptTemplate.fromTemplate(
-        analysisPromptTemplate,
-      ).format({
-        systemInstructions: this.systemInstructions,
-        context: state.relevantDocuments
-          .map((doc, index) => `<source${index + 1}>${doc?.metadata?.title ? `<title>${doc?.metadata?.title}</title>` : ''}<content>${doc.pageContent}</content></source${index + 1}>`)
-          .join('\n\n'),
-      });
-
-      const response = await this.llm.invoke(
-        [...state.messages, new AIMessage(analysisPrompt)],
-        { signal: this.signal },
-      );
-
-      // Parse the response to extract the analysis result
-      const analysisOutputParser = new LineOutputParser({ key: 'answer' });
-      const moreInfoOutputParser = new LineOutputParser({ key: 'question' });
-      const reasonOutputParser = new LineOutputParser({ key: 'reason' });
-
-      const analysisResult = await analysisOutputParser.parse(
-        response.content as string,
-      );
-      const moreInfoQuestion = await moreInfoOutputParser.parse(
-        response.content as string,
-      );
-      const reason = await reasonOutputParser.parse(
-        response.content as string,
-      );
-
-      console.log('Analysis result:', analysisResult);
-      console.log('More info question:', moreInfoQuestion);
-      console.log('Reason for insufficiency:', reason);
-
-      if (analysisResult.startsWith('need_more_info')) {
-        // Emit reanalyzing event when we need more information
-        this.emitter.emit('agent_action', {
-          type: 'agent_action',
-          data: {
-            action: 'MORE_DATA_NEEDED',
-            message: 'Current context is insufficient - gathering more information',
-            details: {
-              reason: reason,
-              nextSearchQuery: moreInfoQuestion,
-              documentCount: state.relevantDocuments.length,
-              searchIterations: state.searchInstructionHistory.length,
-              query: state.query
-            }
-          }
-        });
-
-        return new Command({
-          goto: 'web_search',
-          update: {
-            messages: [
-              new AIMessage(
-                `The following question can help refine the search: ${moreInfoQuestion}`,
-              ),
-            ],
-            searchInstructions: moreInfoQuestion,
-            searchInstructionHistory: [moreInfoQuestion],
-          },
-        });
-      }
-
-      // Emit information gathering complete event when we have sufficient information
-      this.emitter.emit('agent_action', {
-        type: 'agent_action',
-        data: {
-          action: 'INFORMATION_GATHERING_COMPLETE',
-          message: 'Sufficient information gathered - ready to synthesize response',
-          details: {
-            documentCount: state.relevantDocuments.length,
-            searchIterations: state.searchInstructionHistory.length,
-            query: state.query
-          }
-        }
-      });
-
-      return new Command({
-        goto: 'synthesizer',
-        update: {
-          messages: [
-            new AIMessage(
-              `Analysis completed. We have sufficient information to answer the query.`,
-            ),
-          ],
-        },
-      });
-    } catch (error) {
-      console.error('Analysis error:', error);
-      const errorMessage = new AIMessage(
-        `Analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
-
-      return new Command({
-        goto: END,
-        update: {
-          messages: [errorMessage],
-        },
-      });
-    }
-  }
-
-  /**
-   * Synthesizer agent node that combines information to answer the query
-   */
-  private async synthesizerAgent(
-    state: typeof AgentState.State,
-  ): Promise<Command> {
-    try {
-      // Emit synthesizing response event
-      this.emitter.emit('agent_action', {
-        type: 'agent_action',
-        data: {
-          action: 'SYNTHESIZING_RESPONSE',
-          message: 'Synthesizing final answer...',
-          details: {
-            query: state.query,
-            documentCount: state.relevantDocuments.length,
-            searchIterations: state.searchInstructionHistory.length
-          }
-        }
-      });
-
-      const synthesisPrompt = `You are an expert information synthesizer. Based on the search results and analysis provided, create a comprehensive, well-structured answer to the user's query.
-
-## Response Instructions
-Your task is to provide answers that are:
-- **Informative and relevant**: Thoroughly address the user's query using the given context
-- **Well-structured**: Include clear headings and subheadings, and use a professional tone to present information concisely and logically
-- **Engaging and detailed**: Write responses that read like a high-quality blog post, including extra details and relevant insights
-- **Cited and credible**: Use inline citations with [number] notation to refer to the context source(s) for each fact or detail included
-- **Explanatory and Comprehensive**: Strive to explain the topic in depth, offering detailed analysis, insights, and clarifications wherever applicable
-
-### Formatting Instructions
-- **Structure**: Use a well-organized format with proper headings (e.g., "## Example heading 1" or "## Example heading 2"). Present information in paragraphs or concise bullet points where appropriate
-- **Tone and Style**: Maintain a neutral, journalistic tone with engaging narrative flow. Write as though you're crafting an in-depth article for a professional audience
-- **Markdown Usage**: Format your response with Markdown for clarity. Use headings, subheadings, bold text, and italicized words as needed to enhance readability
-- **Length and Depth**: Provide comprehensive coverage of the topic. Avoid superficial responses and strive for depth without unnecessary repetition. Expand on technical or complex topics to make them easier to understand for a general audience
-- **No main heading/title**: Start your response directly with the introduction unless asked to provide a specific title
-- **Conclusion or Summary**: Include a concluding paragraph that synthesizes the provided information or suggests potential next steps, where appropriate
-
-### Persona Instructions
-- Additional user specified persona instructions are provided in the <personaInstructions> tag
-
-### Citation Requirements
-- Cite every single fact, statement, or sentence using [number] notation corresponding to the source from the provided \`context\`
-- Integrate citations naturally at the end of sentences or clauses as appropriate. For example, "The Eiffel Tower is one of the most visited landmarks in the world[1]."
-- Ensure that **every sentence in your response includes at least one citation**, even when information is inferred or connected to general knowledge available in the provided context
-- Use multiple sources for a single detail if applicable, such as, "Paris is a cultural hub, attracting millions of visitors annually[1][2]."
-- Always prioritize credibility and accuracy by linking all statements back to their respective context sources
-- Avoid citing unsupported assumptions or personal interpretations; if no source supports a statement, clearly indicate the limitation
-
-### Example Output
-- Begin with a brief introduction summarizing the event or query topic
-- Follow with detailed sections under clear headings, covering all aspects of the query if possible
-- Provide explanations or historical context as needed to enhance understanding
-- End with a conclusion or overall perspective if relevant
-
-<personaInstructions>
-${this.personaInstructions}
-</personaInstructions>
-
-User Query: ${state.query}
-
-Available Information:
-${state.relevantDocuments
-  .map(
-    (doc, index) =>
-      `<${index + 1}>\n
-<title>${doc.metadata.title}</title>\n
-${doc.metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + doc.metadata.url + '</url>\n'}
-<content>\n${doc.pageContent}\n</content>\n
-</${index + 1}>`,
-  )
-  .join('\n')}
-`;
-
-      // Stream the response in real-time using LLM streaming capabilities
-      let fullResponse = '';
-
-      // Emit the sources as a data response
-      this.emitter.emit(
-        'data',
-        JSON.stringify({
-          type: 'sources',
-          data: state.relevantDocuments,
-          searchQuery: '',
-          searchUrl: '',
-        }),
-      );
-
-      const stream = await this.llm.stream(
-        [new SystemMessage(synthesisPrompt), new HumanMessage(state.query)],
-        { signal: this.signal },
-      );
-
-      for await (const chunk of stream) {
-        if (this.signal.aborted) {
-          break;
-        }
-
-        const content = chunk.content;
-        if (typeof content === 'string' && content.length > 0) {
-          fullResponse += content;
-
-          // Emit each chunk as a data response in real-time
-          this.emitter.emit(
-            'data',
-            JSON.stringify({
-              type: 'response',
-              data: content,
-            }),
-          );
-        }
-      }
-
-      // Emit model stats and end signal after streaming is complete
-      const modelName = getModelName(this.llm);
-      this.emitter.emit(
-        'stats',
-        JSON.stringify({
-          type: 'modelStats',
-          data: { modelName },
-        }),
-      );
-
-      this.emitter.emit('end');
-
-      // Create the final response message with the complete content
-      const response = new SystemMessage(fullResponse);
-
-      return new Command({
-        goto: END,
-        update: {
-          messages: [response],
-        },
-      });
-    } catch (error) {
-      console.error('Synthesis error:', error);
-      const errorMessage = new AIMessage(
-        `Failed to synthesize answer: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
-
-      return new Command({
-        goto: END,
-        update: {
-          messages: [errorMessage],
-        },
-      });
-    }
+    this.synthesizerAgent = new SynthesizerAgent(
+      llm,
+      emitter,
+      personaInstructions,
+      signal
+    );
   }
 
   /**
@@ -621,19 +70,13 @@ ${doc.metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + doc.metada
    */
   private createWorkflow() {
     const workflow = new StateGraph(AgentState)
-      // .addNode('supervisor', this.supervisor.bind(this), {
-      //   ends: ['web_search', 'analyzer', 'synthesizer', END],
-      // })
-      .addNode('web_search', this.webSearchAgent.bind(this), {
+      .addNode('web_search', this.webSearchAgent.execute.bind(this.webSearchAgent), {
         ends: ['analyzer'],
       })
-      .addNode('analyzer', this.analyzer.bind(this), {
+      .addNode('analyzer', this.analyzerAgent.execute.bind(this.analyzerAgent), {
         ends: ['web_search', 'synthesizer'],
       })
-      // .addNode("url_analyzer", this.urlAnalyzerAgent.bind(this), {
-      //   ends: ["supervisor"],
-      // })
-      .addNode('synthesizer', this.synthesizerAgent.bind(this), {
+      .addNode('synthesizer', this.synthesizerAgent.execute.bind(this.synthesizerAgent), {
         ends: [END],
       })
       .addEdge(START, 'analyzer');
