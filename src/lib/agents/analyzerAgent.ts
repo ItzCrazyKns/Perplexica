@@ -103,6 +103,7 @@ Today's date is ${formatDateForLLM(new Date())}
         { signal: this.signal },
       );
 
+      console.log('Analysis response:', response.content);
       // Parse the response to extract the analysis result
       const analysisOutputParser = new LineOutputParser({ key: 'answer' });
       const moreInfoOutputParser = new LineOutputParser({ key: 'question' });
@@ -122,7 +123,7 @@ Today's date is ${formatDateForLLM(new Date())}
       console.log('More info question:', moreInfoQuestion);
       console.log('Reason for insufficiency:', reason);
 
-      if (analysisResult.startsWith('need_more_info')) {
+      if (!analysisResult.startsWith('good_content')) {
         // Emit reanalyzing event when we need more information
         this.emitter.emit('agent_action', {
           type: 'agent_action',

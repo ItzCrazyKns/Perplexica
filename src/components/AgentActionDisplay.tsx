@@ -81,7 +81,7 @@ const AgentActionDisplay = ({ events, messageId }: AgentActionDisplayProps) => {
                     {event.details.searchQuery && event.details.searchQuery !== event.details.query && (
                       <div className="flex space-x-1">
                         <span className="font-bold">Search Query:</span>
-                        <span className="italic">"{event.details.searchQuery}"</span>
+                        <span className="italic">&quot;{event.details.searchQuery}&quot;</span>
                       </div>
                     )}
                     {event.details.sourcesFound !== undefined && (

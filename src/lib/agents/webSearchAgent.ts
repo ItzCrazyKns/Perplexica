@@ -9,6 +9,7 @@ import { webSearchRetrieverAgentPrompt } from '../prompts/webSearch';
 import { searchSearxng } from '../searxng';
 import { formatDateForLLM } from '../utils';
 import { summarizeWebContent } from '../utils/summarizeWebContent';
+import { analyzePreviewContent, PreviewContent } from '../utils/analyzePreviewContent';
 import { AgentState } from './agentState';
 
 export class WebSearchAgent {
@@ -107,10 +108,112 @@ export class WebSearchAgent {
       });
 
       let bannedUrls = state.bannedUrls || [];
-      let attemptedUrlCount = 0;
-      // Summarize the top 2 search results
+      
+      // Extract preview content from top 8 search results for analysis
+      const previewContents: PreviewContent[] = searchResults.results
+        .filter(result => !bannedUrls.includes(result.url)) // Filter out banned URLs first
+        .slice(0, 8) // Then take top 8 results
+        .map(result => ({
+          title: result.title || 'Untitled',
+          snippet: result.content || '',
+          url: result.url
+        }));
+
+      console.log(`Extracted preview content from ${previewContents.length} search results for analysis`);
+
+      // Perform preview analysis to determine if full content retrieval is needed
+      let previewAnalysisResult = null;
+      if (previewContents.length > 0) {
+        console.log('Starting preview content analysis to determine if full processing is needed');
+        
+        // Emit preview analysis event
+        this.emitter.emit('agent_action', {
+          type: 'agent_action',
+          data: {
+            action: 'ANALYZING_PREVIEW_CONTENT',
+            message: `Analyzing ${previewContents.length} search result previews to determine processing approach`,
+            details: {
+              query: state.query,
+              previewCount: previewContents.length,
+              documentCount: state.relevantDocuments.length,
+              searchIterations: state.searchInstructionHistory.length
+            }
+          }
+        });
+
+        previewAnalysisResult = await analyzePreviewContent(
+          previewContents,
+          state.query,
+          state.messages,
+          this.llm,
+          this.systemInstructions,
+          this.signal
+        );
+
+        console.log(`Preview analysis result: ${previewAnalysisResult.isSufficient ? 'SUFFICIENT' : 'INSUFFICIENT'}${previewAnalysisResult.reason ? ` - ${previewAnalysisResult.reason}` : ''}`);
+      }
+
       let documents: Document[] = [];
-      for (const result of searchResults.results) {
+      let attemptedUrlCount = 0; // Declare outside conditional blocks
+
+      // Conditional workflow based on preview analysis result
+      if (previewAnalysisResult && previewAnalysisResult.isSufficient) {
+        // Preview content is sufficient - create documents from preview content
+        console.log('Preview content determined sufficient - skipping full content retrieval');
+        
+        // Emit preview processing event
+        this.emitter.emit('agent_action', {
+          type: 'agent_action',
+          data: {
+            action: 'PROCESSING_PREVIEW_CONTENT',
+            message: `Using preview content from ${previewContents.length} sources - no full content retrieval needed`,
+            details: {
+              query: state.query,
+              previewCount: previewContents.length,
+              documentCount: state.relevantDocuments.length,
+              searchIterations: state.searchInstructionHistory.length,
+              processingType: 'preview-only'
+            }
+          }
+        });
+
+        // Create documents from preview content
+        documents = previewContents.map((content, index) => new Document({
+          pageContent: `# ${content.title}\n\n${content.snippet}`,
+          metadata: {
+            title: content.title,
+            url: content.url,
+            source: content.url,
+            processingType: 'preview-only',
+            snippet: content.snippet
+          }
+        }));
+
+        console.log(`Created ${documents.length} documents from preview content`);
+        
+      } else {
+        // Preview content is insufficient - proceed with full content processing
+        const insufficiencyReason = previewAnalysisResult?.reason || 'Preview content not available or insufficient';
+        console.log(`Preview content insufficient: ${insufficiencyReason} - proceeding with full content retrieval`);
+        
+        // Emit full processing event
+        this.emitter.emit('agent_action', {
+          type: 'agent_action',
+          data: {
+            action: 'PROCEEDING_WITH_FULL_ANALYSIS',
+            message: `Preview content insufficient - proceeding with detailed content analysis`,
+            details: {
+              query: state.query,
+              insufficiencyReason: insufficiencyReason,
+              documentCount: state.relevantDocuments.length,
+              searchIterations: state.searchInstructionHistory.length,
+              processingType: 'full-content'
+            }
+          }
+        });
+
+        // Summarize the top 2 search results
+        for (const result of searchResults.results) {
         if (bannedUrls.includes(result.url)) {
           console.log(`Skipping banned URL: ${result.url}`);
           // Note: We don't emit an agent_action event for banned URLs as this is an internal
@@ -199,6 +302,7 @@ export class WebSearchAgent {
           });
         }
       }
+      } // Close the else block for full content processing
 
       if (documents.length === 0) {
         return new Command({
