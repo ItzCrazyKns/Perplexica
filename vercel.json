@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "env": {
+    "POSTGRES_URL": "@postgres_url",
+    "OPENAI_API_KEY": "@openai_api_key",
+    "GROQ_API_KEY": "@groq_api_key",
+    "ANTHROPIC_API_KEY": "@anthropic_api_key",
+    "GEMINI_API_KEY": "@gemini_api_key",
+    "DEEPSEEK_API_KEY": "@deepseek_api_key",
+    "SEARXNG_API_URL": "@searxng_api_url",
+    "OLLAMA_API_URL": "@ollama_api_url",
+    "LM_STUDIO_API_URL": "@lm_studio_api_url",
+    "CUSTOM_OPENAI_API_URL": "@custom_openai_api_url",
+    "CUSTOM_OPENAI_API_KEY": "@custom_openai_api_key",
+    "CUSTOM_OPENAI_MODEL_NAME": "@custom_openai_model_name"
+  }
+} 

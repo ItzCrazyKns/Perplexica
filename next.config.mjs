@@ -8,7 +8,15 @@ const nextConfig = {
       },
     ],
   },
-  serverExternalPackages: ['pdf-parse'],
+  // Enable experimental features for better performance
+  experimental: {
+    serverActions: true,
+    serverComponentsExternalPackages: ['@vercel/postgres'],
+  },
+  // Configure environment variables
+  env: {
+    POSTGRES_URL: process.env.POSTGRES_URL,
+  },
 };
 
 export default nextConfig;

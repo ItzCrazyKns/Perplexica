@@ -1,15 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
+import { text, integer, pgTable, timestamp, jsonb } from 'drizzle-orm/pg-core';
 
-export const messages = sqliteTable('messages', {
-  id: integer('id').primaryKey(),
+export const messages = pgTable('messages', {
+  id: integer('id').primaryKey().notNull(),
   content: text('content').notNull(),
   chatId: text('chatId').notNull(),
   messageId: text('messageId').notNull(),
   role: text('type', { enum: ['assistant', 'user'] }),
-  metadata: text('metadata', {
-    mode: 'json',
-  }),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
 });
 
 interface File {
@@ -17,12 +16,10 @@ interface File {
   fileId: string;
 }
 
-export const chats = sqliteTable('chats', {
+export const chats = pgTable('chats', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
-  createdAt: text('createdAt').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
   focusMode: text('focusMode').notNull(),
-  files: text('files', { mode: 'json' })
-    .$type<File[]>()
-    .default(sql`'[]'`),
+  files: jsonb('files').$type<File[]>().default(sql`'[]'::jsonb`),
 });
