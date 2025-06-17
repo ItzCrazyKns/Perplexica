@@ -180,8 +180,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
                   ? `${systemInstructions}\n\n`
                   : '';
 
-                const res =
-                  await llm.invoke(`${systemPrompt}You are a web search summarizer, tasked with summarizing a piece of text retrieved from a web search. Your job is to summarize the 
+                const res = await llm.invoke(
+                  `${systemPrompt}You are a web search summarizer, tasked with summarizing a piece of text retrieved from a web search. Your job is to summarize the 
             text into a detailed, 2-4 paragraph explanation that captures the main ideas and provides a comprehensive answer to the query.
             If the query is \"summarize\", you should provide a detailed summary of the text. If the query is a specific question, you should answer it in the summary.
             
@@ -239,7 +239,9 @@ class MetaSearchAgent implements MetaSearchAgentType {
             </text>
 
             Make sure to answer the query in the summary.
-          `, { signal });
+          `,
+                  { signal },
+                );
 
                 const document = new Document({
                   pageContent: res.content as string,

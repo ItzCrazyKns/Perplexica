@@ -2,7 +2,14 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronUp, Bot, Search, Zap, Microscope } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Bot,
+  Search,
+  Zap,
+  Microscope,
+} from 'lucide-react';
 import { AgentActionEvent } from './ChatWindow';
 
 interface AgentActionDisplayProps {
@@ -48,7 +55,9 @@ const AgentActionDisplay = ({ events, messageId }: AgentActionDisplayProps) => {
         <div className="flex items-center space-x-2">
           {getActionIcon(latestEvent.action)}
           <span className="font-medium text-base text-black/70 dark:text-white/70 tracking-wide capitalize">
-            {latestEvent.action === 'SYNTHESIZING_RESPONSE' ? 'Agent Log' : formatActionName(latestEvent.action)}
+            {latestEvent.action === 'SYNTHESIZING_RESPONSE'
+              ? 'Agent Log'
+              : formatActionName(latestEvent.action)}
           </span>
         </div>
         {isExpanded ? (
@@ -83,7 +92,11 @@ const AgentActionDisplay = ({ events, messageId }: AgentActionDisplayProps) => {
                     {event.details.sourceUrl && (
                       <div className="flex space-x-1">
                         <span className="font-bold">Source:</span>
-                        <span className="truncate"><a href={event.details.sourceUrl} target='_blank'>{event.details.sourceUrl}</a></span>
+                        <span className="truncate">
+                          <a href={event.details.sourceUrl} target="_blank">
+                            {event.details.sourceUrl}
+                          </a>
+                        </span>
                       </div>
                     )}
                     {event.details.skipReason && (
@@ -92,12 +105,15 @@ const AgentActionDisplay = ({ events, messageId }: AgentActionDisplayProps) => {
                         <span>{event.details.skipReason}</span>
                       </div>
                     )}
-                    {event.details.searchQuery && event.details.searchQuery !== event.details.query && (
-                      <div className="flex space-x-1">
-                        <span className="font-bold">Search Query:</span>
-                        <span className="italic">&quot;{event.details.searchQuery}&quot;</span>
-                      </div>
-                    )}
+                    {event.details.searchQuery &&
+                      event.details.searchQuery !== event.details.query && (
+                        <div className="flex space-x-1">
+                          <span className="font-bold">Search Query:</span>
+                          <span className="italic">
+                            &quot;{event.details.searchQuery}&quot;
+                          </span>
+                        </div>
+                      )}
                     {event.details.sourcesFound !== undefined && (
                       <div className="flex space-x-1">
                         <span className="font-bold">Sources Found:</span>
@@ -131,7 +147,9 @@ const AgentActionDisplay = ({ events, messageId }: AgentActionDisplayProps) => {
                     {event.details.processingType && (
                       <div className="flex space-x-1">
                         <span className="font-bold">Processing Type:</span>
-                        <span className="capitalize">{event.details.processingType.replace('-', ' ')}</span>
+                        <span className="capitalize">
+                          {event.details.processingType.replace('-', ' ')}
+                        </span>
                       </div>
                     )}
                     {event.details.insufficiencyReason && (

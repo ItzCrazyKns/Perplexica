@@ -442,7 +442,10 @@ const ChatWindow = ({ id }: { id?: string }) => {
         // Update the user message with agent actions
         setMessages((prev) =>
           prev.map((message) => {
-            if (message.messageId === data.messageId && message.role === 'user') {
+            if (
+              message.messageId === data.messageId &&
+              message.role === 'user'
+            ) {
               const updatedActions = [
                 ...(message.agentActions || []),
                 agentActionEvent,

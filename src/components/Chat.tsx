@@ -236,12 +236,11 @@ const Chat = ({
                   />
                 )}
                 {/* Show empty agent action display if this is the last user message and we're loading */}
-                {loading && isLast && (!msg.agentActions || msg.agentActions.length === 0) && (
-                  <AgentActionDisplay
-                    messageId={msg.messageId}
-                    events={[]}
-                  />
-                )}
+                {loading &&
+                  isLast &&
+                  (!msg.agentActions || msg.agentActions.length === 0) && (
+                    <AgentActionDisplay messageId={msg.messageId} events={[]} />
+                  )}
               </>
             )}
             {!isLast && msg.role === 'assistant' && (

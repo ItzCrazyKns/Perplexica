@@ -40,12 +40,18 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
               {/* Processing type indicator */}
               {source.metadata.processingType === 'preview-only' && (
                 <span title="Partial content analyzed" className="inline-flex">
-                  <Zap size={14} className="text-black/40 dark:text-white/40 ml-1" />
+                  <Zap
+                    size={14}
+                    className="text-black/40 dark:text-white/40 ml-1"
+                  />
                 </span>
               )}
               {source.metadata.processingType === 'full-content' && (
                 <span title="Full content analyzed" className="inline-flex">
-                  <Microscope size={14} className="text-black/40 dark:text-white/40 ml-1" />
+                  <Microscope
+                    size={14}
+                    className="text-black/40 dark:text-white/40 ml-1"
+                  />
                 </span>
               )}
             </div>

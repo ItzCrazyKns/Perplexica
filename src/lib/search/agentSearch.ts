@@ -5,18 +5,13 @@ import {
   HumanMessage,
   SystemMessage,
 } from '@langchain/core/messages';
-import {
-  END,
-  MemorySaver,
-  START,
-  StateGraph,
-} from '@langchain/langgraph';
+import { END, MemorySaver, START, StateGraph } from '@langchain/langgraph';
 import { EventEmitter } from 'events';
-import { 
+import {
   AgentState,
   WebSearchAgent,
   AnalyzerAgent,
-  SynthesizerAgent 
+  SynthesizerAgent,
 } from '../agents';
 
 /**
@@ -49,19 +44,19 @@ export class AgentSearch {
       llm,
       emitter,
       systemInstructions,
-      signal
+      signal,
     );
     this.analyzerAgent = new AnalyzerAgent(
       llm,
       emitter,
       systemInstructions,
-      signal
+      signal,
     );
     this.synthesizerAgent = new SynthesizerAgent(
       llm,
       emitter,
       personaInstructions,
-      signal
+      signal,
     );
   }
 
@@ -70,15 +65,27 @@ export class AgentSearch {
    */
   private createWorkflow() {
     const workflow = new StateGraph(AgentState)
-      .addNode('web_search', this.webSearchAgent.execute.bind(this.webSearchAgent), {
-        ends: ['analyzer'],
-      })
-      .addNode('analyzer', this.analyzerAgent.execute.bind(this.analyzerAgent), {
-        ends: ['web_search', 'synthesizer'],
-      })
-      .addNode('synthesizer', this.synthesizerAgent.execute.bind(this.synthesizerAgent), {
-        ends: [END],
-      })
+      .addNode(
+        'web_search',
+        this.webSearchAgent.execute.bind(this.webSearchAgent),
+        {
+          ends: ['analyzer'],
+        },
+      )
+      .addNode(
+        'analyzer',
+        this.analyzerAgent.execute.bind(this.analyzerAgent),
+        {
+          ends: ['web_search', 'synthesizer'],
+        },
+      )
+      .addNode(
+        'synthesizer',
+        this.synthesizerAgent.execute.bind(this.synthesizerAgent),
+        {
+          ends: [END],
+        },
+      )
       .addEdge(START, 'analyzer');
 
     return workflow.compile({ checkpointer: this.checkpointer });

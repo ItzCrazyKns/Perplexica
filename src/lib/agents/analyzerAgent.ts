@@ -32,13 +32,14 @@ export class AnalyzerAgent {
         type: 'agent_action',
         data: {
           action: 'ANALYZING_CONTEXT',
-          message: 'Analyzing the context to see if we have enough information to answer the query',
+          message:
+            'Analyzing the context to see if we have enough information to answer the query',
           details: {
             documentCount: state.relevantDocuments.length,
             query: state.query,
-            searchIterations: state.searchInstructionHistory.length
-          }
-        }
+            searchIterations: state.searchInstructionHistory.length,
+          },
+        },
       });
 
       console.log(
@@ -94,7 +95,10 @@ Today's date is ${formatDateForLLM(new Date())}
       ).format({
         systemInstructions: this.systemInstructions,
         context: state.relevantDocuments
-          .map((doc, index) => `<source${index + 1}>${doc?.metadata?.title ? `<title>${doc?.metadata?.title}</title>` : ''}<content>${doc.pageContent}</content></source${index + 1}>`)
+          .map(
+            (doc, index) =>
+              `<source${index + 1}>${doc?.metadata?.title ? `<title>${doc?.metadata?.title}</title>` : ''}<content>${doc.pageContent}</content></source${index + 1}>`,
+          )
           .join('\n\n'),
       });
 
@@ -115,9 +119,7 @@ Today's date is ${formatDateForLLM(new Date())}
       const moreInfoQuestion = await moreInfoOutputParser.parse(
         response.content as string,
       );
-      const reason = await reasonOutputParser.parse(
-        response.content as string,
-      );
+      const reason = await reasonOutputParser.parse(response.content as string);
 
       console.log('Analysis result:', analysisResult);
       console.log('More info question:', moreInfoQuestion);
@@ -129,15 +131,16 @@ Today's date is ${formatDateForLLM(new Date())}
           type: 'agent_action',
           data: {
             action: 'MORE_DATA_NEEDED',
-            message: 'Current context is insufficient - gathering more information',
+            message:
+              'Current context is insufficient - gathering more information',
             details: {
               reason: reason,
               nextSearchQuery: moreInfoQuestion,
               documentCount: state.relevantDocuments.length,
               searchIterations: state.searchInstructionHistory.length,
-              query: state.query
-            }
-          }
+              query: state.query,
+            },
+          },
         });
 
         return new Command({
@@ -159,13 +162,14 @@ Today's date is ${formatDateForLLM(new Date())}
         type: 'agent_action',
         data: {
           action: 'INFORMATION_GATHERING_COMPLETE',
-          message: 'Sufficient information gathered - ready to synthesize response',
+          message:
+            'Sufficient information gathered - ready to synthesize response',
           details: {
             documentCount: state.relevantDocuments.length,
             searchIterations: state.searchInstructionHistory.length,
-            query: state.query
-          }
-        }
+            query: state.query,
+          },
+        },
       });
 
       return new Command({

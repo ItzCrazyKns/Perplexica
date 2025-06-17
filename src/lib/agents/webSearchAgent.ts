@@ -9,7 +9,10 @@ import { webSearchRetrieverAgentPrompt } from '../prompts/webSearch';
 import { searchSearxng } from '../searxng';
 import { formatDateForLLM } from '../utils';
 import { summarizeWebContent } from '../utils/summarizeWebContent';
-import { analyzePreviewContent, PreviewContent } from '../utils/analyzePreviewContent';
+import {
+  analyzePreviewContent,
+  PreviewContent,
+} from '../utils/analyzePreviewContent';
 import { AgentState } from './agentState';
 
 export class WebSearchAgent {
@@ -44,9 +47,9 @@ export class WebSearchAgent {
           query: state.query,
           searchInstructions: state.searchInstructions || state.query,
           documentCount: state.relevantDocuments.length,
-          searchIterations: state.searchInstructionHistory.length
-        }
-      }
+          searchIterations: state.searchInstructionHistory.length,
+        },
+      },
     });
 
     const template = PromptTemplate.fromTemplate(webSearchRetrieverAgentPrompt);
@@ -70,7 +73,7 @@ export class WebSearchAgent {
 
     try {
       console.log(`Performing web search for query: "${searchQuery}"`);
-      
+
       // Emit executing web search event
       this.emitter.emit('agent_action', {
         type: 'agent_action',
@@ -81,9 +84,9 @@ export class WebSearchAgent {
             query: state.query,
             searchQuery: searchQuery,
             documentCount: state.relevantDocuments.length,
-            searchIterations: state.searchInstructionHistory.length
-          }
-        }
+            searchIterations: state.searchInstructionHistory.length,
+          },
+        },
       });
 
       const searchResults = await searchSearxng(searchQuery, {
@@ -102,30 +105,34 @@ export class WebSearchAgent {
             searchQuery: searchQuery,
             sourcesFound: searchResults.results.length,
             documentCount: state.relevantDocuments.length,
-            searchIterations: state.searchInstructionHistory.length
-          }
-        }
+            searchIterations: state.searchInstructionHistory.length,
+          },
+        },
       });
 
       let bannedUrls = state.bannedUrls || [];
-      
+
       // Extract preview content from top 8 search results for analysis
       const previewContents: PreviewContent[] = searchResults.results
-        .filter(result => !bannedUrls.includes(result.url)) // Filter out banned URLs first
+        .filter((result) => !bannedUrls.includes(result.url)) // Filter out banned URLs first
         .slice(0, 8) // Then take top 8 results
-        .map(result => ({
+        .map((result) => ({
           title: result.title || 'Untitled',
           snippet: result.content || '',
-          url: result.url
+          url: result.url,
         }));
 
-      console.log(`Extracted preview content from ${previewContents.length} search results for analysis`);
+      console.log(
+        `Extracted preview content from ${previewContents.length} search results for analysis`,
+      );
 
       // Perform preview analysis to determine if full content retrieval is needed
       let previewAnalysisResult = null;
       if (previewContents.length > 0) {
-        console.log('Starting preview content analysis to determine if full processing is needed');
-        
+        console.log(
+          'Starting preview content analysis to determine if full processing is needed',
+        );
+
         // Emit preview analysis event
         this.emitter.emit('agent_action', {
           type: 'agent_action',
@@ -136,9 +143,9 @@ export class WebSearchAgent {
               query: state.query,
               previewCount: previewContents.length,
               documentCount: state.relevantDocuments.length,
-              searchIterations: state.searchInstructionHistory.length
-            }
-          }
+              searchIterations: state.searchInstructionHistory.length,
+            },
+          },
         });
 
         previewAnalysisResult = await analyzePreviewContent(
@@ -147,10 +154,12 @@ export class WebSearchAgent {
           state.messages,
           this.llm,
           this.systemInstructions,
-          this.signal
+          this.signal,
         );
 
-        console.log(`Preview analysis result: ${previewAnalysisResult.isSufficient ? 'SUFFICIENT' : 'INSUFFICIENT'}${previewAnalysisResult.reason ? ` - ${previewAnalysisResult.reason}` : ''}`);
+        console.log(
+          `Preview analysis result: ${previewAnalysisResult.isSufficient ? 'SUFFICIENT' : 'INSUFFICIENT'}${previewAnalysisResult.reason ? ` - ${previewAnalysisResult.reason}` : ''}`,
+        );
       }
 
       let documents: Document[] = [];
@@ -159,8 +168,10 @@ export class WebSearchAgent {
       // Conditional workflow based on preview analysis result
       if (previewAnalysisResult && previewAnalysisResult.isSufficient) {
         // Preview content is sufficient - create documents from preview content
-        console.log('Preview content determined sufficient - skipping full content retrieval');
-        
+        console.log(
+          'Preview content determined sufficient - skipping full content retrieval',
+        );
+
         // Emit preview processing event
         this.emitter.emit('agent_action', {
           type: 'agent_action',
@@ -172,30 +183,38 @@ export class WebSearchAgent {
               previewCount: previewContents.length,
               documentCount: state.relevantDocuments.length,
               searchIterations: state.searchInstructionHistory.length,
-              processingType: 'preview-only'
-            }
-          }
+              processingType: 'preview-only',
+            },
+          },
         });
 
         // Create documents from preview content
-        documents = previewContents.map((content, index) => new Document({
-          pageContent: `# ${content.title}\n\n${content.snippet}`,
-          metadata: {
-            title: content.title,
-            url: content.url,
-            source: content.url,
-            processingType: 'preview-only',
-            snippet: content.snippet
-          }
-        }));
+        documents = previewContents.map(
+          (content, index) =>
+            new Document({
+              pageContent: `# ${content.title}\n\n${content.snippet}`,
+              metadata: {
+                title: content.title,
+                url: content.url,
+                source: content.url,
+                processingType: 'preview-only',
+                snippet: content.snippet,
+              },
+            }),
+        );
 
-        console.log(`Created ${documents.length} documents from preview content`);
-        
+        console.log(
+          `Created ${documents.length} documents from preview content`,
+        );
       } else {
         // Preview content is insufficient - proceed with full content processing
-        const insufficiencyReason = previewAnalysisResult?.reason || 'Preview content not available or insufficient';
-        console.log(`Preview content insufficient: ${insufficiencyReason} - proceeding with full content retrieval`);
-        
+        const insufficiencyReason =
+          previewAnalysisResult?.reason ||
+          'Preview content not available or insufficient';
+        console.log(
+          `Preview content insufficient: ${insufficiencyReason} - proceeding with full content retrieval`,
+        );
+
         // Emit full processing event
         this.emitter.emit('agent_action', {
           type: 'agent_action',
@@ -207,101 +226,106 @@ export class WebSearchAgent {
               insufficiencyReason: insufficiencyReason,
               documentCount: state.relevantDocuments.length,
               searchIterations: state.searchInstructionHistory.length,
-              processingType: 'full-content'
-            }
-          }
+              processingType: 'full-content',
+            },
+          },
         });
 
         // Summarize the top 2 search results
         for (const result of searchResults.results) {
-        if (bannedUrls.includes(result.url)) {
-          console.log(`Skipping banned URL: ${result.url}`);
-          // Note: We don't emit an agent_action event for banned URLs as this is an internal
-          // optimization that should be transparent to the user
-          continue; // Skip banned URLs
-        }
-        if (attemptedUrlCount >= 5) {
-          console.warn(
-            'Too many attempts to summarize URLs, stopping further attempts.',
-          );
-          break; // Limit the number of attempts to summarize URLs
-        }
-        attemptedUrlCount++;
-
-        bannedUrls.push(result.url); // Add to banned URLs to avoid duplicates
-
-        if (documents.length >= 1) {
-          break; // Limit to top 1 document
-        }
-
-        // Emit analyzing source event
-        this.emitter.emit('agent_action', {
-          type: 'agent_action',
-          data: {
-            action: 'ANALYZING_SOURCE',
-            message: `Analyzing content from: ${result.title || result.url}`,
-            details: {
-              query: state.query,
-              sourceUrl: result.url,
-              sourceTitle: result.title || 'Untitled',
-              documentCount: state.relevantDocuments.length,
-              searchIterations: state.searchInstructionHistory.length
-            }
+          if (bannedUrls.includes(result.url)) {
+            console.log(`Skipping banned URL: ${result.url}`);
+            // Note: We don't emit an agent_action event for banned URLs as this is an internal
+            // optimization that should be transparent to the user
+            continue; // Skip banned URLs
           }
-        });
+          if (attemptedUrlCount >= 5) {
+            console.warn(
+              'Too many attempts to summarize URLs, stopping further attempts.',
+            );
+            break; // Limit the number of attempts to summarize URLs
+          }
+          attemptedUrlCount++;
 
-        const summaryResult = await summarizeWebContent(
-          result.url,
-          state.query,
-          this.llm,
-          this.systemInstructions,
-          this.signal,
-        );
-        
-        if (summaryResult.document) {
-          documents.push(summaryResult.document);
-          
-          // Emit context updated event
+          bannedUrls.push(result.url); // Add to banned URLs to avoid duplicates
+
+          if (documents.length >= 1) {
+            break; // Limit to top 1 document
+          }
+
+          // Emit analyzing source event
           this.emitter.emit('agent_action', {
             type: 'agent_action',
             data: {
-              action: 'CONTEXT_UPDATED',
-              message: `Added information from ${summaryResult.document.metadata.title || result.url} to context`,
-              details: {
-                query: state.query,
-                sourceUrl: result.url,
-                sourceTitle: summaryResult.document.metadata.title || 'Untitled',
-                contentLength: summaryResult.document.pageContent.length,
-                documentCount: state.relevantDocuments.length + documents.length,
-                searchIterations: state.searchInstructionHistory.length
-              }
-            }
-          });
-          
-          console.log(
-            `Summarized content from ${result.url} to ${summaryResult.document.pageContent.length} characters. Content: ${summaryResult.document.pageContent}`,
-          );
-        } else {
-          console.warn(`No relevant content found for URL: ${result.url}`);
-          
-          // Emit skipping irrelevant source event for non-relevant content
-          this.emitter.emit('agent_action', {
-            type: 'agent_action',
-            data: {
-              action: 'SKIPPING_IRRELEVANT_SOURCE',
-              message: `Source ${result.title || result.url} was not relevant - trying next`,
+              action: 'ANALYZING_SOURCE',
+              message: `Analyzing content from: ${result.title || result.url}`,
               details: {
                 query: state.query,
                 sourceUrl: result.url,
                 sourceTitle: result.title || 'Untitled',
-                skipReason: summaryResult.notRelevantReason || 'Content was not relevant to the query',
-                documentCount: state.relevantDocuments.length + documents.length,
-                searchIterations: state.searchInstructionHistory.length
-              }
-            }
+                documentCount: state.relevantDocuments.length,
+                searchIterations: state.searchInstructionHistory.length,
+              },
+            },
           });
+
+          const summaryResult = await summarizeWebContent(
+            result.url,
+            state.query,
+            this.llm,
+            this.systemInstructions,
+            this.signal,
+          );
+
+          if (summaryResult.document) {
+            documents.push(summaryResult.document);
+
+            // Emit context updated event
+            this.emitter.emit('agent_action', {
+              type: 'agent_action',
+              data: {
+                action: 'CONTEXT_UPDATED',
+                message: `Added information from ${summaryResult.document.metadata.title || result.url} to context`,
+                details: {
+                  query: state.query,
+                  sourceUrl: result.url,
+                  sourceTitle:
+                    summaryResult.document.metadata.title || 'Untitled',
+                  contentLength: summaryResult.document.pageContent.length,
+                  documentCount:
+                    state.relevantDocuments.length + documents.length,
+                  searchIterations: state.searchInstructionHistory.length,
+                },
+              },
+            });
+
+            console.log(
+              `Summarized content from ${result.url} to ${summaryResult.document.pageContent.length} characters. Content: ${summaryResult.document.pageContent}`,
+            );
+          } else {
+            console.warn(`No relevant content found for URL: ${result.url}`);
+
+            // Emit skipping irrelevant source event for non-relevant content
+            this.emitter.emit('agent_action', {
+              type: 'agent_action',
+              data: {
+                action: 'SKIPPING_IRRELEVANT_SOURCE',
+                message: `Source ${result.title || result.url} was not relevant - trying next`,
+                details: {
+                  query: state.query,
+                  sourceUrl: result.url,
+                  sourceTitle: result.title || 'Untitled',
+                  skipReason:
+                    summaryResult.notRelevantReason ||
+                    'Content was not relevant to the query',
+                  documentCount:
+                    state.relevantDocuments.length + documents.length,
+                  searchIterations: state.searchInstructionHistory.length,
+                },
+              },
+            });
+          }
         }
-      }
       } // Close the else block for full content processing
 
       if (documents.length === 0) {

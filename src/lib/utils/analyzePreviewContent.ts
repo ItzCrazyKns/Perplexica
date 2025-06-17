@@ -24,37 +24,37 @@ export const analyzePreviewContent = async (
 ): Promise<PreviewAnalysisResult> => {
   try {
     console.log(`Analyzing preview content for query: "${query}"`);
-    console.log(`Preview content being analyzed:`, previewContents.map(content => ({
-      title: content.title,
-      snippet: content.snippet.substring(0, 100) + '...',
-      url: content.url
-    })));
+    console.log(
+      `Preview content being analyzed:`,
+      previewContents.map((content) => ({
+        title: content.title,
+        snippet: content.snippet.substring(0, 100) + '...',
+        url: content.url,
+      })),
+    );
 
     // Format preview content for analysis
     const formattedPreviewContent = previewContents
-      .map((content, index) => 
-        `Source ${index + 1}:
+      .map(
+        (content, index) =>
+          `Source ${index + 1}:
 Title: ${content.title}
 Snippet: ${content.snippet}
 URL: ${content.url}
----`
+---`,
       )
       .join('\n\n');
 
     // Format chat history for context
     const formattedChatHistory = chatHistory
       .slice(-10) // Only include last 10 messages for context
-      .map((message, index) => 
-        `${message._getType()}: ${message.content}`
-      )
+      .map((message, index) => `${message._getType()}: ${message.content}`)
       .join('\n');
 
-    const systemPrompt = systemInstructions
-      ? `${systemInstructions}\n\n`
-      : '';
+    const systemPrompt = systemInstructions ? `${systemInstructions}\n\n` : '';
 
     console.log(`Invoking LLM for preview content analysis`);
-    
+
     const analysisResponse = await llm.invoke(
       `${systemPrompt}You are a preview content analyzer, tasked with determining if search result snippets contain sufficient information to answer a user's query.
 
@@ -85,9 +85,10 @@ ${formattedPreviewContent}
 
     if (!analysisResponse || !analysisResponse.content) {
       console.error('No analysis response returned from LLM');
-      return { 
-        isSufficient: false, 
-        reason: 'No analysis response returned from LLM - falling back to full content processing' 
+      return {
+        isSufficient: false,
+        reason:
+          'No analysis response returned from LLM - falling back to full content processing',
       };
     }
 
@@ -99,30 +100,36 @@ ${formattedPreviewContent}
     console.log(`LLM decision response:`, decision);
 
     if (decision.toLowerCase().trim() === 'sufficient') {
-      console.log('Preview content determined to be sufficient for answering the query');
+      console.log(
+        'Preview content determined to be sufficient for answering the query',
+      );
       return { isSufficient: true };
     } else if (decision.toLowerCase().startsWith('not_needed')) {
       // Extract the reason from the "not_needed" response
-      const reason = decision.startsWith('not_needed') 
+      const reason = decision.startsWith('not_needed')
         ? decision.substring('not_needed:'.length).trim()
         : 'Preview content insufficient for complete answer';
-        
-      console.log(`Preview content determined to be insufficient. Reason: ${reason}`);
+
+      console.log(
+        `Preview content determined to be insufficient. Reason: ${reason}`,
+      );
       return { isSufficient: false, reason };
     } else {
       // Default to not sufficient if unclear response
-      console.log(`Unclear LLM response, defaulting to insufficient: ${decision}`);
-      return { 
-        isSufficient: false, 
-        reason: 'Unclear analysis response - falling back to full content processing' 
+      console.log(
+        `Unclear LLM response, defaulting to insufficient: ${decision}`,
+      );
+      return {
+        isSufficient: false,
+        reason:
+          'Unclear analysis response - falling back to full content processing',
       };
     }
-
   } catch (error) {
     console.error('Error analyzing preview content:', error);
-    return { 
-      isSufficient: false, 
-      reason: `Error during preview analysis: ${error instanceof Error ? error.message : 'Unknown error'} - falling back to full content processing` 
+    return {
+      isSufficient: false,
+      reason: `Error during preview analysis: ${error instanceof Error ? error.message : 'Unknown error'} - falling back to full content processing`,
     };
   }
 };

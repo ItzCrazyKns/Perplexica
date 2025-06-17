@@ -68,7 +68,10 @@ ${i === 0 ? content.metadata.html : content.pageContent},
 
       if (!summary || !summary.content) {
         console.error(`No summary content returned for URL: ${url}`);
-        return { document: null, notRelevantReason: 'No summary content returned from LLM' };
+        return {
+          document: null,
+          notRelevantReason: 'No summary content returned from LLM',
+        };
       }
 
       const summaryParser = new LineOutputParser({ key: 'summary' });
@@ -84,18 +87,18 @@ ${i === 0 ? content.metadata.html : content.pageContent},
           `LLM response for URL "${url}" indicates it's not needed or is empty:`,
           summarizedContent,
         );
-        
+
         // Extract the reason from the "not_needed" response
-        const reason = summarizedContent.startsWith('not_needed') 
+        const reason = summarizedContent.startsWith('not_needed')
           ? summarizedContent.substring('not_needed:'.length).trim()
-          : summarizedContent.trim().length === 0 
+          : summarizedContent.trim().length === 0
             ? 'Source content was empty or could not be processed'
             : 'Source content was not relevant to the query';
-            
+
         return { document: null, notRelevantReason: reason };
       }
 
-      return { 
+      return {
         document: new Document({
           pageContent: summarizedContent,
           metadata: {
@@ -104,7 +107,7 @@ ${i === 0 ? content.metadata.html : content.pageContent},
             processingType: 'full-content',
           },
         }),
-        notRelevantReason: undefined
+        notRelevantReason: undefined,
       };
     };
 
@@ -138,10 +141,16 @@ ${i === 0 ? content.metadata.html : content.pageContent},
       return await summarizeContent(webContent);
     } else {
       console.log(`No valid content found for URL: ${url}`);
-      return { document: null, notRelevantReason: 'No valid content found at the URL' };
+      return {
+        document: null,
+        notRelevantReason: 'No valid content found at the URL',
+      };
     }
   } catch (error) {
     console.error(`Error processing URL ${url}:`, error);
-    return { document: null, notRelevantReason: `Error processing URL: ${error instanceof Error ? error.message : 'Unknown error'}` };
+    return {
+      document: null,
+      notRelevantReason: `Error processing URL: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    };
   }
 };

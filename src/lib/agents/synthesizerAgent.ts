@@ -37,9 +37,9 @@ export class SynthesizerAgent {
           details: {
             query: state.query,
             documentCount: state.relevantDocuments.length,
-            searchIterations: state.searchInstructionHistory.length
-          }
-        }
+            searchIterations: state.searchInstructionHistory.length,
+          },
+        },
       });
 
       const synthesisPrompt = `You are an expert information synthesizer. Based on the search results and analysis provided, create a comprehensive, well-structured answer to the user's query.
