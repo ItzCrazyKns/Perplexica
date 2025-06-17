@@ -101,6 +101,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     llm: BaseChatModel,
     systemInstructions: string,
     emitter: eventEmitter,
+    signal: AbortSignal,
   ) {
     (llm as unknown as ChatOpenAI).temperature = 0;
 
@@ -238,7 +239,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
             </text>
 
             Make sure to answer the query in the summary.
-          `); //TODO: Pass signal for cancellation
+          `, { signal });
 
                 const document = new Document({
                   pageContent: res.content as string,
@@ -340,6 +341,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
                   llm,
                   systemInstructions,
                   emitter,
+                  signal,
                 );
               var date = formatDateForLLM();
 

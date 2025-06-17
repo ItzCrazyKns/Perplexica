@@ -99,6 +99,7 @@ export class AgentSearch {
       const result = await workflow.invoke(initialState, {
         configurable: { thread_id: `agent_search_${Date.now()}` },
         recursionLimit: 20,
+        signal: this.signal,
       });
 
       return result;
