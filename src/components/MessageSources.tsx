@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { Document } from '@langchain/core/documents';
-import { File } from 'lucide-react';
+import { File, Zap, Microscope } from 'lucide-react';
 
 const MessageSources = ({ sources }: { sources: Document[] }) => {
   return (
@@ -37,6 +37,17 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
             <div className="flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 text-xs">
               <div className="bg-black/50 dark:bg-white/50 h-[4px] w-[4px] rounded-full" />
               <span>{i + 1}</span>
+              {/* Processing type indicator */}
+              {source.metadata.processingType === 'preview-only' && (
+                <span title="Partial content analyzed" className="inline-flex">
+                  <Zap size={14} className="text-black/40 dark:text-white/40 ml-1" />
+                </span>
+              )}
+              {source.metadata.processingType === 'full-content' && (
+                <span title="Full content analyzed" className="inline-flex">
+                  <Microscope size={14} className="text-black/40 dark:text-white/40 ml-1" />
+                </span>
+              )}
             </div>
           </div>
         </a>

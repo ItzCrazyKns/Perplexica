@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronUp, Bot } from 'lucide-react';
+import { ChevronDown, ChevronUp, Bot, Search, Zap, Microscope } from 'lucide-react';
 import { AgentActionEvent } from './ChatWindow';
 
 interface AgentActionDisplayProps {
@@ -21,6 +21,20 @@ const AgentActionDisplay = ({ events, messageId }: AgentActionDisplayProps) => {
     return action.replace(/_/g, ' ').toLocaleLowerCase();
   };
 
+  // Function to get appropriate icon based on action type
+  const getActionIcon = (action: string, size: number = 20) => {
+    switch (action) {
+      case 'ANALYZING_PREVIEW_CONTENT':
+        return <Search size={size} className="text-[#9C27B0]" />;
+      case 'PROCESSING_PREVIEW_CONTENT':
+        return <Zap size={size} className="text-[#9C27B0]" />;
+      case 'PROCEEDING_WITH_FULL_ANALYSIS':
+        return <Microscope size={size} className="text-[#9C27B0]" />;
+      default:
+        return <Bot size={size} className="text-[#9C27B0]" />;
+    }
+  };
+
   if (!latestEvent) {
     return null;
   }
@@ -32,7 +46,7 @@ const AgentActionDisplay = ({ events, messageId }: AgentActionDisplayProps) => {
         className="w-full flex items-center justify-between px-4 py-3 text-black/90 dark:text-white/90 hover:bg-light-200 dark:hover:bg-dark-200 transition duration-200"
       >
         <div className="flex items-center space-x-2">
-          <Bot size={20} className="text-[#9C27B0]" />
+          {getActionIcon(latestEvent.action)}
           <span className="font-medium text-base text-black/70 dark:text-white/70 tracking-wide capitalize">
             {latestEvent.action === 'SYNTHESIZING_RESPONSE' ? 'Agent Log' : formatActionName(latestEvent.action)}
           </span>
@@ -53,7 +67,7 @@ const AgentActionDisplay = ({ events, messageId }: AgentActionDisplayProps) => {
                 className="flex flex-col space-y-1 p-3 bg-white/50 dark:bg-black/20 rounded-lg border border-light-200/50 dark:border-dark-200/50"
               >
                 <div className="flex items-center space-x-2">
-                  <Bot size={16} className="text-[#9C27B0]" />
+                  {getActionIcon(event.action, 16)}
                   <span className="font-medium text-sm text-black/70 dark:text-white/70 capitalize tracking-wide">
                     {formatActionName(event.action)}
                   </span>
@@ -106,6 +120,30 @@ const AgentActionDisplay = ({ events, messageId }: AgentActionDisplayProps) => {
                       <div className="flex space-x-1">
                         <span className="font-bold">Search Instructions:</span>
                         <span>{event.details.searchInstructions}</span>
+                      </div>
+                    )}
+                    {event.details.previewCount !== undefined && (
+                      <div className="flex space-x-1">
+                        <span className="font-bold">Preview Sources:</span>
+                        <span>{event.details.previewCount}</span>
+                      </div>
+                    )}
+                    {event.details.processingType && (
+                      <div className="flex space-x-1">
+                        <span className="font-bold">Processing Type:</span>
+                        <span className="capitalize">{event.details.processingType.replace('-', ' ')}</span>
+                      </div>
+                    )}
+                    {event.details.insufficiencyReason && (
+                      <div className="flex space-x-1">
+                        <span className="font-bold">Reason:</span>
+                        <span>{event.details.insufficiencyReason}</span>
+                      </div>
+                    )}
+                    {event.details.reason && (
+                      <div className="flex space-x-1">
+                        <span className="font-bold">Reason:</span>
+                        <span>{event.details.reason}</span>
                       </div>
                     )}
                   </div>

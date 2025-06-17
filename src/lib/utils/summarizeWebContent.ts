@@ -101,6 +101,7 @@ ${i === 0 ? content.metadata.html : content.pageContent},
           metadata: {
             ...content.metadata,
             url: url,
+            processingType: 'full-content',
           },
         }),
         notRelevantReason: undefined
