@@ -5,7 +5,13 @@ import {
   HumanMessage,
   SystemMessage,
 } from '@langchain/core/messages';
-import { END, MemorySaver, START, StateGraph } from '@langchain/langgraph';
+import {
+  BaseLangGraphError,
+  END,
+  MemorySaver,
+  START,
+  StateGraph,
+} from '@langchain/langgraph';
 import { EventEmitter } from 'events';
 import {
   AgentState,
@@ -25,6 +31,7 @@ export class AgentSearch {
   private webSearchAgent: WebSearchAgent;
   private analyzerAgent: AnalyzerAgent;
   private synthesizerAgent: SynthesizerAgent;
+  private emitter: EventEmitter;
 
   constructor(
     llm: BaseChatModel,
@@ -38,6 +45,7 @@ export class AgentSearch {
     this.embeddings = embeddings;
     this.checkpointer = new MemorySaver();
     this.signal = signal;
+    this.emitter = emitter;
 
     // Initialize agents
     this.webSearchAgent = new WebSearchAgent(
@@ -97,40 +105,35 @@ export class AgentSearch {
   async searchAndAnswer(query: string, history: BaseMessage[] = []) {
     const workflow = this.createWorkflow();
 
-    try {
-      const initialState = {
-        messages: [...history, new HumanMessage(query)],
-        query,
-      };
+    const initialState = {
+      messages: [...history, new HumanMessage(query)],
+      query,
+    };
 
-      const result = await workflow.invoke(initialState, {
+    try {
+      await workflow.invoke(initialState, {
         configurable: { thread_id: `agent_search_${Date.now()}` },
-        recursionLimit: 20,
+        recursionLimit: 10,
         signal: this.signal,
       });
-
-      return result;
-    } catch (error) {
-      console.error('Agent workflow error:', error);
-
-      // Fallback to a simple response
-      const fallbackResponse = await this.llm.invoke(
-        [
-          new SystemMessage(
-            "You are a helpful assistant. The advanced agent workflow failed, so please provide a basic response to the user's query based on your knowledge.",
-          ),
-          new HumanMessage(query),
-        ],
-        { signal: this.signal },
-      );
-
-      return {
-        messages: [...history, new HumanMessage(query), fallbackResponse],
-        query,
-        searchResults: [],
-        next: END,
-        analysis: '',
-      };
+    } catch (error: BaseLangGraphError | any) {
+      if (error instanceof BaseLangGraphError) {
+        console.error('LangGraph error occurred:', error.message);
+        if (error.lc_error_code === 'GRAPH_RECURSION_LIMIT') {
+          this.emitter.emit(
+            'data',
+            JSON.stringify({
+              type: 'response',
+              data: "I've been working on this for a while and can't find a solution. Please try again with a different query.",
+            }),
+          );
+          this.emitter.emit('end');
+        }
+      } else if (error.name === 'AbortError') {
+        console.warn('Agent search was aborted:', error.message);
+      } else {
+        console.error('Unexpected error during agent search:', error);
+      }
     }
   }
 }

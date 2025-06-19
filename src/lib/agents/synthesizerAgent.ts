@@ -28,20 +28,6 @@ export class SynthesizerAgent {
    */
   async execute(state: typeof AgentState.State): Promise<Command> {
     try {
-      // Emit synthesizing response event
-      this.emitter.emit('agent_action', {
-        type: 'agent_action',
-        data: {
-          action: 'SYNTHESIZING_RESPONSE',
-          message: 'Synthesizing final answer...',
-          details: {
-            query: state.query,
-            documentCount: state.relevantDocuments.length,
-            searchIterations: state.searchInstructionHistory.length,
-          },
-        },
-      });
-
       const synthesisPrompt = `You are an expert information synthesizer. Based on the search results and analysis provided, create a comprehensive, well-structured answer to the user's query.
 
 ## Response Instructions

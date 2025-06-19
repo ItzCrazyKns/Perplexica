@@ -86,7 +86,7 @@ export const POST = async (req: Request) => {
         modelName: body.chatModel?.name || getCustomOpenaiModelName(),
         openAIApiKey:
           body.chatModel?.customOpenAIKey || getCustomOpenaiApiKey(),
-        temperature: 0.7,
+        // temperature: 0.7,
         configuration: {
           baseURL:
             body.chatModel?.customOpenAIBaseURL || getCustomOpenaiApiUrl(),

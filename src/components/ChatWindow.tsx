@@ -496,17 +496,16 @@ const ChatWindow = ({ id }: { id?: string }) => {
             },
           ]);
           added = true;
+        } else {
+          setMessages((prev) =>
+            prev.map((message) => {
+              if (message.messageId === data.messageId) {
+                return { ...message, content: message.content + data.data };
+              }
+              return message;
+            }),
+          );
         }
-
-        setMessages((prev) =>
-          prev.map((message) => {
-            if (message.messageId === data.messageId) {
-              return { ...message, content: message.content + data.data };
-            }
-
-            return message;
-          }),
-        );
 
         recievedMessage += data.data;
         setScrollTrigger((prev) => prev + 1);

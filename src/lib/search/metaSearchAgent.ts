@@ -103,6 +103,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     emitter: eventEmitter,
     signal: AbortSignal,
   ) {
+    // TODO: Don't we want to set this back to default once search is done?
     (llm as unknown as ChatOpenAI).temperature = 0;
 
     this.emitProgress(emitter, 10, `Building search query`);
@@ -693,7 +694,7 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
       );
 
       // Execute the agent workflow
-      const result = await agentSearch.searchAndAnswer(message, history);
+      await agentSearch.searchAndAnswer(message, history);
 
       // No need to emit end signals here since synthesizerAgent
       // is now streaming in real-time and emits them

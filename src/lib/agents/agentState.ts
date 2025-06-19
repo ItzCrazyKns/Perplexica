@@ -18,7 +18,11 @@ export const AgentState = Annotation.Root({
     reducer: (x, y) => x.concat(y),
     default: () => [],
   }),
-  bannedUrls: Annotation<string[]>({
+  bannedSummaryUrls: Annotation<string[]>({
+    reducer: (x, y) => x.concat(y),
+    default: () => [],
+  }),
+  bannedPreviewUrls: Annotation<string[]>({
     reducer: (x, y) => x.concat(y),
     default: () => [],
   }),
@@ -37,5 +41,9 @@ export const AgentState = Annotation.Root({
   analysis: Annotation<string>({
     reducer: (x, y) => y ?? x,
     default: () => '',
+  }),
+  fullAnalysisAttempts: Annotation<number>({
+    reducer: (x, y) => (y ?? 0) + x,
+    default: () => 0,
   }),
 });

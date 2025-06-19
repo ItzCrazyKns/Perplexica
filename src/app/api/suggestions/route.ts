@@ -54,7 +54,7 @@ export const POST = async (req: Request) => {
       llm = new ChatOpenAI({
         openAIApiKey: getCustomOpenaiApiKey(),
         modelName: getCustomOpenaiModelName(),
-        temperature: 0.7,
+        // temperature: 0.7,
         configuration: {
           baseURL: getCustomOpenaiApiUrl(),
         },

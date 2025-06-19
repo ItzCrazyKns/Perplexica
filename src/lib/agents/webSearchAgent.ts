@@ -14,6 +14,7 @@ import {
   PreviewContent,
 } from '../utils/analyzePreviewContent';
 import { AgentState } from './agentState';
+import { setTemperature } from '../utils/modelUtils';
 
 export class WebSearchAgent {
   private llm: BaseChatModel;
@@ -37,41 +38,45 @@ export class WebSearchAgent {
    * Web search agent node
    */
   async execute(state: typeof AgentState.State): Promise<Command> {
-    // Emit preparing web search event
-    this.emitter.emit('agent_action', {
-      type: 'agent_action',
-      data: {
-        action: 'PREPARING_SEARCH_QUERY',
-        // message: `Preparing search query`,
-        details: {
-          query: state.query,
-          searchInstructions: state.searchInstructions || state.query,
-          documentCount: state.relevantDocuments.length,
-          searchIterations: state.searchInstructionHistory.length,
-        },
-      },
-    });
-
-    const template = PromptTemplate.fromTemplate(webSearchRetrieverAgentPrompt);
-    const prompt = await template.format({
-      systemInstructions: this.systemInstructions,
-      query: state.query,
-      date: formatDateForLLM(new Date()),
-      supervisor: state.searchInstructions,
-    });
-
-    const searchQueryResult = await this.llm.invoke(
-      [...state.messages, prompt],
-      { signal: this.signal },
-    );
-
-    // Parse the response to extract the search query with the lineoutputparser
-    const lineOutputParser = new LineOutputParser({ key: 'answer' });
-    const searchQuery = await lineOutputParser.parse(
-      searchQueryResult.content as string,
-    );
-
     try {
+      setTemperature(this.llm, 0); // Set temperature to 0 for deterministic output
+
+      // Emit preparing web search event
+      this.emitter.emit('agent_action', {
+        type: 'agent_action',
+        data: {
+          action: 'PREPARING_SEARCH_QUERY',
+          // message: `Preparing search query`,
+          details: {
+            query: state.query,
+            searchInstructions: state.searchInstructions || state.query,
+            documentCount: state.relevantDocuments.length,
+            searchIterations: state.searchInstructionHistory.length,
+          },
+        },
+      });
+
+      const template = PromptTemplate.fromTemplate(
+        webSearchRetrieverAgentPrompt,
+      );
+      const prompt = await template.format({
+        systemInstructions: this.systemInstructions,
+        query: state.query,
+        date: formatDateForLLM(new Date()),
+        supervisor: state.searchInstructions,
+      });
+
+      const searchQueryResult = await this.llm.invoke(
+        [...state.messages, prompt],
+        { signal: this.signal },
+      );
+
+      // Parse the response to extract the search query with the lineoutputparser
+      const lineOutputParser = new LineOutputParser({ key: 'answer' });
+      const searchQuery = await lineOutputParser.parse(
+        searchQueryResult.content as string,
+      );
+
       console.log(`Performing web search for query: "${searchQuery}"`);
 
       // Emit executing web search event
@@ -110,11 +115,16 @@ export class WebSearchAgent {
         },
       });
 
-      let bannedUrls = state.bannedUrls || [];
+      let bannedSummaryUrls = state.bannedSummaryUrls || [];
+      let bannedPreviewUrls = state.bannedPreviewUrls || [];
 
       // Extract preview content from top 8 search results for analysis
       const previewContents: PreviewContent[] = searchResults.results
-        .filter((result) => !bannedUrls.includes(result.url)) // Filter out banned URLs first
+        .filter(
+          (result) =>
+            !bannedSummaryUrls.includes(result.url) &&
+            !bannedPreviewUrls.includes(result.url),
+        ) // Filter out banned URLs first
         .slice(0, 8) // Then take top 8 results
         .map((result) => ({
           title: result.title || 'Untitled',
@@ -203,6 +213,10 @@ export class WebSearchAgent {
             }),
         );
 
+        previewContents.forEach((content) => {
+          bannedPreviewUrls.push(content.url); // Add to banned preview URLs to avoid duplicates
+        });
+
         console.log(
           `Created ${documents.length} documents from preview content`,
         );
@@ -233,7 +247,12 @@ export class WebSearchAgent {
 
         // Summarize the top 2 search results
         for (const result of searchResults.results) {
-          if (bannedUrls.includes(result.url)) {
+          if (this.signal.aborted) {
+            console.warn('Search operation aborted by signal');
+            break; // Exit if the operation is aborted
+          }
+
+          if (bannedSummaryUrls.includes(result.url)) {
             console.log(`Skipping banned URL: ${result.url}`);
             // Note: We don't emit an agent_action event for banned URLs as this is an internal
             // optimization that should be transparent to the user
@@ -247,7 +266,7 @@ export class WebSearchAgent {
           }
           attemptedUrlCount++;
 
-          bannedUrls.push(result.url); // Add to banned URLs to avoid duplicates
+          bannedSummaryUrls.push(result.url); // Add to banned URLs to avoid duplicates
 
           if (documents.length >= 1) {
             break; // Limit to top 1 document
@@ -345,7 +364,8 @@ export class WebSearchAgent {
         update: {
           messages: [new AIMessage(responseMessage)],
           relevantDocuments: documents,
-          bannedUrls: bannedUrls,
+          bannedSummaryUrls: bannedSummaryUrls,
+          bannedPreviewUrls: bannedPreviewUrls,
         },
       });
     } catch (error) {
@@ -360,6 +380,8 @@ export class WebSearchAgent {
           messages: [errorMessage],
         },
       });
+    } finally {
+      setTemperature(this.llm, undefined); // Reset temperature to default
     }
   }
 }

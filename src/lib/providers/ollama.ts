@@ -31,7 +31,7 @@ export const loadOllamaChatModels = async () => {
         model: new ChatOllama({
           baseUrl: ollamaApiEndpoint,
           model: model.model,
-          temperature: 0.7,
+          // temperature: 0.7,
           keepAlive: getKeepAlive(),
         }),
       };

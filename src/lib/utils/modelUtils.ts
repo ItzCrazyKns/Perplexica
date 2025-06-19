@@ -50,3 +50,14 @@ export function getModelName(llm: BaseChatModel): string {
     return 'Unknown';
   }
 }
+
+export function setTemperature(llm: BaseChatModel, temperature?: number) {
+  try {
+    // @ts-ignore - Different LLM implementations have different properties
+    if ('temperature' in llm) {
+      (llm as any).temperature = temperature;
+    }
+  } catch (e) {
+    console.error('Failed to set temperature:', e);
+  }
+}

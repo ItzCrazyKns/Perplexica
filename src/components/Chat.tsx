@@ -233,13 +233,18 @@ const Chat = ({
                   <AgentActionDisplay
                     messageId={msg.messageId}
                     events={msg.agentActions}
+                    isLoading={loading}
                   />
                 )}
                 {/* Show empty agent action display if this is the last user message and we're loading */}
                 {loading &&
                   isLast &&
                   (!msg.agentActions || msg.agentActions.length === 0) && (
-                    <AgentActionDisplay messageId={msg.messageId} events={[]} />
+                    <AgentActionDisplay
+                      messageId={msg.messageId}
+                      events={[]}
+                      isLoading={loading}
+                    />
                   )}
               </>
             )}

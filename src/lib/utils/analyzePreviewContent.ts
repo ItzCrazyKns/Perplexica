@@ -2,6 +2,8 @@ import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { BaseMessage } from '@langchain/core/messages';
 import LineOutputParser from '../outputParsers/lineOutputParser';
 import { formatDateForLLM } from '../utils';
+import { ChatOpenAI, OpenAIClient } from '@langchain/openai';
+import { removeThinkingBlocks } from './contentUtils';
 
 export type PreviewAnalysisResult = {
   isSufficient: boolean;
@@ -40,7 +42,6 @@ export const analyzePreviewContent = async (
           `Source ${index + 1}:
 Title: ${content.title}
 Snippet: ${content.snippet}
-URL: ${content.url}
 ---`,
       )
       .join('\n\n');
@@ -48,7 +49,10 @@ URL: ${content.url}
     // Format chat history for context
     const formattedChatHistory = chatHistory
       .slice(-10) // Only include last 10 messages for context
-      .map((message, index) => `${message._getType()}: ${message.content}`)
+      .map(
+        (message) =>
+          `${message.getType()}: ${removeThinkingBlocks(message.content.toString())}`,
+      )
       .join('\n');
 
     const systemPrompt = systemInstructions ? `${systemInstructions}\n\n` : '';
@@ -59,16 +63,14 @@ URL: ${content.url}
       `${systemPrompt}You are a preview content analyzer, tasked with determining if search result snippets contain sufficient information to answer a user's query.
 
 # Instructions
-- Analyze the provided search result previews (titles + snippets) to determine if they collectively contain enough information to provide a complete and accurate answer to the user's query
-- Consider the chat history context when making your decision
+- Analyze the provided search result previews (titles + snippets), and chat history context to determine if they collectively contain enough information to provide a complete and accurate answer to the user's query
 - You must make a binary decision: either the preview content is sufficient OR it is not sufficient
 - If the preview content can provide a complete answer to the query, respond with "sufficient"
 - If the preview content lacks important details, requires deeper analysis, or cannot fully answer the query, respond with "not_needed: [specific reason why full content analysis is required]"
 - Be specific in your reasoning when the content is not sufficient
-- Consider query complexity: simple factual questions may be answerable from snippets, while complex research questions typically need full content
-- Consider information completeness: if key details are missing from the snippets that would be needed for a complete answer, full analysis is required
 - Output your decision inside a \`decision\` XML tag
 
+# Information Context:
 Today's date is ${formatDateForLLM(new Date())}
 
 # Chat History Context:
@@ -79,7 +81,7 @@ ${query}
 
 # Search Result Previews to Analyze:
 ${formattedPreviewContent}
-      `,
+`,
       { signal },
     );
 

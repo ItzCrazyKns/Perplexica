@@ -15,9 +15,14 @@ import { AgentActionEvent } from './ChatWindow';
 interface AgentActionDisplayProps {
   events: AgentActionEvent[];
   messageId: string;
+  isLoading: boolean;
 }
 
-const AgentActionDisplay = ({ events, messageId }: AgentActionDisplayProps) => {
+const AgentActionDisplay = ({
+  events,
+  messageId,
+  isLoading,
+}: AgentActionDisplayProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Get the most recent event for collapsed view
@@ -54,10 +59,17 @@ const AgentActionDisplay = ({ events, messageId }: AgentActionDisplayProps) => {
       >
         <div className="flex items-center space-x-2">
           {getActionIcon(latestEvent.action)}
-          <span className="font-medium text-base text-black/70 dark:text-white/70 tracking-wide capitalize">
-            {latestEvent.action === 'SYNTHESIZING_RESPONSE'
+          <span className="font-medium text-base text-black/70 dark:text-white/70 tracking-wide capitalize flex items-center">
+            {!isLoading ||
+            latestEvent.action === 'INFORMATION_GATHERING_COMPLETE'
               ? 'Agent Log'
               : formatActionName(latestEvent.action)}
+            {isLoading &&
+              latestEvent.action !== 'INFORMATION_GATHERING_COMPLETE' && (
+                <span className="ml-2 inline-block align-middle">
+                  <span className="animate-spin inline-block w-4 h-4 border-2 border-t-transparent border-[#9C27B0] rounded-full align-middle"></span>
+                </span>
+              )}
           </span>
         </div>
         {isExpanded ? (

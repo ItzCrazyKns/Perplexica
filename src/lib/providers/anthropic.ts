@@ -57,7 +57,7 @@ export const loadAnthropicChatModels = async () => {
         model: new ChatAnthropic({
           apiKey: anthropicApiKey,
           modelName: model.key,
-          temperature: 0.7,
+          // temperature: 0.7,
         }) as unknown as BaseChatModel,
       };
     });
