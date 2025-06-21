@@ -2,24 +2,70 @@ export const decideNextActionPrompt = `You are an expert content analyzer.
 Your task is to analyze the provided context and determine if we have enough information to fully answer the user's query.
 
 # Instructions
-- Carefully analyze the content of the context provided and determine if it contains sufficient information to answer the user's query
-- The content should completely address the query, providing detailed explanations, relevant facts, and necessary context
+- Carefully analyze the content of the context provided and the historical context of the conversation to determine if it contains sufficient information to answer the user's query
 - Use the content provided in the \`context\` tag, as well as the historical context of the conversation, to make your determination
-- If the context provides conflicting information, explain the discrepancies and what additional information is needed to resolve them
 - If the user is asking for a specific number of sources and the context does not provide enough, consider the content insufficient
 
-# Response Options
-- If the content is sufficient, respond with \`good_content\`
-- If the content is not sufficient you have two options
-    - Option 1 - Ask the user for more information (Respond with \`need_user_info\`)
-        - Use this option when the content is not sufficient due to information that is would not typically be available online, or when the query is too vague or broad
-    - For example, if the query is asking for personal opinions, preferences, user experiences, settings, objects the user owns, or specific details that are not typically found in online content
-    - Option 2 - Ask the LLM to generate a more specific search query (Respond with \`need_more_info\`)
-        - Only use this option when the content is not sufficient due to missing information that could typically be found online and is not related to personal opinions, preferences, user experiences, or specific objects the user owns
-- The only output in your response should be one of the following:
-    - \`good_content\`
-    - \`need_user_info\`
-    - \`need_more_info\`
+# Response Options Decision Tree
+
+## Step 1: Check if content is sufficient
+- If the context fully answers the user's query with complete information → respond with \`good_content\`
+- If the user is requesting to use the existing context to answer their query → respond with \`good_content\`
+- If the user is requesting to avoid web searches → respond with \`good_content\`
+- If the user is asking you to be creative, such as writing a story, poem, or creative content → respond with \`good_content\` unless the context is clearly insufficient
+
+## Step 2: If content is insufficient, determine the type of missing information
+
+### Use \`need_user_info\` when the missing information is:
+**Personal/Subjective Information:**
+- User's personal preferences, opinions, or experiences
+- User's specific situation, location, or circumstances  
+- User's budget, timeline, or constraints
+- User's skill level, background, or expertise
+- User's goals, intentions, or desired outcomes
+- Configuration details about user's specific setup/environment
+- User's past experiences with products/services
+- User's access to specific resources or tools
+- Related to creative or subjective tasks
+
+**Context-Dependent Information:**
+- "What should I do in my specific situation?"
+- "What's best for me personally?"
+- "How do I configure my specific system?"
+- "What happened in my case?"
+
+**Examples requiring user info:**
+- "What laptop should I buy?" (missing: budget, use case, preferences)
+- "How do I fix my computer?" (missing: specific problem, system details)
+- "What career should I pursue?" (missing: interests, skills, goals)
+- "Which restaurant should I go to?" (missing: location, cuisine preference, budget)
+
+### Use \`need_more_info\` when the missing information is:
+**Factual/Objective Information that exists online:**
+- Technical specifications or details
+- Current prices, availability, or market data
+- Recent news, updates, or developments
+- Detailed how-to instructions or procedures
+- Comparative analysis between options
+- Expert opinions or reviews from credible sources
+- Statistical data or research findings
+
+**Examples requiring more web search:**
+- "What are the latest features in iPhone 15?" (missing: recent tech specs)
+- "How to install Docker on Ubuntu 22.04?" (missing: specific installation steps)
+- "Compare Tesla Model 3 vs BMW i4" (missing: detailed comparison data)
+
+# Critical Decision Point
+Ask yourself: "Could this missing information reasonably be found through a web search, or does it require the user to provide personal/subjective details?"
+
+- If it's personal/subjective → \`need_user_info\`
+- If it's factual and searchable → \`need_more_info\`
+- If the context is complete or the user wants to use the existing context → \`good_content\`
+
+The only output in your response should be one of the following:
+- \`good_content\`
+- \`need_user_info\`
+- \`need_more_info\`
 
 # System Instructions
 {systemInstructions}
@@ -67,9 +113,6 @@ Your task is to analyze the provided context and user query to determine what ad
 
 # Instructions
 - Respond with a detailed question that will be directed to an LLM to gather more specific information that can help refine the search.
-- If if the query is asking about a complex topic, break it down into a single smaller question that can be answered one at a time. This search process can be iterative
-    - Break down the query into a smaller, more focused question that can be answered with a web search
-    - For example, if the query is asking about specific information from multiple locations, break the query into one smaller query for a single location
 - Avoid giving the same guidance more than once, and avoid repeating the same question multiple times
 - Avoid asking for general information or vague details; focus on specific, actionable questions that can lead to concrete answers
 

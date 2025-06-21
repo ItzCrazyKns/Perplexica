@@ -16,7 +16,7 @@ import {
   additionalWebSearchPrompt,
   decideNextActionPrompt,
 } from '../prompts/analyzer';
-import { removeThinkingBlocks } from '../utils/contentUtils';
+import { removeThinkingBlocks, removeThinkingBlocksFromMessages } from '../utils/contentUtils';
 
 export class AnalyzerAgent {
   private llm: BaseChatModel;
@@ -39,6 +39,11 @@ export class AnalyzerAgent {
   async execute(state: typeof AgentState.State): Promise<Command> {
     try {
       setTemperature(this.llm, 0.0);
+
+      // Initialize originalQuery if not set
+      if (!state.originalQuery) {
+        state.originalQuery = state.query;
+      }
 
       let nextActionContent = 'need_more_info';
       // Skip full analysis if this is the first run.
@@ -76,11 +81,13 @@ export class AnalyzerAgent {
         searchInstructionHistory: state.searchInstructionHistory
           .map((question) => `- ${question}`)
           .join('\n'),
-        query: state.query,
+        query: state.originalQuery || state.query, // Use original query for analysis context
       });
 
+      const thinkingBlocksRemovedMessages = removeThinkingBlocksFromMessages(state.messages);
+
       const nextActionResponse = await this.llm.invoke(
-        [...state.messages, new HumanMessage(nextActionPrompt)],
+        [...thinkingBlocksRemovedMessages, new HumanMessage(nextActionPrompt)],
         { signal: this.signal },
       );
 
@@ -107,11 +114,11 @@ export class AnalyzerAgent {
             searchInstructionHistory: state.searchInstructionHistory
               .map((question) => `- ${question}`)
               .join('\n'),
-            query: state.query,
+            query: state.originalQuery || state.query, // Use original query for user info context
           });
 
           const stream = await this.llm.stream(
-            [...state.messages, new SystemMessage(moreUserInfoPrompt)],
+            [...removeThinkingBlocksFromMessages(state.messages), new SystemMessage(moreUserInfoPrompt)],
             { signal: this.signal },
           );
 
@@ -164,11 +171,11 @@ export class AnalyzerAgent {
           searchInstructionHistory: state.searchInstructionHistory
             .map((question) => `- ${question}`)
             .join('\n'),
-          query: state.query,
+          query: state.originalQuery || state.query, // Use original query for more info context
         });
 
         const moreInfoResponse = await this.llm.invoke(
-          [...state.messages, new HumanMessage(moreInfoPrompt)],
+          [...removeThinkingBlocksFromMessages(state.messages), new HumanMessage(moreInfoPrompt)],
           { signal: this.signal },
         );
 
@@ -182,27 +189,33 @@ export class AnalyzerAgent {
           data: {
             action: 'MORE_DATA_NEEDED',
             message:
-              'Current context is insufficient - gathering more information',
+              'Current context is insufficient - analyzing search requirements',
             details: {
               nextSearchQuery: moreInfoQuestion,
               documentCount: state.relevantDocuments.length,
               searchIterations: state.searchInstructionHistory.length,
-              query: state.query,
+              query: state.originalQuery || state.query, // Show original query in details
+              currentSearchFocus: moreInfoQuestion,
             },
           },
         });
 
         return new Command({
-          goto: 'web_search',
+          goto: 'task_manager',
           update: {
             messages: [
               new AIMessage(
                 `The following question can help refine the search: ${moreInfoQuestion}`,
               ),
             ],
+            query: moreInfoQuestion, // Use the refined question for TaskManager to analyze
             searchInstructions: moreInfoQuestion,
-            searchInstructionHistory: [moreInfoQuestion],
+            searchInstructionHistory: [...(state.searchInstructionHistory || []), moreInfoQuestion],
             fullAnalysisAttempts: 1,
+            originalQuery: state.originalQuery || state.query, // Preserve the original user query
+            // Reset task list so TaskManager can break down the search requirements again
+            tasks: [],
+            currentTaskIndex: 0,
           },
         });
       }
@@ -216,7 +229,8 @@ export class AnalyzerAgent {
           details: {
             documentCount: state.relevantDocuments.length,
             searchIterations: state.searchInstructionHistory.length,
-            query: state.query,
+            totalTasks: state.tasks?.length || 1,
+            query: state.originalQuery || state.query,
           },
         },
       });

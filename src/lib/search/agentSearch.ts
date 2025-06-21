@@ -18,6 +18,7 @@ import {
   WebSearchAgent,
   AnalyzerAgent,
   SynthesizerAgent,
+  TaskManagerAgent,
 } from '../agents';
 
 /**
@@ -28,6 +29,7 @@ export class AgentSearch {
   private embeddings: Embeddings;
   private checkpointer: MemorySaver;
   private signal: AbortSignal;
+  private taskManagerAgent: TaskManagerAgent;
   private webSearchAgent: WebSearchAgent;
   private analyzerAgent: AnalyzerAgent;
   private synthesizerAgent: SynthesizerAgent;
@@ -48,6 +50,12 @@ export class AgentSearch {
     this.emitter = emitter;
 
     // Initialize agents
+    this.taskManagerAgent = new TaskManagerAgent(
+      llm,
+      emitter,
+      systemInstructions,
+      signal,
+    );
     this.webSearchAgent = new WebSearchAgent(
       llm,
       emitter,
@@ -74,17 +82,24 @@ export class AgentSearch {
   private createWorkflow() {
     const workflow = new StateGraph(AgentState)
       .addNode(
+        'task_manager',
+        this.taskManagerAgent.execute.bind(this.taskManagerAgent),
+        {
+          ends: ['web_search', 'analyzer'],
+        },
+      )
+      .addNode(
         'web_search',
         this.webSearchAgent.execute.bind(this.webSearchAgent),
         {
-          ends: ['analyzer'],
+          ends: ['task_manager'],
         },
       )
       .addNode(
         'analyzer',
         this.analyzerAgent.execute.bind(this.analyzerAgent),
         {
-          ends: ['web_search', 'synthesizer'],
+          ends: ['task_manager', 'synthesizer'],
         },
       )
       .addNode(
@@ -113,7 +128,7 @@ export class AgentSearch {
     try {
       await workflow.invoke(initialState, {
         configurable: { thread_id: `agent_search_${Date.now()}` },
-        recursionLimit: 10,
+        recursionLimit: 20,
         signal: this.signal,
       });
     } catch (error: BaseLangGraphError | any) {

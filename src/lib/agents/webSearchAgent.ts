@@ -15,6 +15,8 @@ import {
 } from '../utils/analyzePreviewContent';
 import { AgentState } from './agentState';
 import { setTemperature } from '../utils/modelUtils';
+import { Embeddings } from '@langchain/core/embeddings';
+import { removeThinkingBlocksFromMessages } from '../utils/contentUtils';
 
 export class WebSearchAgent {
   private llm: BaseChatModel;
@@ -41,6 +43,13 @@ export class WebSearchAgent {
     try {
       setTemperature(this.llm, 0); // Set temperature to 0 for deterministic output
 
+      // Determine current task to process
+      const currentTask = state.tasks && state.tasks.length > 0 
+        ? state.tasks[state.currentTaskIndex || 0]
+        : state.query;
+
+      console.log(`Processing task ${(state.currentTaskIndex || 0) + 1} of ${state.tasks?.length || 1}: "${currentTask}"`);
+
       // Emit preparing web search event
       this.emitter.emit('agent_action', {
         type: 'agent_action',
@@ -49,7 +58,10 @@ export class WebSearchAgent {
           // message: `Preparing search query`,
           details: {
             query: state.query,
-            searchInstructions: state.searchInstructions || state.query,
+            currentTask: currentTask,
+            taskIndex: (state.currentTaskIndex || 0) + 1,
+            totalTasks: state.tasks?.length || 1,
+            searchInstructions: state.searchInstructions || currentTask,
             documentCount: state.relevantDocuments.length,
             searchIterations: state.searchInstructionHistory.length,
           },
@@ -61,13 +73,13 @@ export class WebSearchAgent {
       );
       const prompt = await template.format({
         systemInstructions: this.systemInstructions,
-        query: state.query,
+        query: currentTask, // Use current task instead of main query
         date: formatDateForLLM(new Date()),
         supervisor: state.searchInstructions,
       });
 
       const searchQueryResult = await this.llm.invoke(
-        [...state.messages, prompt],
+        [...removeThinkingBlocksFromMessages(state.messages), prompt],
         { signal: this.signal },
       );
 
@@ -87,6 +99,9 @@ export class WebSearchAgent {
           // message: `Searching the web for: '${searchQuery}'`,
           details: {
             query: state.query,
+            currentTask: currentTask,
+            taskIndex: (state.currentTaskIndex || 0) + 1,
+            totalTasks: state.tasks?.length || 1,
             searchQuery: searchQuery,
             documentCount: state.relevantDocuments.length,
             searchIterations: state.searchInstructionHistory.length,
@@ -107,6 +122,9 @@ export class WebSearchAgent {
           message: `Found ${searchResults.results.length} potential web sources`,
           details: {
             query: state.query,
+            currentTask: currentTask,
+            taskIndex: (state.currentTaskIndex || 0) + 1,
+            totalTasks: state.tasks?.length || 1,
             searchQuery: searchQuery,
             sourcesFound: searchResults.results.length,
             documentCount: state.relevantDocuments.length,
@@ -150,7 +168,7 @@ export class WebSearchAgent {
             action: 'ANALYZING_PREVIEW_CONTENT',
             message: `Analyzing ${previewContents.length} search result previews to determine processing approach`,
             details: {
-              query: state.query,
+              query: currentTask,
               previewCount: previewContents.length,
               documentCount: state.relevantDocuments.length,
               searchIterations: state.searchInstructionHistory.length,
@@ -160,8 +178,8 @@ export class WebSearchAgent {
 
         previewAnalysisResult = await analyzePreviewContent(
           previewContents,
-          state.query,
-          state.messages,
+          currentTask,
+          removeThinkingBlocksFromMessages(state.messages),
           this.llm,
           this.systemInstructions,
           this.signal,
@@ -189,7 +207,7 @@ export class WebSearchAgent {
             action: 'PROCESSING_PREVIEW_CONTENT',
             message: `Using preview content from ${previewContents.length} sources - no full content retrieval needed`,
             details: {
-              query: state.query,
+              query: currentTask,
               previewCount: previewContents.length,
               documentCount: state.relevantDocuments.length,
               searchIterations: state.searchInstructionHistory.length,
@@ -236,7 +254,7 @@ export class WebSearchAgent {
             action: 'PROCEEDING_WITH_FULL_ANALYSIS',
             message: `Preview content insufficient - proceeding with detailed content analysis`,
             details: {
-              query: state.query,
+              query: currentTask,
               insufficiencyReason: insufficiencyReason,
               documentCount: state.relevantDocuments.length,
               searchIterations: state.searchInstructionHistory.length,
@@ -246,7 +264,7 @@ export class WebSearchAgent {
         });
 
         // Summarize the top 2 search results
-        for (const result of searchResults.results) {
+        for (const result of searchResults.results.slice(0, 8)) {
           if (this.signal.aborted) {
             console.warn('Search operation aborted by signal');
             break; // Exit if the operation is aborted
@@ -258,17 +276,17 @@ export class WebSearchAgent {
             // optimization that should be transparent to the user
             continue; // Skip banned URLs
           }
-          if (attemptedUrlCount >= 5) {
-            console.warn(
-              'Too many attempts to summarize URLs, stopping further attempts.',
-            );
-            break; // Limit the number of attempts to summarize URLs
-          }
+          // if (attemptedUrlCount >= 5) {
+          //   console.warn(
+          //     'Too many attempts to summarize URLs, stopping further attempts.',
+          //   );
+          //   break; // Limit the number of attempts to summarize URLs
+          // }
           attemptedUrlCount++;
 
           bannedSummaryUrls.push(result.url); // Add to banned URLs to avoid duplicates
 
-          if (documents.length >= 1) {
+          if (documents.length >= 2) {
             break; // Limit to top 1 document
           }
 
@@ -279,7 +297,7 @@ export class WebSearchAgent {
               action: 'ANALYZING_SOURCE',
               message: `Analyzing content from: ${result.title || result.url}`,
               details: {
-                query: state.query,
+                query: currentTask,
                 sourceUrl: result.url,
                 sourceTitle: result.title || 'Untitled',
                 documentCount: state.relevantDocuments.length,
@@ -290,7 +308,7 @@ export class WebSearchAgent {
 
           const summaryResult = await summarizeWebContent(
             result.url,
-            state.query,
+            currentTask,
             this.llm,
             this.systemInstructions,
             this.signal,
@@ -306,7 +324,7 @@ export class WebSearchAgent {
                 action: 'CONTEXT_UPDATED',
                 message: `Added information from ${summaryResult.document.metadata.title || result.url} to context`,
                 details: {
-                  query: state.query,
+                  query: currentTask,
                   sourceUrl: result.url,
                   sourceTitle:
                     summaryResult.document.metadata.title || 'Untitled',
@@ -360,7 +378,7 @@ export class WebSearchAgent {
       console.log(responseMessage);
 
       return new Command({
-        goto: 'analyzer',
+        goto: 'task_manager', // Route back to task manager to check if more tasks remain
         update: {
           messages: [new AIMessage(responseMessage)],
           relevantDocuments: documents,

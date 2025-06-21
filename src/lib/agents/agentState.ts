@@ -46,4 +46,16 @@ export const AgentState = Annotation.Root({
     reducer: (x, y) => (y ?? 0) + x,
     default: () => 0,
   }),
+  tasks: Annotation<string[]>({
+    reducer: (x, y) => y ?? x,
+    default: () => [],
+  }),
+  currentTaskIndex: Annotation<number>({
+    reducer: (x, y) => y ?? x,
+    default: () => 0,
+  }),
+  originalQuery: Annotation<string>({
+    reducer: (x, y) => y ?? x,
+    default: () => '',
+  }),
 });

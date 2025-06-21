@@ -1,6 +1,7 @@
 import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio';
 import { PlaywrightWebBaseLoader } from '@langchain/community/document_loaders/web/playwright';
 import { Document } from '@langchain/core/documents';
+import { Embeddings } from '@langchain/core/embeddings';
 import { Readability } from '@mozilla/readability';
 import axios from 'axios';
 import { JSDOM } from 'jsdom';
@@ -8,6 +9,7 @@ import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import fetch from 'node-fetch';
 import pdfParse from 'pdf-parse';
 import type { Browser, Page } from 'playwright';
+import computeSimilarity from './computeSimilarity';
 
 export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
   const splitter = new RecursiveCharacterTextSplitter();
@@ -272,6 +274,148 @@ export const getWebContentLite = async (
     });
   } catch (error) {
     console.error(`Error fetching/parsing URL ${url}:`, error);
+    return null;
+  }
+};
+
+/**
+ * Fetches web content from a given URL using LangChain's PlaywrightWebBaseLoader.
+ * Parses it using Readability for better content extraction.
+ * Returns a Document object containing relevant snippets of text using ranked text splitting.
+ * Text is split into chunks of approximately 800 characters, with 100 characters overlap.
+ *
+ * @param url - The URL to fetch content from.
+ * @param rankAgainstVector - The vector to rank the content against for relevance.
+ * @param embeddings - The embeddings model to use for ranking the content.
+ * @returns A Promise that resolves to a Document object or null if parsing fails.
+ */
+export const getRankedWebContentSnippets = async (
+  url: string,
+  rankAgainstVector: number[],
+  embeddings: Embeddings,
+): Promise<Document | null> => {
+  try {
+    console.log(`Fetching ranked content snippets from URL: ${url}`);
+
+    const loader = new PlaywrightWebBaseLoader(url, {
+      launchOptions: {
+        headless: true,
+        timeout: 30000,
+      },
+      gotoOptions: {
+        waitUntil: 'domcontentloaded',
+        timeout: 10000,
+      },
+      async evaluate(page: Page, browser: Browser) {
+        // Wait for the content to load properly
+        await page.waitForLoadState('networkidle', { timeout: 10000 });
+
+        // Allow some time for dynamic content to load
+        await page.waitForTimeout(3000);
+
+        return await page.content();
+      },
+    });
+
+    const docs = await loader.load();
+
+    if (!docs || docs.length === 0) {
+      console.warn(`Failed to load content for URL: ${url}`);
+      return null;
+    }
+
+    const doc = docs[0];
+
+    const dom = new JSDOM(doc.pageContent, { url });
+    const reader = new Readability(dom.window.document, {
+      charThreshold: 25,
+    });
+    const article = reader.parse();
+
+    // Split text into chunks with specified parameters
+    const splitter = RecursiveCharacterTextSplitter.fromLanguage('html', {
+      chunkSize: 800,
+      chunkOverlap: 100,
+    });
+
+    const textChunks = await splitter.splitText(article?.content || '');
+    if (!textChunks || textChunks.length === 0) {
+      console.warn(`No text chunks found for URL: ${url}`);
+      return null;
+    }
+
+    const similarity = await Promise.all(
+      textChunks.map(async (chunk, i) => {
+        const sim = computeSimilarity(
+          rankAgainstVector,
+          (await embeddings.embedDocuments([chunk]))[0],
+        );
+        return {
+          index: i,
+          similarity: sim,
+        };
+      }),
+    );
+
+    let rankedChunks = similarity
+      .sort((a, b) => b.similarity - a.similarity)
+      .map((sim) => textChunks[sim.index])
+      .slice(0, 5);
+
+    // Combine chunks into a single document with the most relevant content
+    const combinedContent = rankedChunks.join('\n\n');
+
+    const returnDoc = new Document({
+      pageContent: combinedContent,
+      metadata: {
+        title: article?.title || doc.metadata.title || '',
+        url: url,
+        chunks: rankedChunks.length,
+      },
+    });
+
+    console.log(
+      `Got ranked content snippets, URL: ${url}, Chunks: ${rankedChunks.length}, Total Length: ${returnDoc.pageContent.length}`,
+    );
+
+    return returnDoc;
+  } catch (error) {
+    console.error(`Error fetching/parsing URL ${url}:`, error);
+
+    // Fallback to CheerioWebBaseLoader for simpler content extraction
+    // try {
+    //   console.log(`Fallback to Cheerio for URL: ${url}`);
+    //   const cheerioLoader = new CheerioWebBaseLoader(url);
+    //   const docs = await cheerioLoader.load();
+
+    //   if (docs && docs.length > 0) {
+    //     const doc = docs[0];
+
+    //     // Apply the same splitting logic to fallback content
+    //     const splitter = new RecursiveCharacterTextSplitter({
+    //       chunkSize: 800,
+    //       chunkOverlap: 100,
+    //     });
+
+    //     const textChunks = await splitter.splitText(doc.pageContent);
+    //     const combinedContent = textChunks.join('\n\n');
+
+    //     return new Document({
+    //       pageContent: combinedContent,
+    //       metadata: {
+    //         title: doc.metadata.title || '',
+    //         url: url,
+    //         chunks: textChunks.length,
+    //       },
+    //     });
+    //   }
+    // } catch (fallbackError) {
+    //   console.error(
+    //     `Cheerio fallback also failed for URL ${url}:`,
+    //     fallbackError,
+    //   );
+    // }
+
     return null;
   }
 };

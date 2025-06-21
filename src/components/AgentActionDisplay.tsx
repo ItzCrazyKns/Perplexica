@@ -176,6 +176,42 @@ const AgentActionDisplay = ({
                         <span>{event.details.reason}</span>
                       </div>
                     )}
+                    {event.details.taskCount !== undefined && (
+                      <div className="flex space-x-1">
+                        <span className="font-bold">Tasks:</span>
+                        <span>{event.details.taskCount}</span>
+                      </div>
+                    )}
+                    {event.details.currentTask && (
+                      <div className="flex space-x-1">
+                        <span className="font-bold">Current Task:</span>
+                        <span className="italic">"{event.details.currentTask}"</span>
+                      </div>
+                    )}
+                    {event.details.taskIndex !== undefined && event.details.totalTasks !== undefined && (
+                      <div className="flex space-x-1">
+                        <span className="font-bold">Progress:</span>
+                        <span>Task {event.details.taskIndex} of {event.details.totalTasks}</span>
+                      </div>
+                    )}
+                    {event.details.completedTask && (
+                      <div className="flex space-x-1">
+                        <span className="font-bold">Completed:</span>
+                        <span className="italic">"{event.details.completedTask}"</span>
+                      </div>
+                    )}
+                    {event.details.nextTask && (
+                      <div className="flex space-x-1">
+                        <span className="font-bold">Next:</span>
+                        <span className="italic">"{event.details.nextTask}"</span>
+                      </div>
+                    )}
+                    {event.details.currentSearchFocus && (
+                      <div className="flex space-x-1">
+                        <span className="font-bold">Search Focus:</span>
+                        <span className="italic">"{event.details.currentSearchFocus}"</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

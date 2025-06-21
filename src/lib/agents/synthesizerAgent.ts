@@ -4,6 +4,7 @@ import { Command, END } from '@langchain/langgraph';
 import { EventEmitter } from 'events';
 import { getModelName } from '../utils/modelUtils';
 import { AgentState } from './agentState';
+import { removeThinkingBlocksFromMessages } from '../utils/contentUtils';
 
 export class SynthesizerAgent {
   private llm: BaseChatModel;
@@ -67,7 +68,7 @@ Your task is to provide answers that are:
 ${this.personaInstructions}
 </personaInstructions>
 
-User Query: ${state.query}
+User Query: ${state.originalQuery || state.query}
 
 Available Information:
 ${state.relevantDocuments
@@ -97,7 +98,7 @@ ${doc.metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + doc.metada
       );
 
       const stream = await this.llm.stream(
-        [new SystemMessage(synthesisPrompt), new HumanMessage(state.query)],
+        [...removeThinkingBlocksFromMessages(state.messages), new SystemMessage(synthesisPrompt), new HumanMessage(state.originalQuery || state.query)],
         { signal: this.signal },
       );
 

@@ -187,6 +187,7 @@ export const webSearchRetrieverAgentPrompt = `
   - This includes but is not limited to things like sports scores, standings, weather, current events, etc.
 - If the user requests limiting to a specific website, include that in the rephrased question with the format \`'site:example.com'\`, be sure to include the quotes. Only do this if the limiting is explicitly mentioned in the question
 - You will be given additional instructions from a supervisor in the <supervisor> tag that will direct you to refine the question further or to include specific details. Follow these instructions carefully and incorporate them into your rephrased question
+- Give priority to the user question
 
 # Data
 - The user question is contained in the <question> tag after the <examples> below
