@@ -1,8 +1,8 @@
-import { 
-  BaseMessage, 
-  AIMessage, 
-  HumanMessage, 
-  SystemMessage 
+import {
+  BaseMessage,
+  AIMessage,
+  HumanMessage,
+  SystemMessage,
 } from '@langchain/core/messages';
 
 /**
@@ -21,15 +21,17 @@ export const removeThinkingBlocks = (text: string): string => {
  * @param messages Array of BaseMessage objects
  * @returns New array with thinking blocks removed from each message's content
  */
-export const removeThinkingBlocksFromMessages = (messages: BaseMessage[]): BaseMessage[] => {
-  return messages.map(message => {
+export const removeThinkingBlocksFromMessages = (
+  messages: BaseMessage[],
+): BaseMessage[] => {
+  return messages.map((message) => {
     // Only process string content, leave complex content as-is
     if (typeof message.content !== 'string') {
       return message;
     }
 
     const cleanedContent = removeThinkingBlocks(message.content);
-    
+
     // Create new instance of the same message type with cleaned content
     if (message instanceof AIMessage) {
       return new AIMessage(cleanedContent);

@@ -16,7 +16,10 @@ import {
   additionalWebSearchPrompt,
   decideNextActionPrompt,
 } from '../prompts/analyzer';
-import { removeThinkingBlocks, removeThinkingBlocksFromMessages } from '../utils/contentUtils';
+import {
+  removeThinkingBlocks,
+  removeThinkingBlocksFromMessages,
+} from '../utils/contentUtils';
 
 export class AnalyzerAgent {
   private llm: BaseChatModel;
@@ -84,7 +87,9 @@ export class AnalyzerAgent {
         query: state.originalQuery || state.query, // Use original query for analysis context
       });
 
-      const thinkingBlocksRemovedMessages = removeThinkingBlocksFromMessages(state.messages);
+      const thinkingBlocksRemovedMessages = removeThinkingBlocksFromMessages(
+        state.messages,
+      );
 
       const nextActionResponse = await this.llm.invoke(
         [...thinkingBlocksRemovedMessages, new HumanMessage(nextActionPrompt)],
@@ -118,7 +123,10 @@ export class AnalyzerAgent {
           });
 
           const stream = await this.llm.stream(
-            [...removeThinkingBlocksFromMessages(state.messages), new SystemMessage(moreUserInfoPrompt)],
+            [
+              ...removeThinkingBlocksFromMessages(state.messages),
+              new SystemMessage(moreUserInfoPrompt),
+            ],
             { signal: this.signal },
           );
 
@@ -175,7 +183,10 @@ export class AnalyzerAgent {
         });
 
         const moreInfoResponse = await this.llm.invoke(
-          [...removeThinkingBlocksFromMessages(state.messages), new HumanMessage(moreInfoPrompt)],
+          [
+            ...removeThinkingBlocksFromMessages(state.messages),
+            new HumanMessage(moreInfoPrompt),
+          ],
           { signal: this.signal },
         );
 
@@ -210,7 +221,10 @@ export class AnalyzerAgent {
             ],
             query: moreInfoQuestion, // Use the refined question for TaskManager to analyze
             searchInstructions: moreInfoQuestion,
-            searchInstructionHistory: [...(state.searchInstructionHistory || []), moreInfoQuestion],
+            searchInstructionHistory: [
+              ...(state.searchInstructionHistory || []),
+              moreInfoQuestion,
+            ],
             fullAnalysisAttempts: 1,
             originalQuery: state.originalQuery || state.query, // Preserve the original user query
             // Reset task list so TaskManager can break down the search requirements again

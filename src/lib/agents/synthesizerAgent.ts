@@ -98,7 +98,11 @@ ${doc.metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + doc.metada
       );
 
       const stream = await this.llm.stream(
-        [...removeThinkingBlocksFromMessages(state.messages), new SystemMessage(synthesisPrompt), new HumanMessage(state.originalQuery || state.query)],
+        [
+          ...removeThinkingBlocksFromMessages(state.messages),
+          new SystemMessage(synthesisPrompt),
+          new HumanMessage(state.originalQuery || state.query),
+        ],
         { signal: this.signal },
       );
 

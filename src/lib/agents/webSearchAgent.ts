@@ -44,11 +44,14 @@ export class WebSearchAgent {
       setTemperature(this.llm, 0); // Set temperature to 0 for deterministic output
 
       // Determine current task to process
-      const currentTask = state.tasks && state.tasks.length > 0 
-        ? state.tasks[state.currentTaskIndex || 0]
-        : state.query;
+      const currentTask =
+        state.tasks && state.tasks.length > 0
+          ? state.tasks[state.currentTaskIndex || 0]
+          : state.query;
 
-      console.log(`Processing task ${(state.currentTaskIndex || 0) + 1} of ${state.tasks?.length || 1}: "${currentTask}"`);
+      console.log(
+        `Processing task ${(state.currentTaskIndex || 0) + 1} of ${state.tasks?.length || 1}: "${currentTask}"`,
+      );
 
       // Emit preparing web search event
       this.emitter.emit('agent_action', {

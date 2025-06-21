@@ -115,25 +115,26 @@ export class TaskManagerAgent {
         query: state.query,
       });
 
-      const taskBreakdownResult = await this.llm.invoke(
-        [prompt],
-        { signal: this.signal },
-      );
+      const taskBreakdownResult = await this.llm.invoke([prompt], {
+        signal: this.signal,
+      });
 
       // Parse the response to extract tasks
       const responseContent = taskBreakdownResult.content as string;
       const taskLines = responseContent
         .split('\n')
-        .filter(line => line.trim().startsWith('TASK:'))
-        .map(line => line.replace('TASK:', '').trim())
-        .filter(task => task.length > 0);
+        .filter((line) => line.trim().startsWith('TASK:'))
+        .map((line) => line.replace('TASK:', '').trim())
+        .filter((task) => task.length > 0);
 
       if (taskLines.length === 0) {
         // Fallback: if no tasks found, use the original query
         taskLines.push(state.query);
       }
 
-      console.log(`Task breakdown completed: ${taskLines.length} tasks identified`);
+      console.log(
+        `Task breakdown completed: ${taskLines.length} tasks identified`,
+      );
       taskLines.forEach((task, index) => {
         console.log(`Task ${index + 1}: ${task}`);
       });
@@ -152,9 +153,10 @@ export class TaskManagerAgent {
         },
       });
 
-      const responseMessage = taskLines.length === 1 
-        ? 'Question is already focused and ready for processing'
-        : `Question broken down into ${taskLines.length} focused tasks for parallel processing`;
+      const responseMessage =
+        taskLines.length === 1
+          ? 'Question is already focused and ready for processing'
+          : `Question broken down into ${taskLines.length} focused tasks for parallel processing`;
 
       return new Command({
         goto: 'web_search', // Next step would typically be web search for each task
