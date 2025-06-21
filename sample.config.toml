@@ -21,6 +21,8 @@ MODEL_NAME = ""
 
 [MODELS.OLLAMA]
 API_URL = "" # Ollama API URL - http://host.docker.internal:11434
+API_KEY = ""
+MODEL_NAME = ""
 
 [MODELS.DEEPSEEK]
 API_KEY = ""
