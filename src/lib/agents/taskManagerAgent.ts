@@ -121,6 +121,8 @@ export class TaskManagerAgent {
 
       // Parse the response to extract tasks
       const responseContent = taskBreakdownResult.content as string;
+
+      console.log('Task breakdown response:', responseContent);
       const taskLines = responseContent
         .split('\n')
         .filter((line) => line.trim().startsWith('TASK:'))

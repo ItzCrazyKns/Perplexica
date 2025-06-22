@@ -431,6 +431,14 @@ const ChatWindow = ({ id }: { id?: string }) => {
         return;
       }
 
+      // Handle ping messages to keep connection alive (no action needed)
+      if (data.type === 'ping') {
+        console.debug('Ping received');
+        // Ping messages are used to keep the connection alive during long requests
+        // No action is required on the frontend
+        return;
+      }
+
       if (data.type === 'agent_action') {
         const agentActionEvent: AgentActionEvent = {
           action: data.data.action,

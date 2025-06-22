@@ -22,6 +22,8 @@ export const taskBreakdownPrompt = `You are a task breakdown specialist. Your jo
 3. Maintain **specific details** like quantities, measurements, and qualifiers
 4. Use **clear, unambiguous language** in each sub-question
 5. Keep the **same question type** (factual, analytical, etc.)
+6. Avoid introducing **new concepts** or information not present in the original question
+7. **Do not** repeat the same question multiple times; each sub-question should be unique and focused on a specific aspect of the original query
 
 ## Examples:
 
@@ -57,6 +59,11 @@ TASK: What is the current state of Germany's economy?
 TASK: What are the side effects of aspirin?
 TASK: What are the side effects of ibuprofen?
 TASK: What are the side effects of acetaminophen?
+
+**Input**: "What day is New Year's Day this year?"
+**Analysis**: Single focused question, no breakdown needed
+**Output**:
+TASK: What day is New Year's Day this year?
 
 ## Your Task:
 

@@ -101,10 +101,27 @@ export class AnalyzerAgent {
       );
 
       console.log('Next action response:', nextActionContent);
-      //}
 
-      if (!nextActionContent.startsWith('good_content')) {
-        if (nextActionContent.startsWith('need_user_info')) {
+      if (
+        !nextActionContent.startsWith('good_content') &&
+        !nextActionContent.startsWith('`good_content`')
+      ) {
+        // If we don't have enough information, but we still have available tasks, proceed with the next task
+
+        if (state.tasks && state.tasks.length > 0) {
+          const hasMoreTasks = state.currentTaskIndex < state.tasks.length - 1;
+
+          if (hasMoreTasks) {
+            return new Command({
+              goto: 'task_manager',
+            });
+          }
+        }
+
+        if (
+          nextActionContent.startsWith('need_user_info') ||
+          nextActionContent.startsWith('`need_user_info`')
+        ) {
           const moreUserInfoPrompt = await ChatPromptTemplate.fromTemplate(
             additionalUserInputPrompt,
           ).format({

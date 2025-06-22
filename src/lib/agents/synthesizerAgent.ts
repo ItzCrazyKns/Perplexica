@@ -52,6 +52,8 @@ Your task is to provide answers that are:
 
 ### Citation Requirements
 - Cite every single fact, statement, or sentence using [number] notation corresponding to the source from the provided \`context\`
+- If a statement is based on AI model inference or training data, it must be marked as \`[AI]\` and not cited from the context
+- If a statement is based on previous messages in the conversation history, it must be marked as \`[Hist]\` and not cited from the context
 - Integrate citations naturally at the end of sentences or clauses as appropriate. For example, "The Eiffel Tower is one of the most visited landmarks in the world[1]."
 - Ensure that **every sentence in your response includes at least one citation**, even when information is inferred or connected to general knowledge available in the provided context
 - Use multiple sources for a single detail if applicable, such as, "Paris is a cultural hub, attracting millions of visitors annually[1][2]."
@@ -68,20 +70,29 @@ Your task is to provide answers that are:
 ${this.personaInstructions}
 </personaInstructions>
 
-User Query: ${state.originalQuery || state.query}
+# Conversation History Context:
+${
+  removeThinkingBlocksFromMessages(state.messages)
+    .map((msg) => `<${msg.getType()}>${msg.content}</${msg.getType()}>`)
+    .join('\n') || 'No previous conversation context'
+}
 
-Available Information:
+# Available Information:
 ${state.relevantDocuments
   .map(
     (doc, index) =>
       `<${index + 1}>\n
-<title>${doc.metadata.title}</title>\n
-${doc.metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + doc.metadata.url + '</url>\n'}
-<content>\n${doc.pageContent}\n</content>\n
-</${index + 1}>`,
+    <title>${doc.metadata.title}</title>\n
+    ${doc.metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + doc.metadata.url + '</url>\n'}
+    <content>\n${doc.pageContent}\n</content>\n
+    </${index + 1}>`,
   )
   .join('\n')}
-`;
+
+# User Query: ${state.originalQuery || state.query}
+
+Answer the user query:
+  `;
 
       // Stream the response in real-time using LLM streaming capabilities
       let fullResponse = '';
@@ -99,7 +110,6 @@ ${doc.metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + doc.metada
 
       const stream = await this.llm.stream(
         [
-          ...removeThinkingBlocksFromMessages(state.messages),
           new SystemMessage(synthesisPrompt),
           new HumanMessage(state.originalQuery || state.query),
         ],

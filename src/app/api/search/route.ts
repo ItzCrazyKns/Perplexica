@@ -192,6 +192,7 @@ export const POST = async (req: Request) => {
     const stream = new ReadableStream({
       start(controller) {
         let sources: any[] = [];
+        let isStreamActive = true;
 
         controller.enqueue(
           encoder.encode(
@@ -202,7 +203,31 @@ export const POST = async (req: Request) => {
           ),
         );
 
+        // Keep-alive ping mechanism to prevent reverse proxy timeouts
+        const pingInterval = setInterval(() => {
+          if (isStreamActive && !signal.aborted) {
+            try {
+              controller.enqueue(
+                encoder.encode(
+                  JSON.stringify({
+                    type: 'ping',
+                    timestamp: Date.now(),
+                  }) + '\n',
+                ),
+              );
+            } catch (error) {
+              // If enqueueing fails, the connection is likely closed
+              clearInterval(pingInterval);
+              isStreamActive = false;
+            }
+          } else {
+            clearInterval(pingInterval);
+          }
+        }, 30000); // Send ping every 30 seconds
+
         signal.addEventListener('abort', () => {
+          isStreamActive = false;
+          clearInterval(pingInterval);
           emitter.removeAllListeners();
 
           try {
@@ -244,6 +269,9 @@ export const POST = async (req: Request) => {
         emitter.on('end', () => {
           if (signal.aborted) return;
 
+          isStreamActive = false;
+          clearInterval(pingInterval);
+
           controller.enqueue(
             encoder.encode(
               JSON.stringify({
@@ -256,6 +284,9 @@ export const POST = async (req: Request) => {
 
         emitter.on('error', (error: any) => {
           if (signal.aborted) return;
+
+          isStreamActive = false;
+          clearInterval(pingInterval);
 
           controller.error(error);
         });

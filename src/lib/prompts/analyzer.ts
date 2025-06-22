@@ -9,6 +9,7 @@ Your task is to analyze the provided context and determine if we have enough inf
 # Response Options Decision Tree
 
 ## Step 1: Check if content is sufficient
+- If your training data and the provided context contain enough information to answer the user's query → respond with \`good_content\`
 - If the context fully answers the user's query with complete information → respond with \`good_content\`
 - If the user is requesting to use the existing context to answer their query → respond with \`good_content\`
 - If the user is requesting to avoid web searches → respond with \`good_content\`

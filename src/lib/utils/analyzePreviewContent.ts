@@ -19,6 +19,7 @@ export type PreviewContent = {
 export const analyzePreviewContent = async (
   previewContents: PreviewContent[],
   query: string,
+  taskQuery: string,
   chatHistory: BaseMessage[],
   llm: BaseChatModel,
   systemInstructions: string,
@@ -60,14 +61,15 @@ Snippet: ${content.snippet}
     console.log(`Invoking LLM for preview content analysis`);
 
     const analysisResponse = await llm.invoke(
-      `${systemPrompt}You are a preview content analyzer, tasked with determining if search result snippets contain sufficient information to answer a user's query.
+      `${systemPrompt}You are a preview content analyzer, tasked with determining if search result snippets contain sufficient information to answer the Task Query.
 
 # Instructions
-- Analyze the provided search result previews (titles + snippets), and chat history context to determine if they collectively contain enough information to provide a complete and accurate answer to the user's query
+- Analyze the provided search result previews (titles + snippets), and chat history context to determine if they collectively contain enough information to provide a complete and accurate answer to the Task Query
 - You must make a binary decision: either the preview content is sufficient OR it is not sufficient
-- If the preview content can provide a complete answer to the query, respond with "sufficient"
-- If the preview content lacks important details, requires deeper analysis, or cannot fully answer the query, respond with "not_needed: [specific reason why full content analysis is required]"
+- If the preview content can provide a complete answer to the Task Query, respond with "sufficient"
+- If the preview content lacks important details, requires deeper analysis, or cannot fully answer the Task Query, respond with "not_needed: [specific reason why full content analysis is required]"
 - Be specific in your reasoning when the content is not sufficient
+- The original query is provided for additional context, only use it for clarification of overall expectations and intent. You do **not** need to answer the original query directly or completely
 - Output your decision inside a \`decision\` XML tag
 
 # Information Context:
@@ -78,6 +80,9 @@ ${formattedChatHistory ? formattedChatHistory : 'No previous conversation contex
 
 # User Query:
 ${query}
+
+# Task Query (what to answer):
+${taskQuery}
 
 # Search Result Previews to Analyze:
 ${formattedPreviewContent}

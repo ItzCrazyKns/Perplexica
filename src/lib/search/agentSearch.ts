@@ -61,6 +61,7 @@ export class AgentSearch {
       emitter,
       systemInstructions,
       signal,
+      embeddings,
     );
     this.analyzerAgent = new AnalyzerAgent(
       llm,

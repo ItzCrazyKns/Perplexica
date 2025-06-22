@@ -17,23 +17,27 @@ import { AgentState } from './agentState';
 import { setTemperature } from '../utils/modelUtils';
 import { Embeddings } from '@langchain/core/embeddings';
 import { removeThinkingBlocksFromMessages } from '../utils/contentUtils';
+import computeSimilarity from '../utils/computeSimilarity';
 
 export class WebSearchAgent {
   private llm: BaseChatModel;
   private emitter: EventEmitter;
   private systemInstructions: string;
   private signal: AbortSignal;
+  private embeddings: Embeddings;
 
   constructor(
     llm: BaseChatModel,
     emitter: EventEmitter,
     systemInstructions: string,
     signal: AbortSignal,
+    embeddings: Embeddings,
   ) {
     this.llm = llm;
     this.emitter = emitter;
     this.systemInstructions = systemInstructions;
     this.signal = signal;
+    this.embeddings = embeddings;
   }
 
   /**
@@ -138,16 +142,33 @@ export class WebSearchAgent {
 
       let bannedSummaryUrls = state.bannedSummaryUrls || [];
       let bannedPreviewUrls = state.bannedPreviewUrls || [];
+      const queryVector = await this.embeddings.embedQuery(
+        state.originalQuery + ' ' + currentTask,
+      );
 
-      // Extract preview content from top 8 search results for analysis
-      const previewContents: PreviewContent[] = searchResults.results
-        .filter(
-          (result) =>
-            !bannedSummaryUrls.includes(result.url) &&
-            !bannedPreviewUrls.includes(result.url),
-        ) // Filter out banned URLs first
-        .slice(0, 8) // Then take top 8 results
-        .map((result) => ({
+      // Filter out banned URLs first
+      const filteredResults = searchResults.results.filter(
+        (result) =>
+          !bannedSummaryUrls.includes(result.url) &&
+          !bannedPreviewUrls.includes(result.url),
+      );
+
+      // Calculate similarities for all filtered results
+      const resultsWithSimilarity = await Promise.all(
+        filteredResults.map(async (result) => {
+          const vector = await this.embeddings.embedQuery(
+            result.title + ' ' + result.content || '',
+          );
+          const similarity = computeSimilarity(vector, queryVector);
+          return { result, similarity };
+        }),
+      );
+
+      // Sort by relevance score and take top 8 results
+      const previewContents: PreviewContent[] = resultsWithSimilarity
+        .sort((a, b) => b.similarity - a.similarity)
+        .slice(0, 8)
+        .map(({ result }) => ({
           title: result.title || 'Untitled',
           snippet: result.content || '',
           url: result.url,
@@ -181,6 +202,7 @@ export class WebSearchAgent {
 
         previewAnalysisResult = await analyzePreviewContent(
           previewContents,
+          state.query,
           currentTask,
           removeThinkingBlocksFromMessages(state.messages),
           this.llm,
@@ -267,7 +289,9 @@ export class WebSearchAgent {
         });
 
         // Summarize the top 2 search results
-        for (const result of searchResults.results.slice(0, 8)) {
+        for (const result of resultsWithSimilarity
+          .slice(0, 8)
+          .map((r) => r.result)) {
           if (this.signal.aborted) {
             console.warn('Search operation aborted by signal');
             break; // Exit if the operation is aborted
@@ -381,7 +405,7 @@ export class WebSearchAgent {
       console.log(responseMessage);
 
       return new Command({
-        goto: 'task_manager', // Route back to task manager to check if more tasks remain
+        goto: 'analyzer', // Route back to analyzer to process the results
         update: {
           messages: [new AIMessage(responseMessage)],
           relevantDocuments: documents,
