@@ -59,7 +59,7 @@ export class AnalyzerAgent {
 
   async execute(state: typeof AgentState.State): Promise<Command> {
     try {
-      setTemperature(this.llm, 0.0);
+      //setTemperature(this.llm, 0.0);
 
       // Initialize originalQuery if not set
       if (!state.originalQuery) {

@@ -54,7 +54,7 @@ export class WebSearchAgent {
    */
   async execute(state: typeof AgentState.State): Promise<Command> {
     try {
-      setTemperature(this.llm, 0); // Set temperature to 0 for deterministic output
+      //setTemperature(this.llm, 0); // Set temperature to 0 for deterministic output
 
       // Determine current task to process
       const currentTask =

@@ -39,7 +39,7 @@ export class TaskManagerAgent {
    */
   async execute(state: typeof AgentState.State): Promise<Command> {
     try {
-      setTemperature(this.llm, 0); // Set temperature to 0 for deterministic output
+      //setTemperature(this.llm, 0); // Set temperature to 0 for deterministic output
 
       // Check if we're in task progression mode (tasks already exist and we're processing them)
       if (state.tasks && state.tasks.length > 0) {

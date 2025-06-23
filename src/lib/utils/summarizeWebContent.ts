@@ -3,6 +3,7 @@ import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { formatDateForLLM } from '../utils';
 import { getWebContent } from './documents';
 import { removeThinkingBlocks } from './contentUtils';
+import { setTemperature } from './modelUtils';
 
 export type SummarizeResult = {
   document: Document | null;
@@ -17,6 +18,7 @@ export const summarizeWebContent = async (
   signal: AbortSignal,
 ): Promise<SummarizeResult> => {
   try {
+    setTemperature(llm, 0); // Set temperature to 0 for deterministic output
     // Helper function to summarize content and check relevance
     const summarizeContent = async (
       content: Document,
@@ -140,5 +142,8 @@ ${i === 0 ? content.metadata.html : content.pageContent}`;
       document: null,
       notRelevantReason: `Error processing URL: ${error instanceof Error ? error.message : 'Unknown error'}`,
     };
+  } finally {
+    // Reset temperature to default after processing
+    setTemperature(llm);
   }
 };

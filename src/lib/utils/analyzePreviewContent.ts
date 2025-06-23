@@ -19,7 +19,7 @@ export type PreviewContent = {
 // Zod schema for structured preview analysis output
 const PreviewAnalysisSchema = z.object({
   isSufficient: z.boolean().describe('Whether the preview content is sufficient to answer the task query'),
-  reason: z.string().optional().nullable().describe('Specific reason why full content analysis is required (only if isSufficient is false)')
+  reason: z.string().nullable().describe('Specific reason why full content analysis is required (only if isSufficient is false)')
 });
 
 export const analyzePreviewContent = async (
@@ -80,11 +80,6 @@ Snippet: ${content.snippet}
 - Be specific in your reasoning when the content is not sufficient
 - The original query is provided for additional context, only use it for clarification of overall expectations and intent. You do **not** need to answer the original query directly or completely
 
-# Response Format
-You must return a JSON object with:
-- isSufficient: boolean indicating whether preview content is sufficient
-- reason: string explaining why full content analysis is required (only if isSufficient is false)
-
 # Information Context:
 Today's date is ${formatDateForLLM(new Date())}
 
@@ -99,6 +94,11 @@ ${taskQuery}
 
 # Search Result Previews to Analyze:
 ${formattedPreviewContent}
+
+# Response Format
+You must return a JSON object with:
+- isSufficient: boolean indicating whether preview content is sufficient
+- reason: string explaining why full content analysis is required (only if isSufficient is false)
 `,
       { signal },
     );
