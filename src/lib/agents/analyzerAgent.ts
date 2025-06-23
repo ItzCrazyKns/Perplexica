@@ -7,6 +7,7 @@ import {
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { Command, END } from '@langchain/langgraph';
 import { EventEmitter } from 'events';
+import { z } from 'zod';
 import LineOutputParser from '../outputParsers/lineOutputParser';
 import { formatDateForLLM } from '../utils';
 import { AgentState } from './agentState';
@@ -20,6 +21,22 @@ import {
   removeThinkingBlocks,
   removeThinkingBlocksFromMessages,
 } from '../utils/contentUtils';
+
+// Define Zod schemas for structured output
+const NextActionSchema = z.object({
+  action: z.enum(['good_content', 'need_user_info', 'need_more_info']).describe('The next action to take based on content analysis'),
+  reasoning: z.string().describe('Brief explanation of why this action was chosen')
+});
+
+const UserInfoRequestSchema = z.object({
+  question: z.string().describe('A detailed question to ask the user for additional information'),
+  reasoning: z.string().describe('Explanation of why this information is needed')
+});
+
+const SearchRefinementSchema = z.object({
+  question: z.string().describe('A refined search question to gather more specific information'),
+  reasoning: z.string().describe('Explanation of what information is missing and why this search will help')
+});
 
 export class AnalyzerAgent {
   private llm: BaseChatModel;
@@ -48,7 +65,6 @@ export class AnalyzerAgent {
         state.originalQuery = state.query;
       }
 
-      let nextActionContent = 'need_more_info';
       // Skip full analysis if this is the first run.
       //if (state.fullAnalysisAttempts > 0) {
       // Emit initial analysis event
@@ -91,20 +107,20 @@ export class AnalyzerAgent {
         state.messages,
       );
 
-      const nextActionResponse = await this.llm.invoke(
+      // Use structured output for next action decision
+      const structuredLlm = this.llm.withStructuredOutput(NextActionSchema, {
+        name: 'analyze_content',
+      });
+
+      const nextActionResponse = await structuredLlm.invoke(
         [...thinkingBlocksRemovedMessages, new HumanMessage(nextActionPrompt)],
         { signal: this.signal },
       );
 
-      nextActionContent = removeThinkingBlocks(
-        nextActionResponse.content as string,
-      );
-
-      console.log('Next action response:', nextActionContent);
+      console.log('Next action response:', nextActionResponse);
 
       if (
-        !nextActionContent.startsWith('good_content') &&
-        !nextActionContent.startsWith('`good_content`')
+        nextActionResponse.action !== 'good_content'
       ) {
         // If we don't have enough information, but we still have available tasks, proceed with the next task
 
@@ -119,9 +135,13 @@ export class AnalyzerAgent {
         }
 
         if (
-          nextActionContent.startsWith('need_user_info') ||
-          nextActionContent.startsWith('`need_user_info`')
+          nextActionResponse.action === 'need_user_info'
         ) {
+          // Use structured output for user info request
+          const userInfoLlm = this.llm.withStructuredOutput(UserInfoRequestSchema, {
+            name: 'request_user_info',
+          });
+
           const moreUserInfoPrompt = await ChatPromptTemplate.fromTemplate(
             additionalUserInputPrompt,
           ).format({
@@ -139,39 +159,27 @@ export class AnalyzerAgent {
             query: state.originalQuery || state.query, // Use original query for user info context
           });
 
-          const stream = await this.llm.stream(
+          const userInfoRequest = await userInfoLlm.invoke(
             [
               ...removeThinkingBlocksFromMessages(state.messages),
-              new SystemMessage(moreUserInfoPrompt),
+              new HumanMessage(moreUserInfoPrompt),
             ],
             { signal: this.signal },
           );
 
-          let fullResponse = '';
-          for await (const chunk of stream) {
-            if (this.signal.aborted) {
-              break;
-            }
-
-            const content = chunk.content;
-            if (typeof content === 'string' && content.length > 0) {
-              fullResponse += content;
-
-              // Emit each chunk as a data response in real-time
-              this.emitter.emit(
-                'data',
-                JSON.stringify({
-                  type: 'response',
-                  data: content,
-                }),
-              );
-            }
-          }
+          // Emit the complete question to the user
+          this.emitter.emit(
+            'data',
+            JSON.stringify({
+              type: 'response',
+              data: userInfoRequest.question,
+            }),
+          );
 
           this.emitter.emit('end');
 
           // Create the final response message with the complete content
-          const response = new SystemMessage(fullResponse);
+          const response = new SystemMessage(userInfoRequest.question);
 
           return new Command({
             goto: END,
@@ -182,6 +190,11 @@ export class AnalyzerAgent {
         }
 
         // If we need more information from the LLM, generate a more specific search query
+        // Use structured output for search refinement
+        const searchRefinementLlm = this.llm.withStructuredOutput(SearchRefinementSchema, {
+          name: 'refine_search',
+        });
+
         const moreInfoPrompt = await ChatPromptTemplate.fromTemplate(
           additionalWebSearchPrompt,
         ).format({
@@ -199,16 +212,12 @@ export class AnalyzerAgent {
           query: state.originalQuery || state.query, // Use original query for more info context
         });
 
-        const moreInfoResponse = await this.llm.invoke(
+        const searchRefinement = await searchRefinementLlm.invoke(
           [
             ...removeThinkingBlocksFromMessages(state.messages),
             new HumanMessage(moreInfoPrompt),
           ],
           { signal: this.signal },
-        );
-
-        const moreInfoQuestion = removeThinkingBlocks(
-          moreInfoResponse.content as string,
         );
 
         // Emit reanalyzing event when we need more information
@@ -219,11 +228,11 @@ export class AnalyzerAgent {
             message:
               'Current context is insufficient - analyzing search requirements',
             details: {
-              nextSearchQuery: moreInfoQuestion,
+              nextSearchQuery: searchRefinement.question,
               documentCount: state.relevantDocuments.length,
               searchIterations: state.searchInstructionHistory.length,
               query: state.originalQuery || state.query, // Show original query in details
-              currentSearchFocus: moreInfoQuestion,
+              currentSearchFocus: searchRefinement.question,
             },
           },
         });
@@ -233,14 +242,14 @@ export class AnalyzerAgent {
           update: {
             messages: [
               new AIMessage(
-                `The following question can help refine the search: ${moreInfoQuestion}`,
+                `The following question can help refine the search: ${searchRefinement.question}`,
               ),
             ],
-            query: moreInfoQuestion, // Use the refined question for TaskManager to analyze
-            searchInstructions: moreInfoQuestion,
+            query: searchRefinement.question, // Use the refined question for TaskManager to analyze
+            searchInstructions: searchRefinement.question,
             searchInstructionHistory: [
               ...(state.searchInstructionHistory || []),
-              moreInfoQuestion,
+              searchRefinement.question,
             ],
             fullAnalysisAttempts: 1,
             originalQuery: state.originalQuery || state.query, // Preserve the original user query

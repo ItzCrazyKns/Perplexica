@@ -3,9 +3,18 @@ import { AIMessage } from '@langchain/core/messages';
 import { PromptTemplate } from '@langchain/core/prompts';
 import { Command } from '@langchain/langgraph';
 import { EventEmitter } from 'events';
+import { z } from 'zod';
 import { taskBreakdownPrompt } from '../prompts/taskBreakdown';
 import { AgentState } from './agentState';
 import { setTemperature } from '../utils/modelUtils';
+
+// Define Zod schema for structured task breakdown output
+const TaskBreakdownSchema = z.object({
+  tasks: z.array(z.string()).describe('Array of specific, focused tasks broken down from the original query'),
+  reasoning: z.string().describe('Explanation of how and why the query was broken down into these tasks')
+});
+
+type TaskBreakdown = z.infer<typeof TaskBreakdownSchema>;
 
 export class TaskManagerAgent {
   private llm: BaseChatModel;
@@ -115,19 +124,19 @@ export class TaskManagerAgent {
         query: state.query,
       });
 
-      const taskBreakdownResult = await this.llm.invoke([prompt], {
+      // Use structured output for task breakdown
+      const structuredLlm = this.llm.withStructuredOutput(TaskBreakdownSchema, {
+        name: 'break_down_tasks',
+      });
+
+      const taskBreakdownResult = await structuredLlm.invoke([prompt], {
         signal: this.signal,
       });
 
-      // Parse the response to extract tasks
-      const responseContent = taskBreakdownResult.content as string;
+      console.log('Task breakdown response:', taskBreakdownResult);
 
-      console.log('Task breakdown response:', responseContent);
-      const taskLines = responseContent
-        .split('\n')
-        .filter((line) => line.trim().startsWith('TASK:'))
-        .map((line) => line.replace('TASK:', '').trim())
-        .filter((task) => task.length > 0);
+      // Extract tasks from structured response
+      const taskLines = taskBreakdownResult.tasks.filter((task) => task.trim().length > 0);
 
       if (taskLines.length === 0) {
         // Fallback: if no tasks found, use the original query
@@ -137,6 +146,7 @@ export class TaskManagerAgent {
       console.log(
         `Task breakdown completed: ${taskLines.length} tasks identified`,
       );
+      console.log('Reasoning:', taskBreakdownResult.reasoning);
       taskLines.forEach((task, index) => {
         console.log(`Task ${index + 1}: ${task}`);
       });
@@ -151,6 +161,7 @@ export class TaskManagerAgent {
             query: state.query,
             taskCount: taskLines.length,
             tasks: taskLines,
+            reasoning: taskBreakdownResult.reasoning,
           },
         },
       });

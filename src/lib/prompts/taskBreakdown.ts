@@ -30,47 +30,49 @@ export const taskBreakdownPrompt = `You are a task breakdown specialist. Your jo
 **Input**: "What's the capital of New York, California, and France?"
 **Analysis**: Multiple distinct geographical subjects
 **Output**:
-TASK: What's the capital of New York?
-TASK: What's the capital of California?  
-TASK: What's the capital of France?
+{{
+  "tasks": [
+    "What's the capital of New York?",
+    "What's the capital of California?",
+    "What's the capital of France?"
+  ],
+  "reasoning": "The question asks about capitals of three distinct geographical entities that can each be answered independently."
+}}
 
 **Input**: "How many calories are in my meal of: One chicken breast, one apple, three oreo cookies, two cups of peanut butter"
 **Analysis**: Multiple food items requiring separate calorie calculations
 **Output**:
-TASK: How many calories are in one chicken breast?
-TASK: How many calories are in one apple?
-TASK: How many calories are in one oreo cookie?
-TASK: How many calories are in one cup of peanut butter?
+{{
+  "tasks": [
+    "How many calories are in one chicken breast?",
+    "How many calories are in one apple?",
+    "How many calories are in one oreo cookie?",
+    "How many calories are in one cup of peanut butter?"
+  ],
+  "reasoning": "The question involves calculating calories for multiple distinct food items that can be researched separately and then combined."
+}}
 
 **Input**: "What is the capital of France?"
 **Analysis**: Single focused question, no breakdown needed
 **Output**:
-TASK: What is the capital of France?
+{{
+  "tasks": ["What is the capital of France?"],
+  "reasoning": "This is already a single, focused question that doesn't require breaking down into smaller parts."
+}}
 
 **Input**: "Compare the economies of Japan and Germany"
 **Analysis**: Comparative question requiring detailed data about each economy separately
 **Output**:
-TASK: What is the current state of Japan's economy?
-TASK: What is the current state of Germany's economy?
-
-**Input**: "What are the side effects of aspirin, ibuprofen, and acetaminophen?"
-**Analysis**: Multiple distinct medications
-**Output**:
-TASK: What are the side effects of aspirin?
-TASK: What are the side effects of ibuprofen?
-TASK: What are the side effects of acetaminophen?
-
-**Input**: "What day is New Year's Day this year?"
-**Analysis**: Single focused question, no breakdown needed
-**Output**:
-TASK: What day is New Year's Day this year?
+{{
+  "tasks": [
+    "What is the current state of Japan's economy?",
+    "What is the current state of Germany's economy?"
+  ],
+  "reasoning": "To compare two economies, we need detailed information about each country's economic situation separately, which can then be compared."
+}}
 
 ## Your Task:
 
 Analyze this user question: "{query}"
 
-Provide your response in the following format:
-- Each sub-question on a new line starting with "TASK:"
-- If the question is already focused, provide it as a single task
-
-Your response:`;
+Provide your response as a JSON object with "tasks" (array of task strings) and "reasoning" (explanation of your analysis) fields.`;

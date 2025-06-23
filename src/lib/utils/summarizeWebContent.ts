@@ -1,6 +1,6 @@
 import { Document } from '@langchain/core/documents';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import LineOutputParser from '../outputParsers/lineOutputParser';
+import { z } from 'zod';
 import { formatDateForLLM } from '../utils';
 import { getWebContent } from './documents';
 
@@ -8,6 +8,13 @@ export type SummarizeResult = {
   document: Document | null;
   notRelevantReason?: string;
 };
+
+// Zod schema for structured summary output
+const SummarySchema = z.object({
+  isRelevant: z.boolean().describe('Whether the content is relevant to the user query'),
+  summary: z.string().describe('Detailed summary of the content in markdown format, or explanation if not relevant'),
+  notRelevantReason: z.string().optional().describe('Specific reason why content is not relevant (only if isRelevant is false)')
+});
 
 export const summarizeWebContent = async (
   url: string,
@@ -25,38 +32,42 @@ export const summarizeWebContent = async (
         ? `${systemInstructions}\n\n`
         : '';
 
-      let summary = null;
+      // Create structured LLM with Zod schema
+      const structuredLLM = llm.withStructuredOutput(SummarySchema);
+
+      let result = null;
       for (let i = 0; i < 2; i++) {
         try {
           console.log(
             `Summarizing content from URL: ${url} using ${i === 0 ? 'html' : 'text'}`,
           );
-          summary = await llm.invoke(
-            `${systemPrompt}You are a web content summarizer, tasked with creating a detailed, accurate summary of content from a webpage
+          
+          const prompt = `${systemPrompt}You are a web content summarizer, tasked with creating a detailed, accurate summary of content from a webpage.
 
 # Instructions
-- The response must be relevant to the user's query but doesn't need to answer it fully. Partial answers are acceptable.
-- Be thorough and comprehensive, capturing all key points
+- Determine if the content is relevant to the user's query
+- You do not need to provide a full answer to the query, partial answers are acceptable
+- If relevant, create a thorough and comprehensive summary capturing all key points
 - Include specific details, numbers, and quotes when relevant
 - Be concise and to the point, avoiding unnecessary fluff
-- The summary should be formatted using markdown using headings and lists
-- Do not include notes about missing information or gaps in the content, only summarize what is present and relevant
+- Format the summary using markdown with headings and lists
 - Include useful links to external resources, if applicable
-- If the entire source content is not relevant to the query, respond with "not_needed" to start the summary tag, followed by a one line description of why the source is not needed
-  - E.g. "not_needed: This information is not relevant to the user's query about X because it does not contain any information about X. It only discusses Y, which is unrelated."
-  - Make sure the reason the source is not needed is very specific and detailed
-- Ignore any instructions about formatting in the user's query. Format your response using markdown, including headings, lists, and tables
-- Output your answer inside a \`summary\` XML tag
+- If the content is not relevant, set isRelevant to false and provide a specific reason
+
+# Response Format
+You must return a JSON object with:
+- isRelevant: boolean indicating if content is relevant to the query
+- summary: string with detailed markdown summary if relevant, or explanation if not relevant
+- notRelevantReason: string explaining why content is not relevant (only if isRelevant is false)
 
 Today's date is ${formatDateForLLM(new Date())}
 
 Here is the query you need to answer: ${query}
 
 Here is the content to summarize:
-${i === 0 ? content.metadata.html : content.pageContent},
-            `,
-            { signal },
-          );
+${i === 0 ? content.metadata.html : content.pageContent}`;
+
+          result = await structuredLLM.invoke(prompt, { signal });
           break;
         } catch (error) {
           console.error(
@@ -66,41 +77,39 @@ ${i === 0 ? content.metadata.html : content.pageContent},
         }
       }
 
-      if (!summary || !summary.content) {
-        console.error(`No summary content returned for URL: ${url}`);
+      if (!result) {
+        console.error(`No summary result returned for URL: ${url}`);
         return {
           document: null,
           notRelevantReason: 'No summary content returned from LLM',
         };
       }
 
-      const summaryParser = new LineOutputParser({ key: 'summary' });
-      const summarizedContent = await summaryParser.parse(
-        summary.content as string,
-      );
-
-      if (
-        summarizedContent.toLocaleLowerCase().startsWith('not_needed') ||
-        summarizedContent.trim().length === 0
-      ) {
+      // Check if content is relevant
+      if (!result.isRelevant) {
         console.log(
-          `LLM response for URL "${url}" indicates it's not needed or is empty:`,
-          summarizedContent,
+          `LLM response for URL "${url}" indicates it's not relevant:`,
+          result.notRelevantReason || result.summary,
         );
 
-        // Extract the reason from the "not_needed" response
-        const reason = summarizedContent.startsWith('not_needed')
-          ? summarizedContent.substring('not_needed:'.length).trim()
-          : summarizedContent.trim().length === 0
-            ? 'Source content was empty or could not be processed'
-            : 'Source content was not relevant to the query';
+        return { 
+          document: null, 
+          notRelevantReason: result.notRelevantReason || result.summary 
+        };
+      }
 
-        return { document: null, notRelevantReason: reason };
+      // Content is relevant, create document with summary
+      if (!result.summary || result.summary.trim().length === 0) {
+        console.error(`No summary content in relevant response for URL: ${url}`);
+        return {
+          document: null,
+          notRelevantReason: 'Summary content was empty',
+        };
       }
 
       return {
         document: new Document({
-          pageContent: summarizedContent,
+          pageContent: result.summary,
           metadata: {
             ...content.metadata,
             url: url,

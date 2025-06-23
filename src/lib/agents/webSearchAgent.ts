@@ -4,6 +4,7 @@ import { PromptTemplate } from '@langchain/core/prompts';
 import { Command, END } from '@langchain/langgraph';
 import { EventEmitter } from 'events';
 import { Document } from 'langchain/document';
+import { z } from 'zod';
 import LineOutputParser from '../outputParsers/lineOutputParser';
 import { webSearchRetrieverAgentPrompt } from '../prompts/webSearch';
 import { searchSearxng } from '../searxng';
@@ -18,6 +19,14 @@ import { setTemperature } from '../utils/modelUtils';
 import { Embeddings } from '@langchain/core/embeddings';
 import { removeThinkingBlocksFromMessages } from '../utils/contentUtils';
 import computeSimilarity from '../utils/computeSimilarity';
+
+// Define Zod schema for structured search query output
+const SearchQuerySchema = z.object({
+  searchQuery: z.string().describe('The optimized search query to use for web search'),
+  reasoning: z.string().describe('Explanation of how the search query was optimized for better results')
+});
+
+type SearchQuery = z.infer<typeof SearchQuerySchema>;
 
 export class WebSearchAgent {
   private llm: BaseChatModel;
@@ -85,18 +94,20 @@ export class WebSearchAgent {
         supervisor: state.searchInstructions,
       });
 
-      const searchQueryResult = await this.llm.invoke(
+      // Use structured output for search query generation
+      const structuredLlm = this.llm.withStructuredOutput(SearchQuerySchema, {
+        name: 'generate_search_query',
+      });
+
+      const searchQueryResult = await structuredLlm.invoke(
         [...removeThinkingBlocksFromMessages(state.messages), prompt],
         { signal: this.signal },
       );
 
-      // Parse the response to extract the search query with the lineoutputparser
-      const lineOutputParser = new LineOutputParser({ key: 'answer' });
-      const searchQuery = await lineOutputParser.parse(
-        searchQueryResult.content as string,
-      );
+      const searchQuery = searchQueryResult.searchQuery;
 
       console.log(`Performing web search for query: "${searchQuery}"`);
+      console.log('Search query reasoning:', searchQueryResult.reasoning);
 
       // Emit executing web search event
       this.emitter.emit('agent_action', {

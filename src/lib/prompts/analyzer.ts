@@ -63,11 +63,6 @@ Ask yourself: "Could this missing information reasonably be found through a web 
 - If it's factual and searchable → \`need_more_info\`
 - If the context is complete or the user wants to use the existing context → \`good_content\`
 
-The only output in your response should be one of the following:
-- \`good_content\`
-- \`need_user_info\`
-- \`need_more_info\`
-
 # System Instructions
 {systemInstructions}
 
@@ -81,7 +76,11 @@ Today's date is {date}
 <context>
 {context}
 </context>
-`;
+
+# Search Instruction History
+{searchInstructionHistory}
+
+Provide your response as a JSON object with "action" and "reasoning" fields where action is one of: good_content, need_user_info, or need_more_info.`;
 
 export const additionalUserInputPrompt = `You are an expert content analyzer.
 Your task is to analyze the provided context and user query to determine what additional information is needed to fully answer the user's query.
@@ -105,7 +104,7 @@ Today's date is {date}
 </context>
 
 # Instructions
-Respond with a detailed question that will be directed to the user to gather more specific information that can help refine the search.
+Respond with a JSON object containing "question" and "reasoning" fields. The question should be detailed and directed to the user to gather more specific information that can help refine the search. The reasoning should explain why this information is needed.
 `;
 
 export const additionalWebSearchPrompt = `
@@ -135,5 +134,5 @@ Today's date is {date}
 {context}
 </context>
 
-Respond with a detailed question that will be directed to an LLM to gather more specific information that can help refine the search.
+Respond with a JSON object containing "question" and "reasoning" fields. The question should be detailed and directed to an LLM to gather more specific information that can help refine the search. The reasoning should explain what information is missing and why this search will help.
 `;
