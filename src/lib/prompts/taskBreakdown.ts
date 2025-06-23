@@ -24,6 +24,8 @@ export const taskBreakdownPrompt = `You are a task breakdown specialist. Your jo
 5. Keep the **same question type** (factual, analytical, etc.)
 6. Avoid introducing **new concepts** or information not present in the original question
 7. **Do not** repeat the same question multiple times; each sub-question should be unique and focused on a specific aspect of the original query
+8. Questions should **not** require user input for additional context; they should be designed to be answered by an LLM or through research via web search
+9. Do not ask questions that are based on opinion, personal preference, usage habits, subjective interpretation, etc...
 
 ## Examples:
 

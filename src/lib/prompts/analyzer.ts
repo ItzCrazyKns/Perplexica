@@ -9,7 +9,7 @@ Your task is to analyze the provided context and determine if we have enough inf
 # Response Options Decision Tree
 
 ## Step 1: Check if content is sufficient
-- If your training data and the provided context contain enough information to answer the user's query → respond with \`good_content\`
+- If provided context contains enough information to answer the user's query → respond with \`good_content\`
 - If the context fully answers the user's query with complete information → respond with \`good_content\`
 - If the user is requesting to use the existing context to answer their query → respond with \`good_content\`
 - If the user is requesting to avoid web searches → respond with \`good_content\`
@@ -57,9 +57,9 @@ Your task is to analyze the provided context and determine if we have enough inf
 - "Compare Tesla Model 3 vs BMW i4" (missing: detailed comparison data)
 
 # Critical Decision Point
-Ask yourself: "Could this missing information reasonably be found through a web search, or does it require the user to provide personal/subjective details?"
+Ask yourself: "Could this missing information reasonably be found through a web search, or does it require the user to provide specific details?"
 
-- If it's personal/subjective → \`need_user_info\`
+- If it's personal/subjective or requires user feedback → \`need_user_info\`
 - If it's factual and searchable → \`need_more_info\`
 - If the context is complete or the user wants to use the existing context → \`good_content\`
 
@@ -84,6 +84,10 @@ Provide your response as a JSON object with "action" and "reasoning" fields wher
 
 export const additionalUserInputPrompt = `You are an expert content analyzer.
 Your task is to analyze the provided context and user query to determine what additional information is needed to fully answer the user's query.
+
+# Previous Analysis
+- The LLM analyzed the provided context and user query and determined that additional information is needed to fully answer the user's query, here is the analysis result:
+{previousAnalysis}
 
 # Refinement History
 - The following automated questions have already been asked to refine the search
@@ -112,9 +116,14 @@ You are an expert content analyzer.
 Your task is to analyze the provided context and user query to determine what additional information is needed to fully answer the user's query.
 
 # Instructions
-- Respond with a detailed question that will be directed to an LLM to gather more specific information that can help refine the search.
+- Respond with a detailed question that will be directed to an LLM to create a web search instruction
+- The question should not require user input, but rather be designed to gather more specific information that can help refine the search
 - Avoid giving the same guidance more than once, and avoid repeating the same question multiple times
 - Avoid asking for general information or vague details; focus on specific, actionable questions that can lead to concrete answers
+
+# Previous Analysis
+- The LLM analyzed the provided context and user query and determined that additional information is needed to fully answer the user's query, here is the analysis result:
+{previousAnalysis}
 
 # Refinement History
 - The following automated questions have already been asked to refine the search

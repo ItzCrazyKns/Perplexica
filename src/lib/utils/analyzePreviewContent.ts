@@ -1,6 +1,6 @@
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { BaseMessage } from '@langchain/core/messages';
-import LineOutputParser from '../outputParsers/lineOutputParser';
+import { z } from 'zod';
 import { formatDateForLLM } from '../utils';
 import { ChatOpenAI, OpenAIClient } from '@langchain/openai';
 import { removeThinkingBlocks } from './contentUtils';
@@ -15,6 +15,12 @@ export type PreviewContent = {
   snippet: string;
   url: string;
 };
+
+// Zod schema for structured preview analysis output
+const PreviewAnalysisSchema = z.object({
+  isSufficient: z.boolean().describe('Whether the preview content is sufficient to answer the task query'),
+  reason: z.string().optional().nullable().describe('Specific reason why full content analysis is required (only if isSufficient is false)')
+});
 
 export const analyzePreviewContent = async (
   previewContents: PreviewContent[],
@@ -60,17 +66,24 @@ Snippet: ${content.snippet}
 
     console.log(`Invoking LLM for preview content analysis`);
 
-    const analysisResponse = await llm.invoke(
+    // Create structured LLM with Zod schema
+    const structuredLLM = llm.withStructuredOutput(PreviewAnalysisSchema);
+
+    const analysisResult = await structuredLLM.invoke(
       `${systemPrompt}You are a preview content analyzer, tasked with determining if search result snippets contain sufficient information to answer the Task Query.
 
 # Instructions
 - Analyze the provided search result previews (titles + snippets), and chat history context to determine if they collectively contain enough information to provide a complete and accurate answer to the Task Query
 - You must make a binary decision: either the preview content is sufficient OR it is not sufficient
-- If the preview content can provide a complete answer to the Task Query, respond with "sufficient"
-- If the preview content lacks important details, requires deeper analysis, or cannot fully answer the Task Query, respond with "not_needed: [specific reason why full content analysis is required]"
+- If the preview content can provide a complete answer to the Task Query, set isSufficient to true
+- If the preview content lacks important details, requires deeper analysis, or cannot fully answer the Task Query, set isSufficient to false and provide a specific reason
 - Be specific in your reasoning when the content is not sufficient
 - The original query is provided for additional context, only use it for clarification of overall expectations and intent. You do **not** need to answer the original query directly or completely
-- Output your decision inside a \`decision\` XML tag
+
+# Response Format
+You must return a JSON object with:
+- isSufficient: boolean indicating whether preview content is sufficient
+- reason: string explaining why full content analysis is required (only if isSufficient is false)
 
 # Information Context:
 Today's date is ${formatDateForLLM(new Date())}
@@ -90,8 +103,8 @@ ${formattedPreviewContent}
       { signal },
     );
 
-    if (!analysisResponse || !analysisResponse.content) {
-      console.error('No analysis response returned from LLM');
+    if (!analysisResult) {
+      console.error('No analysis result returned from LLM');
       return {
         isSufficient: false,
         reason:
@@ -99,37 +112,20 @@ ${formattedPreviewContent}
       };
     }
 
-    const decisionParser = new LineOutputParser({ key: 'decision' });
-    const decision = await decisionParser.parse(
-      analysisResponse.content as string,
-    );
+    console.log(`LLM analysis result:`, analysisResult);
 
-    console.log(`LLM decision response:`, decision);
-
-    if (decision.toLowerCase().trim() === 'sufficient') {
+    if (analysisResult.isSufficient) {
       console.log(
         'Preview content determined to be sufficient for answering the query',
       );
       return { isSufficient: true };
-    } else if (decision.toLowerCase().startsWith('not_needed')) {
-      // Extract the reason from the "not_needed" response
-      const reason = decision.startsWith('not_needed')
-        ? decision.substring('not_needed:'.length).trim()
-        : 'Preview content insufficient for complete answer';
-
-      console.log(
-        `Preview content determined to be insufficient. Reason: ${reason}`,
-      );
-      return { isSufficient: false, reason };
     } else {
-      // Default to not sufficient if unclear response
       console.log(
-        `Unclear LLM response, defaulting to insufficient: ${decision}`,
+        `Preview content determined to be insufficient. Reason: ${analysisResult.reason}`,
       );
-      return {
-        isSufficient: false,
-        reason:
-          'Unclear analysis response - falling back to full content processing',
+      return { 
+        isSufficient: false, 
+        reason: analysisResult.reason || 'Preview content insufficient for complete answer'
       };
     }
   } catch (error) {

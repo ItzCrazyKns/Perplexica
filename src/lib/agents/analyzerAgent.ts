@@ -21,6 +21,7 @@ import {
   removeThinkingBlocks,
   removeThinkingBlocksFromMessages,
 } from '../utils/contentUtils';
+import next from 'next';
 
 // Define Zod schemas for structured output
 const NextActionSchema = z.object({
@@ -157,6 +158,7 @@ export class AnalyzerAgent {
               .map((question) => `- ${question}`)
               .join('\n'),
             query: state.originalQuery || state.query, // Use original query for user info context
+            previousAnalysis: nextActionResponse.reasoning, // Include reasoning from previous analysis
           });
 
           const userInfoRequest = await userInfoLlm.invoke(
@@ -210,6 +212,7 @@ export class AnalyzerAgent {
             .map((question) => `- ${question}`)
             .join('\n'),
           query: state.originalQuery || state.query, // Use original query for more info context
+          previousAnalysis: nextActionResponse.reasoning, // Include reasoning from previous analysis
         });
 
         const searchRefinement = await searchRefinementLlm.invoke(

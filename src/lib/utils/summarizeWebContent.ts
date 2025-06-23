@@ -1,20 +1,13 @@
 import { Document } from '@langchain/core/documents';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { z } from 'zod';
 import { formatDateForLLM } from '../utils';
 import { getWebContent } from './documents';
+import { removeThinkingBlocks } from './contentUtils';
 
 export type SummarizeResult = {
   document: Document | null;
   notRelevantReason?: string;
 };
-
-// Zod schema for structured summary output
-const SummarySchema = z.object({
-  isRelevant: z.boolean().describe('Whether the content is relevant to the user query'),
-  summary: z.string().describe('Detailed summary of the content in markdown format, or explanation if not relevant'),
-  notRelevantReason: z.string().optional().describe('Specific reason why content is not relevant (only if isRelevant is false)')
-});
 
 export const summarizeWebContent = async (
   url: string,
@@ -32,10 +25,7 @@ export const summarizeWebContent = async (
         ? `${systemInstructions}\n\n`
         : '';
 
-      // Create structured LLM with Zod schema
-      const structuredLLM = llm.withStructuredOutput(SummarySchema);
-
-      let result = null;
+      let summary = null;
       for (let i = 0; i < 2; i++) {
         try {
           console.log(
@@ -45,20 +35,17 @@ export const summarizeWebContent = async (
           const prompt = `${systemPrompt}You are a web content summarizer, tasked with creating a detailed, accurate summary of content from a webpage.
 
 # Instructions
-- Determine if the content is relevant to the user's query
-- You do not need to provide a full answer to the query, partial answers are acceptable
-- If relevant, create a thorough and comprehensive summary capturing all key points
+- First determine if the content is relevant to the user's query
+- You do not need to provide a full answer to the query in order to be relevant, partial answers are acceptable
+- If the content is relevant, return a thorough and comprehensive summary capturing all key points
 - Include specific details, numbers, and quotes when relevant
 - Be concise and to the point, avoiding unnecessary fluff
 - Format the summary using markdown with headings and lists
 - Include useful links to external resources, if applicable
-- If the content is not relevant, set isRelevant to false and provide a specific reason
 
-# Response Format
-You must return a JSON object with:
-- isRelevant: boolean indicating if content is relevant to the query
-- summary: string with detailed markdown summary if relevant, or explanation if not relevant
-- notRelevantReason: string explaining why content is not relevant (only if isRelevant is false)
+# Decision Tree
+- If the content is NOT relevant to the query, do not provide a summary; respond with 'not_relevant'
+- If the content is relevant, return a detailed summary following the instructions above
 
 Today's date is ${formatDateForLLM(new Date())}
 
@@ -67,7 +54,8 @@ Here is the query you need to answer: ${query}
 Here is the content to summarize:
 ${i === 0 ? content.metadata.html : content.pageContent}`;
 
-          result = await structuredLLM.invoke(prompt, { signal });
+          const result = await llm.invoke(prompt, { signal });
+          summary = removeThinkingBlocks(result.content as string);
           break;
         } catch (error) {
           console.error(
@@ -77,7 +65,7 @@ ${i === 0 ? content.metadata.html : content.pageContent}`;
         }
       }
 
-      if (!result) {
+      if (!summary) {
         console.error(`No summary result returned for URL: ${url}`);
         return {
           document: null,
@@ -85,31 +73,22 @@ ${i === 0 ? content.metadata.html : content.pageContent}`;
         };
       }
 
-      // Check if content is relevant
-      if (!result.isRelevant) {
+      // Check if content is relevant (empty or very short response indicates not relevant)
+      const trimmedSummary = summary.trim();
+      if (trimmedSummary.length === 0 || trimmedSummary.length < 25) {
         console.log(
-          `LLM response for URL "${url}" indicates it's not relevant:`,
-          result.notRelevantReason || result.summary,
+          `LLM response for URL "${url}" indicates it's not relevant (empty or very short response)`,
         );
 
         return { 
           document: null, 
-          notRelevantReason: result.notRelevantReason || result.summary 
-        };
-      }
-
-      // Content is relevant, create document with summary
-      if (!result.summary || result.summary.trim().length === 0) {
-        console.error(`No summary content in relevant response for URL: ${url}`);
-        return {
-          document: null,
-          notRelevantReason: 'Summary content was empty',
+          notRelevantReason: 'Content not relevant to query' 
         };
       }
 
       return {
         document: new Document({
-          pageContent: result.summary,
+          pageContent: trimmedSummary,
           metadata: {
             ...content.metadata,
             url: url,
