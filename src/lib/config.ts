@@ -16,6 +16,9 @@ interface Config {
     SIMILARITY_MEASURE: string;
     KEEP_ALIVE: string;
   };
+  UI: {
+    LAYOUT_MODE: string;
+  };
   HISTORY: {
     RETENTION_DAYS: number;
   };
@@ -72,6 +75,8 @@ export const getSimilarityMeasure = () =>
   loadConfig().GENERAL.SIMILARITY_MEASURE;
 
 export const getKeepAlive = () => loadConfig().GENERAL.KEEP_ALIVE;
+
+export const getLayoutMode = () => loadConfig().UI?.LAYOUT_MODE || 'default';
 
 export const getHistoryRetentionDays = () => loadConfig().HISTORY.RETENTION_DAYS;
 
