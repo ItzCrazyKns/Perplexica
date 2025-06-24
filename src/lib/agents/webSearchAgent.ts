@@ -175,10 +175,10 @@ export class WebSearchAgent {
         }),
       );
 
-      // Sort by relevance score and take top 8 results
+      // Sort by relevance score and take top 12 results
       const previewContents: PreviewContent[] = resultsWithSimilarity
         .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, 8)
+        .slice(0, 12)
         .map(({ result }) => ({
           title: result.title || 'Untitled',
           snippet: result.content || '',
@@ -301,7 +301,7 @@ export class WebSearchAgent {
 
         // Summarize the top 2 search results
         for (const result of resultsWithSimilarity
-          .slice(0, 8)
+          .slice(0, 12)
           .map((r) => r.result)) {
           if (this.signal.aborted) {
             console.warn('Search operation aborted by signal');

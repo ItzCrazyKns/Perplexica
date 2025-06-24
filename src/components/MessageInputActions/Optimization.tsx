@@ -15,13 +15,13 @@ const OptimizationModes = [
       'Prioritize speed and get the quickest possible answer. Minimum effort retrieving web content.',
     icon: <Zap size={20} className="text-[#FF9800]" />,
   },
-  {
-    key: 'balanced',
-    title: 'Balanced',
-    description:
-      'Find the right balance between speed and accuracy. Medium effort retrieving web content.',
-    icon: <Sliders size={20} className="text-[#4CAF50]" />,
-  },
+  // {
+  //   key: 'balanced',
+  //   title: 'Balanced',
+  //   description:
+  //     'Find the right balance between speed and accuracy. Medium effort retrieving web content.',
+  //   icon: <Sliders size={20} className="text-[#4CAF50]" />,
+  // },
   // {
   //   key: 'quality',
   //   title: 'Quality',

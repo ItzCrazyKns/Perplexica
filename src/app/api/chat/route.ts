@@ -425,6 +425,7 @@ export const POST = async (req: Request) => {
           }),
         ),
       );
+      writer.close();
       cleanupCancelToken(message.messageId);
     });
 

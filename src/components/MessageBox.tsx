@@ -93,7 +93,7 @@ const MessageBox = ({
           ) : (
             <>
               <div className="flex items-center">
-                <h2 className="text-black dark:text-white font-medium text-3xl">
+                <h2 className="text-black dark:text-white font-medium text-3xl" onClick={startEditMessage}>
                   {message.content}
                 </h2>
                 <button
