@@ -334,6 +334,9 @@ const ChatWindow = ({ id }: { id?: string }) => {
       return;
     }
 
+    // 檢查無痕模式
+    const isIncognito = localStorage.getItem('incognitoMode') === 'true';
+
     setLoading(true);
     setMessageAppeared(false);
 
@@ -481,6 +484,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
           provider: embeddingModelProvider.provider,
         },
         systemInstructions: localStorage.getItem('systemInstructions'),
+        isIncognito: isIncognito,
       }),
     });
 
