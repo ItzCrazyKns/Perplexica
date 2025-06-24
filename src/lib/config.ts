@@ -16,6 +16,9 @@ interface Config {
     SIMILARITY_MEASURE: string;
     KEEP_ALIVE: string;
   };
+  HISTORY: {
+    RETENTION_DAYS: number;
+  };
   MODELS: {
     OPENAI: {
       API_KEY: string;
@@ -69,6 +72,8 @@ export const getSimilarityMeasure = () =>
   loadConfig().GENERAL.SIMILARITY_MEASURE;
 
 export const getKeepAlive = () => loadConfig().GENERAL.KEEP_ALIVE;
+
+export const getHistoryRetentionDays = () => loadConfig().HISTORY.RETENTION_DAYS;
 
 export const getOpenaiApiKey = () => loadConfig().MODELS.OPENAI.API_KEY;
 

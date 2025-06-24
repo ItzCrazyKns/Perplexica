@@ -26,6 +26,7 @@ interface SettingsType {
   customOpenaiApiKey: string;
   customOpenaiApiUrl: string;
   customOpenaiModelName: string;
+  historyRetentionDays: number;
 }
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -508,6 +509,33 @@ const Page = () => {
                       )}
                     />
                   </Switch>
+                </div>
+              </div>
+            </SettingsSection>
+
+            <SettingsSection title="History Settings">
+              <div className="flex flex-col space-y-4">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    History Retention (Days)
+                  </p>
+                  <p className="text-xs text-black/60 dark:text-white/60">
+                    Number of days to keep chat history when incognito mode is off (0 = keep forever)
+                  </p>
+                  <Input
+                    type="number"
+                    placeholder="30"
+                    min="0"
+                    value={config.historyRetentionDays?.toString() || '30'}
+                    isSaving={savingStates['historyRetentionDays']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        historyRetentionDays: parseInt(e.target.value) || 0,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('historyRetentionDays', parseInt(value) || 0)}
+                  />
                 </div>
               </div>
             </SettingsSection>
