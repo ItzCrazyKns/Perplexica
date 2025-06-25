@@ -7,7 +7,7 @@ import {
   TransitionChild,
 } from '@headlessui/react';
 import { Document } from '@langchain/core/documents';
-import { File } from 'lucide-react';
+import { File, Image } from 'lucide-react';
 import { Fragment, useState } from 'react';
 
 const MessageSources = ({ sources }: { sources: Document[] }) => {
@@ -24,8 +24,18 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
   };
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-      {sources.slice(0, 3).map((source, i) => (
+    <div className="flex flex-col space-y-2 w-full">
+      <div className="flex flex-row items-center space-x-2">
+        <button
+          onClick={() => setIsDialogOpen(true)}
+          className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white text-xs transition-colors duration-200"
+        >
+          <Image size={14} className="text-black/70 dark:text-white/70" />
+          <span>{sources.length} sources</span>
+        </button>
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        {sources.slice(0, 3).map((source, i) => (
         <a
           className="bg-light-100 hover:bg-light-200 dark:bg-dark-100 dark:hover:bg-dark-200 transition duration-200 rounded-lg p-3 flex flex-col space-y-2 font-medium"
           key={i}
@@ -69,15 +79,11 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
           <div className="flex flex-row items-center space-x-1">
             {sources.slice(3, 6).map((source, i) => {
               return source.metadata.url === 'File' ? (
-                <div
-                  key={i}
-                  className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-6 h-6 rounded-full"
-                >
+                <div className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-6 h-6 rounded-full">
                   <File size={12} className="text-white/70" />
                 </div>
               ) : (
                 <img
-                  key={i}
                   src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
                   width={16}
                   height={16}
@@ -92,6 +98,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
           </p>
         </button>
       )}
+      </div>
       <Transition appear show={isDialogOpen} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={closeModal}>
           <div className="fixed inset-0 overflow-y-auto">

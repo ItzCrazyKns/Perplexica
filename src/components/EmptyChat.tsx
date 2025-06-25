@@ -1,10 +1,8 @@
 import { Settings } from 'lucide-react';
 import EmptyChatMessageInput from './EmptyChatMessageInput';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { File } from './ChatWindow';
 import Link from 'next/link';
-import WeatherWidget from './WeatherWidget';
-import NewsArticleWidget from './NewsArticleWidget';
 
 const EmptyChat = ({
   sendMessage,
@@ -27,6 +25,8 @@ const EmptyChat = ({
   files: File[];
   setFiles: (files: File[]) => void;
 }) => {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   return (
     <div className="relative">
       <div className="absolute w-full flex flex-row items-center justify-end mr-5 mt-5">
@@ -49,14 +49,6 @@ const EmptyChat = ({
           files={files}
           setFiles={setFiles}
         />
-        <div className="flex flex-col w-full gap-4 mt-2 sm:flex-row sm:justify-center">
-          <div className="flex-1 max-w-xs">
-            <WeatherWidget />
-          </div>
-          <div className="flex-1 max-w-xs">
-            <NewsArticleWidget />
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -68,11 +68,13 @@ Rephrased question:
 export const webSearchResponsePrompt = (context: string, req?: IncomingMessage): string => {
   // 默认调试位置
   const defaultLocation = {
-    city: "White Plains",
-    state: "NY",
-    country: "USA",
-    timezone: "EST"
+    city: "Unknown",
+    state: "Unknown",
+    country: "Unknown",
+    timezone: "UTC"
   };
+
+  let locationInfo = { ...defaultLocation };
 
   // 获取当前季节
   const getCurrentSeason = (): string => {
@@ -83,7 +85,7 @@ export const webSearchResponsePrompt = (context: string, req?: IncomingMessage):
     return 'Fall';
   };
 
-  // 生成日期字符串
+  // 生成日期字符串和位置信息
   let timeZone = defaultLocation.timezone;
   if (req) {
     // 尝试从 x-forwarded-for 获取客户端 IP，或者退回到 socket 标识
@@ -93,6 +95,12 @@ export const webSearchResponsePrompt = (context: string, req?: IncomingMessage):
     const geo = geoip.lookup(ipStr);
     if (geo && geo.ll) {
       timeZone = geoTz(geo.ll[0], geo.ll[1])[0]; // 使用命名导入后的调用
+      locationInfo = {
+        city: geo.city || "Unknown",
+        state: geo.region || "Unknown", 
+        country: geo.country || "Unknown",
+        timezone: timeZone
+      };
     }
   }
 
@@ -116,7 +124,7 @@ If the user asks you to format your answer, you may use headings level 2 and 3 l
 Write in the language of the user query unless the user explicitly instructs you otherwise.
 
 User Profile (when relevant):
-	•	Location: ${defaultLocation.city}, ${defaultLocation.state}, ${defaultLocation.country}
+	•	Location: ${locationInfo.city}, ${locationInfo.state}, ${locationInfo.country}
 	•	Current date: ${date}
 
 Key Guidelines:
@@ -124,11 +132,11 @@ Key Guidelines:
 	2.	Maintain natural conversation flow without robotic patterns
 	3.	Proactively suggest helpful follow-up questions or related topics
 	4.	For technical queries, break down complex concepts using analogies
-	5.	Local considerations for ${defaultLocation.city}, ${defaultLocation.state}:
+	5.	Local considerations for ${locationInfo.city}, ${locationInfo.state}:
 		•	Timezone: ${timeZone}
 		•	Current season: ${getCurrentSeason()}
-		•	Notable landmarks: White Plains Performing Arts Center, Ridge Road Park
-		•	Proximity: 30 miles northeast of Manhattan (approx. 45-60 minute commute)
+		•	Weather information should be localized to user location when possible
+		•	Local time references should be accurate for user timezone
 
 Response Validation:
 	•	Fact-check against 2025 context

@@ -21,6 +21,7 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
+import { getLocalDateFromRequest } from '@/lib/utils/ipUtils';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -272,6 +273,21 @@ export const POST = async (req: Request) => {
       );
     }
 
+    // Get client location information for location-aware search
+    const forwarded = req.headers.get('x-forwarded-for');
+    const clientIP = forwarded ? forwarded.split(',')[0] : '127.0.0.1';
+    
+    // Create a request-like object for getLocalDateFromRequest
+    const requestLike = {
+      headers: {
+        'x-forwarded-for': req.headers.get('x-forwarded-for') || undefined,
+      },
+      socket: { remoteAddress: clientIP }
+    } as any;
+    
+    const localDate = getLocalDateFromRequest(requestLike);
+    console.log(`Chat local date: ${localDate}`);
+
     const stream = await handler.searchAndAnswer(
       message.content,
       history,
@@ -280,6 +296,7 @@ export const POST = async (req: Request) => {
       body.optimizationMode,
       body.files,
       body.systemInstructions,
+      requestLike,
     );
 
     const responseStream = new TransformStream();

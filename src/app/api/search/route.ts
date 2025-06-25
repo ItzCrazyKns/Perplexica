@@ -13,6 +13,7 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
+import { getLocalDateFromRequest } from '@/lib/utils/ipUtils';
 
 interface chatModel {
   provider: string;
@@ -119,6 +120,21 @@ export const POST = async (req: Request) => {
       return Response.json({ message: 'Invalid focus mode' }, { status: 400 });
     }
 
+    // Get client location information for location-aware search
+    const forwarded = req.headers.get('x-forwarded-for');
+    const clientIP = forwarded ? forwarded.split(',')[0] : '127.0.0.1';
+    
+    // Create a request-like object for getLocalDateFromRequest
+    const requestLike = {
+      headers: {
+        'x-forwarded-for': req.headers.get('x-forwarded-for') || undefined,
+      },
+      socket: { remoteAddress: clientIP }
+    } as any;
+    
+    const localDate = getLocalDateFromRequest(requestLike);
+    console.log(`Local date: ${localDate}`);
+
     const emitter = await searchHandler.searchAndAnswer(
       body.query,
       history,
@@ -127,6 +143,7 @@ export const POST = async (req: Request) => {
       body.optimizationMode,
       [],
       body.systemInstructions || '',
+      requestLike,
     );
 
     if (!body.stream) {

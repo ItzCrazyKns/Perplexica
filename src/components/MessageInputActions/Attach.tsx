@@ -5,7 +5,7 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
-import { CopyPlus, File, LoaderCircle, Plus, Trash } from 'lucide-react';
+import { Paperclip, File, LoaderCircle, Plus, Trash } from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
 import { File as FileType } from '../ChatWindow';
 
@@ -41,7 +41,7 @@ const Attach = ({
     data.append('embedding_model_provider', embeddingModelProvider!);
     data.append('embedding_model', embeddingModel!);
 
-    const res = await fetch(`/api/uploads`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/uploads`, {
       method: 'POST',
       body: data,
     });
@@ -110,7 +110,7 @@ const Attach = ({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current.click()}
-                  className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black hover:dark:text-white transition duration-200"
+                  className="flex flex-row items-center space-x-1 text-white/70 hover:text-white transition duration-200"
                 >
                   <input
                     type="file"
@@ -128,7 +128,7 @@ const Attach = ({
                     setFiles([]);
                     setFileIds([]);
                   }}
-                  className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black hover:dark:text-white transition duration-200"
+                  className="flex flex-row items-center space-x-1 text-white/70 hover:text-white transition duration-200"
                 >
                   <Trash size={14} />
                   <p className="text-xs">Clear</p>
@@ -145,7 +145,7 @@ const Attach = ({
                   <div className="bg-dark-100 flex items-center justify-center w-10 h-10 rounded-md">
                     <File size={16} className="text-white/70" />
                   </div>
-                  <p className="text-black/70 dark:text-white/70 text-sm">
+                  <p className="text-white/70 text-sm">
                     {file.fileName.length > 25
                       ? file.fileName.replace(/\.\w+$/, '').substring(0, 25) +
                         '...' +
@@ -176,7 +176,7 @@ const Attach = ({
         multiple
         hidden
       />
-      <CopyPlus size={showText ? 18 : undefined} />
+      <Paperclip size={showText ? 18 : undefined} />
       {showText && <p className="text-xs font-medium pl-[1px]">Attach</p>}
     </button>
   );
