@@ -6,6 +6,7 @@ import Focus from './MessageInputActions/Focus';
 import Optimization from './MessageInputActions/Optimization';
 import Attach from './MessageInputActions/Attach';
 import { File } from './ChatWindow';
+import VoiceInput from './MessageInputActions/VoiceInput';
 
 const EmptyChatMessageInput = ({
   sendMessage,
@@ -94,6 +95,7 @@ const EmptyChatMessageInput = ({
             />
           </div>
           <div className="flex flex-row items-center space-x-1 sm:space-x-4">
+            <VoiceInput setMessage={setMessage} />
             <Optimization
               optimizationMode={optimizationMode}
               setOptimizationMode={setOptimizationMode}

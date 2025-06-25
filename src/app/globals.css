@@ -11,3 +11,27 @@
     display: none;
   }
 }
+
+/* Voice input animation */
+@keyframes voice-bars {
+  0%, 100% { height: 8px; }
+  50% { height: 16px; }
+}
+
+.voice-bar-1 {
+  height: 8px;
+  animation: voice-bars 0.8s ease-in-out infinite;
+  animation-delay: 0s;
+}
+
+.voice-bar-2 {
+  height: 12px;
+  animation: voice-bars 0.8s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+
+.voice-bar-3 {
+  height: 8px;
+  animation: voice-bars 0.8s ease-in-out infinite;
+  animation-delay: 0.4s;
+}

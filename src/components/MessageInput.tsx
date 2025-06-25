@@ -6,6 +6,7 @@ import Attach from './MessageInputActions/Attach';
 import CopilotToggle from './MessageInputActions/Copilot';
 import { File } from './ChatWindow';
 import AttachSmall from './MessageInputActions/AttachSmall';
+import VoiceInput from './MessageInputActions/VoiceInput';
 
 const MessageInput = ({
   sendMessage,
@@ -99,6 +100,7 @@ const MessageInput = ({
       />
       {mode === 'single' && (
         <div className="flex flex-row items-center space-x-4">
+          <VoiceInput setMessage={setMessage} />
           <CopilotToggle
             copilotEnabled={copilotEnabled}
             setCopilotEnabled={setCopilotEnabled}
@@ -120,6 +122,7 @@ const MessageInput = ({
             setFiles={setFiles}
           />
           <div className="flex flex-row items-center space-x-4">
+            <VoiceInput setMessage={setMessage} />
             <CopilotToggle
               copilotEnabled={copilotEnabled}
               setCopilotEnabled={setCopilotEnabled}
