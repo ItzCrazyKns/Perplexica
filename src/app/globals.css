@@ -12,26 +12,22 @@
   }
 }
 
-/* Voice input animation */
-@keyframes voice-bars {
-  0%, 100% { height: 8px; }
-  50% { height: 16px; }
+/* Voice recognition icon animations - stable and subtle */
+@keyframes voice-bar-1 {
+  0%, 100% { height: 4px; opacity: 0.6; }
+  50% { height: 8px; opacity: 1; }
 }
 
-.voice-bar-1 {
-  height: 8px;
-  animation: voice-bars 0.8s ease-in-out infinite;
-  animation-delay: 0s;
+@keyframes voice-bar-2 {
+  0%, 100% { height: 8px; opacity: 0.7; }
+  50% { height: 12px; opacity: 1; }
 }
 
-.voice-bar-2 {
-  height: 12px;
-  animation: voice-bars 0.8s ease-in-out infinite;
-  animation-delay: 0.2s;
+@keyframes voice-bar-3 {
+  0%, 100% { height: 12px; opacity: 0.8; }
+  50% { height: 16px; opacity: 1; }
 }
 
-.voice-bar-3 {
-  height: 8px;
-  animation: voice-bars 0.8s ease-in-out infinite;
-  animation-delay: 0.4s;
-}
+.voice-bar-1 { animation: voice-bar-1 1.2s ease-in-out infinite; }
+.voice-bar-2 { animation: voice-bar-2 1.0s ease-in-out infinite; }
+.voice-bar-3 { animation: voice-bar-3 1.4s ease-in-out infinite; }
