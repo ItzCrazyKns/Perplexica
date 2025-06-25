@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSelectedLayoutSegments } from 'next/navigation';
 import React, { useState, type ReactNode } from 'react';
 import Layout from './Layout';
+import ChatHistory from './ChatHistory';
 
 const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
   return (
@@ -84,6 +85,10 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
                     <span className="ml-2.5 text-sm">{link.label}</span>
                   </Link>
                 ))}
+              </div>
+              
+              <div className="flex-grow overflow-y-auto mt-0.5 border-t border-black/10 dark:border-white/10 pt-2">
+                <ChatHistory />
               </div>
             </div>
           ) : (

@@ -29,6 +29,8 @@
     "compute-cosine-similarity": "^1.1.0",
     "compute-dot": "^1.1.0",
     "drizzle-orm": "^0.40.1",
+    "geo-tz": "^8.1.4",
+    "geoip-lite": "^1.4.10",
     "html-to-text": "^9.0.5",
     "jspdf": "^3.0.1",
     "langchain": "^0.1.30",
