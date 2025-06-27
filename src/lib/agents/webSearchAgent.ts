@@ -22,8 +22,14 @@ import computeSimilarity from '../utils/computeSimilarity';
 
 // Define Zod schema for structured search query output
 const SearchQuerySchema = z.object({
-  searchQuery: z.string().describe('The optimized search query to use for web search'),
-  reasoning: z.string().describe('Explanation of how the search query was optimized for better results')
+  searchQuery: z
+    .string()
+    .describe('The optimized search query to use for web search'),
+  reasoning: z
+    .string()
+    .describe(
+      'Explanation of how the search query was optimized for better results',
+    ),
 });
 
 type SearchQuery = z.infer<typeof SearchQuerySchema>;
@@ -333,7 +339,7 @@ export class WebSearchAgent {
             type: 'agent_action',
             data: {
               action: 'ANALYZING_SOURCE',
-              message: `Analyzing content from: ${result.title || result.url}`,
+              message: `Analyzing and summarizing content from: ${result.title || result.url}`,
               details: {
                 query: currentTask,
                 sourceUrl: result.url,

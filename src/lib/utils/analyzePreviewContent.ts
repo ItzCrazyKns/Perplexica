@@ -18,8 +18,17 @@ export type PreviewContent = {
 
 // Zod schema for structured preview analysis output
 const PreviewAnalysisSchema = z.object({
-  isSufficient: z.boolean().describe('Whether the preview content is sufficient to answer the task query'),
-  reason: z.string().nullable().describe('Specific reason why full content analysis is required (only if isSufficient is false)')
+  isSufficient: z
+    .boolean()
+    .describe(
+      'Whether the preview content is sufficient to answer the task query',
+    ),
+  reason: z
+    .string()
+    .nullable()
+    .describe(
+      'Specific reason why full content analysis is required (only if isSufficient is false)',
+    ),
 });
 
 export const analyzePreviewContent = async (
@@ -123,9 +132,11 @@ You must return a JSON object with:
       console.log(
         `Preview content determined to be insufficient. Reason: ${analysisResult.reason}`,
       );
-      return { 
-        isSufficient: false, 
-        reason: analysisResult.reason || 'Preview content insufficient for complete answer'
+      return {
+        isSufficient: false,
+        reason:
+          analysisResult.reason ||
+          'Preview content insufficient for complete answer',
       };
     }
   } catch (error) {

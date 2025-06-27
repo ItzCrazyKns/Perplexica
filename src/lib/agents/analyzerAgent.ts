@@ -25,18 +25,32 @@ import next from 'next';
 
 // Define Zod schemas for structured output
 const NextActionSchema = z.object({
-  action: z.enum(['good_content', 'need_user_info', 'need_more_info']).describe('The next action to take based on content analysis'),
-  reasoning: z.string().describe('Brief explanation of why this action was chosen')
+  action: z
+    .enum(['good_content', 'need_user_info', 'need_more_info'])
+    .describe('The next action to take based on content analysis'),
+  reasoning: z
+    .string()
+    .describe('Brief explanation of why this action was chosen'),
 });
 
 const UserInfoRequestSchema = z.object({
-  question: z.string().describe('A detailed question to ask the user for additional information'),
-  reasoning: z.string().describe('Explanation of why this information is needed')
+  question: z
+    .string()
+    .describe('A detailed question to ask the user for additional information'),
+  reasoning: z
+    .string()
+    .describe('Explanation of why this information is needed'),
 });
 
 const SearchRefinementSchema = z.object({
-  question: z.string().describe('A refined search question to gather more specific information'),
-  reasoning: z.string().describe('Explanation of what information is missing and why this search will help')
+  question: z
+    .string()
+    .describe('A refined search question to gather more specific information'),
+  reasoning: z
+    .string()
+    .describe(
+      'Explanation of what information is missing and why this search will help',
+    ),
 });
 
 export class AnalyzerAgent {
@@ -120,9 +134,7 @@ export class AnalyzerAgent {
 
       console.log('Next action response:', nextActionResponse);
 
-      if (
-        nextActionResponse.action !== 'good_content'
-      ) {
+      if (nextActionResponse.action !== 'good_content') {
         // If we don't have enough information, but we still have available tasks, proceed with the next task
 
         if (state.tasks && state.tasks.length > 0) {
@@ -135,13 +147,14 @@ export class AnalyzerAgent {
           }
         }
 
-        if (
-          nextActionResponse.action === 'need_user_info'
-        ) {
+        if (nextActionResponse.action === 'need_user_info') {
           // Use structured output for user info request
-          const userInfoLlm = this.llm.withStructuredOutput(UserInfoRequestSchema, {
-            name: 'request_user_info',
-          });
+          const userInfoLlm = this.llm.withStructuredOutput(
+            UserInfoRequestSchema,
+            {
+              name: 'request_user_info',
+            },
+          );
 
           const moreUserInfoPrompt = await ChatPromptTemplate.fromTemplate(
             additionalUserInputPrompt,
@@ -193,9 +206,12 @@ export class AnalyzerAgent {
 
         // If we need more information from the LLM, generate a more specific search query
         // Use structured output for search refinement
-        const searchRefinementLlm = this.llm.withStructuredOutput(SearchRefinementSchema, {
-          name: 'refine_search',
-        });
+        const searchRefinementLlm = this.llm.withStructuredOutput(
+          SearchRefinementSchema,
+          {
+            name: 'refine_search',
+          },
+        );
 
         const moreInfoPrompt = await ChatPromptTemplate.fromTemplate(
           additionalWebSearchPrompt,
@@ -268,7 +284,7 @@ export class AnalyzerAgent {
         type: 'agent_action',
         data: {
           action: 'INFORMATION_GATHERING_COMPLETE',
-          message: 'Sufficient information gathered, ready to respond.',
+          message: 'Ready to respond.',
           details: {
             documentCount: state.relevantDocuments.length,
             searchIterations: state.searchInstructionHistory.length,

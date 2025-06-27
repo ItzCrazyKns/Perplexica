@@ -37,10 +37,12 @@ const MessageBoxLoading = ({ progress }: MessageBoxLoadingProps) => {
           </div>
         </div>
       ) : (
-        <div className="bg-light-primary dark:bg-dark-primary animate-pulse rounded-lg py-3">
-          <div className="h-2 rounded-full w-full bg-light-secondary dark:bg-dark-secondary" />
-          <div className="h-2 mt-2 rounded-full w-9/12 bg-light-secondary dark:bg-dark-secondary" />
-          <div className="h-2 mt-2 rounded-full w-10/12 bg-light-secondary dark:bg-dark-secondary" />
+        <div className="pl-3 flex items-center justify-start">
+          <div className="flex space-x-1">
+            <div className="w-1.5 h-1.5 bg-black/40 dark:bg-white/40 rounded-full animate-[high-bounce_1s_infinite] [animation-delay:-0.3s]"></div>
+            <div className="w-1.5 h-1.5 bg-black/40 dark:bg-white/40 rounded-full animate-[high-bounce_1s_infinite] [animation-delay:-0.15s]"></div>
+            <div className="w-1.5 h-1.5 bg-black/40 dark:bg-white/40 rounded-full animate-[high-bounce_1s_infinite]"></div>
+          </div>
         </div>
       )}
     </div>

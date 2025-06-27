@@ -33,7 +33,7 @@ export const summarizeWebContent = async (
           console.log(
             `Summarizing content from URL: ${url} using ${i === 0 ? 'html' : 'text'}`,
           );
-          
+
           const prompt = `${systemPrompt}You are a web content summarizer, tasked with creating a detailed, accurate summary of content from a webpage.
 
 # Instructions
@@ -82,9 +82,9 @@ ${i === 0 ? content.metadata.html : content.pageContent}`;
           `LLM response for URL "${url}" indicates it's not relevant (empty or very short response)`,
         );
 
-        return { 
-          document: null, 
-          notRelevantReason: 'Content not relevant to query' 
+        return {
+          document: null,
+          notRelevantReason: 'Content not relevant to query',
         };
       }
 

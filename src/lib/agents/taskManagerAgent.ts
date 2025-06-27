@@ -10,8 +10,16 @@ import { setTemperature } from '../utils/modelUtils';
 
 // Define Zod schema for structured task breakdown output
 const TaskBreakdownSchema = z.object({
-  tasks: z.array(z.string()).describe('Array of specific, focused tasks broken down from the original query'),
-  reasoning: z.string().describe('Explanation of how and why the query was broken down into these tasks')
+  tasks: z
+    .array(z.string())
+    .describe(
+      'Array of specific, focused tasks broken down from the original query',
+    ),
+  reasoning: z
+    .string()
+    .describe(
+      'Explanation of how and why the query was broken down into these tasks',
+    ),
 });
 
 type TaskBreakdown = z.infer<typeof TaskBreakdownSchema>;
@@ -136,7 +144,9 @@ export class TaskManagerAgent {
       console.log('Task breakdown response:', taskBreakdownResult);
 
       // Extract tasks from structured response
-      const taskLines = taskBreakdownResult.tasks.filter((task) => task.trim().length > 0);
+      const taskLines = taskBreakdownResult.tasks.filter(
+        (task) => task.trim().length > 0,
+      );
 
       if (taskLines.length === 0) {
         // Fallback: if no tasks found, use the original query
