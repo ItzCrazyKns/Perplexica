@@ -158,6 +158,7 @@ const MessageInput = ({
               setFileIds={setFileIds}
               files={files}
               setFiles={setFiles}
+              optimizationMode={optimizationMode}
             />
           </div>
           <div className="flex flex-row items-center space-x-2">

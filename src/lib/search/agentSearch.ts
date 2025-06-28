@@ -153,9 +153,9 @@ export class AgentSearch {
    * Execute the agent search workflow
    */
   async searchAndAnswer(
-    query: string, 
-    history: BaseMessage[] = [], 
-    fileIds: string[] = []
+    query: string,
+    history: BaseMessage[] = [],
+    fileIds: string[] = [],
   ) {
     const workflow = this.createWorkflow();
 

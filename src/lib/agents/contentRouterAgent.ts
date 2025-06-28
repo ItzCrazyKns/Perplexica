@@ -15,9 +15,7 @@ const RouterDecisionSchema = z.object({
   decision: z
     .enum(['file_search', 'web_search', 'analyzer'])
     .describe('The next step to take in the workflow'),
-  reasoning: z
-    .string()
-    .describe('Explanation of why this decision was made'),
+  reasoning: z.string().describe('Explanation of why this decision was made'),
 });
 
 type RouterDecision = z.infer<typeof RouterDecisionSchema>;
@@ -57,13 +55,15 @@ export class ContentRouterAgent {
 
       // Extract focus mode from state - this should now come from the API
       const focusMode = state.focusMode || 'webSearch';
-      
+
       const hasFiles = state.fileIds && state.fileIds.length > 0;
       const documentCount = state.relevantDocuments.length;
       const searchHistory = state.searchInstructionHistory.join(', ') || 'None';
-      
+
       // Extract file topics if files are available
-      const fileTopics = hasFiles ? await this.extractFileTopics(state.fileIds!) : 'None';
+      const fileTopics = hasFiles
+        ? await this.extractFileTopics(state.fileIds!)
+        : 'None';
 
       // Emit routing decision event
       this.emitter.emit('agent_action', {
@@ -97,9 +97,12 @@ export class ContentRouterAgent {
       });
 
       // Use structured output for routing decision
-      const structuredLlm = this.llm.withStructuredOutput(RouterDecisionSchema, {
-        name: 'route_content',
-      });
+      const structuredLlm = this.llm.withStructuredOutput(
+        RouterDecisionSchema,
+        {
+          name: 'route_content',
+        },
+      );
 
       const routerDecision = await structuredLlm.invoke(
         [...removeThinkingBlocksFromMessages(state.messages), prompt],
@@ -112,7 +115,11 @@ export class ContentRouterAgent {
       console.log(`Focus mode: ${focusMode}`);
 
       // Validate decision based on focus mode restrictions
-      const validatedDecision = this.validateDecision(routerDecision, focusMode, hasFiles);
+      const validatedDecision = this.validateDecision(
+        routerDecision,
+        focusMode,
+        hasFiles,
+      );
 
       // Emit routing result event
       this.emitter.emit('agent_action', {
@@ -163,15 +170,15 @@ export class ContentRouterAgent {
    */
   private async extractFileTopics(fileIds: string[]): Promise<string> {
     try {
-      const topics = fileIds.map(fileId => {
+      const topics = fileIds.map((fileId) => {
         try {
           const filePath = path.join(process.cwd(), 'uploads', fileId);
           const contentPath = filePath + '-extracted.json';
-          
+
           if (fs.existsSync(contentPath)) {
             const content = JSON.parse(fs.readFileSync(contentPath, 'utf8'));
             const filename = content.title || 'Document';
-            
+
             // Use LLM-generated semantic topics if available, otherwise fall back to filename
             const semanticTopics = content.topics;
             return semanticTopics || filename;
@@ -182,7 +189,7 @@ export class ContentRouterAgent {
           return 'Unknown Document';
         }
       });
-      
+
       return topics.join('; ');
     } catch (error) {
       console.warn('Error extracting file topics:', error);
@@ -199,16 +206,17 @@ export class ContentRouterAgent {
     hasFiles: boolean,
   ): RouterDecision {
     // Enforce focus mode restrictions for chat and localResearch modes
-    if ((focusMode === 'chat' || focusMode === 'localResearch') && 
-        decision.decision === 'web_search') {
-      
+    if (
+      (focusMode === 'chat' || focusMode === 'localResearch') &&
+      decision.decision === 'web_search'
+    ) {
       // Override to file_search if files are available, otherwise analyzer
       const fallbackDecision = hasFiles ? 'file_search' : 'analyzer';
-      
+
       console.log(
-        `Overriding web_search decision to ${fallbackDecision} due to focus mode restriction: ${focusMode}`
+        `Overriding web_search decision to ${fallbackDecision} due to focus mode restriction: ${focusMode}`,
       );
-      
+
       return {
         decision: fallbackDecision as 'file_search' | 'analyzer',
         reasoning: `Overridden to ${fallbackDecision} - web search not allowed in ${focusMode} mode. ${decision.reasoning}`,

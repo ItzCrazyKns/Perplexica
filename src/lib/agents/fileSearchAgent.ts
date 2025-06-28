@@ -5,7 +5,10 @@ import { EventEmitter } from 'events';
 import { Document } from 'langchain/document';
 import { AgentState } from './agentState';
 import { Embeddings } from '@langchain/core/embeddings';
-import { processFilesToDocuments, getRankedDocs } from '../utils/fileProcessing';
+import {
+  processFilesToDocuments,
+  getRankedDocs,
+} from '../utils/fileProcessing';
 
 export class FileSearchAgent {
   private llm: BaseChatModel;
@@ -79,12 +82,16 @@ export class FileSearchAgent {
         return new Command({
           goto: 'analyzer',
           update: {
-            messages: [new AIMessage('No searchable content found in attached files.')],
+            messages: [
+              new AIMessage('No searchable content found in attached files.'),
+            ],
           },
         });
       }
 
-      console.log(`Processed ${fileDocuments.length} file documents for search`);
+      console.log(
+        `Processed ${fileDocuments.length} file documents for search`,
+      );
 
       // Emit searching file content event
       this.emitter.emit('agent_action', {
@@ -139,7 +146,11 @@ export class FileSearchAgent {
         return new Command({
           goto: 'analyzer',
           update: {
-            messages: [new AIMessage('No relevant content found in attached files for the current task.')],
+            messages: [
+              new AIMessage(
+                'No relevant content found in attached files for the current task.',
+              ),
+            ],
           },
         });
       }
@@ -157,7 +168,8 @@ export class FileSearchAgent {
             totalTasks: state.tasks?.length || 1,
             relevantSections: rankedDocuments.length,
             searchedDocuments: fileDocuments.length,
-            documentCount: state.relevantDocuments.length + rankedDocuments.length,
+            documentCount:
+              state.relevantDocuments.length + rankedDocuments.length,
           },
         },
       });

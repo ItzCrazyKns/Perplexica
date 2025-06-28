@@ -127,12 +127,13 @@ export class TaskManagerAgent {
       });
 
       const template = PromptTemplate.fromTemplate(taskBreakdownPrompt);
-      
+
       // Create file context information
-      const fileContext = state.fileIds && state.fileIds.length > 0
-        ? `Files attached: ${state.fileIds.length} file(s) are available for analysis. Consider creating tasks that can leverage these attached files when appropriate.`
-        : 'No files attached: Focus on tasks that can be answered through web research or general knowledge.';
-      
+      const fileContext =
+        state.fileIds && state.fileIds.length > 0
+          ? `Files attached: ${state.fileIds.length} file(s) are available for analysis. Consider creating tasks that can leverage these attached files when appropriate.`
+          : 'No files attached: Focus on tasks that can be answered through web research or general knowledge.';
+
       const prompt = await template.format({
         systemInstructions: this.systemInstructions,
         fileContext: fileContext,

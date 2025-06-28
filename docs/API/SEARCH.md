@@ -60,7 +60,6 @@ The API accepts a JSON object in the request body, where you define the focus mo
 - **`optimizationMode`** (string, optional): Specifies the optimization mode to control the balance between performance and quality. Available modes:
 
   - `speed`: Prioritize speed and get the quickest possible answer. Minimum effort retrieving web content. - Only uses SearXNG result previews.
-  - `balanced`: Find the right balance between speed and accuracy. Medium effort retrieving web content. - Uses web scraping technologies to retrieve partial content from full web pages.
   - `agent`: Use an agentic workflow to answer complex multi-part questions. This mode requires a model that is trained for tool use.
 
 - **`query`** (string, required): The search query or question.

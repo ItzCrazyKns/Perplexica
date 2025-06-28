@@ -11,10 +11,8 @@ Perplexica's architecture consists of the following key components:
    - In Agent mode, the application uses an agentic workflow to answer complex multi-part questions
      - The agent can use reasoning steps to provide comprehensive answers to complex questions
      - Agent mode is experimental and may consume lots of tokens and take a long time to produce responses
-   - In Balanced mode, the application retrieves web content using Playwright and Mozilla Readability to extract relevant segments of web content
-     - Because it only uses segments of web content, it can be less accurate than Agent mode
    - In Speed mode, the application only uses the preview content returned by SearXNG
      - This content is provided by the search engines and contains minimal context from the actual web page
-     - This mode is the least accurate and is often prone to hallucination
+     - This mode prioritizes quick responses over accuracy
 
 For a more detailed explanation of how these components work together, see [WORKING.md](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/architecture/WORKING.md).

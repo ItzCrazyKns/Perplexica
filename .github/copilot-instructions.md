@@ -15,6 +15,7 @@ The system works through these main steps:
 ## Architecture Details
 
 ### Technology Stack
+
 - **Frontend**: React, Next.js, Tailwind CSS
 - **Backend**: Node.js
 - **Database**: SQLite with Drizzle ORM
@@ -23,28 +24,30 @@ The system works through these main steps:
 - **Content Processing**: Mozilla Readability, Cheerio, Playwright
 
 ### Database (SQLite + Drizzle ORM)
+
 - Schema: `src/lib/db/schema.ts`
 - Tables: `messages`, `chats`, `systemPrompts`
 - Configuration: `drizzle.config.ts`
 - Local file: `data/db.sqlite`
 
 ### AI/ML Stack
+
 - **LLM Providers**: OpenAI, Anthropic, Groq, Ollama, Gemini, DeepSeek, LM Studio
 - **Embeddings**: Xenova Transformers, similarity search (cosine/dot product)
 - **Agents**: `webSearchAgent`, `analyzerAgent`, `synthesizerAgent`, `taskManagerAgent`
 
 ### External Services
+
 - **Search Engine**: SearXNG integration (`src/lib/searxng.ts`)
 - **Configuration**: TOML-based config file
 
 ### Data Flow
+
 1. User query → Task Manager Agent
 2. Web Search Agent → SearXNG → Content extraction
 3. Analyzer Agent → Content processing + embedding
 4. Synthesizer Agent → LLM response generation
 5. Response with cited sources
-
-
 
 ## Project Structure
 
@@ -117,22 +120,26 @@ When working on this codebase, you might need to:
 ## Code Style & Standards
 
 ### TypeScript Configuration
+
 - Strict mode enabled
 - ES2017 target
 - Path aliases: `@/*` → `src/*`
 - No test files (testing not implemented)
 
 ### Formatting & Linting
+
 - ESLint: Next.js core web vitals rules
 - Prettier: Use `npm run format:write` before commits
 - Import style: Use `@/` prefix for internal imports
 
 ### File Organization
+
 - Components: React functional components with TypeScript
 - API routes: Next.js App Router (`src/app/api/`)
 - Utilities: Grouped by domain (`src/lib/`)
 - Naming: camelCase for functions/variables, PascalCase for components
 
 ### Error Handling
+
 - Use try/catch blocks for async operations
 - Return structured error responses from API routes

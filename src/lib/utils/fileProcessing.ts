@@ -17,7 +17,9 @@ export interface FileData {
  * @param fileIds Array of file IDs to process
  * @returns Array of Document objects with content and embeddings
  */
-export async function processFilesToDocuments(fileIds: string[]): Promise<Document[]> {
+export async function processFilesToDocuments(
+  fileIds: string[],
+): Promise<Document[]> {
   if (fileIds.length === 0) {
     return [];
   }
@@ -91,7 +93,7 @@ export function getRankedDocs(
   }
 
   // Import computeSimilarity utility
-  
+
   const similarity = documents.map((doc, i) => {
     const sim = computeSimilarity(
       queryEmbedding,

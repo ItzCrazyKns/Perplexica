@@ -33,23 +33,22 @@ export class SynthesizerAgent {
     try {
       // Format the prompt using the external template
       const template = PromptTemplate.fromTemplate(synthesizerPrompt);
-      
-      const conversationHistory = removeThinkingBlocksFromMessages(state.messages)
-        .map((msg) => `<${msg.getType()}>${msg.content}</${msg.getType()}>`)
-        .join('\n') || 'No previous conversation context';
+
+      const conversationHistory =
+        removeThinkingBlocksFromMessages(state.messages)
+          .map((msg) => `<${msg.getType()}>${msg.content}</${msg.getType()}>`)
+          .join('\n') || 'No previous conversation context';
 
       const relevantDocuments = state.relevantDocuments
-        .map(
-          (doc, index) => {
-            const isFile = doc.metadata?.url?.toLowerCase().includes('file');
-            return `<${index + 1}>\n
+        .map((doc, index) => {
+          const isFile = doc.metadata?.url?.toLowerCase().includes('file');
+          return `<${index + 1}>\n
     <title>${doc.metadata.title}</title>\n
     <source_type>${isFile ? 'file' : 'web'}</source_type>\n
     ${isFile ? '' : '\n<url>' + doc.metadata.url + '</url>\n'}
     <content>\n${doc.pageContent}\n</content>\n
     </${index + 1}>`;
-          }
-        )
+        })
         .join('\n');
 
       const formattedPrompt = await template.format({
