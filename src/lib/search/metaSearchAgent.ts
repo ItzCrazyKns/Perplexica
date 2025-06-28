@@ -39,6 +39,7 @@ export interface MetaSearchAgentType {
     systemInstructions: string,
     signal: AbortSignal,
     personaInstructions?: string,
+    focusMode?: string,
   ) => Promise<eventEmitter>;
 }
 
@@ -679,9 +680,11 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
     emitter: eventEmitter,
     message: string,
     history: BaseMessage[],
+    fileIds: string[],
     systemInstructions: string,
     personaInstructions: string,
     signal: AbortSignal,
+    focusMode: string,
   ) {
     try {
       const agentSearch = new AgentSearch(
@@ -691,10 +694,11 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
         systemInstructions,
         personaInstructions,
         signal,
+        focusMode,
       );
 
       // Execute the agent workflow
-      await agentSearch.searchAndAnswer(message, history);
+      await agentSearch.searchAndAnswer(message, history, fileIds);
 
       // No need to emit end signals here since synthesizerAgent
       // is now streaming in real-time and emits them
@@ -720,6 +724,7 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
     systemInstructions: string,
     signal: AbortSignal,
     personaInstructions?: string,
+    focusMode?: string,
   ) {
     const emitter = new eventEmitter();
 
@@ -732,9 +737,11 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
         emitter,
         message,
         history,
+        fileIds,
         systemInstructions,
         personaInstructions || '',
         signal,
+        focusMode || 'webSearch',
       );
       return emitter;
     }

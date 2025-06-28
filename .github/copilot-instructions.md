@@ -12,14 +12,39 @@ The system works through these main steps:
 - Results are ranked using embedding-based similarity search
 - LLMs are used to generate a comprehensive response with cited sources
 
-## Key Technologies
+## Architecture Details
 
+### Technology Stack
 - **Frontend**: React, Next.js, Tailwind CSS
 - **Backend**: Node.js
 - **Database**: SQLite with Drizzle ORM
-- **AI/ML**: LangChain for orchestration, various LLM providers including OpenAI, Anthropic, Groq, Ollama (local models)
+- **AI/ML**: LangChain + LangGraph for orchestration
 - **Search**: SearXNG integration
-- **Embedding Models**: For re-ranking search results
+- **Content Processing**: Mozilla Readability, Cheerio, Playwright
+
+### Database (SQLite + Drizzle ORM)
+- Schema: `src/lib/db/schema.ts`
+- Tables: `messages`, `chats`, `systemPrompts`
+- Configuration: `drizzle.config.ts`
+- Local file: `data/db.sqlite`
+
+### AI/ML Stack
+- **LLM Providers**: OpenAI, Anthropic, Groq, Ollama, Gemini, DeepSeek, LM Studio
+- **Embeddings**: Xenova Transformers, similarity search (cosine/dot product)
+- **Agents**: `webSearchAgent`, `analyzerAgent`, `synthesizerAgent`, `taskManagerAgent`
+
+### External Services
+- **Search Engine**: SearXNG integration (`src/lib/searxng.ts`)
+- **Configuration**: TOML-based config file
+
+### Data Flow
+1. User query → Task Manager Agent
+2. Web Search Agent → SearXNG → Content extraction
+3. Analyzer Agent → Content processing + embedding
+4. Synthesizer Agent → LLM response generation
+5. Response with cited sources
+
+
 
 ## Project Structure
 
@@ -47,13 +72,14 @@ Perplexica supports multiple specialized search modes:
 - Wolfram Alpha Search Mode: For calculations and data analysis
 - Reddit Search Mode: For community discussions
 
-## Development Workflow
+## Core Commands
 
-- Use `npm run dev` for local development
-- Format code with `npm run format:write` before committing
-- Database migrations: `npm run db:push`
-- Build for production: `npm run build`
-- Start production server: `npm run start`
+- **Development**: `npm run dev` (uses Turbopack for faster builds)
+- **Build**: `npm run build` (includes automatic DB push)
+- **Production**: `npm run start`
+- **Linting**: `npm run lint` (Next.js ESLint)
+- **Formatting**: `npm run format:write` (Prettier)
+- **Database**: `npm run db:push` (Drizzle migrations)
 
 ## Configuration
 
@@ -77,12 +103,36 @@ When working on this codebase, you might need to:
 - Build new chains in `/src/lib/chains`
 - Implement new LangGraph agents in `/src/lib/agents`
 
-## AI Behavior
+## AI Behavior Guidelines
 
-- Avoid conciliatory language
-- It is not necessary to apologize
-- If you don't know the answer, ask for clarification
-- Do not add additional packages or dependencies unless explicitly requested
-- Only make changes to the code that are relevant to the task at hand
-- Do not create new files to test changes
-- Do not run the application unless asked
+- Focus on factual, technical responses without unnecessary pleasantries
+- Avoid conciliatory language and apologies
+- Ask for clarification when requirements are unclear
+- Do not add dependencies unless explicitly requested
+- Only make changes relevant to the specific task
+- Do not create test files or run the application unless requested
+- Prioritize existing patterns and architectural decisions
+- Use the established component structure and styling patterns
+
+## Code Style & Standards
+
+### TypeScript Configuration
+- Strict mode enabled
+- ES2017 target
+- Path aliases: `@/*` → `src/*`
+- No test files (testing not implemented)
+
+### Formatting & Linting
+- ESLint: Next.js core web vitals rules
+- Prettier: Use `npm run format:write` before commits
+- Import style: Use `@/` prefix for internal imports
+
+### File Organization
+- Components: React functional components with TypeScript
+- API routes: Next.js App Router (`src/app/api/`)
+- Utilities: Grouped by domain (`src/lib/`)
+- Naming: camelCase for functions/variables, PascalCase for components
+
+### Error Handling
+- Use try/catch blocks for async operations
+- Return structured error responses from API routes

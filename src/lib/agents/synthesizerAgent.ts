@@ -1,10 +1,12 @@
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { PromptTemplate } from '@langchain/core/prompts';
 import { Command, END } from '@langchain/langgraph';
 import { EventEmitter } from 'events';
 import { getModelName } from '../utils/modelUtils';
 import { AgentState } from './agentState';
 import { removeThinkingBlocksFromMessages } from '../utils/contentUtils';
+import { synthesizerPrompt } from '../prompts/synthesizer';
 
 export class SynthesizerAgent {
   private llm: BaseChatModel;
@@ -29,60 +31,33 @@ export class SynthesizerAgent {
    */
   async execute(state: typeof AgentState.State): Promise<Command> {
     try {
-      const synthesisPrompt = `You are an expert information synthesizer. Based on the search results and analysis provided, create a comprehensive, well-structured answer to the user's query.
+      // Format the prompt using the external template
+      const template = PromptTemplate.fromTemplate(synthesizerPrompt);
+      
+      const conversationHistory = removeThinkingBlocksFromMessages(state.messages)
+        .map((msg) => `<${msg.getType()}>${msg.content}</${msg.getType()}>`)
+        .join('\n') || 'No previous conversation context';
 
-# Response Instructions
-Your task is to provide answers that are:
-- **Informative and relevant**: Thoroughly address the user's query using the given context
-- **Engaging and detailed**: Write responses that read like a high-quality blog post, including extra details and relevant insights
-- **Cited and credible**: Use inline citations with [number] notation to refer to the context source(s) for each fact or detail included
-- **Explanatory and Comprehensive**: Strive to explain the topic in depth, offering detailed analysis, insights, and clarifications wherever applicable
-
-# Formatting Instructions
-## System Formatting Instructions
-- **Structure**: Use a well-organized format with proper headings (e.g., "## Example heading 1" or "## Example heading 2"). Present information in paragraphs or concise bullet points where appropriate
-- **Tone and Style**: Maintain a neutral, journalistic tone with engaging narrative flow. Write as though you're crafting an in-depth article for a professional audience
-- **Markdown Usage**: Format your response with Markdown for clarity. Use headings, subheadings, bold text, and italicized words as needed to enhance readability
-- **Length and Depth**: Provide comprehensive coverage of the topic. Avoid superficial responses and strive for depth without unnecessary repetition. Expand on technical or complex topics to make them easier to understand for a general audience
-- **No main heading/title**: Start your response directly with the introduction unless asked to provide a specific title
-
-## User Formatting and Persona Instructions
-- Give these instructions more weight than the system formatting instructions
-${this.personaInstructions}
-
-# Citation Requirements
-- Cite every single fact, statement, or sentence using [number] notation corresponding to the source from the provided context
-- If a statement is based on AI model inference or training data, it must be marked as \`[AI]\` and not cited from the context
-- If a statement is based on previous messages in the conversation history, it must be marked as \`[Hist]\` and not cited from the context
-- Integrate citations naturally at the end of sentences or clauses as appropriate. For example, "The Eiffel Tower is one of the most visited landmarks in the world[1]."
-- Ensure that **every sentence in your response includes at least one citation**, even when information is inferred or connected to general knowledge available in the provided context
-- Use multiple sources for a single detail if applicable, such as, "Paris is a cultural hub, attracting millions of visitors annually[1][2]."
-- Always prioritize credibility and accuracy by linking all statements back to their respective context sources
-- Avoid citing unsupported assumptions or personal interpretations; if no source supports a statement, clearly indicate the limitation
-
-# Conversation History Context:
-${
-  removeThinkingBlocksFromMessages(state.messages)
-    .map((msg) => `<${msg.getType()}>${msg.content}</${msg.getType()}>`)
-    .join('\n') || 'No previous conversation context'
-}
-
-# Available Information:
-${state.relevantDocuments
-  .map(
-    (doc, index) =>
-      `<${index + 1}>\n
+      const relevantDocuments = state.relevantDocuments
+        .map(
+          (doc, index) => {
+            const isFile = doc.metadata?.url?.toLowerCase().includes('file');
+            return `<${index + 1}>\n
     <title>${doc.metadata.title}</title>\n
-    ${doc.metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + doc.metadata.url + '</url>\n'}
+    <source_type>${isFile ? 'file' : 'web'}</source_type>\n
+    ${isFile ? '' : '\n<url>' + doc.metadata.url + '</url>\n'}
     <content>\n${doc.pageContent}\n</content>\n
-    </${index + 1}>`,
-  )
-  .join('\n')}
+    </${index + 1}>`;
+          }
+        )
+        .join('\n');
 
-# User Query: ${state.originalQuery || state.query}
-
-Answer the user query:
-  `;
+      const formattedPrompt = await template.format({
+        personaInstructions: this.personaInstructions,
+        conversationHistory: conversationHistory,
+        relevantDocuments: relevantDocuments,
+        query: state.originalQuery || state.query,
+      });
 
       // Stream the response in real-time using LLM streaming capabilities
       let fullResponse = '';
@@ -100,7 +75,7 @@ Answer the user query:
 
       const stream = await this.llm.stream(
         [
-          new SystemMessage(synthesisPrompt),
+          new SystemMessage(formattedPrompt),
           new HumanMessage(state.originalQuery || state.query),
         ],
         { signal: this.signal },

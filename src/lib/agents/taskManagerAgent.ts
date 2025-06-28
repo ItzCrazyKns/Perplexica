@@ -74,7 +74,7 @@ export class TaskManagerAgent {
           });
 
           return new Command({
-            goto: 'web_search',
+            goto: 'content_router',
             update: {
               messages: [
                 new AIMessage(
@@ -127,8 +127,15 @@ export class TaskManagerAgent {
       });
 
       const template = PromptTemplate.fromTemplate(taskBreakdownPrompt);
+      
+      // Create file context information
+      const fileContext = state.fileIds && state.fileIds.length > 0
+        ? `Files attached: ${state.fileIds.length} file(s) are available for analysis. Consider creating tasks that can leverage these attached files when appropriate.`
+        : 'No files attached: Focus on tasks that can be answered through web research or general knowledge.';
+      
       const prompt = await template.format({
         systemInstructions: this.systemInstructions,
+        fileContext: fileContext,
         query: state.query,
       });
 
@@ -182,7 +189,7 @@ export class TaskManagerAgent {
           : `Question broken down into ${taskLines.length} focused tasks for parallel processing`;
 
       return new Command({
-        goto: 'web_search', // Next step would typically be web search for each task
+        goto: 'content_router', // Route to content router to decide between file search, web search, or analysis
         update: {
           messages: [new AIMessage(responseMessage)],
           tasks: taskLines,
@@ -197,7 +204,7 @@ export class TaskManagerAgent {
       );
 
       return new Command({
-        goto: 'web_search', // Fallback to web search with original query
+        goto: 'content_router', // Fallback to content router with original query
         update: {
           messages: [errorMessage],
           tasks: [state.query], // Use original query as single task

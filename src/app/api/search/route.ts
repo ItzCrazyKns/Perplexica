@@ -142,6 +142,7 @@ export const POST = async (req: Request) => {
       promptData.systemInstructions,
       signal,
       promptData.personaInstructions,
+      body.focusMode,
     );
 
     if (!body.stream) {

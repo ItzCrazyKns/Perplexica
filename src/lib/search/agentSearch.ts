@@ -19,6 +19,8 @@ import {
   AnalyzerAgent,
   SynthesizerAgent,
   TaskManagerAgent,
+  FileSearchAgent,
+  ContentRouterAgent,
 } from '../agents';
 
 /**
@@ -33,7 +35,10 @@ export class AgentSearch {
   private webSearchAgent: WebSearchAgent;
   private analyzerAgent: AnalyzerAgent;
   private synthesizerAgent: SynthesizerAgent;
+  private fileSearchAgent: FileSearchAgent;
+  private contentRouterAgent: ContentRouterAgent;
   private emitter: EventEmitter;
+  private focusMode: string;
 
   constructor(
     llm: BaseChatModel,
@@ -42,12 +47,14 @@ export class AgentSearch {
     systemInstructions: string = '',
     personaInstructions: string = '',
     signal: AbortSignal,
+    focusMode: string = 'webSearch',
   ) {
     this.llm = llm;
     this.embeddings = embeddings;
     this.checkpointer = new MemorySaver();
     this.signal = signal;
     this.emitter = emitter;
+    this.focusMode = focusMode;
 
     // Initialize agents
     this.taskManagerAgent = new TaskManagerAgent(
@@ -75,6 +82,19 @@ export class AgentSearch {
       personaInstructions,
       signal,
     );
+    this.fileSearchAgent = new FileSearchAgent(
+      llm,
+      emitter,
+      systemInstructions,
+      signal,
+      embeddings,
+    );
+    this.contentRouterAgent = new ContentRouterAgent(
+      llm,
+      emitter,
+      systemInstructions,
+      signal,
+    );
   }
 
   /**
@@ -86,14 +106,28 @@ export class AgentSearch {
         'task_manager',
         this.taskManagerAgent.execute.bind(this.taskManagerAgent),
         {
-          ends: ['web_search', 'analyzer'],
+          ends: ['content_router', 'analyzer'],
+        },
+      )
+      .addNode(
+        'content_router',
+        this.contentRouterAgent.execute.bind(this.contentRouterAgent),
+        {
+          ends: ['file_search', 'web_search', 'analyzer'],
+        },
+      )
+      .addNode(
+        'file_search',
+        this.fileSearchAgent.execute.bind(this.fileSearchAgent),
+        {
+          ends: ['analyzer'],
         },
       )
       .addNode(
         'web_search',
         this.webSearchAgent.execute.bind(this.webSearchAgent),
         {
-          ends: ['task_manager'],
+          ends: ['analyzer'],
         },
       )
       .addNode(
@@ -118,12 +152,18 @@ export class AgentSearch {
   /**
    * Execute the agent search workflow
    */
-  async searchAndAnswer(query: string, history: BaseMessage[] = []) {
+  async searchAndAnswer(
+    query: string, 
+    history: BaseMessage[] = [], 
+    fileIds: string[] = []
+  ) {
     const workflow = this.createWorkflow();
 
     const initialState = {
       messages: [...history, new HumanMessage(query)],
       query,
+      fileIds,
+      focusMode: this.focusMode,
     };
 
     try {

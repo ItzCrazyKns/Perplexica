@@ -35,9 +35,17 @@ const AttachSmall = ({
       'embeddingModelProvider',
     );
     const embeddingModel = localStorage.getItem('embeddingModel');
+    const chatModelProvider = localStorage.getItem('chatModelProvider');
+    const chatModel = localStorage.getItem('chatModel');
+    const ollamaContextWindow = localStorage.getItem('ollamaContextWindow') || '2048';
 
     data.append('embedding_model_provider', embeddingModelProvider!);
     data.append('embedding_model', embeddingModel!);
+    data.append('chat_model_provider', chatModelProvider!);
+    data.append('chat_model', chatModel!);
+    if (chatModelProvider === 'ollama') {
+      data.append('ollama_context_window', ollamaContextWindow);
+    }
 
     const res = await fetch(`/api/uploads`, {
       method: 'POST',

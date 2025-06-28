@@ -4,7 +4,20 @@ Your task is to analyze the provided context and determine if we have enough inf
 # Instructions
 - Carefully analyze the content of the context provided and the historical context of the conversation to determine if it contains sufficient information to answer the user's query
 - Use the content provided in the \`context\` tag, as well as the historical context of the conversation, to make your determination
+- Consider both file-based documents (from attached files) and web-based documents when analyzing context
 - If the user is asking for a specific number of sources and the context does not provide enough, consider the content insufficient
+
+# Source Type Awareness
+When analyzing the context, be aware that documents may come from different sources:
+- **File documents**: Content extracted from user-attached files (identified by metadata indicating file source)
+- **Web documents**: Content retrieved from web searches (identified by URLs and web source metadata)
+- **Mixed sources**: Both file and web content may be present
+
+Consider the following when evaluating sufficiency:
+- File documents may contain user-specific, proprietary, or contextual information that cannot be found elsewhere
+- Web documents provide current, general, and publicly available information
+- The combination of both sources may be needed for comprehensive answers
+- File content should be prioritized when answering questions specifically about attached documents
 
 # Response Options Decision Tree
 
@@ -14,6 +27,7 @@ Your task is to analyze the provided context and determine if we have enough inf
 - If the user is requesting to use the existing context to answer their query → respond with \`good_content\`
 - If the user is requesting to avoid web searches → respond with \`good_content\`
 - If the user is asking you to be creative, such as writing a story, poem, or creative content → respond with \`good_content\` unless the context is clearly insufficient
+- If file documents contain complete information for file-specific queries → respond with \`good_content\`
 
 ## Step 2: If content is insufficient, determine the type of missing information
 
@@ -50,11 +64,13 @@ Your task is to analyze the provided context and determine if we have enough inf
 - Comparative analysis between options
 - Expert opinions or reviews from credible sources
 - Statistical data or research findings
+- Additional context to supplement file content with current information
 
 **Examples requiring more web search:**
 - "What are the latest features in iPhone 15?" (missing: recent tech specs)
 - "How to install Docker on Ubuntu 22.04?" (missing: specific installation steps)
 - "Compare Tesla Model 3 vs BMW i4" (missing: detailed comparison data)
+- "Find current market trends related to this research paper" (missing: current data to supplement file content)
 
 # Critical Decision Point
 Ask yourself: "Could this missing information reasonably be found through a web search, or does it require the user to provide specific details?"
@@ -62,6 +78,7 @@ Ask yourself: "Could this missing information reasonably be found through a web 
 - If it's personal/subjective or requires user feedback → \`need_user_info\`
 - If it's factual and searchable → \`need_more_info\`
 - If the context is complete or the user wants to use the existing context → \`good_content\`
+- If file content is complete for file-specific questions → \`good_content\`
 
 # System Instructions
 {systemInstructions}
@@ -120,6 +137,15 @@ Your task is to analyze the provided context and user query to determine what ad
 - The question should not require user input, but rather be designed to gather more specific information that can help refine the search
 - Avoid giving the same guidance more than once, and avoid repeating the same question multiple times
 - Avoid asking for general information or vague details; focus on specific, actionable questions that can lead to concrete answers
+- Consider that the context may contain both file-based documents (from attached files) and web-based documents
+- When file content is present, focus on gathering additional information that complements or updates the file content
+
+# Source-Aware Search Strategy
+When formulating search questions, consider:
+- **File content supplementation**: If file documents are present, search for current information, updates, or external perspectives that complement the file content
+- **Validation and verification**: Search for information that can validate or provide alternative viewpoints to file content
+- **Current developments**: Search for recent developments or changes related to topics covered in file documents
+- **Broader context**: Search for additional context that wasn't included in the file documents
 
 # Previous Analysis
 - The LLM analyzed the provided context and user query and determined that additional information is needed to fully answer the user's query, here is the analysis result:

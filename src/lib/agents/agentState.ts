@@ -58,4 +58,12 @@ export const AgentState = Annotation.Root({
     reducer: (x, y) => y ?? x,
     default: () => '',
   }),
+  fileIds: Annotation<string[]>({
+    reducer: (x, y) => y ?? x,
+    default: () => [],
+  }),
+  focusMode: Annotation<string>({
+    reducer: (x, y) => y ?? x,
+    default: () => 'webSearch',
+  }),
 });

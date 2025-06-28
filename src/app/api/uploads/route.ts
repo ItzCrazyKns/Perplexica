@@ -2,11 +2,20 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { getAvailableEmbeddingModelProviders } from '@/lib/providers';
+import { getAvailableEmbeddingModelProviders, getAvailableChatModelProviders } from '@/lib/providers';
+import { 
+  getCustomOpenaiApiKey,
+  getCustomOpenaiApiUrl,
+  getCustomOpenaiModelName,
+} from '@/lib/config';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { Document } from 'langchain/document';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { ChatOpenAI } from '@langchain/openai';
+import { ChatOllama } from '@langchain/ollama';
+import { z } from 'zod';
 
 interface FileRes {
   fileName: string;
@@ -25,6 +34,52 @@ const splitter = new RecursiveCharacterTextSplitter({
   chunkOverlap: 100,
 });
 
+// Define Zod schema for structured topic generation output
+const TopicsSchema = z.object({
+  topics: z
+    .array(z.string())
+    .min(1)
+    .max(3)
+    .describe('Array of 1-3 concise, descriptive topics that capture the main subject matter'),
+});
+
+type TopicsOutput = z.infer<typeof TopicsSchema>;
+
+/**
+ * Generate semantic topics for a document using LLM with structured output
+ */
+async function generateFileTopics(
+  content: string,
+  filename: string,
+  llm: BaseChatModel
+): Promise<string> {
+  try {
+    // Take first 1500 characters for topic generation to avoid token limits
+    const excerpt = content.substring(0, 1500);
+    
+    const prompt = `Analyze the following document excerpt and generate 1-5 concise, descriptive topics that capture the main subject matter. The topics should be useful for determining if this document is relevant to answer questions.
+
+Document filename: ${filename}
+Document excerpt:
+${excerpt}
+
+Generate topics that describe what this document is about, its domain, and key subject areas. Focus on topics that would help determine relevance for search queries.`;
+
+    // Use structured output for reliable topic extraction
+    const structuredLlm = llm.withStructuredOutput(TopicsSchema, {
+      name: 'generate_topics',
+    });
+
+    const result = await structuredLlm.invoke(prompt);
+    console.log('Generated topics:', result.topics);
+    // Filename is included for context
+    return filename + ', ' + result.topics.join(', ');
+  } catch (error) {
+    console.warn('Error generating topics with LLM:', error);
+    return `Document: ${filename}`;
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
@@ -32,6 +87,9 @@ export async function POST(req: Request) {
     const files = formData.getAll('files') as File[];
     const embedding_model = formData.get('embedding_model');
     const embedding_model_provider = formData.get('embedding_model_provider');
+    const chat_model = formData.get('chat_model');
+    const chat_model_provider = formData.get('chat_model_provider');
+    const ollama_context_window = formData.get('ollama_context_window');
 
     if (!embedding_model || !embedding_model_provider) {
       return NextResponse.json(
@@ -40,19 +98,63 @@ export async function POST(req: Request) {
       );
     }
 
-    const embeddingModels = await getAvailableEmbeddingModelProviders();
-    const provider =
-      embedding_model_provider ?? Object.keys(embeddingModels)[0];
-    const embeddingModel =
-      embedding_model ?? Object.keys(embeddingModels[provider as string])[0];
+    // Get available providers
+    const [chatModelProviders, embeddingModelProviders] = await Promise.all([
+      getAvailableChatModelProviders(),
+      getAvailableEmbeddingModelProviders(),
+    ]);
 
-    let embeddingsModel =
-      embeddingModels[provider as string]?.[embeddingModel as string]?.model;
-    if (!embeddingsModel) {
+    // Setup embedding model
+    const embeddingProvider =
+      embeddingModelProviders[
+        embedding_model_provider as string ?? Object.keys(embeddingModelProviders)[0]
+      ];
+    const embeddingModelConfig =
+      embeddingProvider[
+        embedding_model as string ?? Object.keys(embeddingProvider)[0]
+      ];
+
+    if (!embeddingModelConfig) {
       return NextResponse.json(
         { message: 'Invalid embedding model selected' },
         { status: 400 },
       );
+    }
+
+    let embeddingsModel = embeddingModelConfig.model;
+
+    // Setup chat model for topic generation (similar to chat route)
+    const chatModelProvider =
+      chatModelProviders[
+        chat_model_provider as string ?? Object.keys(chatModelProviders)[0]
+      ];
+    const chatModelConfig =
+      chatModelProvider[
+        chat_model as string ?? Object.keys(chatModelProvider)[0]
+      ];
+
+    let llm: BaseChatModel;
+
+    // Handle chat model creation like in chat route
+    if (chat_model_provider === 'custom_openai') {
+      llm = new ChatOpenAI({
+        openAIApiKey: getCustomOpenaiApiKey(),
+        modelName: getCustomOpenaiModelName(),
+        temperature: 0.1,
+        configuration: {
+          baseURL: getCustomOpenaiApiUrl(),
+        },
+      }) as unknown as BaseChatModel;
+    } else if (chatModelProvider && chatModelConfig) {
+      llm = chatModelConfig.model;
+
+      // Set context window size for Ollama models
+      if (llm instanceof ChatOllama && chat_model_provider === 'ollama') {
+        // Use provided context window or default to 2048
+        const contextWindow = ollama_context_window ? 
+          parseInt(ollama_context_window as string, 10) : 2048;
+        llm.numCtx = contextWindow;
+      }
     }
 
     const processedFiles: FileRes[] = [];
@@ -89,11 +191,16 @@ export async function POST(req: Request) {
 
         const splitted = await splitter.splitDocuments(docs);
 
+        // Generate semantic topics using LLM
+        const fullContent = docs.map(doc => doc.pageContent).join('\n');
+        const semanticTopics = await generateFileTopics(fullContent, file.name, llm);
+
         const extractedDataPath = filePath.replace(/\.\w+$/, '-extracted.json');
         fs.writeFileSync(
           extractedDataPath,
           JSON.stringify({
             title: file.name,
+            topics: semanticTopics,
             contents: splitted.map((doc) => doc.pageContent),
           }),
         );

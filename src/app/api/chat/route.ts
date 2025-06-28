@@ -440,6 +440,7 @@ export const POST = async (req: Request) => {
       systemInstructionsContent,
       abortController.signal,
       personaInstructionsContent,
+      body.focusMode,
     );
 
     handleEmitterEvents(
