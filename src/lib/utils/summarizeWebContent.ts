@@ -27,6 +27,73 @@ export const summarizeWebContent = async (
         ? `${systemInstructions}\n\n`
         : '';
 
+      // Determine content length for short-circuit logic
+      const contentToAnalyze = content.pageContent || content.metadata.html || '';
+      const isShortContent = contentToAnalyze.length < 4000;
+
+      if (isShortContent) {
+        // For short content, only check relevance without summarizing
+        console.log(
+          `Short content detected (${contentToAnalyze.length} chars) for URL: ${url}, checking relevance only`,
+        );
+
+        const relevancePrompt = `${systemPrompt}You are a content relevance checker. Your task is to determine if the given content is relevant to the user's query.
+
+# Instructions
+- Analyze the content to determine if it contains information relevant to the user's query
+- You do not need to provide a full answer to the query in order to be relevant, partial answers are acceptable
+- Respond with valid JSON in the following format:
+{
+  "relevant": true/false,
+  "reason": "brief explanation of why content is or isn't relevant"
+}
+
+Today's date is ${formatDateForLLM(new Date())}
+
+Here is the query you need to answer: ${query}
+
+Here is the content to analyze:
+${contentToAnalyze}`;
+
+        try {
+          const result = await llm.invoke(relevancePrompt, { signal });
+          const responseText = removeThinkingBlocks(result.content as string).trim();
+          
+          try {
+            const parsedResponse = JSON.parse(responseText);
+            
+            if (parsedResponse.relevant === true) {
+              console.log(`Short content for URL "${url}" is relevant: ${parsedResponse.reason}`);
+              return {
+                document: new Document({
+                  pageContent: content.pageContent,
+                  metadata: {
+                    ...content.metadata,
+                    url: url,
+                    processingType: 'short-content',
+                  },
+                }),
+                notRelevantReason: undefined,
+              };
+            } else {
+              console.log(`Short content for URL "${url}" is not relevant: ${parsedResponse.reason}`);
+              return {
+                document: null,
+                notRelevantReason: parsedResponse.reason || 'Content not relevant to query',
+              };
+            }
+          } catch (parseError) {
+            console.error(`Error parsing JSON response for URL ${url}:`, parseError);
+            console.error(`Raw response:`, responseText);
+            // Fall through to full summarization as fallback
+          }
+        } catch (error) {
+          console.error(`Error checking relevance for short content from URL ${url}:`, error);
+          // Fall through to full summarization as fallback
+        }
+      }
+
+      // For longer content or if relevance check failed, use full summarization
       let summary = null;
       for (let i = 0; i < 2; i++) {
         try {
