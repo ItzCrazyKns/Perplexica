@@ -28,6 +28,7 @@ Consider the following when evaluating sufficiency:
 - If the user is requesting to avoid web searches → respond with \`good_content\`
 - If the user is asking you to be creative, such as writing a story, poem, or creative content → respond with \`good_content\` unless the context is clearly insufficient
 - If file documents contain complete information for file-specific queries → respond with \`good_content\`
+- If the user is requesting specific web content and there is a source that corresponds to that request in the context, it can be considered sufficient even if the content is not exhaustive or looks like errors → respond with \`good_content\`
 
 ## Step 2: If content is insufficient, determine the type of missing information
 

@@ -21,6 +21,7 @@ import {
   TaskManagerAgent,
   FileSearchAgent,
   ContentRouterAgent,
+  URLSummarizationAgent,
 } from '../agents';
 
 /**
@@ -37,6 +38,7 @@ export class AgentSearch {
   private synthesizerAgent: SynthesizerAgent;
   private fileSearchAgent: FileSearchAgent;
   private contentRouterAgent: ContentRouterAgent;
+  private urlSummarizationAgent: URLSummarizationAgent;
   private emitter: EventEmitter;
   private focusMode: string;
 
@@ -95,6 +97,12 @@ export class AgentSearch {
       systemInstructions,
       signal,
     );
+    this.urlSummarizationAgent = new URLSummarizationAgent(
+      llm,
+      emitter,
+      systemInstructions,
+      signal,
+    );
   }
 
   /**
@@ -102,6 +110,13 @@ export class AgentSearch {
    */
   private createWorkflow() {
     const workflow = new StateGraph(AgentState)
+      .addNode(
+        'url_summarization',
+        this.urlSummarizationAgent.execute.bind(this.urlSummarizationAgent),
+        {
+          ends: ['task_manager', 'analyzer'],
+        },
+      )
       .addNode(
         'task_manager',
         this.taskManagerAgent.execute.bind(this.taskManagerAgent),
@@ -134,7 +149,7 @@ export class AgentSearch {
         'analyzer',
         this.analyzerAgent.execute.bind(this.analyzerAgent),
         {
-          ends: ['task_manager', 'synthesizer'],
+          ends: ['url_summarization', 'task_manager', 'synthesizer'],
         },
       )
       .addNode(

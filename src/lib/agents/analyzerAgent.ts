@@ -80,6 +80,38 @@ export class AnalyzerAgent {
         state.originalQuery = state.query;
       }
 
+      // Check for URLs first - if found and not yet processed, route to URL summarization
+      if (!state.urlsToSummarize || state.urlsToSummarize.length === 0) {
+        const urlRegex = /https?:\/\/[^\s]+/gi;
+        const urls = [...new Set(state.query.match(urlRegex) || [])];
+        
+        if (urls.length > 0) {
+          console.log('URLs detected in initial query, routing to URL summarization');
+          console.log(`URLs found: ${urls.join(', ')}`);
+          
+          // Emit URL detection event
+          this.emitter.emit('agent_action', {
+            type: 'agent_action',
+            data: {
+              action: 'URLS_DETECTED_ROUTING',
+              message: `Detected ${urls.length} URL(s) in query - processing content first`,
+              details: {
+                query: state.query,
+                urls: urls,
+              },
+            },
+          });
+
+          return new Command({
+            goto: 'url_summarization',
+            update: {
+              urlsToSummarize: urls,
+              summarizationIntent: `Process the content from the provided URLs to help answer: ${state.query}`,
+            },
+          });
+        }
+      }
+
       // Skip full analysis if this is the first run.
       //if (state.fullAnalysisAttempts > 0) {
       // Emit initial analysis event
@@ -108,7 +140,7 @@ export class AnalyzerAgent {
         context: state.relevantDocuments
           .map(
             (doc, index) =>
-              `<source${index + 1}>${doc?.metadata?.title ? `<title>${doc?.metadata?.title}</title>` : ''}<content>${doc.pageContent}</content></source${index + 1}>`,
+              `<source${index + 1}>${doc?.metadata?.title ? `<title>${doc?.metadata?.title}</title>` : ''}${doc?.metadata.url ? `<url>${doc?.metadata?.url}</url>` : ''}<content>${doc.pageContent}</content></source${index + 1}>`,
           )
           .join('\n\n'),
         date: formatDateForLLM(new Date()),

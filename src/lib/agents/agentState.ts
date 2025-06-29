@@ -66,4 +66,12 @@ export const AgentState = Annotation.Root({
     reducer: (x, y) => y ?? x,
     default: () => 'webSearch',
   }),
+  urlsToSummarize: Annotation<string[]>({
+    reducer: (x, y) => y ?? x,
+    default: () => [],
+  }),
+  summarizationIntent: Annotation<string>({
+    reducer: (x, y) => y ?? x,
+    default: () => '',
+  }),
 });
