@@ -27,6 +27,7 @@ interface SettingsType {
   customOpenaiApiKey: string;
   customOpenaiApiUrl: string;
   customOpenaiModelName: string;
+  historyRetentionDays: number;
 }
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -417,11 +418,34 @@ const Page = () => {
         config && (
           <div className="flex flex-col space-y-6 pb-28 lg:pb-8">
             <SettingsSection title="Appearance">
-              <div className="flex flex-col space-y-1">
-                <p className="text-black/70 dark:text-white/70 text-sm">
-                  Theme
-                </p>
-                <ThemeSwitcher />
+              <div className="flex flex-col space-y-4">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Theme
+                  </p>
+                  <ThemeSwitcher />
+                </div>
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Layout Mode
+                  </p>
+                  <p className="text-xs text-black/60 dark:text-white/60">
+                    Choose how to display answer, sources, and related content (stored locally in browser)
+                  </p>
+                  <Select
+                    value={localStorage.getItem('layoutMode') || 'default'}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      localStorage.setItem('layoutMode', value);
+                      // Force a re-render to update the UI
+                      window.location.reload();
+                    }}
+                    options={[
+                      { value: 'default', label: 'Default (Separate Sections)' },
+                      { value: 'tabs', label: 'Tabs (Answer, Sources, Related)' },
+                    ]}
+                  />
+                </div>
               </div>
             </SettingsSection>
 
@@ -509,6 +533,33 @@ const Page = () => {
                       )}
                     />
                   </Switch>
+                </div>
+              </div>
+            </SettingsSection>
+
+            <SettingsSection title="History Settings">
+              <div className="flex flex-col space-y-4">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    History Retention (Days)
+                  </p>
+                  <p className="text-xs text-black/60 dark:text-white/60">
+                    Number of days to keep chat history when incognito mode is off (0 = keep forever)
+                  </p>
+                  <Input
+                    type="number"
+                    placeholder="30"
+                    min="0"
+                    value={config.historyRetentionDays?.toString() || '30'}
+                    isSaving={savingStates['historyRetentionDays']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        historyRetentionDays: parseInt(e.target.value) || 0,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('historyRetentionDays', parseInt(value) || 0)}
+                  />
                 </div>
               </div>
             </SettingsSection>

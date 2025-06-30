@@ -20,24 +20,6 @@ const ThemeSwitcher = ({ className }: { className?: string }) => {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (isTheme('system')) {
-      const preferDarkScheme = window.matchMedia(
-        '(prefers-color-scheme: dark)',
-      );
-
-      const detectThemeChange = (event: MediaQueryListEvent) => {
-        const theme: Theme = event.matches ? 'dark' : 'light';
-        setTheme(theme);
-      };
-
-      preferDarkScheme.addEventListener('change', detectThemeChange);
-
-      return () => {
-        preferDarkScheme.removeEventListener('change', detectThemeChange);
-      };
-    }
-  }, [isTheme, setTheme, theme]);
 
   // Avoid Hydration Mismatch
   if (!mounted) {
@@ -52,6 +34,7 @@ const ThemeSwitcher = ({ className }: { className?: string }) => {
       options={[
         { value: 'light', label: 'Light' },
         { value: 'dark', label: 'Dark' },
+        { value: 'system', label: 'System' },
       ]}
     />
   );

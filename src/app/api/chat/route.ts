@@ -21,6 +21,7 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
+import { cleanupOldHistory } from '@/lib/utils/historyCleanup';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -50,6 +51,7 @@ type Body = {
   chatModel: ChatModel;
   embeddingModel: EmbeddingModel;
   systemInstructions: string;
+  isIncognito?: boolean;
 };
 
 const handleEmitterEvents = async (
@@ -58,6 +60,7 @@ const handleEmitterEvents = async (
   encoder: TextEncoder,
   aiMessageId: string,
   chatId: string,
+  isIncognito: boolean = false,
 ) => {
   let recievedMessage = '';
   let sources: any[] = [];
@@ -101,18 +104,21 @@ const handleEmitterEvents = async (
     );
     writer.close();
 
-    db.insert(messagesSchema)
-      .values({
-        content: recievedMessage,
-        chatId: chatId,
-        messageId: aiMessageId,
-        role: 'assistant',
-        metadata: JSON.stringify({
-          createdAt: new Date(),
-          ...(sources && sources.length > 0 && { sources }),
-        }),
-      })
-      .execute();
+    // 在無痕模式下不保存助手回應到數據庫
+    if (!isIncognito) {
+      db.insert(messagesSchema)
+        .values({
+          content: recievedMessage,
+          chatId: chatId,
+          messageId: aiMessageId,
+          role: 'assistant',
+          metadata: JSON.stringify({
+            createdAt: new Date(),
+            ...(sources && sources.length > 0 && { sources }),
+          }),
+        })
+        .execute();
+    }
   });
   stream.on('error', (data) => {
     const parsedData = JSON.parse(data);
@@ -149,6 +155,11 @@ const handleHistorySave = async (
         files: files.map(getFileDetails),
       })
       .execute();
+    
+    // Trigger history cleanup for new chats (run in background)
+    cleanupOldHistory().catch(err => {
+      console.error('Background history cleanup failed:', err);
+    });
   }
 
   const messageExists = await db.query.messages.findFirst({
@@ -286,8 +297,12 @@ export const POST = async (req: Request) => {
     const writer = responseStream.writable.getWriter();
     const encoder = new TextEncoder();
 
-    handleEmitterEvents(stream, writer, encoder, aiMessageId, message.chatId);
-    handleHistorySave(message, humanMessageId, body.focusMode, body.files);
+    handleEmitterEvents(stream, writer, encoder, aiMessageId, message.chatId, body.isIncognito);
+    
+    // 在無痕模式下不保存聊天記錄
+    if (!body.isIncognito) {
+      handleHistorySave(message, humanMessageId, body.focusMode, body.files);
+    }
 
     return new Response(responseStream.readable, {
       headers: {
