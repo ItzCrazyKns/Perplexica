@@ -29,6 +29,7 @@ type Message = {
   messageId: string;
   chatId: string;
   content: string;
+  userSessionId: string;
 };
 
 type ChatModel = {
@@ -138,6 +139,7 @@ const handleHistorySave = async (
     where: eq(chats.id, message.chatId),
   });
 
+  let currentDate = new Date();
   if (!chat) {
     await db
       .insert(chats)
@@ -147,6 +149,8 @@ const handleHistorySave = async (
         createdAt: new Date().toString(),
         focusMode: focusMode,
         files: files.map(getFileDetails),
+        userSessionId: message.userSessionId,
+        timestamp: currentDate.toISOString(),
       })
       .execute();
   }
