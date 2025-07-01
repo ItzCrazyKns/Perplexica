@@ -83,9 +83,8 @@ Snippet: ${content.snippet}
 
 # Instructions
 - Analyze the provided search result previews (titles + snippets), and chat history context to determine if they collectively contain enough information to provide a complete and accurate answer to the Task Query
-- You must make a binary decision: either the preview content is sufficient OR it is not sufficient
-- If the preview content can provide a complete answer to the Task Query, set isSufficient to true
-- If the preview content lacks important details, requires deeper analysis, or cannot fully answer the Task Query, set isSufficient to false and provide a specific reason
+- If the preview content can provide a complete answer to the Task Query, consider it sufficient
+- If the preview content lacks important details, requires deeper analysis, or cannot fully answer the Task Query, consider it insufficient
 - Be specific in your reasoning when the content is not sufficient
 - The original query is provided for additional context, only use it for clarification of overall expectations and intent. You do **not** need to answer the original query directly or completely
 
@@ -103,11 +102,6 @@ ${taskQuery}
 
 # Search Result Previews to Analyze:
 ${formattedPreviewContent}
-
-# Response Format
-You must return a JSON object with:
-- isSufficient: boolean indicating whether preview content is sufficient
-- reason: string explaining why full content analysis is required (only if isSufficient is false)
 `,
       { signal },
     );
