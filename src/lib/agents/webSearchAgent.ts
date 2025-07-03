@@ -183,23 +183,26 @@ export class WebSearchAgent {
 
       let previewContents: PreviewContent[] = [];
       // Always take the top 3 results for preview content
-      previewContents.push(...filteredResults.slice(0, 3)
-        .map((result) => ({
+      previewContents.push(
+        ...filteredResults.slice(0, 3).map((result) => ({
           title: result.title || 'Untitled',
           snippet: result.content || '',
           url: result.url,
-        }))
+        })),
       );
 
       // Sort by relevance score and take top 12 results for a total of 15
-      previewContents.push(...resultsWithSimilarity.slice(3)
-        .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, 12)
-        .map(({ result }) => ({
-          title: result.title || 'Untitled',
-          snippet: result.content || '',
-          url: result.url,
-        })));
+      previewContents.push(
+        ...resultsWithSimilarity
+          .slice(3)
+          .sort((a, b) => b.similarity - a.similarity)
+          .slice(0, 12)
+          .map(({ result }) => ({
+            title: result.title || 'Untitled',
+            snippet: result.content || '',
+            url: result.url,
+          })),
+      );
 
       console.log(
         `Extracted preview content from ${previewContents.length} search results for analysis`,

@@ -25,9 +25,11 @@ interface ProviderModelMap {
 const ModelSelector = ({
   selectedModel,
   setSelectedModel,
+  truncateModelName = true,
 }: {
   selectedModel: { provider: string; model: string } | null;
   setSelectedModel: (model: { provider: string; model: string }) => void;
+  truncateModelName?: boolean;
 }) => {
   const [providerModels, setProviderModels] = useState<ProviderModelMap>({});
   const [providersList, setProvidersList] = useState<string[]>([]);
@@ -114,7 +116,13 @@ const ModelSelector = ({
               setSelectedModelDisplay(currentModel.displayName);
               setSelectedProviderDisplay(provider.displayName);
             }
+          } else {
+            setSelectedModelDisplay('');
+            setSelectedProviderDisplay('');
           }
+        } else {
+          setSelectedModelDisplay('');
+          setSelectedProviderDisplay('');
         }
 
         setLoading(false);
@@ -125,7 +133,7 @@ const ModelSelector = ({
     };
 
     fetchModels();
-  }, [selectedModel, setSelectedModel]);
+  }, [selectedModel]);
 
   const toggleProviderExpanded = (provider: string) => {
     setExpandedProviders((prev) => ({
@@ -144,10 +152,6 @@ const ModelSelector = ({
     setSelectedProviderDisplay(
       providerModels[option.provider]?.displayName || option.provider,
     );
-
-    // Save to localStorage for persistence
-    localStorage.setItem('chatModelProvider', option.provider);
-    localStorage.setItem('chatModel', option.model);
   };
 
   const getDisplayText = () => {
@@ -162,9 +166,19 @@ const ModelSelector = ({
       {({ open }) => (
         <>
           <div className="relative">
-            <PopoverButton className="group flex items-center justify-center text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white">
+            <PopoverButton
+              type="button"
+              className="p-2 group flex text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
+            >
               <Cpu size={18} />
-              <span className="mx-2 text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap max-w-44 hidden lg:block">
+              <span
+                className={cn(
+                  'mx-2 text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap hidden lg:block',
+                  {
+                    'max-w-44': truncateModelName,
+                  },
+                )}
+              >
                 {getDisplayText()}
               </span>
               <ChevronDown

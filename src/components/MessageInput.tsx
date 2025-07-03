@@ -164,7 +164,14 @@ const MessageInput = ({
           <div className="flex flex-row items-center space-x-2">
             <ModelSelector
               selectedModel={selectedModel}
-              setSelectedModel={setSelectedModel}
+              setSelectedModel={(selectedModel) => {
+                setSelectedModel(selectedModel);
+                localStorage.setItem(
+                  'chatModelProvider',
+                  selectedModel.provider,
+                );
+                localStorage.setItem('chatModel', selectedModel.model);
+              }}
             />
             <SystemPromptSelector
               selectedPromptIds={systemPromptIds}
@@ -172,7 +179,10 @@ const MessageInput = ({
             />
             <Optimization
               optimizationMode={optimizationMode}
-              setOptimizationMode={setOptimizationMode}
+              setOptimizationMode={(optimizationMode) => {
+                setOptimizationMode(optimizationMode);
+                localStorage.setItem('optimizationMode', optimizationMode);
+              }}
             />
             {loading ? (
               <button

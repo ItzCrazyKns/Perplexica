@@ -7,7 +7,7 @@ import Chat from './Chat';
 import EmptyChat from './EmptyChat';
 import crypto from 'crypto';
 import { toast } from 'sonner';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { getSuggestions } from '@/lib/actions';
 import { Settings } from 'lucide-react';
 import Link from 'next/link';
@@ -250,6 +250,7 @@ const loadMessages = async (
 
 const ChatWindow = ({ id }: { id?: string }) => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialMessage = searchParams.get('q');
 
   const [chatId, setChatId] = useState<string | undefined>(id);
@@ -585,6 +586,9 @@ const ChatWindow = ({ id }: { id?: string }) => {
       currentChatModelProvider || chatModelProvider.provider;
     const modelName = currentChatModel || chatModelProvider.name;
 
+    const currentOptimizationMode =
+      localStorage.getItem('optimizationMode') || optimizationMode;
+
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {
@@ -600,7 +604,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         chatId: chatId!,
         files: fileIds,
         focusMode: focusMode,
-        optimizationMode: optimizationMode,
+        optimizationMode: currentOptimizationMode,
         history: messageChatHistory,
         chatModel: {
           name: modelName,
@@ -674,7 +678,42 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   useEffect(() => {
     if (isReady && initialMessage && isConfigReady) {
+      // Check if we have an initial query and apply saved search settings
+      const searchOptimizationMode = localStorage.getItem(
+        'searchOptimizationMode',
+      );
+      const searchChatModelProvider = localStorage.getItem(
+        'searchChatModelProvider',
+      );
+      const searchChatModel = localStorage.getItem('searchChatModel');
+
+      // Apply saved optimization mode if valid
+      if (
+        searchOptimizationMode &&
+        (searchOptimizationMode === 'speed' ||
+          searchOptimizationMode === 'agent')
+      ) {
+        setOptimizationMode(searchOptimizationMode);
+        localStorage.setItem('optimizationMode', searchOptimizationMode);
+      }
+
+      // Apply saved chat model if valid
+      if (searchChatModelProvider && searchChatModel) {
+        setChatModelProvider({
+          name: searchChatModel,
+          provider: searchChatModelProvider,
+        });
+        // Also update localStorage to ensure consistency
+        localStorage.setItem('chatModelProvider', searchChatModelProvider);
+        localStorage.setItem('chatModel', searchChatModel);
+      }
+
       sendMessage(initialMessage);
+
+      // Remove the query parameter from the URL to prevent re-execution on page reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete('q');
+      router.replace(url.pathname + url.search, { scroll: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfigReady, isReady, initialMessage]);

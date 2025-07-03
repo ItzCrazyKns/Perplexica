@@ -145,9 +145,9 @@ export class TaskManagerAgent {
         name: 'break_down_tasks',
       });
 
-      const taskBreakdownResult = await structuredLlm.invoke([prompt], {
+      const taskBreakdownResult = (await structuredLlm.invoke([prompt], {
         signal: this.signal,
-      });
+      })) as TaskBreakdown;
 
       console.log('Task breakdown response:', taskBreakdownResult);
 

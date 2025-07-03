@@ -84,11 +84,13 @@ export class AnalyzerAgent {
       if (!state.urlsToSummarize || state.urlsToSummarize.length === 0) {
         const urlRegex = /https?:\/\/[^\s]+/gi;
         const urls = [...new Set(state.query.match(urlRegex) || [])];
-        
+
         if (urls.length > 0) {
-          console.log('URLs detected in initial query, routing to URL summarization');
+          console.log(
+            'URLs detected in initial query, routing to URL summarization',
+          );
           console.log(`URLs found: ${urls.join(', ')}`);
-          
+
           // Emit URL detection event
           this.emitter.emit('agent_action', {
             type: 'agent_action',

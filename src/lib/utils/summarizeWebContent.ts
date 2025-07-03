@@ -18,7 +18,7 @@ const RelevanceCheckSchema = z.object({
     .describe('Whether the content is relevant to the user query'),
   reason: z
     .string()
-    .describe('Brief explanation of why content is or isn\'t relevant'),
+    .describe("Brief explanation of why content is or isn't relevant"),
 });
 
 export const summarizeWebContent = async (
@@ -39,7 +39,8 @@ export const summarizeWebContent = async (
         : '';
 
       // Determine content length for short-circuit logic
-      const contentToAnalyze = content.pageContent || content.metadata.html || '';
+      const contentToAnalyze =
+        content.pageContent || content.metadata.html || '';
       const isShortContent = contentToAnalyze.length < 4000;
 
       if (isShortContent) {
@@ -66,14 +67,16 @@ Here is the query you need to answer: ${query}
 
 Here is the content to analyze:
 ${contentToAnalyze}`,
-            { signal }
+            { signal },
           );
 
           if (!relevanceResult) {
             console.error(`No relevance result returned for URL ${url}`);
             // Fall through to full summarization as fallback
           } else if (relevanceResult.relevant) {
-            console.log(`Short content for URL "${url}" is relevant: ${relevanceResult.reason}`);
+            console.log(
+              `Short content for URL "${url}" is relevant: ${relevanceResult.reason}`,
+            );
             return {
               document: new Document({
                 pageContent: content.pageContent,
@@ -86,14 +89,20 @@ ${contentToAnalyze}`,
               notRelevantReason: undefined,
             };
           } else {
-            console.log(`Short content for URL "${url}" is not relevant: ${relevanceResult.reason}`);
+            console.log(
+              `Short content for URL "${url}" is not relevant: ${relevanceResult.reason}`,
+            );
             return {
               document: null,
-              notRelevantReason: relevanceResult.reason || 'Content not relevant to query',
+              notRelevantReason:
+                relevanceResult.reason || 'Content not relevant to query',
             };
           }
         } catch (error) {
-          console.error(`Error checking relevance for short content from URL ${url}:`, error);
+          console.error(
+            `Error checking relevance for short content from URL ${url}:`,
+            error,
+          );
           // Fall through to full summarization as fallback
         }
       }

@@ -35,14 +35,22 @@ export class URLSummarizationAgent {
 
       // Use pre-analyzed URLs from ContentRouterAgent
       const urlsToProcess = state.urlsToSummarize || [];
-      const summarizationIntent = state.summarizationIntent || 'process content to help answer the user query';
+      const summarizationIntent =
+        state.summarizationIntent ||
+        'process content to help answer the user query';
 
       if (urlsToProcess.length === 0) {
-        console.log('No URLs found for processing, routing back to content router');
+        console.log(
+          'No URLs found for processing, routing back to content router',
+        );
         return new Command({
           goto: 'content_router',
           update: {
-            messages: [new AIMessage('No URLs found for processing, routing to content router')],
+            messages: [
+              new AIMessage(
+                'No URLs found for processing, routing to content router',
+              ),
+            ],
           },
         });
       }
@@ -93,7 +101,7 @@ export class URLSummarizationAgent {
 
           if (!webContent || !webContent.pageContent) {
             console.warn(`No content retrieved from URL: ${url}`);
-            
+
             // Emit URL processing failure event
             this.emitter.emit('agent_action', {
               type: 'agent_action',
@@ -118,9 +126,11 @@ export class URLSummarizationAgent {
           if (contentLength < 4000) {
             finalContent = webContent.pageContent;
             processingType = 'url-direct-content';
-            
-            console.log(`Content is short (${contentLength} chars), using directly without summarization`);
-            
+
+            console.log(
+              `Content is short (${contentLength} chars), using directly without summarization`,
+            );
+
             // Emit direct content usage event
             this.emitter.emit('agent_action', {
               type: 'agent_action',
@@ -138,8 +148,10 @@ export class URLSummarizationAgent {
             });
           } else {
             // Content is long, summarize using LLM
-            console.log(`Content is long (${contentLength} chars), generating summary`);
-            
+            console.log(
+              `Content is long (${contentLength} chars), generating summary`,
+            );
+
             const systemPrompt = this.systemInstructions
               ? `${this.systemInstructions}\n\n`
               : '';
@@ -215,7 +227,7 @@ Provide a comprehensive summary of the above web page content, focusing on infor
           }
         } catch (error) {
           console.error(`Error processing URL ${url}:`, error);
-          
+
           // Emit URL processing error event
           this.emitter.emit('agent_action', {
             type: 'agent_action',

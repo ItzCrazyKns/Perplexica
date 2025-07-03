@@ -222,6 +222,9 @@ This fork adds several enhancements to the original Perplexica project:
 - ✅ Enhanced Balance mode that uses a headless web browser to retrieve web content and use relevant excerpts to enhance responses
 - ✅ Adds Agent mode that uses the full content of web pages to answer queries and an agentic flow to intelligently answer complex queries with accuracy
   - See the [README.md](docs/architecture/README.md) in the docs architecture directory for more info
+- ✅ Query-based settings override for browser search engine integration
+  - Automatically applies user's saved optimization mode and AI model preferences when accessing via URL with `q` parameter
+  - Enables seamless browser search bar integration with personalized settings
 
 ### AI Functionality
 

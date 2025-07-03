@@ -10,6 +10,7 @@ import {
   PlusCircle,
   Save,
   X,
+  RotateCcw,
 } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -18,6 +19,8 @@ import ThemeSwitcher from '@/components/theme/Switcher';
 import { ImagesIcon, VideoIcon, Layers3 } from 'lucide-react';
 import Link from 'next/link';
 import { PROVIDER_METADATA } from '@/lib/providers';
+import Optimization from '@/components/MessageInputActions/Optimization';
+import ModelSelector from '@/components/MessageInputActions/ModelSelector';
 
 interface SettingsType {
   chatModelProviders: {
@@ -242,6 +245,13 @@ export default function SettingsPage() {
   );
   const [isAddingNewPrompt, setIsAddingNewPrompt] = useState(false);
 
+  // Default Search Settings state variables
+  const [searchOptimizationMode, setSearchOptimizationMode] =
+    useState<string>('');
+  const [searchChatModelProvider, setSearchChatModelProvider] =
+    useState<string>('');
+  const [searchChatModel, setSearchChatModel] = useState<string>('');
+
   useEffect(() => {
     const fetchConfig = async () => {
       setIsLoading(true);
@@ -310,6 +320,29 @@ export default function SettingsPage() {
     };
 
     fetchConfig();
+
+    // Load search settings from localStorage
+    const loadSearchSettings = () => {
+      const storedSearchOptimizationMode = localStorage.getItem(
+        'searchOptimizationMode',
+      );
+      const storedSearchChatModelProvider = localStorage.getItem(
+        'searchChatModelProvider',
+      );
+      const storedSearchChatModel = localStorage.getItem('searchChatModel');
+
+      if (storedSearchOptimizationMode) {
+        setSearchOptimizationMode(storedSearchOptimizationMode);
+      }
+      if (storedSearchChatModelProvider) {
+        setSearchChatModelProvider(storedSearchChatModelProvider);
+      }
+      if (storedSearchChatModel) {
+        setSearchChatModel(storedSearchChatModel);
+      }
+    };
+
+    loadSearchSettings();
 
     const fetchSystemPrompts = async () => {
       setIsLoading(true);
@@ -490,6 +523,10 @@ export default function SettingsPage() {
         setSavingStates((prev) => ({ ...prev, [key]: false }));
       }, 500);
     }
+  };
+
+  const saveSearchSetting = (key: string, value: string) => {
+    localStorage.setItem(key, value);
   };
 
   const handleAddOrUpdateSystemPrompt = async () => {
@@ -994,6 +1031,79 @@ export default function SettingsPage() {
                     <PlusCircle size={18} /> Add Persona Prompt
                   </button>
                 )}
+              </div>
+            </SettingsSection>
+
+            <SettingsSection
+              title="Default Search Settings"
+              tooltip='Select the settings that will be used when navigating to the site with a search query, such as "example.com/search?q=your+query".\nThese settings will override the global settings for search queries.\n\nIf settings are not specified, the global settings will be used.'
+            >
+              <div className="flex flex-col space-y-4">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Optimization Mode
+                  </p>
+                  <div className="flex justify-start items-center space-x-2">
+                    <Optimization
+                      optimizationMode={searchOptimizationMode}
+                      setOptimizationMode={(mode) => {
+                        setSearchOptimizationMode(mode);
+                        saveSearchSetting('searchOptimizationMode', mode);
+                      }}
+                      showTitle={true}
+                    />
+                    {searchOptimizationMode && (
+                      <button
+                        onClick={() => {
+                          setSearchOptimizationMode('');
+                          localStorage.removeItem('searchOptimizationMode');
+                        }}
+                        className="p-1.5 rounded-md hover:bg-light-200 dark:hover:bg-dark-200 text-black/50 dark:text-white/50 hover:text-black/80 dark:hover:text-white/80 transition-colors"
+                        title="Reset optimization mode"
+                      >
+                        <RotateCcw size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Chat Model
+                  </p>
+                  <div className="flex justify-start items-center space-x-2">
+                    <ModelSelector
+                      selectedModel={{
+                        provider: searchChatModelProvider,
+                        model: searchChatModel,
+                      }}
+                      setSelectedModel={(model) => {
+                        setSearchChatModelProvider(model.provider);
+                        setSearchChatModel(model.model);
+                        saveSearchSetting(
+                          'searchChatModelProvider',
+                          model.provider,
+                        );
+                        saveSearchSetting('searchChatModel', model.model);
+                      }}
+                      truncateModelName={false}
+                    />
+                    {(searchChatModelProvider || searchChatModel) && (
+                      <button
+                        onClick={() => {
+                          setSearchChatModelProvider('');
+                          setSearchChatModel('');
+                          localStorage.removeItem('searchChatModelProvider');
+                          localStorage.removeItem('searchChatModel');
+                        }}
+                        className="p-1.5 rounded-md hover:bg-light-200 dark:hover:bg-dark-200 text-black/50 dark:text-white/50 hover:text-black/80 dark:hover:text-white/80 transition-colors"
+                        title="Reset chat model"
+                      >
+                        <RotateCcw size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             </SettingsSection>
 

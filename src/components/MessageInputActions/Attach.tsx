@@ -90,8 +90,16 @@ const Attach = ({
         >
           {files.length > 1 && (
             <>
-              <File size={19} className={isDisabled ? 'text-sky-900' : 'text-sky-400'} />
-              <p className={cn("inline whitespace-nowrap text-xs font-medium", isDisabled ? 'text-sky-900' : 'text-sky-400')}>
+              <File
+                size={19}
+                className={isDisabled ? 'text-sky-900' : 'text-sky-400'}
+              />
+              <p
+                className={cn(
+                  'inline whitespace-nowrap text-xs font-medium',
+                  isDisabled ? 'text-sky-900' : 'text-sky-400',
+                )}
+              >
                 {files.length} files
               </p>
             </>
@@ -99,8 +107,16 @@ const Attach = ({
 
           {files.length === 1 && (
             <>
-              <File size={18} className={isDisabled ? 'text-sky-900' : 'text-sky-400'} />
-              <p className={cn("text-xs font-medium", isDisabled ? 'text-sky-900' : 'text-sky-400')}>
+              <File
+                size={18}
+                className={isDisabled ? 'text-sky-900' : 'text-sky-400'}
+              />
+              <p
+                className={cn(
+                  'text-xs font-medium',
+                  isDisabled ? 'text-sky-900' : 'text-sky-400',
+                )}
+              >
                 {files[0].fileName.length > 10
                   ? files[0].fileName.replace(/\.\w+$/, '').substring(0, 3) +
                     '...' +

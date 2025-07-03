@@ -104,10 +104,10 @@ export class ContentRouterAgent {
         },
       );
 
-      const routerDecision = await structuredLlm.invoke(
+      const routerDecision = (await structuredLlm.invoke(
         [...removeThinkingBlocksFromMessages(state.messages), prompt],
         { signal: this.signal },
-      );
+      )) as RouterDecision;
 
       console.log(`Router decision: ${routerDecision.decision}`);
       console.log(`Router reasoning: ${routerDecision.reasoning}`);

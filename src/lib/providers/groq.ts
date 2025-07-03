@@ -1,4 +1,4 @@
-import { ChatOpenAI } from '@langchain/openai';
+import { ChatGroq } from '@langchain/groq';
 import { getGroqApiKey } from '../config';
 import { ChatModel } from '.';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
@@ -47,7 +47,7 @@ const generateDisplayName = (modelId: string, ownedBy: string): string => {
   let displayName = modelId
     .replace(/[-_]/g, ' ')
     .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 
   // Add owner info for certain models
@@ -62,24 +62,27 @@ const fetchGroqModels = async (apiKey: string): Promise<GroqModel[]> => {
   try {
     const response = await fetch('https://api.groq.com/openai/v1/models', {
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch models: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch models: ${response.status} ${response.statusText}`,
+      );
     }
 
     const data: GroqModelsResponse = await response.json();
-    
+
     // Filter for active chat completion models (exclude audio/whisper models)
-    return data.data.filter(model => 
-      model.active && 
-      !model.id.includes('whisper') &&
-      !model.id.includes('tts') &&
-      !model.id.includes('guard') &&
-      !model.id.includes('prompt-guard')
+    return data.data.filter(
+      (model) =>
+        model.active &&
+        !model.id.includes('whisper') &&
+        !model.id.includes('tts') &&
+        !model.id.includes('guard') &&
+        !model.id.includes('prompt-guard'),
     );
   } catch (error) {
     console.error('Error fetching Groq models:', error);
@@ -101,13 +104,9 @@ export const loadGroqChatModels = async () => {
     availableModels.forEach((model) => {
       chatModels[model.id] = {
         displayName: generateDisplayName(model.id, model.owned_by),
-        model: new ChatOpenAI({
-          openAIApiKey: groqApiKey,
-          modelName: model.id,
-          // temperature: 0.7,
-          configuration: {
-            baseURL: 'https://api.groq.com/openai/v1',
-          },
+        model: new ChatGroq({
+          apiKey: groqApiKey,
+          model: model.id,
         }) as unknown as BaseChatModel,
       };
     });

@@ -46,15 +46,12 @@ const OptimizationModes = [
 const Optimization = ({
   optimizationMode,
   setOptimizationMode,
+  showTitle = false,
 }: {
   optimizationMode: string;
   setOptimizationMode: (mode: string) => void;
+  showTitle?: boolean;
 }) => {
-  const handleOptimizationChange = (mode: string) => {
-    setOptimizationMode(mode);
-    localStorage.setItem('optimizationMode', mode);
-  };
-
   return (
     <Popover className="relative">
       <PopoverButton
@@ -62,16 +59,14 @@ const Optimization = ({
         className="p-2 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
       >
         <div className="flex flex-row items-center space-x-1">
-          {
-            OptimizationModes.find((mode) => mode.key === optimizationMode)
-              ?.icon
-          }
-          {/* <p className="text-xs font-medium hidden lg:block">
-            {
-              OptimizationModes.find((mode) => mode.key === optimizationMode)
-                ?.title
-            }
-          </p> */}
+          {OptimizationModes.find((mode) => mode.key === optimizationMode)
+            ?.icon || <Minimize2 size={20} className="text-gray-400" />}
+          {showTitle && (
+            <p className="text-xs font-medium">
+              {OptimizationModes.find((mode) => mode.key === optimizationMode)
+                ?.title || 'Select mode'}
+            </p>
+          )}
           <ChevronDown size={20} />
         </div>
       </PopoverButton>
@@ -88,7 +83,7 @@ const Optimization = ({
           <div className="flex flex-col gap-2 bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-max max-w-[300px] p-4 max-h-[200px] md:max-h-none overflow-y-auto">
             {OptimizationModes.map((mode, i) => (
               <PopoverButton
-                onClick={() => handleOptimizationChange(mode.key)}
+                onClick={() => setOptimizationMode(mode.key)}
                 key={i}
                 className={cn(
                   'p-2 rounded-lg flex flex-col items-start justify-start text-start space-y-1 duration-200 cursor-pointer transition',
