@@ -6,13 +6,13 @@ import { NextRequest } from 'next/server';
 export async function POST(req: NextRequest) {
   console.log('=== Groq Transcribe API Called ===');
   
-  const apiKey = process.env.GROK_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   console.log('API Key exists:', !!apiKey);
   console.log('API Key prefix:', apiKey ? apiKey.substring(0, 10) + '...' : 'undefined');
   
   if (!apiKey) {
-    console.error('GROK_API_KEY not configured');
-    return new Response('GROK_API_KEY not configured', { status: 500 });
+    console.error('GROQ_API_KEY not configured');
+    return new Response('GROQ_API_KEY not configured', { status: 500 });
   }
 
   try {

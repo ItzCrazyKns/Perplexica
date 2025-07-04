@@ -117,9 +117,9 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
               <button
                 onClick={toggleSidebar}
                 aria-label="Expand sidebar"
-                className="relative flex flex-row items-center justify-center cursor-pointer bg-white dark:bg-dark-primary border border-black/20 dark:border-white/20 duration-150 transition w-full py-3 rounded-lg text-black dark:text-white group hover:bg-sky-50 dark:hover:bg-sky-900/30"
+                className="relative flex flex-row items-center justify-center cursor-pointer hover:bg-black/15 dark:hover:bg-white/15 duration-150 transition w-full py-3 rounded-lg group text-black/70 dark:text-white/70"
               >
-                <ChevronRight size={22} className="text-sky-500" />
+                <ChevronRight size={22} />
                 <div className="absolute left-full ml-2 px-2 py-1 bg-black/80 dark:bg-white/90 text-white dark:text-black text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
                   展开侧边栏
                 </div>
@@ -128,19 +128,19 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
           )}
 
           <div className={cn(
-            "flex items-center justify-center w-full mt-auto pt-2",
+            "flex items-center justify-center w-full mt-auto pt-4",
             isSidebarExpanded && "border-t border-black/10 dark:border-white/10"
           )}>
             <Link 
               href="/settings" 
               className={cn(
-                "flex items-center justify-center p-1.5 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors relative group",
-                isSidebarExpanded && "px-2 gap-2"
+                "flex items-center justify-center p-2 rounded-lg hover:bg-black/15 dark:hover:bg-white/15 transition-colors relative group",
+                isSidebarExpanded && "w-full justify-start px-3 gap-2"
               )}
               title="Settings"
             >
-              <Settings size={isSidebarExpanded ? 14 : 18} className="text-black/70 dark:text-white/70" />
-              {isSidebarExpanded && <span className="text-xs text-black/70 dark:text-white/70">Settings</span>}
+              <Settings size={isSidebarExpanded ? 16 : 20} className="text-black/70 dark:text-white/70" />
+              {isSidebarExpanded && <span className="text-sm text-black/70 dark:text-white/70">Settings</span>}
               {!isSidebarExpanded && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-black/80 dark:bg-white/90 text-white dark:text-black text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
                   设置
