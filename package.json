@@ -52,6 +52,7 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
+    "@types/geoip-lite": "^1.4.4",
     "@types/html-to-text": "^9.0.4",
     "@types/jspdf": "^2.0.0",
     "@types/node": "^20",
