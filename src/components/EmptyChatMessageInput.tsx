@@ -95,7 +95,7 @@ const EmptyChatMessageInput = ({
             />
           </div>
           <div className="flex flex-row items-center space-x-1 sm:space-x-4">
-            <VoiceInput setMessage={setMessage} />
+            <VoiceInput message={message} setMessage={setMessage} />
             <Optimization
               optimizationMode={optimizationMode}
               setOptimizationMode={setOptimizationMode}

@@ -8,11 +8,14 @@ import { transcribeWithGrok } from '@/lib/grok';
  * Shows animated voice icon bars when recording (stable animation)
  */
 const VoiceInput = ({
+  message,
   setMessage,
 }: {
+  message: string;
   setMessage: (text: string) => void;
 }) => {
   const [recording, setRecording] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
@@ -45,14 +48,26 @@ const VoiceInput = ({
 
   const handleStop = async () => {
     setRecording(false);
+    setTranscribing(true);
+    console.log('Starting transcription...');
 
     const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
 
     try {
       const text = await transcribeWithGrok(blob);
-      if (text) setMessage(text);
+      console.log('Transcription completed:', text);
+      if (text) {
+        // Append to existing message with proper spacing
+        const newMessage = message.trim() 
+          ? `${message.trim()} ${text.trim()}`
+          : text.trim();
+        setMessage(newMessage);
+      }
     } catch (err) {
       console.error('Transcription failed', err);
+    } finally {
+      setTranscribing(false);
+      console.log('Transcription finished');
     }
   };
 
@@ -90,6 +105,14 @@ const VoiceInput = ({
           >
             <Square size={16} className="text-red-500 fill-red-500" />
           </button>
+        </div>
+      )}
+      
+      {/* Subtle transcription indicator */}
+      {transcribing && (
+        <div className="ml-2 flex items-center space-x-1">
+          <div className="w-4 h-4 border-2 border-gray-300/40 dark:border-gray-500/40 border-t-[#24A0ED] rounded-full animate-spin" />
+          <span className="text-xs text-gray-500 dark:text-gray-400">transcribing...</span>
         </div>
       )}
     </div>

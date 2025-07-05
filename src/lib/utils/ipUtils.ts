@@ -1,6 +1,16 @@
 import { IncomingMessage } from 'http';
-import geoip from 'geoip-lite';
-import { find as geoTz } from 'geo-tz';
+
+// Safe imports for GeoIP functionality
+let geoip: any = null;
+let geoTz: any = null;
+
+try {
+  geoip = require('geoip-lite');
+  const geoTzModule = require('geo-tz');
+  geoTz = geoTzModule.find;
+} catch (error) {
+  console.warn('GeoIP functionality disabled:', error.message);
+}
 
 /**
  * Extracts the client's IP address from an HTTP request.
@@ -19,12 +29,22 @@ export function getIPAddress(req: IncomingMessage): string {
  * Determines the local time zone from the request's IP address.
  */
 export function getTimeZoneFromRequest(req: IncomingMessage): string {
+  if (!geoip || !geoTz) {
+    return 'UTC'; // Fallback when GeoIP is not available
+  }
+  
   const ip = getIPAddress(req);
   const geo = geoip.lookup(ip);
   let timeZone = 'UTC';
-  if (geo && geo.ll) {
-    timeZone = geoTz(geo.ll[0], geo.ll[1])[0];
+  
+  try {
+    if (geo && geo.ll) {
+      timeZone = geoTz(geo.ll[0], geo.ll[1])[0];
+    }
+  } catch (error) {
+    console.warn('GeoIP lookup failed:', error.message);
   }
+  
   return timeZone;
 }
 

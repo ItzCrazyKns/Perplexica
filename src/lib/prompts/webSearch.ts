@@ -1,6 +1,5 @@
-import geoip from 'geoip-lite';
-import { find as geoTz } from 'geo-tz';
 import { IncomingMessage } from 'http';
+import { getLocalDateFromRequest } from '../utils/ipUtils';
 
 export const webSearchRetrieverPrompt = `
 You are an AI question rephraser. You will be given a conversation and a follow-up question,  you will have to rephrase the follow up question so it is a standalone question and can be used by another LLM to search the web for information to answer it.
@@ -86,34 +85,37 @@ export const webSearchResponsePrompt = (context: string, req?: IncomingMessage):
   };
 
   // 生成日期字符串和位置信息
-  let timeZone = defaultLocation.timezone;
+  let date: string;
   if (req) {
-    // 尝试从 x-forwarded-for 获取客户端 IP，或者退回到 socket 标识
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
-    // 如果 IP 为数组则取第一个
-    const ipStr = typeof ip === 'string' ? ip : (ip.length > 0 ? ip[0] : '127.0.0.1');
-    const geo = geoip.lookup(ipStr);
-    if (geo && geo.ll) {
-      timeZone = geoTz(geo.ll[0], geo.ll[1])[0]; // 使用命名导入后的调用
-      locationInfo = {
-        city: geo.city || "Unknown",
-        state: geo.region || "Unknown", 
-        country: geo.country || "Unknown",
-        timezone: timeZone
-      };
+    try {
+      date = getLocalDateFromRequest(req);
+      // For now, keep default location info since full GeoIP lookup is disabled
+      // In the future, you could extend getLocalDateFromRequest to return location info too
+    } catch (error) {
+      console.warn('Failed to get local date from request:', error);
+      date = new Date().toLocaleString('en-US', {
+        timeZone: 'UTC',
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        timeZoneName: 'short'
+      });
     }
+  } else {
+    date = new Date().toLocaleString('en-US', {
+      timeZone: 'UTC',
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      timeZoneName: 'short'
+    });
   }
-
-  const date = new Date().toLocaleString('en-US', {
-    timeZone,
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: 'numeric',
-    timeZoneName: 'short'
-  });
 
   return `You are an AI assistant created by Perplexity
 Your responses should be:
@@ -133,7 +135,7 @@ Key Guidelines:
 	3.	Proactively suggest helpful follow-up questions or related topics
 	4.	For technical queries, break down complex concepts using analogies
 	5.	Local considerations for ${locationInfo.city}, ${locationInfo.state}:
-		•	Timezone: ${timeZone}
+		•	Timezone: ${locationInfo.timezone}
 		•	Current season: ${getCurrentSeason()}
 		•	Weather information should be localized to user location when possible
 		•	Local time references should be accurate for user timezone

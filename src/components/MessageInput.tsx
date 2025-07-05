@@ -100,7 +100,7 @@ const MessageInput = ({
       />
       {mode === 'single' && (
         <div className="flex flex-row items-center space-x-4">
-          <VoiceInput setMessage={setMessage} />
+          <VoiceInput message={message} setMessage={setMessage} />
           <CopilotToggle
             copilotEnabled={copilotEnabled}
             setCopilotEnabled={setCopilotEnabled}
@@ -122,7 +122,7 @@ const MessageInput = ({
             setFiles={setFiles}
           />
           <div className="flex flex-row items-center space-x-4">
-            <VoiceInput setMessage={setMessage} />
+            <VoiceInput message={message} setMessage={setMessage} />
             <CopilotToggle
               copilotEnabled={copilotEnabled}
               setCopilotEnabled={setCopilotEnabled}

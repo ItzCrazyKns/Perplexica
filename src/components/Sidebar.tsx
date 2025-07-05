@@ -128,18 +128,18 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
           )}
 
           <div className={cn(
-            "flex items-center justify-center w-full mt-auto pt-4",
-            isSidebarExpanded && "border-t border-black/10 dark:border-white/10"
+            "flex items-center w-full mt-auto pt-8 pb-2",
+            isSidebarExpanded ? "justify-start border-t border-black/10 dark:border-white/10 px-2 mt-6" : "justify-center"
           )}>
             <Link 
               href="/settings" 
               className={cn(
-                "flex items-center justify-center p-2 rounded-lg hover:bg-black/15 dark:hover:bg-white/15 transition-colors relative group",
-                isSidebarExpanded && "w-full justify-start px-3 gap-2"
+                "flex items-center p-3 rounded-lg hover:bg-black/15 dark:hover:bg-white/15 transition-colors relative group",
+                isSidebarExpanded ? "w-full justify-start gap-3" : "justify-center"
               )}
               title="Settings"
             >
-              <Settings size={isSidebarExpanded ? 16 : 20} className="text-black/70 dark:text-white/70" />
+              <Settings size={20} className="text-black/70 dark:text-white/70" />
               {isSidebarExpanded && <span className="text-sm text-black/70 dark:text-white/70">Settings</span>}
               {!isSidebarExpanded && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-black/80 dark:bg-white/90 text-white dark:text-black text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
