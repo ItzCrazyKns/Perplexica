@@ -11,6 +11,18 @@ const WeatherWidget = () => {
     icon: '',
   });
   const [loading, setLoading] = useState(true);
+  const [unit, setUnit] = useState<'C' | 'F'>('C');
+
+  const convertTemperature = (tempCelsius: number, targetUnit: 'C' | 'F') => {
+    if (targetUnit === 'F') {
+      return ((tempCelsius * 9) / 5 + 32).toFixed(1);
+    }
+    return tempCelsius.toFixed(1);
+  };
+
+  const toggleUnit = () => {
+    setUnit((prev) => (prev === 'C' ? 'F' : 'C'));
+  };
 
   useEffect(() => {
     const getApproxLocation = async () => {
@@ -124,9 +136,33 @@ const WeatherWidget = () => {
               alt={data.condition}
               className="h-10 w-auto"
             />
-            <span className="text-base font-semibold text-black dark:text-white">
-              {data.temperature}°C
-            </span>
+            <div className="flex flex-col items-center space-y-1">
+              <span className="text-base font-semibold text-black dark:text-white text-center leading-tight">
+                {convertTemperature(data.temperature, unit)}°
+              </span>
+              <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-0.5 shadow-inner">
+                <button
+                  onClick={toggleUnit}
+                  className={`text-xs font-medium px-2 py-1 rounded-full transition-all duration-200 ${
+                    unit === 'C'
+                      ? 'text-white bg-blue-500 dark:bg-blue-600 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                  }`}
+                >
+                  °C
+                </button>
+                <button
+                  onClick={toggleUnit}
+                  className={`text-xs font-medium px-2 py-1 rounded-full transition-all duration-200 ${
+                    unit === 'F'
+                      ? 'text-white bg-blue-500 dark:bg-blue-600 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                  }`}
+                >
+                  °F
+                </button>
+              </div>
+            </div>
           </div>
           <div className="flex flex-col justify-between flex-1 h-full py-1">
             <div className="flex flex-row items-center justify-between">
