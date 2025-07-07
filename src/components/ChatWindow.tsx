@@ -110,6 +110,18 @@ const checkConfig = async (
       if (!embeddingModel || !embeddingModelProvider) {
         const embeddingModelProviders = providers.embeddingModelProviders;
 
+        let userSessionId = localStorage.getItem('userSessionId');
+        if (!userSessionId) {
+          userSessionId = crypto.randomBytes(20).toString('hex');
+          localStorage.setItem('userSessionId', userSessionId!)
+        }
+
+        let maxRecordLimit = localStorage.getItem('maxRecordLimit');
+        if (!maxRecordLimit) {
+          maxRecordLimit = '20';
+          localStorage.setItem('maxRecordLimit', maxRecordLimit);
+        }
+
         if (
           !embeddingModelProviders ||
           Object.keys(embeddingModelProviders).length === 0
@@ -369,6 +381,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     let added = false;
 
     messageId = messageId ?? crypto.randomBytes(7).toString('hex');
+    let userSessionId = localStorage.getItem('userSessionId');
 
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -493,6 +506,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
           messageId: messageId,
           chatId: chatId!,
           content: message,
+          userSessionId: userSessionId,
         },
         chatId: chatId!,
         files: fileIds,
