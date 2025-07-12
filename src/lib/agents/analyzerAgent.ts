@@ -21,6 +21,7 @@ import {
   removeThinkingBlocks,
   removeThinkingBlocksFromMessages,
 } from '../utils/contentUtils';
+import { withStructuredOutput } from '../utils/structuredOutput';
 import next from 'next';
 
 // Define Zod schemas for structured output
@@ -157,7 +158,7 @@ export class AnalyzerAgent {
       );
 
       // Use structured output for next action decision
-      const structuredLlm = this.llm.withStructuredOutput(NextActionSchema, {
+      const structuredLlm = withStructuredOutput(this.llm, NextActionSchema, {
         name: 'analyze_content',
       });
 
@@ -183,7 +184,8 @@ export class AnalyzerAgent {
 
         if (nextActionResponse.action === 'need_user_info') {
           // Use structured output for user info request
-          const userInfoLlm = this.llm.withStructuredOutput(
+          const userInfoLlm = withStructuredOutput(
+            this.llm,
             UserInfoRequestSchema,
             {
               name: 'request_user_info',
@@ -240,7 +242,8 @@ export class AnalyzerAgent {
 
         // If we need more information from the LLM, generate a more specific search query
         // Use structured output for search refinement
-        const searchRefinementLlm = this.llm.withStructuredOutput(
+        const searchRefinementLlm = withStructuredOutput(
+          this.llm,
           SearchRefinementSchema,
           {
             name: 'refine_search',
@@ -254,7 +257,7 @@ export class AnalyzerAgent {
           context: state.relevantDocuments
             .map(
               (doc, index) =>
-                `<source${index + 1}>${doc?.metadata?.title ? `<title>${doc?.metadata?.title}</title>` : ''}<content>${doc.pageContent}</content></source${index + 1}>`,
+                `<source${index + 1}>${doc?.metadata?.title ? `\n<title>${doc?.metadata?.title}</title>` : ''}\n<content>${doc.pageContent}</content>\n</source${index + 1}>`,
             )
             .join('\n\n'),
           date: formatDateForLLM(new Date()),
@@ -293,11 +296,11 @@ export class AnalyzerAgent {
         return new Command({
           goto: 'task_manager',
           update: {
-            messages: [
-              new AIMessage(
-                `The following question can help refine the search: ${searchRefinement.question}`,
-              ),
-            ],
+            // messages: [
+            //   new AIMessage(
+            //     `The following question can help refine the search: ${searchRefinement.question}`,
+            //   ),
+            // ],
             query: searchRefinement.question, // Use the refined question for TaskManager to analyze
             searchInstructions: searchRefinement.question,
             searchInstructionHistory: [
@@ -330,13 +333,13 @@ export class AnalyzerAgent {
 
       return new Command({
         goto: 'synthesizer',
-        update: {
-          messages: [
-            new AIMessage(
-              `Analysis completed. We have sufficient information to answer the query.`,
-            ),
-          ],
-        },
+        // update: {
+        //   messages: [
+        //     new AIMessage(
+        //       `Analysis completed. We have sufficient information to answer the query.`,
+        //     ),
+        //   ],
+        // },
       });
     } catch (error) {
       console.error('Analysis error:', error);

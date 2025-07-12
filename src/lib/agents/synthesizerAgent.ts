@@ -43,11 +43,11 @@ export class SynthesizerAgent {
         .map((doc, index) => {
           const isFile = doc.metadata?.url?.toLowerCase().includes('file');
           return `<${index + 1}>\n
-    <title>${doc.metadata.title}</title>\n
-    <source_type>${isFile ? 'file' : 'web'}</source_type>\n
-    ${isFile ? '' : '\n<url>' + doc.metadata.url + '</url>\n'}
-    <content>\n${doc.pageContent}\n</content>\n
-    </${index + 1}>`;
+    <title>${doc.metadata.title}</title>
+    <source_type>${isFile ? 'file' : 'web'}</source_type>
+    ${isFile ? '' : '\n<url>' + doc.metadata.url + '</url>'}
+    <content>\n${doc.pageContent}\n    </content>
+</${index + 1}>`;
         })
         .join('\n');
 

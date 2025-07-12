@@ -16,6 +16,7 @@ import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatOpenAI } from '@langchain/openai';
 import { ChatOllama } from '@langchain/ollama';
 import { z } from 'zod';
+import { withStructuredOutput } from '@/lib/utils/structuredOutput';
 
 interface FileRes {
   fileName: string;
@@ -66,7 +67,7 @@ ${excerpt}
 Generate topics that describe what this document is about, its domain, and key subject areas. Focus on topics that would help determine relevance for search queries.`;
 
     // Use structured output for reliable topic extraction
-    const structuredLlm = llm.withStructuredOutput(TopicsSchema, {
+    const structuredLlm = withStructuredOutput(llm, TopicsSchema, {
       name: 'generate_topics',
     });
 

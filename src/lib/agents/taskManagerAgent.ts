@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { taskBreakdownPrompt } from '../prompts/taskBreakdown';
 import { AgentState } from './agentState';
 import { setTemperature } from '../utils/modelUtils';
+import { withStructuredOutput } from '../utils/structuredOutput';
 
 // Define Zod schema for structured task breakdown output
 const TaskBreakdownSchema = z.object({
@@ -76,11 +77,11 @@ export class TaskManagerAgent {
           return new Command({
             goto: 'content_router',
             update: {
-              messages: [
-                new AIMessage(
-                  `Task ${currentTaskIndex + 1} completed. Processing task ${nextTaskIndex + 1} of ${state.tasks.length}: "${state.tasks[nextTaskIndex]}"`,
-                ),
-              ],
+              // messages: [
+              //   new AIMessage(
+              //     `Task ${currentTaskIndex + 1} completed. Processing task ${nextTaskIndex + 1} of ${state.tasks.length}: "${state.tasks[nextTaskIndex]}"`,
+              //   ),
+              // ],
               currentTaskIndex: nextTaskIndex,
             },
           });
@@ -101,13 +102,13 @@ export class TaskManagerAgent {
 
           return new Command({
             goto: 'analyzer',
-            update: {
-              messages: [
-                new AIMessage(
-                  `All ${state.tasks.length} tasks completed. Moving to analysis phase.`,
-                ),
-              ],
-            },
+            // update: {
+            //   messages: [
+            //     new AIMessage(
+            //       `All ${state.tasks.length} tasks completed. Moving to analysis phase.`,
+            //     ),
+            //   ],
+            // },
           });
         }
       }
@@ -141,7 +142,7 @@ export class TaskManagerAgent {
       });
 
       // Use structured output for task breakdown
-      const structuredLlm = this.llm.withStructuredOutput(TaskBreakdownSchema, {
+      const structuredLlm = withStructuredOutput(this.llm, TaskBreakdownSchema, {
         name: 'break_down_tasks',
       });
 
@@ -192,7 +193,7 @@ export class TaskManagerAgent {
       return new Command({
         goto: 'content_router', // Route to content router to decide between file search, web search, or analysis
         update: {
-          messages: [new AIMessage(responseMessage)],
+          // messages: [new AIMessage(responseMessage)],
           tasks: taskLines,
           currentTaskIndex: 0,
           originalQuery: state.originalQuery || state.query, // Preserve original if not already set

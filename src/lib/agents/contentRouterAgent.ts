@@ -9,6 +9,7 @@ import path from 'node:path';
 import { AgentState } from './agentState';
 import { contentRouterPrompt } from '../prompts/contentRouter';
 import { removeThinkingBlocksFromMessages } from '../utils/contentUtils';
+import { withStructuredOutput } from '../utils/structuredOutput';
 
 // Define Zod schema for structured router decision output
 const RouterDecisionSchema = z.object({
@@ -87,6 +88,7 @@ export class ContentRouterAgent {
 
       const template = PromptTemplate.fromTemplate(contentRouterPrompt);
       const prompt = await template.format({
+        systemInstructions: this.systemInstructions,
         currentTask: currentTask,
         query: state.originalQuery || state.query,
         focusMode: focusMode,
@@ -97,7 +99,8 @@ export class ContentRouterAgent {
       });
 
       // Use structured output for routing decision
-      const structuredLlm = this.llm.withStructuredOutput(
+      const structuredLlm = withStructuredOutput(
+        this.llm,
         RouterDecisionSchema,
         {
           name: 'route_content',
@@ -146,9 +149,9 @@ export class ContentRouterAgent {
 
       return new Command({
         goto: validatedDecision.decision,
-        update: {
-          messages: [new AIMessage(responseMessage)],
-        },
+        // update: {
+        //   messages: [new AIMessage(responseMessage)],
+        // },
       });
     } catch (error) {
       console.error('Content router error:', error);

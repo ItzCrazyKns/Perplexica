@@ -1,32 +1,34 @@
 export const decideNextActionPrompt = `You are an expert content analyzer.
-Your task is to analyze the provided context and determine if we have enough information to fully answer the user's query.
+Your task is to analyze the provided content and determine if we have enough information to fully answer the user's query.
 
 # Instructions
-- Carefully analyze the content of the context provided and the historical context of the conversation to determine if it contains sufficient information to answer the user's query
-- Use the content provided in the \`context\` tag, as well as the historical context of the conversation, to make your determination
-- Consider both file-based documents (from attached files) and web-based documents when analyzing context
+- Carefully analyze the content of the context provided **and** the historical content of the conversation to determine if it contains sufficient information to answer the user's query
+- The context may be empty, if the historical content is sufficient, you can still consider it sufficient
+- Historic content should generally be considered factual and does not require additional confirmation unless the user explicitly asks for confirmation or indicates that it was incorrect
 - If the user is asking for a specific number of sources and the context does not provide enough, consider the content insufficient
 
 # Source Type Awareness
-When analyzing the context, be aware that documents may come from different sources:
+When analyzing the content, be aware that documents may come from different sources:
 - **File documents**: Content extracted from user-attached files (identified by metadata indicating file source)
 - **Web documents**: Content retrieved from web searches (identified by URLs and web source metadata)
-- **Mixed sources**: Both file and web content may be present
+- **Chat history**: Previous messages in the conversation that may provide additional content
+- **Mixed sources**: The content may include a combination of file documents, web documents, and chat history
 
 Consider the following when evaluating sufficiency:
 - File documents may contain user-specific, proprietary, or contextual information that cannot be found elsewhere
 - Web documents provide current, general, and publicly available information
-- The combination of both sources may be needed for comprehensive answers
+- Chat history provides conversational context and may include user preferences, past interactions, or clarifications
+- The combination of these sources should be evaluated holistically to determine if they collectively provide enough information to answer the user's query
 - File content should be prioritized when answering questions specifically about attached documents
 
 # Response Options Decision Tree
 
 ## Step 1: Check if content is sufficient
-- If provided context contains enough information to answer the user's query → respond with \`good_content\`
-- If the context fully answers the user's query with complete information → respond with \`good_content\`
-- If the user is requesting to use the existing context to answer their query → respond with \`good_content\`
+- If provided content contains enough information to answer the user's query → respond with \`good_content\`
+- If the content fully answers the user's query with complete information → respond with \`good_content\`
+- If the user is requesting to use the existing content to answer their query → respond with \`good_content\`
 - If the user is requesting to avoid web searches → respond with \`good_content\`
-- If the user is asking you to be creative, such as writing a story, poem, or creative content → respond with \`good_content\` unless the context is clearly insufficient
+- If the user is asking you to be creative, such as writing a story, poem, or creative content → respond with \`good_content\` unless the content is clearly insufficient
 - If file documents contain complete information for file-specific queries → respond with \`good_content\`
 - If the user is requesting specific web content and there is a source that corresponds to that request in the context, it can be considered sufficient even if the content is not exhaustive or looks like errors → respond with \`good_content\`
 
@@ -65,7 +67,7 @@ Consider the following when evaluating sufficiency:
 - Comparative analysis between options
 - Expert opinions or reviews from credible sources
 - Statistical data or research findings
-- Additional context to supplement file content with current information
+- Existing content is not sufficient to answer the query, but the information can be found through a web search
 
 **Examples requiring more web search:**
 - "What are the latest features in iPhone 15?" (missing: recent tech specs)
@@ -76,10 +78,9 @@ Consider the following when evaluating sufficiency:
 # Critical Decision Point
 Ask yourself: "Could this missing information reasonably be found through a web search, or does it require the user to provide specific details?"
 
-- If it's personal/subjective or requires user feedback → \`need_user_info\`
-- If it's factual and searchable → \`need_more_info\`
-- If the context is complete or the user wants to use the existing context → \`good_content\`
-- If file content is complete for file-specific questions → \`good_content\`
+- If the content is complete and sufficient to answer the query, or the user wants to use the existing content → \`good_content\`
+- If the query is personal/subjective or requires user feedback → \`need_user_info\`
+- If the query is factual and searchable → \`need_more_info\`
 
 # System Instructions
 {systemInstructions}
@@ -98,7 +99,14 @@ Today's date is {date}
 # Search Instruction History
 {searchInstructionHistory}
 
-Provide your response as a JSON object with "action" and "reasoning" fields where action is one of: good_content, need_user_info, or need_more_info.`;
+#Response Format
+Respond with a JSON object that matches this structure:
+{{
+  "action": "string",
+  "reasoning": "string"
+}}
+
+Your response should contain only the JSON object, no additional text or formatting.`;
 
 export const additionalUserInputPrompt = `You are an expert content analyzer.
 Your task is to analyze the provided context and user query to determine what additional information is needed to fully answer the user's query.

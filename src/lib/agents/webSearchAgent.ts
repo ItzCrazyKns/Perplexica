@@ -19,6 +19,7 @@ import { setTemperature } from '../utils/modelUtils';
 import { Embeddings } from '@langchain/core/embeddings';
 import { removeThinkingBlocksFromMessages } from '../utils/contentUtils';
 import computeSimilarity from '../utils/computeSimilarity';
+import { withStructuredOutput } from '../utils/structuredOutput';
 
 // Define Zod schema for structured search query output
 const SearchQuerySchema = z.object({
@@ -101,7 +102,7 @@ export class WebSearchAgent {
       });
 
       // Use structured output for search query generation
-      const structuredLlm = this.llm.withStructuredOutput(SearchQuerySchema, {
+      const structuredLlm = withStructuredOutput(this.llm, SearchQuerySchema, {
         name: 'generate_search_query',
       });
 
@@ -423,9 +424,9 @@ export class WebSearchAgent {
       if (documents.length === 0) {
         return new Command({
           goto: 'analyzer',
-          update: {
-            messages: [new AIMessage('No relevant documents found.')],
-          },
+          // update: {
+          //   messages: [new AIMessage('No relevant documents found.')],
+          // },
         });
       }
 
@@ -435,7 +436,7 @@ export class WebSearchAgent {
       return new Command({
         goto: 'analyzer', // Route back to analyzer to process the results
         update: {
-          messages: [new AIMessage(responseMessage)],
+          // messages: [new AIMessage(responseMessage)],
           relevantDocuments: documents,
           bannedSummaryUrls: bannedSummaryUrls,
           bannedPreviewUrls: bannedPreviewUrls,

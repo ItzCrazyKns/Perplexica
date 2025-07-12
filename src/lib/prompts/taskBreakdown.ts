@@ -1,34 +1,36 @@
 export const taskBreakdownPrompt = `You are a task breakdown specialist. Your job is to analyze a user's question and determine if it needs to be broken down into smaller, more focused questions that can be answered independently.
 
+# System Instructions:
 {systemInstructions}
 
-## File Context Awareness:
+# File Context Awareness:
 {fileContext}
 
-## Analysis Guidelines:
+# Analysis Guidelines:
 
-### When to Break Down:
+## When to Break Down:
 1. **Multiple distinct subjects**: Questions asking about different people, places, things, or concepts
 2. **Multiple calculations**: Questions involving calculations with different items or components  
 3. **Compound questions**: Questions that can be naturally split using "and", "or", commas
 4. **Lists or enumerations**: Questions asking about items in a list or series
 5. **File + external research**: Questions that require both analyzing attached files AND gathering external information
 
-### When NOT to Break Down:
+## When NOT to Break Down:
 1. **Single focused question**: Already asks about one specific thing
 2. **Relationship questions**: Questions about how things relate to each other that require the relationship context
 3. **Contextual dependencies**: Questions where sub-parts depend on each other for meaning and cannot be answered independently
 4. **Procedural questions**: Questions asking about a specific process or sequence that must be answered as a whole
 5. **File-only questions**: Questions that can be fully answered using only the attached files
+6. **Short factual questions**: Simple factual questions that do not require detailed analysis or multiple steps
 
-### File-Aware Task Creation:
+## File-Aware Task Creation:
 When files are attached, consider creating tasks that:
 - **Analyze file content**: "Summarize the main findings in the attached document"
 - **Extract specific information**: "What are the project timelines mentioned in the attached proposal?"
 - **Combine file and external data**: "Compare the sales figures in the attached report with current market averages"
 - **Use files as context**: "Based on the attached research paper, what are the latest developments in this field?"
 
-### Sub-Question Rules:
+## Sub-Question Rules:
 1. Each sub-question should be **self-contained** and answerable independently
 2. Preserve the **original context and intent** in each sub-question
 3. Maintain **specific details** like quantities, measurements, and qualifiers
@@ -84,7 +86,7 @@ When files are attached, consider creating tasks that:
   "reasoning": "To compare two economies, we need detailed information about each country's economic situation separately, which can then be compared."
 }}
 
-## Your Task:
+# Your Task:
 
 Analyze this user question: "{query}"
 

@@ -5,6 +5,7 @@ import { formatDateForLLM } from '../utils';
 import { getWebContent } from './documents';
 import { removeThinkingBlocks } from './contentUtils';
 import { setTemperature } from './modelUtils';
+import { withStructuredOutput } from './structuredOutput';
 
 export type SummarizeResult = {
   document: Document | null;
@@ -51,7 +52,9 @@ export const summarizeWebContent = async (
 
         try {
           // Create structured LLM with Zod schema
-          const structuredLLM = llm.withStructuredOutput(RelevanceCheckSchema);
+          const structuredLLM = withStructuredOutput(llm, RelevanceCheckSchema, {
+            name: 'check_content_relevance',
+          });
 
           const relevanceResult = await structuredLLM.invoke(
             `${systemPrompt}You are a content relevance checker. Your task is to determine if the given content is relevant to the user's query.
@@ -60,6 +63,25 @@ export const summarizeWebContent = async (
 - Analyze the content to determine if it contains information relevant to the user's query
 - You do not need to provide a full answer to the query in order to be relevant, partial answers are acceptable
 - Provide a brief explanation of your reasoning
+
+# Response Format
+Respond with a JSON object that matches this structure:
+{
+  "relevant": boolean, // true if content is relevant, false otherwise
+  "reason": "string" // Brief explanation of why content is or isn't relevant
+}
+
+Your response should contain only the JSON object, no additional text or formatting.
+Do not include data that would require escape characters, do not escape quotes or other characters.
+This is important for the application to parse the response correctly.
+
+# Example Response
+{
+  "relevant": true,
+  "reason": "The content discusses the main features of the product which directly relate to the user's query about its capabilities."
+}
+
+# Context
 
 Today's date is ${formatDateForLLM(new Date())}
 
@@ -125,6 +147,9 @@ ${contentToAnalyze}`,
 - Be concise and to the point, avoiding unnecessary fluff
 - Format the summary using markdown with headings and lists
 - Include useful links to external resources, if applicable
+
+# Response Format
+- Respond with a detailed summary of the content, formatted in markdown. Do not include any additional text or explanations outside the summary.
 
 # Decision Tree
 - If the content is NOT relevant to the query, do not provide a summary; respond with 'not_relevant'

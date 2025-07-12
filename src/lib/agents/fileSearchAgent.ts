@@ -81,11 +81,11 @@ export class FileSearchAgent {
         console.log('No processable file content found');
         return new Command({
           goto: 'analyzer',
-          update: {
-            messages: [
-              new AIMessage('No searchable content found in attached files.'),
-            ],
-          },
+          // update: {
+          //   messages: [
+          //     new AIMessage('No searchable content found in attached files.'),
+          //   ],
+          // },
         });
       }
 
@@ -145,13 +145,13 @@ export class FileSearchAgent {
 
         return new Command({
           goto: 'analyzer',
-          update: {
-            messages: [
-              new AIMessage(
-                'No relevant content found in attached files for the current task.',
-              ),
-            ],
-          },
+          // update: {
+          //   messages: [
+          //     new AIMessage(
+          //       'No relevant content found in attached files for the current task.',
+          //     ),
+          //   ],
+          // },
         });
       }
 
@@ -180,7 +180,7 @@ export class FileSearchAgent {
       return new Command({
         goto: 'analyzer', // Route back to analyzer to process the results
         update: {
-          messages: [new AIMessage(responseMessage)],
+          // messages: [new AIMessage(responseMessage)],
           relevantDocuments: rankedDocuments,
         },
       });

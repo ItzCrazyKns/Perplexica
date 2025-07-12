@@ -45,13 +45,13 @@ export class URLSummarizationAgent {
         );
         return new Command({
           goto: 'content_router',
-          update: {
-            messages: [
-              new AIMessage(
-                'No URLs found for processing, routing to content router',
-              ),
-            ],
-          },
+          // update: {
+          //   messages: [
+          //     new AIMessage(
+          //       'No URLs found for processing, routing to content router',
+          //     ),
+          //   ],
+          // },
         });
       }
 
@@ -250,9 +250,9 @@ Provide a comprehensive summary of the above web page content, focusing on infor
 
         return new Command({
           goto: 'analyzer',
-          update: {
-            messages: [new AIMessage(errorMessage)],
-          },
+          // update: {
+          //   messages: [new AIMessage(errorMessage)],
+          // },
         });
       }
 
@@ -277,7 +277,7 @@ Provide a comprehensive summary of the above web page content, focusing on infor
       return new Command({
         goto: 'analyzer', // Route to analyzer to continue with normal workflow after URL processing
         update: {
-          messages: [new AIMessage(responseMessage)],
+          // messages: [new AIMessage(responseMessage)],
           relevantDocuments: documents,
         },
       });

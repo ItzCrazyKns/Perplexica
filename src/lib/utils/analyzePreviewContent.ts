@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { formatDateForLLM } from '../utils';
 import { ChatOpenAI, OpenAIClient } from '@langchain/openai';
 import { removeThinkingBlocks } from './contentUtils';
+import { withStructuredOutput } from './structuredOutput';
 
 export type PreviewAnalysisResult = {
   isSufficient: boolean;
@@ -76,10 +77,12 @@ Snippet: ${content.snippet}
     console.log(`Invoking LLM for preview content analysis`);
 
     // Create structured LLM with Zod schema
-    const structuredLLM = llm.withStructuredOutput(PreviewAnalysisSchema);
+    const structuredLLM = withStructuredOutput(llm, PreviewAnalysisSchema, {
+      name: 'analyze_preview_content',
+    });
 
     const analysisResult = await structuredLLM.invoke(
-      `${systemPrompt}You are a preview content analyzer, tasked with determining if search result snippets contain sufficient information to answer the Task Query.
+      `You are a preview content analyzer, tasked with determining if search result snippets contain sufficient information to answer the Task Query.
 
 # Instructions
 - Analyze the provided search result previews (titles + snippets), and chat history context to determine if they collectively contain enough information to provide a complete and accurate answer to the Task Query
@@ -87,6 +90,18 @@ Snippet: ${content.snippet}
 - If the preview content lacks important details, requires deeper analysis, or cannot fully answer the Task Query, consider it insufficient
 - Be specific in your reasoning when the content is not sufficient
 - The original query is provided for additional context, only use it for clarification of overall expectations and intent. You do **not** need to answer the original query directly or completely
+
+# System Instructions
+${systemPrompt}
+
+# Response Format
+Respond with a JSON object that matches this structure:
+{
+  "isSufficient": boolean,
+  "reason": "string"
+}
+
+Your response should contain only the JSON object, no additional text or formatting.
 
 # Information Context:
 Today's date is ${formatDateForLLM(new Date())}
