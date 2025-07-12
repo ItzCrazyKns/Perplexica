@@ -23,7 +23,7 @@ const Attach = ({
   optimizationMode: string;
 }) => {
   const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef<any>();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isSpeedMode = optimizationMode === 'speed';
   const isDisabled = isSpeedMode;
@@ -144,7 +144,7 @@ const Attach = ({
                 <div className="flex flex-row items-center space-x-4">
                   <button
                     type="button"
-                    onClick={() => !isDisabled && fileInputRef.current.click()}
+                    onClick={() => !isDisabled && fileInputRef.current?.click()}
                     disabled={isDisabled}
                     className={cn(
                       'flex flex-row items-center space-x-1 transition duration-200',
@@ -222,7 +222,7 @@ const Attach = ({
     <div className="relative group">
       <button
         type="button"
-        onClick={() => !isDisabled && fileInputRef.current.click()}
+        onClick={() => !isDisabled && fileInputRef.current?.click()}
         disabled={isDisabled}
         className={cn(
           'flex flex-row items-center space-x-1 rounded-xl transition duration-200 p-2',
