@@ -235,6 +235,11 @@ This fork adds several enhancements to the original Perplexica project:
 - ✅ Toggle for automatic suggestions
 - ✅ Added support for latest Anthropic models
 - ✅ Adds support for multiple user-customizable system prompt enhancement and personas so you can tailor output to your needs
+- ✅ **Model Visibility Management**: Server administrators can hide specific models from the user interface and API responses
+  - Hide expensive models to prevent accidental usage and cost overruns
+  - Remove non-functional or problematic models from user selection
+  - Configurable via settings UI with collapsible provider interface for better organization
+  - API support with `include_hidden` parameter for administrative access
 
 ### Bug Fixes
 

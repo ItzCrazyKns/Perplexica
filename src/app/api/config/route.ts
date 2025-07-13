@@ -10,6 +10,7 @@ import {
   getOpenaiApiKey,
   getDeepseekApiKey,
   getLMStudioApiEndpoint,
+  getHiddenModels,
   updateConfig,
 } from '@/lib/config';
 import {
@@ -70,6 +71,7 @@ export const GET = async (req: Request) => {
     config['customOpenaiApiUrl'] = getCustomOpenaiApiUrl();
     config['customOpenaiModelName'] = getCustomOpenaiModelName();
     config['baseUrl'] = getBaseUrl();
+    config['hiddenModels'] = getHiddenModels();
 
     return Response.json({ ...config }, { status: 200 });
   } catch (err) {
@@ -96,6 +98,9 @@ export const POST = async (req: Request) => {
     };
 
     const updatedConfig = {
+      GENERAL: {
+        HIDDEN_MODELS: config.hiddenModels || [],
+      },
       MODELS: {
         OPENAI: {
           API_KEY: getUpdatedProtectedValue(

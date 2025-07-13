@@ -16,6 +16,7 @@ interface Config {
     SIMILARITY_MEASURE: string;
     KEEP_ALIVE: string;
     BASE_URL?: string;
+    HIDDEN_MODELS: string[];
   };
   MODELS: {
     OPENAI: {
@@ -57,9 +58,35 @@ type RecursivePartial<T> = {
 const loadConfig = () => {
   // Server-side only
   if (typeof window === 'undefined') {
-    return toml.parse(
+    const config = toml.parse(
       fs.readFileSync(path.join(process.cwd(), `${configFileName}`), 'utf-8'),
     ) as any as Config;
+    
+    // Ensure GENERAL section exists
+    if (!config.GENERAL) {
+      config.GENERAL = {} as any;
+    }
+    
+    // Handle HIDDEN_MODELS - fix malformed table format to proper array
+    if (!config.GENERAL.HIDDEN_MODELS) {
+      config.GENERAL.HIDDEN_MODELS = [];
+    } else if (typeof config.GENERAL.HIDDEN_MODELS === 'object' && !Array.isArray(config.GENERAL.HIDDEN_MODELS)) {
+      // Convert malformed table format to array
+      const hiddenModelsObj = config.GENERAL.HIDDEN_MODELS as any;
+      const hiddenModelsArray: string[] = [];
+      
+      // Extract values from numeric keys and sort by key
+      const keys = Object.keys(hiddenModelsObj).map(k => parseInt(k)).filter(k => !isNaN(k)).sort((a, b) => a - b);
+      for (const key of keys) {
+        if (typeof hiddenModelsObj[key] === 'string') {
+          hiddenModelsArray.push(hiddenModelsObj[key]);
+        }
+      }
+      
+      config.GENERAL.HIDDEN_MODELS = hiddenModelsArray;
+    }
+    
+    return config;
   }
 
   // Client-side fallback - settings will be loaded via API
@@ -72,6 +99,8 @@ export const getSimilarityMeasure = () =>
 export const getKeepAlive = () => loadConfig().GENERAL.KEEP_ALIVE;
 
 export const getBaseUrl = () => loadConfig().GENERAL.BASE_URL;
+
+export const getHiddenModels = () => loadConfig().GENERAL.HIDDEN_MODELS;
 
 export const getOpenaiApiKey = () => loadConfig().MODELS.OPENAI.API_KEY;
 
@@ -109,17 +138,26 @@ const mergeConfigs = (current: any, update: any): any => {
     return update;
   }
 
+  // Handle arrays specifically - don't merge them, replace them
+  if (Array.isArray(update)) {
+    return update;
+  }
+
   const result = { ...current };
 
   for (const key in update) {
     if (Object.prototype.hasOwnProperty.call(update, key)) {
       const updateValue = update[key];
 
-      if (
+      // Handle arrays specifically - don't merge them, replace them
+      if (Array.isArray(updateValue)) {
+        result[key] = updateValue;
+      } else if (
         typeof updateValue === 'object' &&
         updateValue !== null &&
         typeof result[key] === 'object' &&
-        result[key] !== null
+        result[key] !== null &&
+        !Array.isArray(result[key])
       ) {
         result[key] = mergeConfigs(result[key], updateValue);
       } else if (updateValue !== undefined) {

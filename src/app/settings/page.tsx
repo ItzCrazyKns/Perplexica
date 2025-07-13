@@ -11,6 +11,8 @@ import {
   Save,
   X,
   RotateCcw,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -40,6 +42,7 @@ interface SettingsType {
   customOpenaiApiUrl: string;
   customOpenaiModelName: string;
   ollamaContextWindow: number;
+  hiddenModels: string[];
 }
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -245,6 +248,14 @@ export default function SettingsPage() {
   );
   const [isAddingNewPrompt, setIsAddingNewPrompt] = useState(false);
 
+  // Model visibility state variables
+  const [allModels, setAllModels] = useState<{
+    chat: Record<string, Record<string, any>>;
+    embedding: Record<string, Record<string, any>>;
+  }>({ chat: {}, embedding: {} });
+  const [hiddenModels, setHiddenModels] = useState<string[]>([]);
+  const [expandedProviders, setExpandedProviders] = useState<Set<string>>(new Set());
+
   // Default Search Settings state variables
   const [searchOptimizationMode, setSearchOptimizationMode] =
     useState<string>('');
@@ -264,6 +275,9 @@ export default function SettingsPage() {
       const data = (await res.json()) as SettingsType;
 
       setConfig(data);
+
+      // Populate hiddenModels state from config
+      setHiddenModels(data.hiddenModels || []);
 
       const chatModelProvidersKeys = Object.keys(data.chatModelProviders || {});
       const embeddingModelProvidersKeys = Object.keys(
@@ -319,7 +333,29 @@ export default function SettingsPage() {
       setIsLoading(false);
     };
 
+    const fetchAllModels = async () => {
+      try {
+        // Fetch complete model list including hidden models
+        const res = await fetch(`/api/models?include_hidden=true`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setAllModels({
+            chat: data.chatModelProviders || {},
+            embedding: data.embeddingModelProviders || {},
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch all models:', error);
+      }
+    };
+
     fetchConfig();
+    fetchAllModels();
 
     // Load search settings from localStorage
     const loadSearchSettings = () => {
@@ -527,6 +563,42 @@ export default function SettingsPage() {
 
   const saveSearchSetting = (key: string, value: string) => {
     localStorage.setItem(key, value);
+  };
+
+  const handleModelVisibilityToggle = async (modelKey: string, isVisible: boolean) => {
+    let updatedHiddenModels: string[];
+    
+    if (isVisible) {
+      // Model should be visible, remove from hidden list
+      updatedHiddenModels = hiddenModels.filter(m => m !== modelKey);
+    } else {
+      // Model should be hidden, add to hidden list
+      updatedHiddenModels = [...hiddenModels, modelKey];
+    }
+    
+    // Update local state immediately
+    setHiddenModels(updatedHiddenModels);
+    
+    // Persist changes to backend
+    try {
+      await saveConfig('hiddenModels', updatedHiddenModels);
+    } catch (error) {
+      console.error('Failed to save hidden models:', error);
+      // Revert local state on error
+      setHiddenModels(hiddenModels);
+    }
+  };
+
+  const toggleProviderExpansion = (providerId: string) => {
+    setExpandedProviders(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(providerId)) {
+        newSet.delete(providerId);
+      } else {
+        newSet.add(providerId);
+      }
+      return newSet;
+    });
   };
 
   const handleAddOrUpdateSystemPrompt = async () => {
@@ -1398,6 +1470,123 @@ export default function SettingsPage() {
                   )}
                 </div>
               )}
+            </SettingsSection>
+
+            <SettingsSection 
+              title="Model Visibility"
+              tooltip="Hide models from the API to prevent them from appearing in model lists.\nHidden models will not be available for selection in the interface.\nThis allows server admins to disable models that may incur large costs or won't work with the application."
+            >
+              <div className="flex flex-col space-y-3">
+                {/* Unified Models List */}
+                {(() => {
+                  // Combine all models from both chat and embedding providers
+                  const allProviders: Record<string, Record<string, any>> = {};
+                  
+                  // Add chat models
+                  Object.entries(allModels.chat).forEach(([provider, models]) => {
+                    if (!allProviders[provider]) {
+                      allProviders[provider] = {};
+                    }
+                    Object.entries(models).forEach(([modelKey, model]) => {
+                      allProviders[provider][modelKey] = model;
+                    });
+                  });
+                  
+                  // Add embedding models
+                  Object.entries(allModels.embedding).forEach(([provider, models]) => {
+                    if (!allProviders[provider]) {
+                      allProviders[provider] = {};
+                    }
+                    Object.entries(models).forEach(([modelKey, model]) => {
+                      allProviders[provider][modelKey] = model;
+                    });
+                  });
+
+                  return Object.keys(allProviders).length > 0 ? (
+                    Object.entries(allProviders).map(([provider, models]) => {
+                      const providerId = `provider-${provider}`;
+                      const isExpanded = expandedProviders.has(providerId);
+                      const modelEntries = Object.entries(models);
+                      const hiddenCount = modelEntries.filter(([modelKey]) => hiddenModels.includes(modelKey)).length;
+                      const totalCount = modelEntries.length;
+                      
+                      return (
+                        <div
+                          key={providerId}
+                          className="border border-light-200 dark:border-dark-200 rounded-lg overflow-hidden"
+                        >
+                          <button
+                            onClick={() => toggleProviderExpansion(providerId)}
+                            className="w-full p-3 bg-light-secondary dark:bg-dark-secondary hover:bg-light-200 dark:hover:bg-dark-200 transition-colors flex items-center justify-between"
+                          >
+                            <div className="flex items-center space-x-3">
+                              {isExpanded ? (
+                                <ChevronDown size={16} className="text-black/70 dark:text-white/70" />
+                              ) : (
+                                <ChevronRight size={16} className="text-black/70 dark:text-white/70" />
+                              )}
+                              <h4 className="text-sm font-medium text-black/80 dark:text-white/80">
+                                {(PROVIDER_METADATA as any)[provider]?.displayName ||
+                                  provider.charAt(0).toUpperCase() + provider.slice(1)}
+                              </h4>
+                            </div>
+                            <div className="flex items-center space-x-2 text-xs text-black/60 dark:text-white/60">
+                              <span>{totalCount - hiddenCount} visible</span>
+                              {hiddenCount > 0 && (
+                                <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded">
+                                  {hiddenCount} hidden
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                          
+                          {isExpanded && (
+                            <div className="p-3 bg-light-100 dark:bg-dark-100 border-t border-light-200 dark:border-dark-200">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                {modelEntries.map(([modelKey, model]) => (
+                                  <div
+                                    key={`${provider}-${modelKey}`}
+                                    className="flex items-center justify-between p-2 bg-white dark:bg-dark-secondary rounded-md"
+                                  >
+                                    <span className="text-sm text-black/90 dark:text-white/90">
+                                      {model.displayName || modelKey}
+                                    </span>
+                                    <Switch
+                                      checked={!hiddenModels.includes(modelKey)}
+                                      onChange={(checked) => {
+                                        handleModelVisibilityToggle(modelKey, checked);
+                                      }}
+                                      className={cn(
+                                        !hiddenModels.includes(modelKey)
+                                          ? 'bg-[#24A0ED]'
+                                          : 'bg-light-200 dark:bg-dark-200',
+                                        'relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none',
+                                      )}
+                                    >
+                                      <span
+                                        className={cn(
+                                          !hiddenModels.includes(modelKey)
+                                            ? 'translate-x-5'
+                                            : 'translate-x-1',
+                                          'inline-block h-3 w-3 transform rounded-full bg-white transition-transform',
+                                        )}
+                                      />
+                                    </Switch>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-sm text-black/60 dark:text-white/60 italic">
+                      No models available
+                    </p>
+                  );
+                })()}
+              </div>
             </SettingsSection>
 
             <SettingsSection
