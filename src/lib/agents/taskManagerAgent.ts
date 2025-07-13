@@ -142,9 +142,13 @@ export class TaskManagerAgent {
       });
 
       // Use structured output for task breakdown
-      const structuredLlm = withStructuredOutput(this.llm, TaskBreakdownSchema, {
-        name: 'break_down_tasks',
-      });
+      const structuredLlm = withStructuredOutput(
+        this.llm,
+        TaskBreakdownSchema,
+        {
+          name: 'break_down_tasks',
+        },
+      );
 
       const taskBreakdownResult = (await structuredLlm.invoke([prompt], {
         signal: this.signal,

@@ -254,7 +254,9 @@ export default function SettingsPage() {
     embedding: Record<string, Record<string, any>>;
   }>({ chat: {}, embedding: {} });
   const [hiddenModels, setHiddenModels] = useState<string[]>([]);
-  const [expandedProviders, setExpandedProviders] = useState<Set<string>>(new Set());
+  const [expandedProviders, setExpandedProviders] = useState<Set<string>>(
+    new Set(),
+  );
 
   // Default Search Settings state variables
   const [searchOptimizationMode, setSearchOptimizationMode] =
@@ -565,20 +567,23 @@ export default function SettingsPage() {
     localStorage.setItem(key, value);
   };
 
-  const handleModelVisibilityToggle = async (modelKey: string, isVisible: boolean) => {
+  const handleModelVisibilityToggle = async (
+    modelKey: string,
+    isVisible: boolean,
+  ) => {
     let updatedHiddenModels: string[];
-    
+
     if (isVisible) {
       // Model should be visible, remove from hidden list
-      updatedHiddenModels = hiddenModels.filter(m => m !== modelKey);
+      updatedHiddenModels = hiddenModels.filter((m) => m !== modelKey);
     } else {
       // Model should be hidden, add to hidden list
       updatedHiddenModels = [...hiddenModels, modelKey];
     }
-    
+
     // Update local state immediately
     setHiddenModels(updatedHiddenModels);
-    
+
     // Persist changes to backend
     try {
       await saveConfig('hiddenModels', updatedHiddenModels);
@@ -590,7 +595,7 @@ export default function SettingsPage() {
   };
 
   const toggleProviderExpansion = (providerId: string) => {
-    setExpandedProviders(prev => {
+    setExpandedProviders((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(providerId)) {
         newSet.delete(providerId);
@@ -1472,7 +1477,7 @@ export default function SettingsPage() {
               )}
             </SettingsSection>
 
-            <SettingsSection 
+            <SettingsSection
               title="Model Visibility"
               tooltip="Hide models from the API to prevent them from appearing in model lists.\nHidden models will not be available for selection in the interface.\nThis allows server admins to disable models that may incur large costs or won't work with the application."
             >
@@ -1481,35 +1486,41 @@ export default function SettingsPage() {
                 {(() => {
                   // Combine all models from both chat and embedding providers
                   const allProviders: Record<string, Record<string, any>> = {};
-                  
+
                   // Add chat models
-                  Object.entries(allModels.chat).forEach(([provider, models]) => {
-                    if (!allProviders[provider]) {
-                      allProviders[provider] = {};
-                    }
-                    Object.entries(models).forEach(([modelKey, model]) => {
-                      allProviders[provider][modelKey] = model;
-                    });
-                  });
-                  
+                  Object.entries(allModels.chat).forEach(
+                    ([provider, models]) => {
+                      if (!allProviders[provider]) {
+                        allProviders[provider] = {};
+                      }
+                      Object.entries(models).forEach(([modelKey, model]) => {
+                        allProviders[provider][modelKey] = model;
+                      });
+                    },
+                  );
+
                   // Add embedding models
-                  Object.entries(allModels.embedding).forEach(([provider, models]) => {
-                    if (!allProviders[provider]) {
-                      allProviders[provider] = {};
-                    }
-                    Object.entries(models).forEach(([modelKey, model]) => {
-                      allProviders[provider][modelKey] = model;
-                    });
-                  });
+                  Object.entries(allModels.embedding).forEach(
+                    ([provider, models]) => {
+                      if (!allProviders[provider]) {
+                        allProviders[provider] = {};
+                      }
+                      Object.entries(models).forEach(([modelKey, model]) => {
+                        allProviders[provider][modelKey] = model;
+                      });
+                    },
+                  );
 
                   return Object.keys(allProviders).length > 0 ? (
                     Object.entries(allProviders).map(([provider, models]) => {
                       const providerId = `provider-${provider}`;
                       const isExpanded = expandedProviders.has(providerId);
                       const modelEntries = Object.entries(models);
-                      const hiddenCount = modelEntries.filter(([modelKey]) => hiddenModels.includes(modelKey)).length;
+                      const hiddenCount = modelEntries.filter(([modelKey]) =>
+                        hiddenModels.includes(modelKey),
+                      ).length;
                       const totalCount = modelEntries.length;
-                      
+
                       return (
                         <div
                           key={providerId}
@@ -1521,13 +1532,21 @@ export default function SettingsPage() {
                           >
                             <div className="flex items-center space-x-3">
                               {isExpanded ? (
-                                <ChevronDown size={16} className="text-black/70 dark:text-white/70" />
+                                <ChevronDown
+                                  size={16}
+                                  className="text-black/70 dark:text-white/70"
+                                />
                               ) : (
-                                <ChevronRight size={16} className="text-black/70 dark:text-white/70" />
+                                <ChevronRight
+                                  size={16}
+                                  className="text-black/70 dark:text-white/70"
+                                />
                               )}
                               <h4 className="text-sm font-medium text-black/80 dark:text-white/80">
-                                {(PROVIDER_METADATA as any)[provider]?.displayName ||
-                                  provider.charAt(0).toUpperCase() + provider.slice(1)}
+                                {(PROVIDER_METADATA as any)[provider]
+                                  ?.displayName ||
+                                  provider.charAt(0).toUpperCase() +
+                                    provider.slice(1)}
                               </h4>
                             </div>
                             <div className="flex items-center space-x-2 text-xs text-black/60 dark:text-white/60">
@@ -1539,7 +1558,7 @@ export default function SettingsPage() {
                               )}
                             </div>
                           </button>
-                          
+
                           {isExpanded && (
                             <div className="p-3 bg-light-100 dark:bg-dark-100 border-t border-light-200 dark:border-dark-200">
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -1554,7 +1573,10 @@ export default function SettingsPage() {
                                     <Switch
                                       checked={!hiddenModels.includes(modelKey)}
                                       onChange={(checked) => {
-                                        handleModelVisibilityToggle(modelKey, checked);
+                                        handleModelVisibilityToggle(
+                                          modelKey,
+                                          checked,
+                                        );
                                       }}
                                       className={cn(
                                         !hiddenModels.includes(modelKey)

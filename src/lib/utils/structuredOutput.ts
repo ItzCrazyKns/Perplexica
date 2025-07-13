@@ -14,10 +14,10 @@ interface StructuredOutputOptions {
 export function withStructuredOutput<T extends z.ZodType>(
   llm: BaseChatModel,
   schema: T,
-  options: StructuredOutputOptions = {}
+  options: StructuredOutputOptions = {},
 ) {
   const isGroqModel = llm instanceof ChatGroq;
-  
+
   if (isGroqModel) {
     return llm.withStructuredOutput(schema, {
       name: options.name,

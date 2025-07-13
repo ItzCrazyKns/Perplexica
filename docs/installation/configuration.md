@@ -17,22 +17,26 @@ cp sample.config.toml config.toml
 General application settings.
 
 #### SIMILARITY_MEASURE
+
 - **Type**: String
 - **Options**: `"cosine"` or `"dot"`
 - **Default**: `"cosine"`
 - **Description**: The similarity measure used for embedding comparisons in search results ranking.
 
 #### KEEP_ALIVE
+
 - **Type**: String
 - **Default**: `"5m"`
 - **Description**: How long to keep Ollama models loaded into memory. Use time suffixes like `"5m"` for 5 minutes, `"1h"` for 1 hour, or `"-1m"` for indefinite.
 
 #### BASE_URL
+
 - **Type**: String
 - **Default**: `""` (empty)
 - **Description**: Optional base URL override. When set, overrides the detected URL for OpenSearch and other public URLs.
 
 #### HIDDEN_MODELS
+
 - **Type**: Array of Strings
 - **Default**: `[]` (empty array)
 - **Description**: Array of model names to hide from the user interface and API responses. Hidden models will not appear in model selection lists but can still be used if directly specified.
@@ -47,30 +51,39 @@ General application settings.
 Model provider configurations. Each provider has its own subsection.
 
 #### [MODELS.OPENAI]
+
 - **API_KEY**: Your OpenAI API key
 
 #### [MODELS.GROQ]
+
 - **API_KEY**: Your Groq API key
 
 #### [MODELS.ANTHROPIC]
+
 - **API_KEY**: Your Anthropic API key
 
 #### [MODELS.GEMINI]
+
 - **API_KEY**: Your Google Gemini API key
 
 #### [MODELS.CUSTOM_OPENAI]
+
 Configuration for OpenAI-compatible APIs (like LMStudio, vLLM, etc.)
+
 - **API_KEY**: API key for the custom endpoint
 - **API_URL**: Base URL for the OpenAI-compatible API
 - **MODEL_NAME**: Name of the model to use
 
 #### [MODELS.OLLAMA]
+
 - **API_URL**: Ollama server URL (e.g., `"http://host.docker.internal:11434"`)
 
 #### [MODELS.DEEPSEEK]
+
 - **API_KEY**: Your DeepSeek API key
 
 #### [MODELS.LM_STUDIO]
+
 - **API_URL**: LM Studio server URL (e.g., `"http://host.docker.internal:1234"`)
 
 ### [API_ENDPOINTS]
@@ -78,6 +91,7 @@ Configuration for OpenAI-compatible APIs (like LMStudio, vLLM, etc.)
 External service endpoints.
 
 #### SEARXNG
+
 - **Type**: String
 - **Description**: SearxNG API URL for web search functionality
 - **Example**: `"http://localhost:32768"`
@@ -97,16 +111,19 @@ Some configurations can also be set via environment variables, which take preced
 The `HIDDEN_MODELS` setting allows server administrators to control which models are visible to users:
 
 ### How It Works
+
 1. Models listed in `HIDDEN_MODELS` are filtered out of API responses
 2. The settings UI shows all models (including hidden ones) for management
 3. Hidden models can still be used if explicitly specified in API calls
 
 ### Managing Hidden Models
+
 1. **Via Configuration File**: Edit the `HIDDEN_MODELS` array in `config.toml`
 2. **Via Settings UI**: Use the "Model Visibility" section in the settings page
 3. **Via API**: Use the `/api/config` endpoint to update the configuration
 
 ### API Behavior
+
 - **Default**: `/api/models` returns only visible models
 - **Include Hidden**: `/api/models?include_hidden=true` returns all models (for admin use)
 
@@ -129,6 +146,7 @@ The `HIDDEN_MODELS` setting allows server administrators to control which models
 ### Configuration Validation
 
 The application validates configuration on startup and will log errors for:
+
 - Invalid TOML syntax
 - Missing required fields
 - Invalid URLs or API endpoints

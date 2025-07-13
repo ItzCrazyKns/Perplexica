@@ -61,31 +61,37 @@ const loadConfig = () => {
     const config = toml.parse(
       fs.readFileSync(path.join(process.cwd(), `${configFileName}`), 'utf-8'),
     ) as any as Config;
-    
+
     // Ensure GENERAL section exists
     if (!config.GENERAL) {
       config.GENERAL = {} as any;
     }
-    
+
     // Handle HIDDEN_MODELS - fix malformed table format to proper array
     if (!config.GENERAL.HIDDEN_MODELS) {
       config.GENERAL.HIDDEN_MODELS = [];
-    } else if (typeof config.GENERAL.HIDDEN_MODELS === 'object' && !Array.isArray(config.GENERAL.HIDDEN_MODELS)) {
+    } else if (
+      typeof config.GENERAL.HIDDEN_MODELS === 'object' &&
+      !Array.isArray(config.GENERAL.HIDDEN_MODELS)
+    ) {
       // Convert malformed table format to array
       const hiddenModelsObj = config.GENERAL.HIDDEN_MODELS as any;
       const hiddenModelsArray: string[] = [];
-      
+
       // Extract values from numeric keys and sort by key
-      const keys = Object.keys(hiddenModelsObj).map(k => parseInt(k)).filter(k => !isNaN(k)).sort((a, b) => a - b);
+      const keys = Object.keys(hiddenModelsObj)
+        .map((k) => parseInt(k))
+        .filter((k) => !isNaN(k))
+        .sort((a, b) => a - b);
       for (const key of keys) {
         if (typeof hiddenModelsObj[key] === 'string') {
           hiddenModelsArray.push(hiddenModelsObj[key]);
         }
       }
-      
+
       config.GENERAL.HIDDEN_MODELS = hiddenModelsArray;
     }
-    
+
     return config;
   }
 

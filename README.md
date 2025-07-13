@@ -75,7 +75,6 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 3. After cloning, navigate to the directory containing the project files.
 
 4. Rename the `sample.config.toml` file to `config.toml`. For Docker setups, you need only fill in the following fields:
-
    - `OPENAI`: Your OpenAI API key. **You only need to fill this if you wish to use OpenAI's models**.
    - `OLLAMA`: Your Ollama API URL. You should enter it as `http://host.docker.internal:PORT_NUMBER`. If you installed Ollama on port 11434, use `http://host.docker.internal:11434`. For other ports, adjust accordingly. **You need to fill this if you wish to use Ollama's models instead of OpenAI's**.
    - `GROQ`: Your Groq API key. **You only need to fill this if you wish to use Groq's hosted models**.
@@ -113,7 +112,6 @@ If you're encountering an Ollama connection error, it is likely due to the backe
 
 1. **Check your Ollama API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
-
    - **Windows:** Use `http://host.docker.internal:11434`
    - **Mac:** Use `http://host.docker.internal:11434`
    - **Linux:** Use `http://<private_ip_of_host>:11434`
@@ -121,7 +119,6 @@ If you're encountering an Ollama connection error, it is likely due to the backe
    Adjust the port number if you're using a different one.
 
 3. **Linux Users - Expose Ollama to Network:**
-
    - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0"`. Then restart Ollama by `systemctl restart ollama`. For more information see [Ollama docs](https://github.com/ollama/ollama/blob/main/docs/faq.md#setting-environment-variables-on-linux)
 
    - Ensure that the port (default is 11434) is not blocked by your firewall.
@@ -150,11 +147,9 @@ Perplexica runs on Next.js and handles all API requests. It works right away on 
 When running Perplexica behind a reverse proxy (like Nginx, Apache, or Traefik), follow these steps to ensure proper functionality:
 
 1. **Configure the BASE_URL setting**:
-
    - In `config.toml`, set the `BASE_URL` parameter under the `[GENERAL]` section to your public-facing URL (e.g., `https://perplexica.yourdomain.com`)
 
 2. **Ensure proper headers forwarding**:
-
    - Your reverse proxy should forward the following headers:
      - `X-Forwarded-Host`
      - `X-Forwarded-Proto`

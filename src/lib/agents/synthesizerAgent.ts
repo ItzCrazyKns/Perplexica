@@ -51,11 +51,38 @@ export class SynthesizerAgent {
         })
         .join('\n');
 
+      const recursionLimitMessage = state.recursionLimitReached
+        ? `# ⚠️ IMPORTANT NOTICE - LIMITED INFORMATION
+**The search process was interrupted due to complexity limits. You MUST start your response with a warning about incomplete information and qualify all statements appropriately.**
+## ⚠️ CRITICAL: Incomplete Information Response Requirements
+**You MUST:**
+1. **Start your response** with a clear warning that the information may be incomplete or conflicting
+2. **Acknowledge limitations** throughout your response where information gaps exist
+3. **Be transparent** about what you cannot determine from the available sources
+4. **Suggest follow-up actions** for the user to get more complete information
+5. **Qualify your statements** with phrases like "based on available information" or "from the limited sources gathered"
+
+**Example opening for incomplete information responses:**
+"⚠️ **Please note:** This response is based on incomplete information due to search complexity limits. The findings below may be missing important details or conflicting perspectives. I recommend verifying this information through additional research or rephrasing your query for better results.
+
+`
+        : '';
+
+      // If we have limited documents due to recursion limit, acknowledge this
+      const documentsAvailable = state.relevantDocuments?.length || 0;
+      const limitedInfoNote =
+        state.recursionLimitReached && documentsAvailable === 0
+          ? '**CRITICAL: No source documents were gathered due to search limitations.**\n\n'
+          : state.recursionLimitReached
+            ? `**NOTICE: Search was interrupted with ${documentsAvailable} documents gathered.**\n\n`
+            : '';
+
       const formattedPrompt = await template.format({
         personaInstructions: this.personaInstructions,
         conversationHistory: conversationHistory,
         relevantDocuments: relevantDocuments,
         query: state.originalQuery || state.query,
+        recursionLimitReached: recursionLimitMessage + limitedInfoNote,
       });
 
       // Stream the response in real-time using LLM streaming capabilities

@@ -8,6 +8,7 @@ import {
 import {
   BaseLangGraphError,
   END,
+  GraphRecursionError,
   MemorySaver,
   START,
   StateGraph,
@@ -181,21 +182,121 @@ export class AgentSearch {
       focusMode: this.focusMode,
     };
 
+    const threadId = `agent_search_${Date.now()}`;
+    const config = {
+      configurable: { thread_id: threadId },
+      recursionLimit: 18,
+      signal: this.signal,
+    };
+
     try {
-      await workflow.invoke(initialState, {
-        configurable: { thread_id: `agent_search_${Date.now()}` },
-        recursionLimit: 20,
-        signal: this.signal,
-      });
-    } catch (error: BaseLangGraphError | any) {
-      if (error instanceof BaseLangGraphError) {
-        console.error('LangGraph error occurred:', error.message);
-        if (error.lc_error_code === 'GRAPH_RECURSION_LIMIT') {
+      const result = await workflow.invoke(initialState, config);
+    } catch (error: any) {
+      if (error instanceof GraphRecursionError) {
+        console.warn(
+          'Graph recursion limit reached, attempting best-effort synthesis with gathered information',
+        );
+
+        // Emit agent action to explain what happened
+        this.emitter.emit(
+          'data',
+          JSON.stringify({
+            type: 'agent_action',
+            data: {
+              action: 'recursion_limit_recovery',
+              message:
+                'Search process reached complexity limits. Attempting to provide best-effort response with gathered information.',
+              details:
+                'The agent workflow exceeded the maximum number of steps allowed. Recovering by synthesizing available data.',
+            },
+          }),
+        );
+
+        try {
+          // Get the latest state from the checkpointer to access gathered information
+          const latestState = await workflow.getState({
+            configurable: { thread_id: threadId },
+          });
+
+          if (latestState && latestState.values) {
+            // Create emergency synthesis state using gathered information
+            const stateValues = latestState.values;
+            const emergencyState = {
+              messages: stateValues.messages || initialState.messages,
+              query: stateValues.query || initialState.query,
+              relevantDocuments: stateValues.relevantDocuments || [],
+              bannedSummaryUrls: stateValues.bannedSummaryUrls || [],
+              bannedPreviewUrls: stateValues.bannedPreviewUrls || [],
+              searchInstructionHistory:
+                stateValues.searchInstructionHistory || [],
+              searchInstructions: stateValues.searchInstructions || '',
+              next: 'synthesizer',
+              analysis: stateValues.analysis || '',
+              fullAnalysisAttempts: stateValues.fullAnalysisAttempts || 0,
+              tasks: stateValues.tasks || [],
+              currentTaskIndex: stateValues.currentTaskIndex || 0,
+              originalQuery:
+                stateValues.originalQuery ||
+                stateValues.query ||
+                initialState.query,
+              fileIds: stateValues.fileIds || initialState.fileIds,
+              focusMode: stateValues.focusMode || initialState.focusMode,
+              urlsToSummarize: stateValues.urlsToSummarize || [],
+              summarizationIntent: stateValues.summarizationIntent || '',
+              recursionLimitReached: true,
+            };
+
+            const documentsCount =
+              emergencyState.relevantDocuments?.length || 0;
+            console.log(
+              `Attempting emergency synthesis with ${documentsCount} gathered documents`,
+            );
+
+            // Emit detailed agent action about the recovery attempt
+            this.emitter.emit(
+              'data',
+              JSON.stringify({
+                type: 'agent_action',
+                data: {
+                  action: 'emergency_synthesis',
+                  message: `Proceeding with available information: ${documentsCount} documents gathered${emergencyState.analysis ? ', analysis available' : ''}`,
+                  details: `Recovered state contains: ${documentsCount} relevant documents, ${emergencyState.searchInstructionHistory?.length || 0} search attempts, ${emergencyState.analysis ? 'analysis data' : 'no analysis'}`,
+                },
+              }),
+            );
+
+            // Only proceed with synthesis if we have some useful information
+            if (documentsCount > 0 || emergencyState.analysis) {
+              await this.synthesizerAgent.execute(emergencyState);
+            } else {
+              // If we don't have any gathered information, provide a helpful message
+              this.emitter.emit(
+                'data',
+                JSON.stringify({
+                  type: 'response',
+                  data: "⚠️ **Search Process Incomplete** - The search process reached complexity limits before gathering sufficient information to provide a meaningful response. Please try:\n\n- Using more specific keywords\n- Breaking your question into smaller parts\n- Rephrasing your query to be more focused\n\nI apologize that I couldn't provide the information you were looking for.",
+                }),
+              );
+              this.emitter.emit('end');
+            }
+          } else {
+            // Fallback if we can't retrieve state
+            this.emitter.emit(
+              'data',
+              JSON.stringify({
+                type: 'response',
+                data: '⚠️ **Limited Information Available** - The search process encountered complexity limits and was unable to gather sufficient information. Please try rephrasing your question or breaking it into smaller, more specific parts.',
+              }),
+            );
+            this.emitter.emit('end');
+          }
+        } catch (synthError) {
+          console.error('Emergency synthesis failed:', synthError);
           this.emitter.emit(
             'data',
             JSON.stringify({
               type: 'response',
-              data: "I've been working on this for a while and can't find a solution. Please try again with a different query.",
+              data: '⚠️ **Search Process Interrupted** - The search encountered complexity limits and could not complete successfully. Please try a simpler query or break your question into smaller parts.',
             }),
           );
           this.emitter.emit('end');

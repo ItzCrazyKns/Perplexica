@@ -92,7 +92,7 @@ export const embeddingModelProviders: Record<
 };
 
 export const getAvailableChatModelProviders = async (
-  options: { includeHidden?: boolean } = {}
+  options: { includeHidden?: boolean } = {},
 ) => {
   const { includeHidden = false } = options;
   const models: Record<string, Record<string, ChatModel>> = {};
@@ -154,7 +154,7 @@ export const getAvailableChatModelProviders = async (
 };
 
 export const getAvailableEmbeddingModelProviders = async (
-  options: { includeHidden?: boolean } = {}
+  options: { includeHidden?: boolean } = {},
 ) => {
   const { includeHidden = false } = options;
   const models: Record<string, Record<string, EmbeddingModel>> = {};

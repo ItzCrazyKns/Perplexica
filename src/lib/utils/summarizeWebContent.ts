@@ -52,9 +52,13 @@ export const summarizeWebContent = async (
 
         try {
           // Create structured LLM with Zod schema
-          const structuredLLM = withStructuredOutput(llm, RelevanceCheckSchema, {
-            name: 'check_content_relevance',
-          });
+          const structuredLLM = withStructuredOutput(
+            llm,
+            RelevanceCheckSchema,
+            {
+              name: 'check_content_relevance',
+            },
+          );
 
           const relevanceResult = await structuredLLM.invoke(
             `${systemPrompt}You are a content relevance checker. Your task is to determine if the given content is relevant to the user's query.
