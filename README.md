@@ -84,7 +84,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 3. After cloning, navigate to the directory containing the project files.
 
-4. Update environment variables in `docker-compose.yml` file to configure `config.toml`. 
+4. Update environment variables in `docker-compose.yaml` file to configure `config.toml`. 
 
 Example: 
 
