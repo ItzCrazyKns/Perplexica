@@ -10,6 +10,7 @@ import {
   Transition,
 } from '@headlessui/react';
 import jsPDF from 'jspdf';
+import IncognitoToggle from './IncognitoToggle';
 
 const downloadFile = (filename: string, content: string, type: string) => {
   const blob = new Blob([content], { type });
@@ -173,6 +174,7 @@ const Navbar = ({
       <p className="hidden lg:flex">{title}</p>
 
       <div className="flex flex-row items-center space-x-4">
+        <IncognitoToggle showLabel={false} className="hidden lg:flex" />
         <Popover className="relative">
           <PopoverButton className="active:scale-95 transition duration-100 cursor-pointer p-2 rounded-full hover:bg-light-secondary dark:hover:bg-dark-secondary">
             <Share size={17} />

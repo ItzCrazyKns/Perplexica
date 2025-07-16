@@ -10,6 +10,7 @@ import {
   getDeepseekApiKey,
   getAimlApiKey,
   getLMStudioApiEndpoint,
+  getHistoryRetentionDays,
   updateConfig,
 } from '@/lib/config';
 import {
@@ -62,6 +63,7 @@ export const GET = async (req: Request) => {
     config['customOpenaiApiUrl'] = getCustomOpenaiApiUrl();
     config['customOpenaiApiKey'] = getCustomOpenaiApiKey();
     config['customOpenaiModelName'] = getCustomOpenaiModelName();
+    config['historyRetentionDays'] = getHistoryRetentionDays();
 
     return Response.json({ ...config }, { status: 200 });
   } catch (err) {
@@ -78,6 +80,9 @@ export const POST = async (req: Request) => {
     const config = await req.json();
 
     const updatedConfig = {
+      HISTORY: {
+        RETENTION_DAYS: config.historyRetentionDays,
+      },
       MODELS: {
         OPENAI: {
           API_KEY: config.openaiApiKey,

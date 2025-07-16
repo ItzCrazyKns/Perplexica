@@ -10,7 +10,7 @@ import { Document } from '@langchain/core/documents';
 import { File } from 'lucide-react';
 import { Fragment, useState } from 'react';
 
-const MessageSources = ({ sources }: { sources: Document[] }) => {
+const MessageSources = ({ sources, layout = 'grid' }: { sources: Document[]; layout?: 'grid' | 'list' }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const closeModal = () => {
@@ -22,6 +22,71 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
     setIsDialogOpen(true);
     document.body.classList.add('overflow-hidden-scrollable');
   };
+
+  if (layout === 'list') {
+    return (
+      <div className="flex flex-col space-y-6">
+        {sources.map((source, i) => (
+          <div key={i} className="flex items-start space-x-4">
+            {/* Left side: favicon */}
+            <div className="flex-shrink-0 mt-1">
+              {source.metadata.url === 'File' ? (
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700">
+                  <File size={16} className="text-gray-600 dark:text-gray-400" />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 p-1">
+                  <img
+                    src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
+                    width={20}
+                    height={20}
+                    alt="favicon"
+                    className="rounded-sm"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Main content */}
+            <div className="flex-1 min-w-0">
+              <a
+                href={source.metadata.url}
+                target="_blank"
+                className="group block"
+              >
+                {/* Number and domain line */}
+                <div className="flex items-center space-x-2 mb-2">
+                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {i + 1}. {source.metadata.url.replace(/^https?:\/\//, '').split('/')[0]}
+                  </span>
+                </div>
+                
+                {/* Title line */}
+                <h3 className="text-xl text-gray-700 dark:text-white hover:underline group-hover:underline font-normal leading-tight mb-2 overflow-hidden" style={{
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical'
+                }}>
+                  {source.metadata.title}
+                </h3>
+                
+                {/* Description/snippet line */}
+                {source.pageContent && (
+                  <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed overflow-hidden" style={{
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical'
+                  }}>
+                    {source.pageContent.substring(0, 300)}...
+                  </p>
+                )}
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
