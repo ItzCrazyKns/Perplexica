@@ -43,6 +43,9 @@ interface Config {
     LM_STUDIO: {
       API_URL: string;
     };
+    OPENROUTER: {
+      API_KEY: string;
+    };
     CUSTOM_OPENAI: {
       API_URL: string;
       API_KEY: string;
@@ -114,6 +117,8 @@ export const getHiddenModels = () => loadConfig().GENERAL.HIDDEN_MODELS;
 export const getOpenaiApiKey = () => loadConfig().MODELS.OPENAI.API_KEY;
 
 export const getGroqApiKey = () => loadConfig().MODELS.GROQ.API_KEY;
+
+export const getOpenrouterApiKey = () => loadConfig().MODELS.OPENROUTER.API_KEY;
 
 export const getAnthropicApiKey = () => loadConfig().MODELS.ANTHROPIC.API_KEY;
 
