@@ -9,6 +9,7 @@ import {
   getOllamaApiEndpoint,
   getOpenaiApiKey,
   getDeepseekApiKey,
+  getAimlApiKey,
   getLMStudioApiEndpoint,
   getHiddenModels,
   updateConfig,
@@ -64,6 +65,7 @@ export const GET = async (req: Request) => {
     config['geminiApiKey'] = protectApiKey(getGeminiApiKey());
     config['deepseekApiKey'] = protectApiKey(getDeepseekApiKey());
     config['customOpenaiApiKey'] = protectApiKey(getCustomOpenaiApiKey());
+    config['aimlApiKey'] = protectApiKey(getAimlApiKey());
 
     // Non-sensitive values remain unchanged
     config['ollamaApiUrl'] = getOllamaApiEndpoint();
@@ -130,6 +132,12 @@ export const POST = async (req: Request) => {
           API_KEY: getUpdatedProtectedValue(
             config.deepseekApiKey,
             getDeepseekApiKey(),
+          ),
+        },
+        AIMLAPI: {
+          API_KEY: getUpdatedProtectedValue(
+            config.aimlApiKey,
+            getAimlApiKey(),
           ),
         },
         LM_STUDIO: {

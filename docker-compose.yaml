@@ -18,6 +18,7 @@ services:
         - linux/amd64
     environment:
       - SEARXNG_API_URL=http://searxng:8080
+      - DATA_DIR=/home/perplexica
     ports:
       - 3000:3000
     networks:

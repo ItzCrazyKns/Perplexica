@@ -38,6 +38,7 @@ interface SettingsType {
   ollamaApiUrl: string;
   lmStudioApiUrl: string;
   deepseekApiKey: string;
+  aimlApiKey: string;
   customOpenaiApiKey: string;
   customOpenaiApiUrl: string;
   customOpenaiModelName: string;
@@ -228,7 +229,7 @@ export default function SettingsPage() {
   const [selectedEmbeddingModel, setSelectedEmbeddingModel] = useState<
     string | null
   >(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [automaticSuggestions, setAutomaticSuggestions] = useState(true);
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
   const [contextWindowSize, setContextWindowSize] = useState(2048);
@@ -267,7 +268,6 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const fetchConfig = async () => {
-      setIsLoading(true);
       const res = await fetch(`/api/config`, {
         headers: {
           'Content-Type': 'application/json',
@@ -1727,6 +1727,44 @@ export default function SettingsPage() {
                       }));
                     }}
                     onSave={(value) => saveConfig('deepseekApiKey', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    AI/ML API Key
+                  </p>
+                  <InputComponent
+                    type="text"
+                    placeholder="AI/ML API Key"
+                    value={config.aimlApiKey}
+                    isSaving={savingStates['aimlApiKey']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        aimlApiKey: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('aimlApiKey', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    AI/ML API Key
+                  </p>
+                  <InputComponent
+                    type="text"
+                    placeholder="AI/ML API Key"
+                    value={config.aimlApiKey}
+                    isSaving={savingStates['aimlApiKey']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        aimlApiKey: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('aimlApiKey', value)}
                   />
                 </div>
 
