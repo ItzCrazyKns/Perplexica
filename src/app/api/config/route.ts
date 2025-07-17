@@ -135,10 +135,7 @@ export const POST = async (req: Request) => {
           ),
         },
         AIMLAPI: {
-          API_KEY: getUpdatedProtectedValue(
-            config.aimlApiKey,
-            getAimlApiKey(),
-          ),
+          API_KEY: getUpdatedProtectedValue(config.aimlApiKey, getAimlApiKey()),
         },
         LM_STUDIO: {
           API_URL: config.lmStudioApiUrl,
