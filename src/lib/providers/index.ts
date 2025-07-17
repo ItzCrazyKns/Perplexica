@@ -46,6 +46,10 @@ import {
   loadLMStudioEmbeddingsModels,
   PROVIDER_INFO as LMStudioInfo,
 } from './lmstudio';
+import {
+  loadOpenrouterChatModels,
+  PROVIDER_INFO as OpenRouterInfo,
+} from './openrouter';
 
 export const PROVIDER_METADATA = {
   openai: OpenAIInfo,
@@ -57,6 +61,7 @@ export const PROVIDER_METADATA = {
   deepseek: DeepseekInfo,
   aimlapi: AimlApiInfo,
   lmstudio: LMStudioInfo,
+  openrouter: OpenRouterInfo,
   custom_openai: {
     key: 'custom_openai',
     displayName: 'Custom OpenAI',
@@ -85,6 +90,7 @@ export const chatModelProviders: Record<
   deepseek: loadDeepseekChatModels,
   aimlapi: loadAimlApiChatModels,
   lmstudio: loadLMStudioChatModels,
+  openrouter: loadOpenrouterChatModels,
 };
 
 export const embeddingModelProviders: Record<

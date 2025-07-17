@@ -8,6 +8,7 @@ import {
   getGroqApiKey,
   getOllamaApiEndpoint,
   getOpenaiApiKey,
+  getOpenrouterApiKey,
   getDeepseekApiKey,
   getAimlApiKey,
   getLMStudioApiEndpoint,
@@ -64,6 +65,7 @@ export const GET = async (req: Request) => {
     config['anthropicApiKey'] = protectApiKey(getAnthropicApiKey());
     config['geminiApiKey'] = protectApiKey(getGeminiApiKey());
     config['deepseekApiKey'] = protectApiKey(getDeepseekApiKey());
+    config['openrouterApiKey'] = protectApiKey(getOpenrouterApiKey());
     config['customOpenaiApiKey'] = protectApiKey(getCustomOpenaiApiKey());
     config['aimlApiKey'] = protectApiKey(getAimlApiKey());
 
@@ -139,6 +141,12 @@ export const POST = async (req: Request) => {
         },
         LM_STUDIO: {
           API_URL: config.lmStudioApiUrl,
+        },
+        OPENROUTER: {
+          API_KEY: getUpdatedProtectedValue(
+            config.openrouterApiKey,
+            getOpenrouterApiKey(),
+          ),
         },
         CUSTOM_OPENAI: {
           API_URL: config.customOpenaiApiUrl,
