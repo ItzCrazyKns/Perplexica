@@ -232,6 +232,7 @@ export default function SettingsPage() {
   >(null);
   const [isLoading, setIsLoading] = useState(true);
   const [automaticSuggestions, setAutomaticSuggestions] = useState(true);
+  const [temperatureUnit, setTemperatureUnit] = useState<'C' | 'F'>('C');
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
   const [contextWindowSize, setContextWindowSize] = useState(2048);
   const [isCustomContextWindow, setIsCustomContextWindow] = useState(false);
@@ -332,6 +333,8 @@ export default function SettingsPage() {
       setIsCustomContextWindow(
         !predefinedContextSizes.includes(storedContextWindow),
       );
+
+      setTemperatureUnit(localStorage.getItem('temperatureUnit')! as 'C' | 'F');
 
       setIsLoading(false);
     };
@@ -553,6 +556,8 @@ export default function SettingsPage() {
         localStorage.setItem('embeddingModel', value);
       } else if (key === 'ollamaContextWindow') {
         localStorage.setItem('ollamaContextWindow', value.toString());
+      } else if (key === 'temperatureUnit') {
+        localStorage.setItem('temperatureUnit', value.toString());
       }
     } catch (err) {
       console.error('Failed to save:', err);
@@ -721,12 +726,34 @@ export default function SettingsPage() {
       ) : (
         config && (
           <div className="flex flex-col space-y-6 pb-28 lg:pb-8">
-            <SettingsSection title="Appearance">
+            <SettingsSection title="Preferences">
               <div className="flex flex-col space-y-1">
                 <p className="text-black/70 dark:text-white/70 text-sm">
                   Theme
                 </p>
                 <ThemeSwitcher />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <p className="text-black/70 dark:text-white/70 text-sm">
+                  Temperature Unit
+                </p>
+                <Select
+                  value={temperatureUnit ?? undefined}
+                  onChange={(e) => {
+                    setTemperatureUnit(e.target.value as 'C' | 'F');
+                    saveConfig('temperatureUnit', e.target.value);
+                  }}
+                  options={[
+                    {
+                      label: 'Celsius',
+                      value: 'C',
+                    },
+                    {
+                      label: 'Fahrenheit',
+                      value: 'F',
+                    },
+                  ]}
+                />
               </div>
             </SettingsSection>
 
