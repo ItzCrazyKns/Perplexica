@@ -1,9 +1,10 @@
-FROM node:20.18.0-slim AS builder
+FROM --platform=linux/amd64 node:20-slim AS builder
 
 WORKDIR /home/perplexica
 
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile --network-timeout 600000
+ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY tsconfig.json next.config.mjs next-env.d.ts postcss.config.js drizzle.config.ts tailwind.config.ts ./
 COPY src ./src
@@ -15,7 +16,9 @@ RUN yarn build
 RUN yarn add --dev @vercel/ncc
 RUN yarn ncc build ./src/lib/db/migrate.ts -o migrator
 
-FROM node:20.18.0-slim
+FROM --platform=linux/amd64 node:20-slim
+
+ENV NEXT_TELEMETRY_DISABLED=1
 
 WORKDIR /home/perplexica
 
@@ -28,8 +31,14 @@ COPY drizzle ./drizzle
 COPY --from=builder /home/perplexica/migrator/build ./build
 COPY --from=builder /home/perplexica/migrator/index.js ./migrate.js
 
-RUN mkdir /home/perplexica/uploads
-
 COPY entrypoint.sh ./entrypoint.sh
-RUN chmod +x ./entrypoint.sh
+
+RUN mkdir /home/perplexica/uploads && \
+    chmod +x /home/perplexica/entrypoint.sh && \
+    npm install playwright && \
+    npx -y playwright install chromium --only-shell --with-deps && \
+    apt-get update && \
+    apt-get install -y procps && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 CMD ["./entrypoint.sh"]

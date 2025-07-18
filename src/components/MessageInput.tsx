@@ -1,11 +1,12 @@
-import { cn } from '@/lib/utils';
-import { ArrowUp } from 'lucide-react';
+import { ArrowRight, ArrowUp, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
-import Attach from './MessageInputActions/Attach';
-import CopilotToggle from './MessageInputActions/Copilot';
 import { File } from './ChatWindow';
-import AttachSmall from './MessageInputActions/AttachSmall';
+import Attach from './MessageInputActions/Attach';
+import Focus from './MessageInputActions/Focus';
+import ModelSelector from './MessageInputActions/ModelSelector';
+import Optimization from './MessageInputActions/Optimization';
+import SystemPromptSelector from './MessageInputActions/SystemPromptSelector'; // Import new component
 
 const MessageInput = ({
   sendMessage,
@@ -14,125 +15,208 @@ const MessageInput = ({
   setFileIds,
   files,
   setFiles,
+  optimizationMode,
+  setOptimizationMode,
+  focusMode,
+  setFocusMode,
+  firstMessage,
+  onCancel,
+  systemPromptIds,
+  setSystemPromptIds,
 }: {
-  sendMessage: (message: string) => void;
+  sendMessage: (
+    message: string,
+    options?: {
+      messageId?: string; // For rewrites/edits
+      selectedSystemPromptIds?: string[];
+    },
+  ) => void;
   loading: boolean;
   fileIds: string[];
   setFileIds: (fileIds: string[]) => void;
   files: File[];
   setFiles: (files: File[]) => void;
+  optimizationMode: string;
+  setOptimizationMode: (mode: string) => void;
+  focusMode: string;
+  setFocusMode: (mode: string) => void;
+  firstMessage: boolean;
+  onCancel?: () => void;
+  systemPromptIds: string[];
+  setSystemPromptIds: (ids: string[]) => void;
 }) => {
-  const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [message, setMessage] = useState('');
-  const [textareaRows, setTextareaRows] = useState(1);
-  const [mode, setMode] = useState<'multi' | 'single'>('single');
+  const [selectedModel, setSelectedModel] = useState<{
+    provider: string;
+    model: string;
+  } | null>(null);
 
   useEffect(() => {
-    if (textareaRows >= 2 && message && mode === 'single') {
-      setMode('multi');
-    } else if (!message && mode === 'multi') {
-      setMode('single');
+    // Load saved model preferences from localStorage
+    const chatModelProvider = localStorage.getItem('chatModelProvider');
+    const chatModel = localStorage.getItem('chatModel');
+
+    if (chatModelProvider && chatModel) {
+      setSelectedModel({
+        provider: chatModelProvider,
+        model: chatModel,
+      });
     }
-  }, [textareaRows, mode, message]);
+
+    const storedPromptIds = localStorage.getItem('selectedSystemPromptIds');
+    if (storedPromptIds) {
+      try {
+        const parsedIds = JSON.parse(storedPromptIds);
+        if (Array.isArray(parsedIds)) {
+          setSystemPromptIds(parsedIds);
+        }
+      } catch (e) {
+        console.error(
+          'Failed to parse selectedSystemPromptIds from localStorage',
+          e,
+        );
+        localStorage.removeItem('selectedSystemPromptIds'); // Clear corrupted data
+      }
+    }
+  }, [setSystemPromptIds]);
+
+  useEffect(() => {
+    if (systemPromptIds.length > 0) {
+      localStorage.setItem(
+        'selectedSystemPromptIds',
+        JSON.stringify(systemPromptIds),
+      );
+    } else {
+      // Remove from localStorage if no prompts are selected to keep it clean
+      localStorage.removeItem('selectedSystemPromptIds');
+    }
+  }, [systemPromptIds]);
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const activeElement = document.activeElement;
-
       const isInputFocused =
         activeElement?.tagName === 'INPUT' ||
         activeElement?.tagName === 'TEXTAREA' ||
         activeElement?.hasAttribute('contenteditable');
-
       if (e.key === '/' && !isInputFocused) {
         e.preventDefault();
         inputRef.current?.focus();
       }
     };
-
     document.addEventListener('keydown', handleKeyDown);
-
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
+  // Function to handle message submission
+  const handleSubmitMessage = () => {
+    // Only submit if we have a non-empty message and not currently loading
+    if (loading || message.trim().length === 0) return;
+
+    // Make sure the selected model is used when sending a message
+    if (selectedModel) {
+      localStorage.setItem('chatModelProvider', selectedModel.provider);
+      localStorage.setItem('chatModel', selectedModel.model);
+    }
+
+    sendMessage(message);
+    setMessage('');
+  };
+
   return (
     <form
       onSubmit={(e) => {
-        if (loading) return;
         e.preventDefault();
-        sendMessage(message);
-        setMessage('');
+        handleSubmitMessage();
       }}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' && !e.shiftKey && !loading) {
+        if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault();
-          sendMessage(message);
-          setMessage('');
+          handleSubmitMessage();
         }
       }}
-      className={cn(
-        'bg-light-secondary dark:bg-dark-secondary p-4 flex items-center overflow-hidden border border-light-200 dark:border-dark-200',
-        mode === 'multi' ? 'flex-col rounded-lg' : 'flex-row rounded-full',
-      )}
+      className="w-full"
     >
-      {mode === 'single' && (
-        <AttachSmall
-          fileIds={fileIds}
-          setFileIds={setFileIds}
-          files={files}
-          setFiles={setFiles}
-        />
-      )}
-      <TextareaAutosize
-        ref={inputRef}
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        onHeightChange={(height, props) => {
-          setTextareaRows(Math.ceil(height / props.rowHeight));
-        }}
-        className="transition bg-transparent dark:placeholder:text-white/50 placeholder:text-sm text-sm dark:text-white resize-none focus:outline-none w-full px-2 max-h-24 lg:max-h-36 xl:max-h-48 flex-grow flex-shrink"
-        placeholder="Ask a follow-up"
-      />
-      {mode === 'single' && (
-        <div className="flex flex-row items-center space-x-4">
-          <CopilotToggle
-            copilotEnabled={copilotEnabled}
-            setCopilotEnabled={setCopilotEnabled}
+      <div className="flex flex-col bg-light-secondary dark:bg-dark-secondary px-3 pt-4 pb-2 rounded-lg w-full border border-light-200 dark:border-dark-200">
+        <div className="flex flex-row items-end space-x-2 mb-2">
+          <TextareaAutosize
+            ref={inputRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            minRows={1}
+            className="mb-2 bg-transparent placeholder:text-black/50 dark:placeholder:text-white/50 text-sm text-black dark:text-white resize-none focus:outline-none w-full max-h-24 lg:max-h-36 xl:max-h-48"
+            placeholder={firstMessage ? 'Ask anything...' : 'Ask a follow-up'}
           />
-          <button
-            disabled={message.trim().length === 0 || loading}
-            className="bg-[#24A0ED] text-white disabled:text-black/50 dark:disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#e0e0dc79] dark:disabled:bg-[#ececec21] rounded-full p-2"
-          >
-            <ArrowUp className="bg-background" size={17} />
-          </button>
+          <Optimization
+            optimizationMode={optimizationMode}
+            setOptimizationMode={(optimizationMode) => {
+              setOptimizationMode(optimizationMode);
+              localStorage.setItem('optimizationMode', optimizationMode);
+            }}
+          />
         </div>
-      )}
-      {mode === 'multi' && (
-        <div className="flex flex-row items-center justify-between w-full pt-2">
-          <AttachSmall
-            fileIds={fileIds}
-            setFileIds={setFileIds}
-            files={files}
-            setFiles={setFiles}
-          />
-          <div className="flex flex-row items-center space-x-4">
-            <CopilotToggle
-              copilotEnabled={copilotEnabled}
-              setCopilotEnabled={setCopilotEnabled}
+        <div className="flex flex-row items-center justify-between">
+          <div className="flex flex-row items-center space-x-2">
+            <Focus focusMode={focusMode} setFocusMode={setFocusMode} />
+            <Attach
+              fileIds={fileIds}
+              setFileIds={setFileIds}
+              files={files}
+              setFiles={setFiles}
+              optimizationMode={optimizationMode}
             />
-            <button
-              disabled={message.trim().length === 0 || loading}
-              className="bg-[#24A0ED] text-white text-black/50 dark:disabled:text-white/50 hover:bg-opacity-85 transition duration-100 disabled:bg-[#e0e0dc79] dark:disabled:bg-[#ececec21] rounded-full p-2"
-            >
-              <ArrowUp className="bg-background" size={17} />
-            </button>
+          </div>
+          <div className="flex flex-row items-center space-x-2">
+            <ModelSelector
+              showModelName={false}
+              selectedModel={selectedModel}
+              setSelectedModel={(selectedModel) => {
+                setSelectedModel(selectedModel);
+                localStorage.setItem(
+                  'chatModelProvider',
+                  selectedModel.provider,
+                );
+                localStorage.setItem('chatModel', selectedModel.model);
+              }}
+            />
+            <SystemPromptSelector
+              selectedPromptIds={systemPromptIds}
+              onSelectedPromptIdsChange={setSystemPromptIds}
+            />
+            {loading ? (
+              <button
+                type="button"
+                className="bg-red-700 text-white hover:bg-red-800 transition duration-100 rounded-full p-2 relative group"
+                onClick={onCancel}
+                aria-label="Cancel"
+              >
+                {loading && (
+                  <div className="absolute inset-0 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                )}
+                <span className="relative flex items-center justify-center w-[17px] h-[17px]">
+                  <Square size={17} className="text-white" />
+                </span>
+              </button>
+            ) : (
+              <button
+                disabled={message.trim().length === 0}
+                className="bg-[#24A0ED] text-white disabled:text-black/50 dark:disabled:text-white/50 disabled:bg-[#e0e0dc] dark:disabled:bg-[#ececec21] hover:bg-opacity-85 transition duration-100 rounded-full p-2"
+                type="submit"
+              >
+                {firstMessage ? (
+                  <ArrowRight className="bg-background" size={17} />
+                ) : (
+                  <ArrowUp className="bg-background" size={17} />
+                )}
+              </button>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </form>
   );
 };

@@ -19,6 +19,12 @@ interface SearxngSearchResult {
   iframe_src?: string;
 }
 
+interface SearxngResponse {
+  results: SearxngSearchResult[];
+  suggestions: string[];
+  searchUrl: string;
+}
+
 export const searchSearxng = async (
   query: string,
   opts?: SearxngSearchOptions,
@@ -44,5 +50,16 @@ export const searchSearxng = async (
   const results: SearxngSearchResult[] = res.data.results;
   const suggestions: string[] = res.data.suggestions;
 
-  return { results, suggestions };
+  // Create a URL for viewing the search results in the SearXNG web interface
+  const searchUrl = new URL(searxngURL);
+  searchUrl.pathname = '/search';
+  searchUrl.searchParams.append('q', query);
+  if (opts?.engines?.length) {
+    searchUrl.searchParams.append('engines', opts.engines.join(','));
+  }
+  if (opts?.language) {
+    searchUrl.searchParams.append('language', opts.language);
+  }
+
+  return { results, suggestions, searchUrl: searchUrl.toString() };
 };

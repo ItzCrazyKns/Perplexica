@@ -6,8 +6,8 @@ export const PROVIDER_INFO = {
   key: 'ollama',
   displayName: 'Ollama',
 };
-import { ChatOllama } from '@langchain/community/chat_models/ollama';
-import { OllamaEmbeddings } from '@langchain/community/embeddings/ollama';
+import { ChatOllama } from '@langchain/ollama';
+import { OllamaEmbeddings } from '@langchain/ollama';
 
 export const loadOllamaChatModels = async () => {
   const ollamaApiEndpoint = getOllamaApiEndpoint();
@@ -31,7 +31,7 @@ export const loadOllamaChatModels = async () => {
         model: new ChatOllama({
           baseUrl: ollamaApiEndpoint,
           model: model.model,
-          temperature: 0.7,
+          // temperature: 0.7,
           keepAlive: getKeepAlive(),
         }),
       };

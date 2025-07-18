@@ -1,7 +1,8 @@
 import { Settings } from 'lucide-react';
-import EmptyChatMessageInput from './EmptyChatMessageInput';
+import { useState } from 'react';
 import { File } from './ChatWindow';
 import Link from 'next/link';
+import MessageInput from './MessageInput';
 import WeatherWidget from './WeatherWidget';
 import NewsArticleWidget from './NewsArticleWidget';
 
@@ -11,6 +12,8 @@ const EmptyChat = ({
   setFocusMode,
   optimizationMode,
   setOptimizationMode,
+  systemPromptIds,
+  setSystemPromptIds,
   fileIds,
   setFileIds,
   files,
@@ -21,6 +24,8 @@ const EmptyChat = ({
   setFocusMode: (mode: string) => void;
   optimizationMode: string;
   setOptimizationMode: (mode: string) => void;
+  systemPromptIds: string[];
+  setSystemPromptIds: (ids: string[]) => void;
   fileIds: string[];
   setFileIds: (fileIds: string[]) => void;
   files: File[];
@@ -38,7 +43,9 @@ const EmptyChat = ({
           <h2 className="text-black/70 dark:text-white/70 text-3xl font-medium -mt-8">
             Research begins here.
           </h2>
-          <EmptyChatMessageInput
+          <MessageInput
+            firstMessage={true}
+            loading={false}
             sendMessage={sendMessage}
             focusMode={focusMode}
             setFocusMode={setFocusMode}
@@ -47,6 +54,8 @@ const EmptyChat = ({
             fileIds={fileIds}
             setFileIds={setFileIds}
             files={files}
+            systemPromptIds={systemPromptIds}
+            setSystemPromptIds={setSystemPromptIds}
             setFiles={setFiles}
           />
         </div>

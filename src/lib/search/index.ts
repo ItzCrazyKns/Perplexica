@@ -1,5 +1,8 @@
 import MetaSearchAgent from '@/lib/search/metaSearchAgent';
+import SpeedSearchAgent from '@/lib/search/speedSearch';
 import prompts from '../prompts';
+
+export { default as SpeedSearchAgent } from './speedSearch';
 
 export const searchHandlers: Record<string, MetaSearchAgent> = {
   webSearch: new MetaSearchAgent({
@@ -13,26 +16,35 @@ export const searchHandlers: Record<string, MetaSearchAgent> = {
   }),
   academicSearch: new MetaSearchAgent({
     activeEngines: ['arxiv', 'google scholar', 'pubmed'],
-    queryGeneratorPrompt: prompts.academicSearchRetrieverPrompt,
-    responsePrompt: prompts.academicSearchResponsePrompt,
+    queryGeneratorPrompt: prompts.webSearchRetrieverPrompt,
+    responsePrompt: prompts.webSearchResponsePrompt,
     rerank: true,
     rerankThreshold: 0,
     searchWeb: true,
     summarizer: false,
   }),
-  writingAssistant: new MetaSearchAgent({
+  localResearch: new MetaSearchAgent({
     activeEngines: [],
     queryGeneratorPrompt: '',
-    responsePrompt: prompts.writingAssistantPrompt,
+    responsePrompt: prompts.localResearchPrompt,
     rerank: true,
+    rerankThreshold: 0,
+    searchWeb: false,
+    summarizer: false,
+  }),
+  chat: new MetaSearchAgent({
+    activeEngines: [],
+    queryGeneratorPrompt: '',
+    responsePrompt: prompts.chatPrompt,
+    rerank: false,
     rerankThreshold: 0,
     searchWeb: false,
     summarizer: false,
   }),
   wolframAlphaSearch: new MetaSearchAgent({
     activeEngines: ['wolframalpha'],
-    queryGeneratorPrompt: prompts.wolframAlphaSearchRetrieverPrompt,
-    responsePrompt: prompts.wolframAlphaSearchResponsePrompt,
+    queryGeneratorPrompt: prompts.webSearchRetrieverPrompt,
+    responsePrompt: prompts.webSearchResponsePrompt,
     rerank: false,
     rerankThreshold: 0,
     searchWeb: true,
@@ -40,20 +52,21 @@ export const searchHandlers: Record<string, MetaSearchAgent> = {
   }),
   youtubeSearch: new MetaSearchAgent({
     activeEngines: ['youtube'],
-    queryGeneratorPrompt: prompts.youtubeSearchRetrieverPrompt,
-    responsePrompt: prompts.youtubeSearchResponsePrompt,
+    queryGeneratorPrompt: prompts.webSearchRetrieverPrompt,
+    responsePrompt: prompts.webSearchResponsePrompt,
     rerank: true,
     rerankThreshold: 0.3,
     searchWeb: true,
     summarizer: false,
   }),
   redditSearch: new MetaSearchAgent({
-    activeEngines: ['reddit'],
-    queryGeneratorPrompt: prompts.redditSearchRetrieverPrompt,
-    responsePrompt: prompts.redditSearchResponsePrompt,
+    activeEngines: [],
+    queryGeneratorPrompt: prompts.webSearchRetrieverPrompt,
+    responsePrompt: prompts.webSearchResponsePrompt,
     rerank: true,
     rerankThreshold: 0.3,
     searchWeb: true,
     summarizer: false,
+    additionalSearchCriteria: "'site:reddit.com'",
   }),
 };

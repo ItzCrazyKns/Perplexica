@@ -1,22 +1,6 @@
 # 🚀 Perplexica - An AI-powered search engine 🔎 <!-- omit in toc -->
 
-<div align="center" markdown="1">
-   <sup>Special thanks to:</sup>
-   <br>
-   <br>
-   <a href="https://www.warp.dev/perplexica">
-      <img alt="Warp sponsorship" width="400" src="https://github.com/user-attachments/assets/775dd593-9b5f-40f1-bf48-479faff4c27b">
-   </a>
-
-### [Warp, the AI Devtool that lives in your terminal](https://www.warp.dev/perplexica)
-
-[Available for MacOS, Linux, & Windows](https://www.warp.dev/perplexica)
-
-</div>
-
-<hr/>
-
-[![Discord](https://dcbadge.limes.pink/api/server/26aArMy8tT?style=flat)](https://discord.gg/26aArMy8tT)
+_This is a fork of [ItzCrazyKns/Perplexica](https://github.com/ItzCrazyKns/Perplexica) with additional features and improvements._
 
 ![preview](.assets/perplexica-screenshot.png?)
 
@@ -31,11 +15,16 @@
   - [Ollama Connection Errors](#ollama-connection-errors)
 - [Using as a Search Engine](#using-as-a-search-engine)
 - [Using Perplexica's API](#using-perplexicas-api)
-- [Expose Perplexica to a network](#expose-perplexica-to-network)
+- [Expose Perplexica to network](#expose-perplexica-to-network)
+  - [Running Behind a Reverse Proxy](#running-behind-a-reverse-proxy)
 - [One-Click Deployment](#one-click-deployment)
 - [Upcoming Features](#upcoming-features)
+- [Fork Improvements](#fork-improvements)
+  - [UI Improvements](#ui-improvements)
+  - [Search and Integration Enhancements](#search-and-integration-enhancements)
+  - [AI Functionality](#ai-functionality)
+  - [Bug Fixes](#bug-fixes)
 - [Support Us](#support-us)
-  - [Donations](#donations)
 - [Contribution](#contribution)
 - [Help and Support](#help-and-support)
 
@@ -57,9 +46,10 @@ Want to know more about its architecture and how it works? You can read it [here
 - **Two Main Modes:**
   - **Copilot Mode:** (In development) Boosts search by generating different queries to find more relevant internet sources. Like normal search instead of just using the context by SearxNG, it visits the top matches and tries to find relevant sources to the user's query directly from the page.
   - **Normal Mode:** Processes your query and performs a web search.
-- **Focus Modes:** Special modes to better answer specific types of questions. Perplexica currently has 6 focus modes:
+- **Focus Modes:** Special modes to better answer specific types of questions. Perplexica currently has 7 focus modes:
   - **All Mode:** Searches the entire web to find the best results.
-  - **Writing Assistant Mode:** Helpful for writing tasks that do not require searching the web.
+  - **Local Research Mode:** Research and interact with local files with citations.
+  - **Chat Mode:** Have a truly creative conversation without web search.
   - **Academic Search Mode:** Finds articles and papers, ideal for academic research.
   - **YouTube Search Mode:** Finds YouTube videos based on the search query.
   - **Wolfram Alpha Search Mode:** Answers queries that need calculations or data analysis using Wolfram Alpha.
@@ -85,10 +75,10 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 3. After cloning, navigate to the directory containing the project files.
 
 4. Rename the `sample.config.toml` file to `config.toml`. For Docker setups, you need only fill in the following fields:
-
    - `OPENAI`: Your OpenAI API key. **You only need to fill this if you wish to use OpenAI's models**.
    - `OLLAMA`: Your Ollama API URL. You should enter it as `http://host.docker.internal:PORT_NUMBER`. If you installed Ollama on port 11434, use `http://host.docker.internal:11434`. For other ports, adjust accordingly. **You need to fill this if you wish to use Ollama's models instead of OpenAI's**.
    - `GROQ`: Your Groq API key. **You only need to fill this if you wish to use Groq's hosted models**.
+   - `OPENROUTER`: Your OpenRouter API key. **You only need to fill this if you wish to use models via OpenRouter**.
    - `ANTHROPIC`: Your Anthropic API key. **You only need to fill this if you wish to use Anthropic models**.
    - `Gemini`: Your Gemini API key. **You only need to fill this if you wish to use Google's models**.
    - `DEEPSEEK`: Your Deepseek API key. **Only needed if you want Deepseek models.**
@@ -126,7 +116,6 @@ If you're encountering an Ollama connection error, it is likely due to the backe
 
 1. **Check your Ollama API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
-
    - **Windows:** Use `http://host.docker.internal:11434`
    - **Mac:** Use `http://host.docker.internal:11434`
    - **Linux:** Use `http://<private_ip_of_host>:11434`
@@ -134,8 +123,7 @@ If you're encountering an Ollama connection error, it is likely due to the backe
    Adjust the port number if you're using a different one.
 
 3. **Linux Users - Expose Ollama to Network:**
-
-   - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0:11434"`. (Change the port number if you are using a different one.) Then reload the systemd manager configuration with `systemctl daemon-reload`, and restart Ollama by `systemctl restart ollama`. For more information see [Ollama docs](https://github.com/ollama/ollama/blob/main/docs/faq.md#setting-environment-variables-on-linux)
+   - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0"`. Then restart Ollama by `systemctl restart ollama`. For more information see [Ollama docs](https://github.com/ollama/ollama/blob/main/docs/faq.md#setting-environment-variables-on-linux)
 
    - Ensure that the port (default is 11434) is not blocked by your firewall.
 
@@ -158,6 +146,38 @@ For more details, check out the full documentation [here](https://github.com/Itz
 
 Perplexica runs on Next.js and handles all API requests. It works right away on the same network and stays accessible even with port forwarding.
 
+### Running Behind a Reverse Proxy
+
+When running Perplexica behind a reverse proxy (like Nginx, Apache, or Traefik), follow these steps to ensure proper functionality:
+
+1. **Configure the BASE_URL setting**:
+   - In `config.toml`, set the `BASE_URL` parameter under the `[GENERAL]` section to your public-facing URL (e.g., `https://perplexica.yourdomain.com`)
+
+2. **Ensure proper headers forwarding**:
+   - Your reverse proxy should forward the following headers:
+     - `X-Forwarded-Host`
+     - `X-Forwarded-Proto`
+     - `X-Forwarded-Port` (if using non-standard ports)
+
+3. **Example Nginx configuration**:
+
+   ```nginx
+   server {
+     listen 80;
+     server_name perplexica.yourdomain.com;
+
+     location / {
+       proxy_pass http://localhost:3000;
+       proxy_set_header Host $host;
+       proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+       proxy_set_header X-Forwarded-Proto $scheme;
+       proxy_set_header X-Forwarded-Host $host;
+     }
+   }
+   ```
+
+This ensures that OpenSearch descriptions, browser integrations, and all URLs work properly when accessing Perplexica through your reverse proxy.
+
 ## One-Click Deployment
 
 [![Deploy to Sealos](https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg)](https://usw.sealos.io/?openapp=system-template%3FtemplateName%3Dperplexica)
@@ -174,17 +194,59 @@ Perplexica runs on Next.js and handles all API requests. It works right away on 
 - [x] Adding Discover
 - [ ] Finalizing Copilot Mode
 
+## Fork Improvements
+
+This fork adds several enhancements to the original Perplexica project:
+
+### UI Improvements
+
+- ✅ Tabbed interface for message results
+- ✅ Added message editing capability
+- ✅ Ability to select AI models directly while chatting without opening settings
+- ✅ Change focus mode at any time during chat sessions
+- ✅ Auto-scrolling
+- ✅ Syntax highlighting for code blocks
+- ✅ Display search query with the response
+- ✅ Improved styling for all screen sizes
+- ✅ Added model statistics showing model name and response time
+- ✅ Shows progress during processing
+- ✅ Secures API keys by not showing them in the UI
+
+### Search and Integration Enhancements
+
+- ✅ OpenSearch support with dynamic XML generation
+  - Added BASE_URL config to support reverse proxy deployments
+  - Added autocomplete functionality proxied to SearxNG
+- ✅ Enhanced Reddit focus mode to work around SearxNG limitations
+- ✅ Enhanced Balance mode that uses a headless web browser to retrieve web content and use relevant excerpts to enhance responses
+- ✅ Adds Agent mode that uses the full content of web pages to answer queries and an agentic flow to intelligently answer complex queries with accuracy
+  - See the [README.md](docs/architecture/README.md) in the docs architecture directory for more info
+- ✅ Query-based settings override for browser search engine integration
+  - Automatically applies user's saved optimization mode and AI model preferences when accessing via URL with `q` parameter
+  - Enables seamless browser search bar integration with personalized settings
+
+### AI Functionality
+
+- ✅ True chat mode implementation (moved writing mode to local research mode)
+- ✅ Enhanced system prompts for more reliable and relevant results
+- ✅ Better parsing for reasoning models
+- ✅ User customizable context window for Ollama models
+- ✅ Toggle for automatic suggestions
+- ✅ Added support for latest Anthropic models
+- ✅ Adds support for multiple user-customizable system prompt enhancement and personas so you can tailor output to your needs
+- ✅ **Model Visibility Management**: Server administrators can hide specific models from the user interface and API responses
+  - Hide expensive models to prevent accidental usage and cost overruns
+  - Remove non-functional or problematic models from user selection
+  - Configurable via settings UI with collapsible provider interface for better organization
+  - API support with `include_hidden` parameter for administrative access
+
+### Bug Fixes
+
+- ✅ Improved history rewriting
+
 ## Support Us
 
 If you find Perplexica useful, consider giving us a star on GitHub. This helps more people discover Perplexica and supports the development of new features. Your support is greatly appreciated.
-
-### Donations
-
-We also accept donations to help sustain our project. If you would like to contribute, you can use the following options to donate. Thank you for your support!
-
-| Ethereum                                              |
-| ----------------------------------------------------- |
-| Address: `0xB025a84b2F269570Eb8D4b05DEdaA41D8525B6DD` |
 
 ## Contribution
 
@@ -192,6 +254,6 @@ Perplexica is built on the idea that AI and large language models should be easy
 
 ## Help and Support
 
-If you have any questions or feedback, please feel free to reach out to us. You can create an issue on GitHub or join our Discord server. There, you can connect with other users, share your experiences and reviews, and receive more personalized help. [Click here](https://discord.gg/EFwsmQDgAu) to join the Discord server. To discuss matters outside of regular support, feel free to contact me on Discord at `itzcrazykns`.
+If you have any questions or feedback, please feel free to reach out to us. You can create an issue on GitHub to get support or report bugs.
 
 Thank you for exploring Perplexica, the AI-powered search engine designed to enhance your search experience. We are constantly working to improve Perplexica and expand its capabilities. We value your feedback and contributions which help us make Perplexica even better. Don't forget to check back for updates and new features!

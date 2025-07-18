@@ -5,9 +5,12 @@ import {
 
 export const GET = async (req: Request) => {
   try {
+    const url = new URL(req.url);
+    const includeHidden = url.searchParams.get('include_hidden') === 'true';
+
     const [chatModelProviders, embeddingModelProviders] = await Promise.all([
-      getAvailableChatModelProviders(),
-      getAvailableEmbeddingModelProviders(),
+      getAvailableChatModelProviders({ includeHidden }),
+      getAvailableEmbeddingModelProviders({ includeHidden }),
     ]);
 
     Object.keys(chatModelProviders).forEach((provider) => {

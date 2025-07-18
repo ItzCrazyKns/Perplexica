@@ -38,4 +38,6 @@ Thumbs.db
 db.sqlite
 /searxng
 
+# AI stuff for planning and implementation
+.ai/
 certificates

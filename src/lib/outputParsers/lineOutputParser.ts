@@ -1,4 +1,5 @@
 import { BaseOutputParser } from '@langchain/core/output_parsers';
+import { removeThinkingBlocks } from '../utils/contentUtils';
 
 interface LineOutputParserArgs {
   key?: string;
@@ -20,6 +21,10 @@ class LineOutputParser extends BaseOutputParser<string> {
 
   async parse(text: string): Promise<string> {
     text = text.trim() || '';
+
+    // First, remove all <think>...</think> blocks to avoid parsing tags inside thinking content
+    // This might be a little aggressive. Prompt massaging might be all we need, but this is a guarantee and should rarely mess anything up.
+    text = removeThinkingBlocks(text);
 
     const regex = /^(\s*(-|\*|\d+\.\s|\d+\)\s|\u2022)\s*)+/;
     const startKeyIndex = text.indexOf(`<${this.key}>`);

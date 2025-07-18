@@ -1,5 +1,6 @@
 import {
   getAnthropicApiKey,
+  getBaseUrl,
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
@@ -7,9 +8,11 @@ import {
   getGroqApiKey,
   getOllamaApiEndpoint,
   getOpenaiApiKey,
+  getOpenrouterApiKey,
   getDeepseekApiKey,
   getAimlApiKey,
   getLMStudioApiEndpoint,
+  getHiddenModels,
   updateConfig,
 } from '@/lib/config';
 import {
@@ -51,17 +54,28 @@ export const GET = async (req: Request) => {
       });
     }
 
-    config['openaiApiKey'] = getOpenaiApiKey();
+    // Helper function to obfuscate API keys
+    const protectApiKey = (key: string | null | undefined) => {
+      return key ? 'protected' : key;
+    };
+
+    // Obfuscate all API keys in the response
+    config['openaiApiKey'] = protectApiKey(getOpenaiApiKey());
+    config['groqApiKey'] = protectApiKey(getGroqApiKey());
+    config['anthropicApiKey'] = protectApiKey(getAnthropicApiKey());
+    config['geminiApiKey'] = protectApiKey(getGeminiApiKey());
+    config['deepseekApiKey'] = protectApiKey(getDeepseekApiKey());
+    config['openrouterApiKey'] = protectApiKey(getOpenrouterApiKey());
+    config['customOpenaiApiKey'] = protectApiKey(getCustomOpenaiApiKey());
+    config['aimlApiKey'] = protectApiKey(getAimlApiKey());
+
+    // Non-sensitive values remain unchanged
     config['ollamaApiUrl'] = getOllamaApiEndpoint();
     config['lmStudioApiUrl'] = getLMStudioApiEndpoint();
-    config['anthropicApiKey'] = getAnthropicApiKey();
-    config['groqApiKey'] = getGroqApiKey();
-    config['geminiApiKey'] = getGeminiApiKey();
-    config['deepseekApiKey'] = getDeepseekApiKey();
-    config['aimlApiKey'] = getAimlApiKey();
     config['customOpenaiApiUrl'] = getCustomOpenaiApiUrl();
-    config['customOpenaiApiKey'] = getCustomOpenaiApiKey();
     config['customOpenaiModelName'] = getCustomOpenaiModelName();
+    config['baseUrl'] = getBaseUrl();
+    config['hiddenModels'] = getHiddenModels();
 
     return Response.json({ ...config }, { status: 200 });
   } catch (err) {
@@ -77,35 +91,69 @@ export const POST = async (req: Request) => {
   try {
     const config = await req.json();
 
+    const getUpdatedProtectedValue = (
+      newValue: string,
+      currentConfig: string,
+    ) => {
+      if (newValue === 'protected') {
+        return currentConfig;
+      }
+      return newValue;
+    };
+
     const updatedConfig = {
+      GENERAL: {
+        HIDDEN_MODELS: config.hiddenModels || [],
+      },
       MODELS: {
         OPENAI: {
-          API_KEY: config.openaiApiKey,
+          API_KEY: getUpdatedProtectedValue(
+            config.openaiApiKey,
+            getOpenaiApiKey(),
+          ),
         },
         GROQ: {
-          API_KEY: config.groqApiKey,
+          API_KEY: getUpdatedProtectedValue(config.groqApiKey, getGroqApiKey()),
         },
         ANTHROPIC: {
-          API_KEY: config.anthropicApiKey,
+          API_KEY: getUpdatedProtectedValue(
+            config.anthropicApiKey,
+            getAnthropicApiKey(),
+          ),
         },
         GEMINI: {
-          API_KEY: config.geminiApiKey,
+          API_KEY: getUpdatedProtectedValue(
+            config.geminiApiKey,
+            getGeminiApiKey(),
+          ),
         },
         OLLAMA: {
           API_URL: config.ollamaApiUrl,
         },
         DEEPSEEK: {
-          API_KEY: config.deepseekApiKey,
+          API_KEY: getUpdatedProtectedValue(
+            config.deepseekApiKey,
+            getDeepseekApiKey(),
+          ),
         },
         AIMLAPI: {
-          API_KEY: config.aimlApiKey,
+          API_KEY: getUpdatedProtectedValue(config.aimlApiKey, getAimlApiKey()),
         },
         LM_STUDIO: {
           API_URL: config.lmStudioApiUrl,
         },
+        OPENROUTER: {
+          API_KEY: getUpdatedProtectedValue(
+            config.openrouterApiKey,
+            getOpenrouterApiKey(),
+          ),
+        },
         CUSTOM_OPENAI: {
           API_URL: config.customOpenaiApiUrl,
-          API_KEY: config.customOpenaiApiKey,
+          API_KEY: getUpdatedProtectedValue(
+            config.customOpenaiApiKey,
+            getCustomOpenaiApiKey(),
+          ),
           MODEL_NAME: config.customOpenaiModelName,
         },
       },

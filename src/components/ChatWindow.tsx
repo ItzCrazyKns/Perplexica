@@ -7,11 +7,23 @@ import Chat from './Chat';
 import EmptyChat from './EmptyChat';
 import crypto from 'crypto';
 import { toast } from 'sonner';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { getSuggestions } from '@/lib/actions';
 import { Settings } from 'lucide-react';
 import Link from 'next/link';
 import NextError from 'next/error';
+
+export type ModelStats = {
+  modelName: string;
+  responseTime?: number;
+};
+
+export type AgentActionEvent = {
+  action: string;
+  message: string;
+  details: Record<string, any>;
+  timestamp: Date;
+};
 
 export type Message = {
   messageId: string;
@@ -21,6 +33,16 @@ export type Message = {
   role: 'user' | 'assistant';
   suggestions?: string[];
   sources?: Document[];
+  modelStats?: ModelStats;
+  searchQuery?: string;
+  searchUrl?: string;
+  agentActions?: AgentActionEvent[];
+  progress?: {
+    message: string;
+    current: number;
+    total: number;
+    subMessage?: string;
+  };
 };
 
 export interface File {
@@ -50,17 +72,6 @@ const checkConfig = async (
     let chatModelProvider = localStorage.getItem('chatModelProvider');
     let embeddingModel = localStorage.getItem('embeddingModel');
     let embeddingModelProvider = localStorage.getItem('embeddingModelProvider');
-
-    const autoImageSearch = localStorage.getItem('autoImageSearch');
-    const autoVideoSearch = localStorage.getItem('autoVideoSearch');
-
-    if (!autoImageSearch) {
-      localStorage.setItem('autoImageSearch', 'true');
-    }
-
-    if (!autoVideoSearch) {
-      localStorage.setItem('autoVideoSearch', 'false');
-    }
 
     const providers = await fetch(`/api/models`, {
       headers: {
@@ -266,6 +277,7 @@ const loadMessages = async (
 
 const ChatWindow = ({ id }: { id?: string }) => {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const initialMessage = searchParams.get('q');
 
   const [chatId, setChatId] = useState<string | undefined>(id);
@@ -299,7 +311,13 @@ const ChatWindow = ({ id }: { id?: string }) => {
   }, []);
 
   const [loading, setLoading] = useState(false);
-  const [messageAppeared, setMessageAppeared] = useState(false);
+  const [scrollTrigger, setScrollTrigger] = useState(0);
+  const [analysisProgress, setAnalysisProgress] = useState<{
+    message: string;
+    current: number;
+    total: number;
+    subMessage?: string;
+  } | null>(null);
 
   const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -309,10 +327,21 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const [focusMode, setFocusMode] = useState('webSearch');
   const [optimizationMode, setOptimizationMode] = useState('speed');
+  const [systemPromptIds, setSystemPromptIds] = useState<string[]>([]);
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
   const [notFound, setNotFound] = useState(false);
+
+  useEffect(() => {
+    const savedOptimizationMode = localStorage.getItem('optimizationMode');
+
+    if (savedOptimizationMode !== null) {
+      setOptimizationMode(savedOptimizationMode);
+    } else {
+      localStorage.setItem('optimizationMode', optimizationMode);
+    }
+  }, [optimizationMode]);
 
   useEffect(() => {
     if (
@@ -354,7 +383,28 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
   }, [isMessagesLoaded, isConfigReady]);
 
-  const sendMessage = async (message: string, messageId?: string) => {
+  const sendMessage = async (
+    message: string,
+    options?: {
+      messageId?: string;
+      suggestions?: string[];
+      editMode?: boolean;
+    },
+  ) => {
+    setScrollTrigger((x) => (x === 0 ? -1 : 0));
+    // Special case: If we're just updating an existing message with suggestions
+    if (options?.suggestions && options.messageId) {
+      setMessages((prev) =>
+        prev.map((msg) => {
+          if (msg.messageId === options.messageId) {
+            return { ...msg, suggestions: options.suggestions };
+          }
+          return msg;
+        }),
+      );
+      return;
+    }
+
     if (loading) return;
     if (!isConfigReady) {
       toast.error('Cannot send message before the configuration is ready');
@@ -362,13 +412,29 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
 
     setLoading(true);
-    setMessageAppeared(false);
 
     let sources: Document[] | undefined = undefined;
     let recievedMessage = '';
     let added = false;
+    let messageChatHistory = chatHistory;
 
-    messageId = messageId ?? crypto.randomBytes(7).toString('hex');
+    // If the user is editing or rewriting a message, we need to remove the messages after it
+    const rewriteIndex = messages.findIndex(
+      (msg) => msg.messageId === options?.messageId,
+    );
+    if (rewriteIndex !== -1) {
+      setMessages((prev) => {
+        return [...prev.slice(0, rewriteIndex)];
+      });
+
+      messageChatHistory = chatHistory.slice(0, rewriteIndex);
+      setChatHistory(messageChatHistory);
+
+      setScrollTrigger((prev) => prev + 1);
+    }
+
+    const messageId =
+      options?.messageId ?? crypto.randomBytes(7).toString('hex');
 
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -388,6 +454,46 @@ const ChatWindow = ({ id }: { id?: string }) => {
         return;
       }
 
+      if (data.type === 'progress') {
+        setAnalysisProgress(data.data);
+        return;
+      }
+
+      // Handle ping messages to keep connection alive (no action needed)
+      if (data.type === 'ping') {
+        console.debug('Ping received');
+        // Ping messages are used to keep the connection alive during long requests
+        // No action is required on the frontend
+        return;
+      }
+
+      if (data.type === 'agent_action') {
+        const agentActionEvent: AgentActionEvent = {
+          action: data.data.action,
+          message: data.data.message,
+          details: data.data.details || {},
+          timestamp: new Date(),
+        };
+
+        // Update the user message with agent actions
+        setMessages((prev) =>
+          prev.map((message) => {
+            if (
+              message.messageId === data.messageId &&
+              message.role === 'user'
+            ) {
+              const updatedActions = [
+                ...(message.agentActions || []),
+                agentActionEvent,
+              ];
+              return { ...message, agentActions: updatedActions };
+            }
+            return message;
+          }),
+        );
+        return;
+      }
+
       if (data.type === 'sources') {
         sources = data.data;
         if (!added) {
@@ -399,12 +505,14 @@ const ChatWindow = ({ id }: { id?: string }) => {
               chatId: chatId!,
               role: 'assistant',
               sources: sources,
+              searchQuery: data.searchQuery,
+              searchUrl: data.searchUrl,
               createdAt: new Date(),
             },
           ]);
           added = true;
+          setScrollTrigger((prev) => prev + 1);
         }
-        setMessageAppeared(true);
       }
 
       if (data.type === 'message') {
@@ -418,56 +526,67 @@ const ChatWindow = ({ id }: { id?: string }) => {
               role: 'assistant',
               sources: sources,
               createdAt: new Date(),
+              modelStats: {
+                modelName: data.modelName,
+              },
             },
           ]);
           added = true;
+        } else {
+          setMessages((prev) =>
+            prev.map((message) => {
+              if (message.messageId === data.messageId) {
+                return { ...message, content: message.content + data.data };
+              }
+              return message;
+            }),
+          );
         }
 
-        setMessages((prev) =>
-          prev.map((message) => {
-            if (message.messageId === data.messageId) {
-              return { ...message, content: message.content + data.data };
-            }
-
-            return message;
-          }),
-        );
-
         recievedMessage += data.data;
-        setMessageAppeared(true);
+        setScrollTrigger((prev) => prev + 1);
       }
 
       if (data.type === 'messageEnd') {
+        // Clear analysis progress
+        setAnalysisProgress(null);
+
         setChatHistory((prevHistory) => [
           ...prevHistory,
           ['human', message],
           ['assistant', recievedMessage],
         ]);
 
+        // Always update the message, adding modelStats if available
+        setMessages((prev) =>
+          prev.map((message) => {
+            if (message.messageId === data.messageId) {
+              return {
+                ...message,
+                // Include model stats if available, otherwise null
+                modelStats: data.modelStats || null,
+                // Make sure the searchQuery is preserved (if available in the message data)
+                searchQuery: message.searchQuery || data.searchQuery,
+                searchUrl: message.searchUrl || data.searchUrl,
+              };
+            }
+            return message;
+          }),
+        );
+
         setLoading(false);
+        setScrollTrigger((prev) => prev + 1);
 
         const lastMsg = messagesRef.current[messagesRef.current.length - 1];
 
-        const autoImageSearch = localStorage.getItem('autoImageSearch');
-        const autoVideoSearch = localStorage.getItem('autoVideoSearch');
-
-        if (autoImageSearch === 'true') {
-          document
-            .getElementById(`search-images-${lastMsg.messageId}`)
-            ?.click();
-        }
-
-        if (autoVideoSearch === 'true') {
-          document
-            .getElementById(`search-videos-${lastMsg.messageId}`)
-            ?.click();
-        }
+        const autoSuggestions = localStorage.getItem('autoSuggestions');
 
         if (
           lastMsg.role === 'assistant' &&
           lastMsg.sources &&
           lastMsg.sources.length > 0 &&
-          !lastMsg.suggestions
+          !lastMsg.suggestions &&
+          autoSuggestions !== 'false' // Default to true if not set
         ) {
           const suggestions = await getSuggestions(messagesRef.current);
           setMessages((prev) =>
@@ -481,6 +600,21 @@ const ChatWindow = ({ id }: { id?: string }) => {
         }
       }
     };
+
+    const ollamaContextWindow =
+      localStorage.getItem('ollamaContextWindow') || '2048';
+
+    // Get the latest model selection from localStorage
+    const currentChatModelProvider = localStorage.getItem('chatModelProvider');
+    const currentChatModel = localStorage.getItem('chatModel');
+
+    // Use the most current model selection from localStorage, falling back to the state if not available
+    const modelProvider =
+      currentChatModelProvider || chatModelProvider.provider;
+    const modelName = currentChatModel || chatModelProvider.name;
+
+    const currentOptimizationMode =
+      localStorage.getItem('optimizationMode') || optimizationMode;
 
     const res = await fetch('/api/chat', {
       method: 'POST',
@@ -497,17 +631,20 @@ const ChatWindow = ({ id }: { id?: string }) => {
         chatId: chatId!,
         files: fileIds,
         focusMode: focusMode,
-        optimizationMode: optimizationMode,
-        history: chatHistory,
+        optimizationMode: currentOptimizationMode,
+        history: messageChatHistory,
         chatModel: {
-          name: chatModelProvider.name,
-          provider: chatModelProvider.provider,
+          name: modelName,
+          provider: modelProvider,
+          ...(chatModelProvider.provider === 'ollama' && {
+            ollamaContextWindow: parseInt(ollamaContextWindow),
+          }),
         },
         embeddingModel: {
           name: embeddingModelProvider.name,
           provider: embeddingModelProvider.provider,
         },
-        systemInstructions: localStorage.getItem('systemInstructions'),
+        selectedSystemPromptIds: systemPromptIds || [],
       }),
     });
 
@@ -539,25 +676,71 @@ const ChatWindow = ({ id }: { id?: string }) => {
   };
 
   const rewrite = (messageId: string) => {
-    const index = messages.findIndex((msg) => msg.messageId === messageId);
-
-    if (index === -1) return;
-
-    const message = messages[index - 1];
-
-    setMessages((prev) => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
+    const messageIndex = messages.findIndex(
+      (msg) => msg.messageId === messageId,
+    );
+    if (messageIndex == -1) return;
+    sendMessage(messages[messageIndex - 1].content, {
+      messageId: messages[messageIndex - 1].messageId,
     });
-    setChatHistory((prev) => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
-    });
+  };
 
-    sendMessage(message.content, message.messageId);
+  const handleEditMessage = async (messageId: string, newContent: string) => {
+    // Get the index of the message being edited
+    const messageIndex = messages.findIndex(
+      (msg) => msg.messageId === messageId,
+    );
+    if (messageIndex === -1) return;
+
+    try {
+      sendMessage(newContent, {
+        messageId,
+        editMode: true,
+      });
+    } catch (error) {
+      console.error('Error updating message:', error);
+      toast.error('Failed to update message');
+    }
   };
 
   useEffect(() => {
     if (isReady && initialMessage && isConfigReady) {
+      // Check if we have an initial query and apply saved search settings
+      const searchOptimizationMode = localStorage.getItem(
+        'searchOptimizationMode',
+      );
+      const searchChatModelProvider = localStorage.getItem(
+        'searchChatModelProvider',
+      );
+      const searchChatModel = localStorage.getItem('searchChatModel');
+
+      // Apply saved optimization mode if valid
+      if (
+        searchOptimizationMode &&
+        (searchOptimizationMode === 'speed' ||
+          searchOptimizationMode === 'agent')
+      ) {
+        setOptimizationMode(searchOptimizationMode);
+        localStorage.setItem('optimizationMode', searchOptimizationMode);
+      }
+
+      // Apply saved chat model if valid
+      if (searchChatModelProvider && searchChatModel) {
+        setChatModelProvider({
+          name: searchChatModel,
+          provider: searchChatModelProvider,
+        });
+        // Also update localStorage to ensure consistency
+        localStorage.setItem('chatModelProvider', searchChatModelProvider);
+        localStorage.setItem('chatModel', searchChatModel);
+      }
+
       sendMessage(initialMessage);
+
+      // Remove the query parameter from the URL to prevent re-execution on page reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete('q');
+      router.replace(url.pathname + url.search, { scroll: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfigReady, isReady, initialMessage]);
@@ -591,12 +774,20 @@ const ChatWindow = ({ id }: { id?: string }) => {
               loading={loading}
               messages={messages}
               sendMessage={sendMessage}
-              messageAppeared={messageAppeared}
+              scrollTrigger={scrollTrigger}
               rewrite={rewrite}
               fileIds={fileIds}
               setFileIds={setFileIds}
               files={files}
               setFiles={setFiles}
+              optimizationMode={optimizationMode}
+              setOptimizationMode={setOptimizationMode}
+              focusMode={focusMode}
+              setFocusMode={setFocusMode}
+              handleEditMessage={handleEditMessage}
+              analysisProgress={analysisProgress}
+              systemPromptIds={systemPromptIds}
+              setSystemPromptIds={setSystemPromptIds}
             />
           </>
         ) : (
@@ -606,6 +797,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
             setFocusMode={setFocusMode}
             optimizationMode={optimizationMode}
             setOptimizationMode={setOptimizationMode}
+            systemPromptIds={systemPromptIds}
+            setSystemPromptIds={setSystemPromptIds}
             fileIds={fileIds}
             setFileIds={setFileIds}
             files={files}

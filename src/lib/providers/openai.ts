@@ -69,7 +69,7 @@ export const loadOpenAIChatModels = async () => {
         model: new ChatOpenAI({
           openAIApiKey: openaiApiKey,
           modelName: model.key,
-          temperature: 0.7,
+          // temperature: 0.7,
         }) as unknown as BaseChatModel,
       };
     });

@@ -10,6 +10,7 @@ import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
+  getHiddenModels,
 } from '../config';
 import { ChatOpenAI } from '@langchain/openai';
 import {
@@ -45,6 +46,10 @@ import {
   loadLMStudioEmbeddingsModels,
   PROVIDER_INFO as LMStudioInfo,
 } from './lmstudio';
+import {
+  loadOpenrouterChatModels,
+  PROVIDER_INFO as OpenRouterInfo,
+} from './openrouter';
 
 export const PROVIDER_METADATA = {
   openai: OpenAIInfo,
@@ -56,6 +61,7 @@ export const PROVIDER_METADATA = {
   deepseek: DeepseekInfo,
   aimlapi: AimlApiInfo,
   lmstudio: LMStudioInfo,
+  openrouter: OpenRouterInfo,
   custom_openai: {
     key: 'custom_openai',
     displayName: 'Custom OpenAI',
@@ -84,6 +90,7 @@ export const chatModelProviders: Record<
   deepseek: loadDeepseekChatModels,
   aimlapi: loadAimlApiChatModels,
   lmstudio: loadLMStudioChatModels,
+  openrouter: loadOpenrouterChatModels,
 };
 
 export const embeddingModelProviders: Record<
@@ -98,13 +105,23 @@ export const embeddingModelProviders: Record<
   lmstudio: loadLMStudioEmbeddingsModels,
 };
 
-export const getAvailableChatModelProviders = async () => {
+export const getAvailableChatModelProviders = async (
+  options: { includeHidden?: boolean } = {},
+) => {
+  const { includeHidden = false } = options;
   const models: Record<string, Record<string, ChatModel>> = {};
 
   for (const provider in chatModelProviders) {
     const providerModels = await chatModelProviders[provider]();
     if (Object.keys(providerModels).length > 0) {
-      models[provider] = providerModels;
+      // Sort models alphabetically by their keys
+      const sortedModels: Record<string, ChatModel> = {};
+      Object.keys(providerModels)
+        .sort()
+        .forEach((key) => {
+          sortedModels[key] = providerModels[key];
+        });
+      models[provider] = sortedModels;
     }
   }
 
@@ -112,34 +129,79 @@ export const getAvailableChatModelProviders = async () => {
   const customOpenAiApiUrl = getCustomOpenaiApiUrl();
   const customOpenAiModelName = getCustomOpenaiModelName();
 
-  models['custom_openai'] = {
-    ...(customOpenAiApiKey && customOpenAiApiUrl && customOpenAiModelName
-      ? {
-          [customOpenAiModelName]: {
-            displayName: customOpenAiModelName,
-            model: new ChatOpenAI({
-              openAIApiKey: customOpenAiApiKey,
-              modelName: customOpenAiModelName,
-              temperature: 0.7,
-              configuration: {
-                baseURL: customOpenAiApiUrl,
-              },
-            }) as unknown as BaseChatModel,
+  // Only add custom_openai provider if all required fields are configured
+  if (customOpenAiApiKey && customOpenAiApiUrl && customOpenAiModelName) {
+    models['custom_openai'] = {
+      [customOpenAiModelName]: {
+        displayName: customOpenAiModelName,
+        model: new ChatOpenAI({
+          openAIApiKey: customOpenAiApiKey,
+          modelName: customOpenAiModelName,
+          // temperature: 0.7,
+          configuration: {
+            baseURL: customOpenAiApiUrl,
           },
+        }) as unknown as BaseChatModel,
+      },
+    };
+  }
+
+  // Filter out hidden models if includeHidden is false
+  if (!includeHidden) {
+    const hiddenModels = getHiddenModels();
+    if (hiddenModels.length > 0) {
+      for (const provider in models) {
+        for (const modelKey in models[provider]) {
+          if (hiddenModels.includes(modelKey)) {
+            delete models[provider][modelKey];
+          }
         }
-      : {}),
-  };
+        // Remove provider if all models are hidden
+        if (Object.keys(models[provider]).length === 0) {
+          delete models[provider];
+        }
+      }
+    }
+  }
 
   return models;
 };
 
-export const getAvailableEmbeddingModelProviders = async () => {
+export const getAvailableEmbeddingModelProviders = async (
+  options: { includeHidden?: boolean } = {},
+) => {
+  const { includeHidden = false } = options;
   const models: Record<string, Record<string, EmbeddingModel>> = {};
 
   for (const provider in embeddingModelProviders) {
     const providerModels = await embeddingModelProviders[provider]();
     if (Object.keys(providerModels).length > 0) {
-      models[provider] = providerModels;
+      // Sort embedding models alphabetically by their keys
+      const sortedModels: Record<string, EmbeddingModel> = {};
+      Object.keys(providerModels)
+        .sort()
+        .forEach((key) => {
+          sortedModels[key] = providerModels[key];
+        });
+      models[provider] = sortedModels;
+    }
+  }
+
+  // Filter out hidden models if includeHidden is false
+  if (!includeHidden) {
+    const hiddenModels = getHiddenModels();
+    if (hiddenModels.length > 0) {
+      for (const provider in models) {
+        for (const modelKey in models[provider]) {
+          if (hiddenModels.includes(modelKey)) {
+            delete models[provider][modelKey];
+          }
+        }
+        // Remove provider if all models are hidden
+        if (Object.keys(models[provider]).length === 0) {
+          delete models[provider];
+        }
+      }
     }
   }
 

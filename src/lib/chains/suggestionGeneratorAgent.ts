@@ -7,20 +7,34 @@ import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatOpenAI } from '@langchain/openai';
 
 const suggestionGeneratorPrompt = `
-You are an AI suggestion generator for an AI powered search engine. You will be given a conversation below. You need to generate 4-5 suggestions based on the conversation. The suggestion should be relevant to the conversation that can be used by the user to ask the chat model for more information.
-You need to make sure the suggestions are relevant to the conversation and are helpful to the user. Keep a note that the user might use these suggestions to ask a chat model for more information. 
-Make sure the suggestions are medium in length and are informative and relevant to the conversation.
+You are an AI suggestion generator for an AI powered search engine.
 
-Provide these suggestions separated by newlines between the XML tags <suggestions> and </suggestions>. For example:
+# Instructions
+- You will be given a conversation below
+- Generate 5 total suggestions based on the conversation
+  - Three of the suggestions should be relevant to the conversation so it can be used by the user to ask the chat model for more information
+  - Two of the suggestions should still be relevant to the conversation but could optionally steer the conversation in a different direction
+  - The suggestions should be in the form of questions
+  - The suggestions should not be something that is already in the conversation
+- The conversation history is provided in the conversation section below
 
+ # Output Format
+- If you are a thinking or reasoning AI, you should avoid using \`<suggestions>\` and \`</suggestions>\` tags in your thinking. Those tags should only be used in the final output.
+- Provide these suggestions separated by newlines between the XML tags <suggestions> and </suggestions>. For example:
+- Make sure each suggestion is a single line and does not contain any newlines or any formatting
+- Example output is provided in the example section below
+
+<example>
 <suggestions>
 Tell me more about SpaceX and their recent projects
 What is the latest news on SpaceX?
 Who is the CEO of SpaceX?
 </suggestions>
+</example>
 
-Conversation:
+<conversation>
 {chat_history}
+</conversation>
 `;
 
 type SuggestionGeneratorInput = {
@@ -31,13 +45,20 @@ const outputParser = new ListLineOutputParser({
   key: 'suggestions',
 });
 
-const createSuggestionGeneratorChain = (llm: BaseChatModel) => {
+const createSuggestionGeneratorChain = (
+  llm: BaseChatModel,
+  systemInstructions?: string,
+) => {
+  const systemPrompt = systemInstructions ? `${systemInstructions}\n\n` : '';
+
+  const fullPrompt = `${systemPrompt}${suggestionGeneratorPrompt}`;
+
   return RunnableSequence.from([
     RunnableMap.from({
       chat_history: (input: SuggestionGeneratorInput) =>
         formatChatHistoryAsString(input.chat_history),
     }),
-    PromptTemplate.fromTemplate(suggestionGeneratorPrompt),
+    PromptTemplate.fromTemplate(fullPrompt),
     llm,
     outputParser,
   ]);
@@ -46,9 +67,13 @@ const createSuggestionGeneratorChain = (llm: BaseChatModel) => {
 const generateSuggestions = (
   input: SuggestionGeneratorInput,
   llm: BaseChatModel,
+  systemInstructions?: string,
 ) => {
   (llm as unknown as ChatOpenAI).temperature = 0;
-  const suggestionGeneratorChain = createSuggestionGeneratorChain(llm);
+  const suggestionGeneratorChain = createSuggestionGeneratorChain(
+    llm,
+    systemInstructions,
+  );
   return suggestionGeneratorChain.invoke(input);
 };
 

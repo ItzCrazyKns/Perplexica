@@ -5,19 +5,23 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { getAvailableChatModelProviders } from '@/lib/providers';
+import { getSystemInstructionsOnly } from '@/lib/utils/prompts';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
+import { ChatOllama } from '@langchain/ollama';
 import { ChatOpenAI } from '@langchain/openai';
 
 interface ChatModel {
   provider: string;
   model: string;
+  ollamaContextWindow?: number;
 }
 
 interface ImageSearchBody {
   query: string;
   chatHistory: any[];
   chatModel?: ChatModel;
+  selectedSystemPromptIds?: string[];
 }
 
 export const POST = async (req: Request) => {
@@ -51,17 +55,37 @@ export const POST = async (req: Request) => {
       llm = new ChatOpenAI({
         openAIApiKey: getCustomOpenaiApiKey(),
         modelName: getCustomOpenaiModelName(),
-        temperature: 0.7,
+        // temperature: 0.7,
         configuration: {
           baseURL: getCustomOpenaiApiUrl(),
         },
       }) as unknown as BaseChatModel;
     } else if (chatModelProvider && chatModel) {
       llm = chatModel.model;
+      // Set context window size for Ollama models
+      if (llm instanceof ChatOllama && body.chatModel?.provider === 'ollama') {
+        llm.numCtx = body.chatModel.ollamaContextWindow || 2048;
+      }
     }
 
     if (!llm) {
       return Response.json({ error: 'Invalid chat model' }, { status: 400 });
+    }
+
+    let systemInstructions = '';
+    if (
+      body.selectedSystemPromptIds &&
+      body.selectedSystemPromptIds.length > 0
+    ) {
+      try {
+        const promptInstructions = await getSystemInstructionsOnly(
+          body.selectedSystemPromptIds,
+        );
+        systemInstructions = promptInstructions || systemInstructions;
+      } catch (error) {
+        console.error('Error fetching system prompts:', error);
+        // Continue with fallback systemInstructions
+      }
     }
 
     const images = await handleImageSearch(
@@ -70,6 +94,7 @@ export const POST = async (req: Request) => {
         query: body.query,
       },
       llm,
+      systemInstructions,
     );
 
     return Response.json({ images }, { status: 200 });

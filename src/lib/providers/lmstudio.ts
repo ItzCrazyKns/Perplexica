@@ -52,7 +52,7 @@ export const loadLMStudioChatModels = async () => {
             baseURL: ensureV1Endpoint(endpoint),
           },
           modelName: model.id,
-          temperature: 0.7,
+          // temperature: 0.7,
           streaming: true,
           maxRetries: 3,
         }) as unknown as BaseChatModel,
