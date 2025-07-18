@@ -26,10 +26,12 @@ const ModelSelector = ({
   selectedModel,
   setSelectedModel,
   truncateModelName = true,
+  showModelName = true,
 }: {
   selectedModel: { provider: string; model: string } | null;
   setSelectedModel: (model: { provider: string; model: string }) => void;
   truncateModelName?: boolean;
+  showModelName?: boolean;
 }) => {
   const [providerModels, setProviderModels] = useState<ProviderModelMap>({});
   const [providersList, setProvidersList] = useState<string[]>([]);
@@ -171,16 +173,18 @@ const ModelSelector = ({
               className="p-2 group flex text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
             >
               <Cpu size={18} />
-              <span
-                className={cn(
-                  'mx-2 text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap hidden lg:block',
-                  {
-                    'max-w-44': truncateModelName,
-                  },
-                )}
-              >
-                {getDisplayText()}
-              </span>
+              {showModelName && (
+                <span
+                  className={cn(
+                    'ml-2 text-xs font-medium overflow-hidden text-ellipsis whitespace-nowrap',
+                    {
+                      'max-w-44': truncateModelName,
+                    },
+                  )}
+                >
+                  {getDisplayText()}
+                </span>
+              )}
               <ChevronDown
                 size={16}
                 className={cn(

@@ -1,65 +1,26 @@
-import {
-  BadgePercent,
-  ChevronDown,
-  Globe,
-  MessageCircle,
-  Pencil,
-  ScanEye,
-  SwatchBook,
-} from 'lucide-react';
+import { Globe, MessageCircle, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  Popover,
-  PopoverButton,
-  PopoverPanel,
-  Transition,
-} from '@headlessui/react';
-import { SiReddit, SiYoutube } from '@icons-pack/react-simple-icons';
-import { Fragment } from 'react';
+import { useState } from 'react';
 
 const focusModes = [
   {
     key: 'webSearch',
     title: 'All',
     description: 'Searches across all of the internet',
-    icon: <Globe size={20} />,
+    icon: <Globe size={20} className="text-[#24A0ED]" />,
   },
-  // {
-  //   key: 'academicSearch',
-  //   title: 'Academic',
-  //   description: 'Search in published academic papers',
-  //   icon: <SwatchBook size={20} />,
-  // },
   {
     key: 'chat',
     title: 'Chat',
     description: 'Have a creative conversation',
-    icon: <MessageCircle size={16} />,
+    icon: <MessageCircle size={16} className="text-[#10B981]" />,
   },
   {
     key: 'localResearch',
     title: 'Local Research',
     description: 'Research and interact with local files with citations',
-    icon: <Pencil size={16} />,
+    icon: <Pencil size={16} className="text-[#8B5CF6]" />,
   },
-  // {
-  //   key: 'redditSearch',
-  //   title: 'Reddit',
-  //   description: 'Search for discussions and opinions',
-  //   icon: <SiReddit className="h-5 w-auto mr-0.5" />,
-  // },
-  // {
-  //   key: 'wolframAlphaSearch',
-  //   title: 'Wolfram Alpha',
-  //   description: 'Computational knowledge engine',
-  //   icon: <BadgePercent size={20} />,
-  // },
-  // {
-  //   key: 'youtubeSearch',
-  //   title: 'Youtube',
-  //   description: 'Search and watch videos',
-  //   icon: <SiYoutube className="h-5 w-auto mr-0.5" />,
-  // },
 ];
 
 const Focus = ({
@@ -69,62 +30,136 @@ const Focus = ({
   focusMode: string;
   setFocusMode: (mode: string) => void;
 }) => {
+  const [showWebSearchTooltip, setShowWebSearchTooltip] = useState(false);
+  const [showChatTooltip, setShowChatTooltip] = useState(false);
+  const [showLocalResearchTooltip, setShowLocalResearchTooltip] =
+    useState(false);
+
+  const webSearchMode = focusModes.find((mode) => mode.key === 'webSearch');
+  const chatMode = focusModes.find((mode) => mode.key === 'chat');
+  const localResearchMode = focusModes.find(
+    (mode) => mode.key === 'localResearch',
+  );
+
   return (
-    <Popover className="relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg mt-[6.5px]">
-      <PopoverButton
-        type="button"
-        className=" text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
-      >
-        <div className="flex flex-row items-center space-x-1">
-          {focusModes.find((mode) => mode.key === focusMode)?.icon}
-          <p className="text-xs font-medium hidden lg:block">
-            {focusModes.find((mode) => mode.key === focusMode)?.title}
-          </p>
-          <ChevronDown size={20} className="-translate-x-1" />
-        </div>
-      </PopoverButton>
-      <Transition
-        as={Fragment}
-        enter="transition ease-out duration-150"
-        enterFrom="opacity-0 -translate-y-1"
-        enterTo="opacity-100 translate-y-0"
-        leave="transition ease-in duration-150"
-        leaveFrom="opacity-100 translate-y-0"
-        leaveTo="opacity-0 -translate-y-1"
-      >
-        <PopoverPanel className="absolute z-10 w-64 md:w-[500px] left-0 bottom-full mb-2">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-full p-4 max-h-[200px] md:max-h-none overflow-y-auto">
-            {focusModes.map((mode, i) => (
-              <PopoverButton
-                onClick={() => setFocusMode(mode.key)}
-                key={i}
-                className={cn(
-                  'p-2 rounded-lg flex flex-col items-start justify-start text-start space-y-2 duration-200 cursor-pointer transition',
-                  focusMode === mode.key
-                    ? 'bg-light-secondary dark:bg-dark-secondary'
-                    : 'hover:bg-light-secondary dark:hover:bg-dark-secondary',
-                )}
-              >
-                <div
-                  className={cn(
-                    'flex flex-row items-center space-x-1',
-                    focusMode === mode.key
-                      ? 'text-[#24A0ED]'
-                      : 'text-black dark:text-white',
-                  )}
-                >
-                  {mode.icon}
-                  <p className="text-sm font-medium">{mode.title}</p>
-                </div>
-                <p className="text-black/70 dark:text-white/70 text-xs">
-                  {mode.description}
-                </p>
-              </PopoverButton>
-            ))}
+    <div className="text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white">
+      <div className="flex flex-row items-center space-x-1">
+        <div className="relative">
+          <div className="flex items-center border border-light-200 dark:border-dark-200 rounded-lg overflow-hidden">
+            {/* Web Search Mode Icon */}
+            <button
+              className={cn(
+                'p-2 transition-all duration-200',
+                focusMode === 'webSearch'
+                  ? 'bg-[#24A0ED]/20 text-[#24A0ED] scale-105'
+                  : 'text-black/30 dark:text-white/30 hover:text-black/50 dark:hover:text-white/50 hover:bg-light-secondary/50 dark:hover:bg-dark-secondary/50',
+              )}
+              onMouseEnter={() => setShowWebSearchTooltip(true)}
+              onMouseLeave={() => setShowWebSearchTooltip(false)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setFocusMode('webSearch');
+              }}
+            >
+              <Globe size={18} />
+            </button>
+
+            {/* Divider */}
+            <div className="h-6 w-px bg-light-200 dark:bg-dark-200"></div>
+
+            {/* Chat Mode Icon */}
+            <button
+              className={cn(
+                'p-2 transition-all duration-200',
+                focusMode === 'chat'
+                  ? 'bg-[#10B981]/20 text-[#10B981] scale-105'
+                  : 'text-black/30 dark:text-white/30 hover:text-black/50 dark:hover:text-white/50 hover:bg-light-secondary/50 dark:hover:bg-dark-secondary/50',
+              )}
+              onMouseEnter={() => setShowChatTooltip(true)}
+              onMouseLeave={() => setShowChatTooltip(false)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setFocusMode('chat');
+              }}
+            >
+              <MessageCircle size={18} />
+            </button>
+
+            {/* Divider */}
+            <div className="h-6 w-px bg-light-200 dark:bg-dark-200"></div>
+
+            {/* Local Research Mode Icon */}
+            <button
+              className={cn(
+                'p-2 transition-all duration-200',
+                focusMode === 'localResearch'
+                  ? 'bg-[#8B5CF6]/20 text-[#8B5CF6] scale-105'
+                  : 'text-black/30 dark:text-white/30 hover:text-black/50 dark:hover:text-white/50 hover:bg-light-secondary/50 dark:hover:bg-dark-secondary/50',
+              )}
+              onMouseEnter={() => setShowLocalResearchTooltip(true)}
+              onMouseLeave={() => setShowLocalResearchTooltip(false)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setFocusMode('localResearch');
+              }}
+            >
+              <Pencil size={18} />
+            </button>
           </div>
-        </PopoverPanel>
-      </Transition>
-    </Popover>
+
+          {/* Web Search Mode Tooltip */}
+          {showWebSearchTooltip && (
+            <div className="absolute z-20 bottom-[100%] mb-2 left-0 animate-in fade-in-0 duration-150">
+              <div className="bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 p-4 w-80 shadow-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Globe size={16} className="text-[#24A0ED]" />
+                  <h3 className="font-medium text-sm text-black dark:text-white text-left">
+                    {webSearchMode?.title}
+                  </h3>
+                </div>
+                <p className="text-sm text-black/70 dark:text-white/70 leading-relaxed text-left">
+                  {webSearchMode?.description}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Chat Mode Tooltip */}
+          {showChatTooltip && (
+            <div className="absolute z-20 bottom-[100%] mb-2 left-0 transform animate-in fade-in-0 duration-150">
+              <div className="bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 p-4 w-80 shadow-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <MessageCircle size={16} className="text-[#10B981]" />
+                  <h3 className="font-medium text-sm text-black dark:text-white text-left">
+                    {chatMode?.title}
+                  </h3>
+                </div>
+                <p className="text-sm text-black/70 dark:text-white/70 leading-relaxed text-left">
+                  {chatMode?.description}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Local Research Mode Tooltip */}
+          {showLocalResearchTooltip && (
+            <div className="absolute z-20 bottom-[100%] mb-2 left-0 animate-in fade-in-0 duration-150">
+              <div className="bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 p-4 w-80 shadow-lg">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Pencil size={16} className="text-[#8B5CF6]" />
+                  <h3 className="font-medium text-sm text-black dark:text-white text-left">
+                    {localResearchMode?.title}
+                  </h3>
+                </div>
+                <p className="text-sm text-black/70 dark:text-white/70 leading-relaxed text-left">
+                  {localResearchMode?.description}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 

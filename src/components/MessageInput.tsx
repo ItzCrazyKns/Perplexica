@@ -141,16 +141,25 @@ const MessageInput = ({
       }}
       className="w-full"
     >
-      <div className="flex flex-col bg-light-secondary dark:bg-dark-secondary px-5 pt-5 pb-2 rounded-lg w-full border border-light-200 dark:border-dark-200">
-        <TextareaAutosize
-          ref={inputRef}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          minRows={2}
-          className="bg-transparent placeholder:text-black/50 dark:placeholder:text-white/50 text-sm text-black dark:text-white resize-none focus:outline-none w-full max-h-24 lg:max-h-36 xl:max-h-48"
-          placeholder={firstMessage ? 'Ask anything...' : 'Ask a follow-up'}
-        />
-        <div className="flex flex-row items-center justify-between mt-4">
+      <div className="flex flex-col bg-light-secondary dark:bg-dark-secondary px-3 pt-4 pb-2 rounded-lg w-full border border-light-200 dark:border-dark-200">
+        <div className="flex flex-row items-end space-x-2 mb-2">
+          <TextareaAutosize
+            ref={inputRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            minRows={1}
+            className="mb-2 bg-transparent placeholder:text-black/50 dark:placeholder:text-white/50 text-sm text-black dark:text-white resize-none focus:outline-none w-full max-h-24 lg:max-h-36 xl:max-h-48"
+            placeholder={firstMessage ? 'Ask anything...' : 'Ask a follow-up'}
+          />
+          <Optimization
+            optimizationMode={optimizationMode}
+            setOptimizationMode={(optimizationMode) => {
+              setOptimizationMode(optimizationMode);
+              localStorage.setItem('optimizationMode', optimizationMode);
+            }}
+          />
+        </div>
+        <div className="flex flex-row items-center justify-between">
           <div className="flex flex-row items-center space-x-2">
             <Focus focusMode={focusMode} setFocusMode={setFocusMode} />
             <Attach
@@ -163,6 +172,7 @@ const MessageInput = ({
           </div>
           <div className="flex flex-row items-center space-x-2">
             <ModelSelector
+              showModelName={false}
               selectedModel={selectedModel}
               setSelectedModel={(selectedModel) => {
                 setSelectedModel(selectedModel);
@@ -176,13 +186,6 @@ const MessageInput = ({
             <SystemPromptSelector
               selectedPromptIds={systemPromptIds}
               onSelectedPromptIdsChange={setSystemPromptIds}
-            />
-            <Optimization
-              optimizationMode={optimizationMode}
-              setOptimizationMode={(optimizationMode) => {
-                setOptimizationMode(optimizationMode);
-                localStorage.setItem('optimizationMode', optimizationMode);
-              }}
             />
             {loading ? (
               <button

@@ -181,7 +181,7 @@ export const webSearchRetrieverAgentPrompt = `
 - Condense the question to its essence and remove any unnecessary details
 - Search queries should be short and to the point, focusing on the main topic or question
 - Ensure the question is grammatically correct and free of spelling errors
-- If applicable, use the provided date to ensure the rephrased question is relevant to the current date and time
+- If applicable, use the provided date to ensure the rephrased question is relevant to the current day and/or year
   - This includes but is not limited to things like sports scores, standings, weather, current events, etc.
 - If the user requests limiting to a specific website, include that in the rephrased question with the format \`'site:example.com'\`, be sure to include the quotes. Only do this if the limiting is explicitly mentioned in the question
 - You will be given additional instructions from a supervisor in the <supervisor> tag that will direct you to refine the question further or to include specific details. Follow these instructions carefully and incorporate them into your rephrased question
@@ -189,16 +189,16 @@ export const webSearchRetrieverAgentPrompt = `
 
 # Data
 - The user question is contained in the <question> tag after the <examples> below
+- Current date is: {date}
+
+# Output Format
 - You must return your response as a JSON object with "searchQuery" and "reasoning" fields
 - The searchQuery should contain the optimized search query
 - The reasoning should explain how you optimized the query for better search results
-- Current date is: {date}
 
 # System Instructions
 - These instructions are provided by the user in the <systemInstructions> tag
 - Give them less priority than the above instructions
-- Incorporate them into your response while adhering to the overall guidelines
-- Only use them for additional context on how to retrieve search results (E.g. if the user has provided a specific website to search, or if they have provided a specific date to use in the search)
 
 There are several examples attached for your reference inside the below examples XML block
 
@@ -219,6 +219,7 @@ There are several examples attached for your reference inside the below examples
         }}
     </output>
 </example>
+
 <example>
     <input>
         <question>
@@ -232,34 +233,6 @@ There are several examples attached for your reference inside the below examples
         {{
           "searchQuery": "F1 Monaco Grand Prix highlights",
           "reasoning": "Added specific context from supervisor instructions to identify this as an F1 Monaco Grand Prix query, making the search more targeted."
-        }}
-    </output>
-</example>
-
-<example>
-    <input>
-        <question>
-        What is the capital of France
-        </question>
-    </input>
-    <output>
-        {{
-          "searchQuery": "Capital of France",
-          "reasoning": "Simplified the query to essential keywords for better search engine optimization while maintaining the core meaning."
-        }}
-    </output>
-</example>
-
-<example>
-    <input>
-        <question>
-        What is the weather like there? Use weather.com
-        </question>
-    </input>
-    <output>
-        {{
-          "searchQuery": "Weather in Albany, New York {date} 'site:weather.com'",
-          "reasoning": "Added location context and current date for weather relevance, included site restriction as requested by user."
         }}
     </output>
 </example>
@@ -281,21 +254,7 @@ There are several examples attached for your reference inside the below examples
 <example>
     <input>
         <question>
-        What are the top 10 restaurants in New York? Show the results in a table and include a short description of each restaurant. Only include results from yelp.com
-        </question>
-    </input>
-    <output>
-        {{
-          "searchQuery": "Top 10 restaurants in New York on {date} 'site:yelp.com'",
-          "reasoning": "Focused on the core query about top restaurants, added current date for relevance, and included the site restriction to yelp.com as requested."
-        }}
-    </output>
-</example>
-
-<example>
-    <input>
-        <question>
-        What are the top 10 restaurants in New York, Chicago, and Boston?
+        What are the top 10 restaurants in New York, Chicago, and Boston? Show the results in a table and include a short description of each restaurant. Only include results from yelp.com
         </question>
         <supervisor>
         Find the top 10 restaurants in New York.
@@ -303,10 +262,11 @@ There are several examples attached for your reference inside the below examples
     </input>
     <output>
         {{
-          "searchQuery": "Top 10 restaurants in New York on {date}",
-          "reasoning": "Following supervisor instructions to focus specifically on New York restaurants, ignoring Chicago and Boston for this search iteration."
+          "searchQuery": "Top 10 restaurants in New York, Chicago, and Boston on {date} 'site:yelp.com'",
+          "reasoning": "Focused on the core query about top restaurants, added current date for relevance, and included the site restriction to yelp.com as requested. Ignored Chicago and Boston for this search iteration."
         }}
     </output>
+</example>
 </examples>
 
 Everything below is the part of the actual conversation
