@@ -24,6 +24,7 @@ import computeSimilarity from '../utils/computeSimilarity';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
 import { StreamEvent } from '@langchain/core/tracers/log_stream';
+import { z } from 'zod';
 
 export interface MetaSearchAgentType {
   searchAndAnswer: (
@@ -52,6 +53,17 @@ type BasicChainInput = {
   query: string;
 };
 
+const retrieverLLMOutputSchema = z.object({
+  query: z.string().describe('The query to search the web for.'),
+  links: z
+    .array(z.string())
+    .describe('The links to search/summarize if present'),
+  searchRequired: z
+    .boolean()
+    .describe('Wether there is a need to search the web'),
+  searchMode: z.enum(['', 'normal', 'news']).describe('The search mode.'),
+});
+
 class MetaSearchAgent implements MetaSearchAgentType {
   private config: Config;
   private strParser = new StringOutputParser();
@@ -62,73 +74,71 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
   private async createSearchRetrieverChain(llm: BaseChatModel) {
     (llm as unknown as ChatOpenAI).temperature = 0;
-
     return RunnableSequence.from([
       PromptTemplate.fromTemplate(this.config.queryGeneratorPrompt),
-      llm,
-      this.strParser,
-      RunnableLambda.from(async (input: string) => {
-        const linksOutputParser = new LineListOutputParser({
-          key: 'links',
-        });
+      Object.assign(
+        Object.create(Object.getPrototypeOf(llm)),
+        llm,
+      ).withStructuredOutput(retrieverLLMOutputSchema, {
+        ...(llm.metadata?.['model-type'] === 'groq'
+          ? {
+              method: 'json-object',
+            }
+          : {}),
+      }),
+      RunnableLambda.from(
+        async (input: z.infer<typeof retrieverLLMOutputSchema>) => {
+          let question = input.query;
+          const links = input.links;
 
-        const questionOutputParser = new LineOutputParser({
-          key: 'question',
-        });
-
-        const links = await linksOutputParser.parse(input);
-        let question = this.config.summarizer
-          ? await questionOutputParser.parse(input)
-          : input;
-
-        if (question === 'not_needed') {
-          return { query: '', docs: [] };
-        }
-
-        if (links.length > 0) {
-          if (question.length === 0) {
-            question = 'summarize';
+          if (!input.searchRequired) {
+            return { query: '', docs: [] };
           }
 
-          let docs: Document[] = [];
-
-          const linkDocs = await getDocumentsFromLinks({ links });
-
-          const docGroups: Document[] = [];
-
-          linkDocs.map((doc) => {
-            const URLDocExists = docGroups.find(
-              (d) =>
-                d.metadata.url === doc.metadata.url &&
-                d.metadata.totalDocs < 10,
-            );
-
-            if (!URLDocExists) {
-              docGroups.push({
-                ...doc,
-                metadata: {
-                  ...doc.metadata,
-                  totalDocs: 1,
-                },
-              });
+          if (links.length > 0) {
+            if (question.length === 0) {
+              question = 'summarize';
             }
 
-            const docIndex = docGroups.findIndex(
-              (d) =>
-                d.metadata.url === doc.metadata.url &&
-                d.metadata.totalDocs < 10,
-            );
+            let docs: Document[] = [];
 
-            if (docIndex !== -1) {
-              docGroups[docIndex].pageContent =
-                docGroups[docIndex].pageContent + `\n\n` + doc.pageContent;
-              docGroups[docIndex].metadata.totalDocs += 1;
-            }
-          });
+            const linkDocs = await getDocumentsFromLinks({ links });
 
-          await Promise.all(
-            docGroups.map(async (doc) => {
-              const res = await llm.invoke(`
+            const docGroups: Document[] = [];
+
+            linkDocs.map((doc) => {
+              const URLDocExists = docGroups.find(
+                (d) =>
+                  d.metadata.url === doc.metadata.url &&
+                  d.metadata.totalDocs < 10,
+              );
+
+              if (!URLDocExists) {
+                docGroups.push({
+                  ...doc,
+                  metadata: {
+                    ...doc.metadata,
+                    totalDocs: 1,
+                  },
+                });
+              }
+
+              const docIndex = docGroups.findIndex(
+                (d) =>
+                  d.metadata.url === doc.metadata.url &&
+                  d.metadata.totalDocs < 10,
+              );
+
+              if (docIndex !== -1) {
+                docGroups[docIndex].pageContent =
+                  docGroups[docIndex].pageContent + `\n\n` + doc.pageContent;
+                docGroups[docIndex].metadata.totalDocs += 1;
+              }
+            });
+
+            await Promise.all(
+              docGroups.map(async (doc) => {
+                const res = await llm.invoke(`
             You are a web search summarizer, tasked with summarizing a piece of text retrieved from a web search. Your job is to summarize the 
             text into a detailed, 2-4 paragraph explanation that captures the main ideas and provides a comprehensive answer to the query.
             If the query is \"summarize\", you should provide a detailed summary of the text. If the query is a specific question, you should answer it in the summary.
@@ -189,46 +199,50 @@ class MetaSearchAgent implements MetaSearchAgentType {
             Make sure to answer the query in the summary.
           `);
 
-              const document = new Document({
-                pageContent: res.content as string,
-                metadata: {
-                  title: doc.metadata.title,
-                  url: doc.metadata.url,
-                },
-              });
+                const document = new Document({
+                  pageContent: res.content as string,
+                  metadata: {
+                    title: doc.metadata.title,
+                    url: doc.metadata.url,
+                  },
+                });
 
-              docs.push(document);
-            }),
-          );
-
-          return { query: question, docs: docs };
-        } else {
-          question = question.replace(/<think>.*?<\/think>/g, '');
-
-          const res = await searchSearxng(question, {
-            language: 'en',
-            engines: this.config.activeEngines,
-          });
-
-          const documents = res.results.map(
-            (result) =>
-              new Document({
-                pageContent:
-                  result.content ||
-                  (this.config.activeEngines.includes('youtube')
-                    ? result.title
-                    : '') /* Todo: Implement transcript grabbing using Youtubei (source: https://www.npmjs.com/package/youtubei) */,
-                metadata: {
-                  title: result.title,
-                  url: result.url,
-                  ...(result.img_src && { img_src: result.img_src }),
-                },
+                docs.push(document);
               }),
-          );
+            );
 
-          return { query: question, docs: documents };
-        }
-      }),
+            return { query: question, docs: docs };
+          } else {
+            question = question.replace(/<think>.*?<\/think>/g, '');
+
+            const res = await searchSearxng(question, {
+              language: 'en',
+              engines:
+                input.searchMode === 'normal'
+                  ? this.config.activeEngines
+                  : ['bing news'],
+            });
+
+            const documents = res.results.map(
+              (result) =>
+                new Document({
+                  pageContent:
+                    result.content ||
+                    (this.config.activeEngines.includes('youtube')
+                      ? result.title
+                      : '') /* Todo: Implement transcript grabbing using Youtubei (source: https://www.npmjs.com/package/youtubei) */,
+                  metadata: {
+                    title: result.title,
+                    url: result.url,
+                    ...(result.img_src && { img_src: result.img_src }),
+                  },
+                }),
+            );
+
+            return { query: question, docs: documents };
+          }
+        },
+      ),
     ]);
   }
 
