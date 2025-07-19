@@ -224,7 +224,12 @@ const DashboardPage = () => {
         ) : widgets.length === 0 ? (
           <EmptyDashboard />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 auto-rows-min">
+          <div
+            className="grid gap-6 auto-rows-min"
+            style={{
+              gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+            }}
+          >
             {widgets.map((widget) => (
               <WidgetDisplay
                 key={widget.id}
