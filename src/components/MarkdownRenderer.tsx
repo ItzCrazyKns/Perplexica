@@ -6,7 +6,8 @@ import { CheckCheck, Copy as CopyIcon, Brain } from 'lucide-react';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { oneDark, oneLight } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import { useTheme } from 'next-themes';
 import ThinkBox from './ThinkBox';
 
 // Helper functions for think overlay
@@ -49,6 +50,8 @@ const CodeBlock = ({
   className?: string;
   children: React.ReactNode;
 }) => {
+  const { theme } = useTheme();
+  
   // Extract language from className (format could be "language-javascript" or "lang-javascript")
   let language = '';
   if (className) {
@@ -68,30 +71,34 @@ const CodeBlock = ({
     setTimeout(() => setIsCopied(false), 2000);
   };
 
+  // Choose syntax highlighting style based on theme
+  const syntaxStyle = theme === 'light' ? oneLight : oneDark;
+  const backgroundStyle = theme === 'light' ? '#fafafa' : '#1c1c1c';
+
   return (
-    <div className="rounded-md overflow-hidden my-4 relative group border border-dark-secondary">
-      <div className="flex justify-between items-center px-4 py-2 bg-dark-200 border-b border-dark-secondary text-xs text-white/70 font-mono">
+    <div className="rounded-md overflow-hidden my-4 relative group border border-light-200 dark:border-dark-secondary">
+      <div className="flex justify-between items-center px-4 py-2 bg-light-100 dark:bg-dark-200 border-b border-light-200 dark:border-dark-secondary text-xs text-black/70 dark:text-white/70 font-mono">
         <span>{language}</span>
         <button
           onClick={handleCopyCode}
-          className="p-1 rounded-md hover:bg-dark-secondary transition duration-200"
+          className="p-1 rounded-md hover:bg-light-200 dark:hover:bg-dark-secondary transition duration-200"
           aria-label="Copy code to clipboard"
         >
           {isCopied ? (
             <CheckCheck size={14} className="text-green-500" />
           ) : (
-            <CopyIcon size={14} className="text-white/70" />
+            <CopyIcon size={14} className="text-black/70 dark:text-white/70" />
           )}
         </button>
       </div>
       <SyntaxHighlighter
         language={language || 'text'}
-        style={oneDark}
+        style={syntaxStyle}
         customStyle={{
           margin: 0,
           padding: '1rem',
           borderRadius: 0,
-          backgroundColor: '#1c1c1c',
+          backgroundColor: backgroundStyle,
         }}
         wrapLines={true}
         wrapLongLines={true}
@@ -140,11 +147,18 @@ const MarkdownRenderer = ({
           }
           // This is an inline code block (`code`)
           return (
-            <code className="px-1.5 py-0.5 rounded bg-dark-secondary text-white font-mono text-sm">
+            <code className="px-1.5 py-0.5 rounded bg-light-200 dark:bg-dark-secondary text-black dark:text-white font-mono text-sm">
               {children}
             </code>
           );
         },
+      },
+      strong: {
+        component: ({ children }) => (
+          <strong className="font-bold text-black dark:text-white">
+            {children}
+          </strong>
+        ),
       },
       pre: {
         component: ({ children }) => children,
@@ -177,9 +191,10 @@ const MarkdownRenderer = ({
 
       <Markdown
         className={cn(
-          'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
+          'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
           'prose-code:bg-transparent prose-code:p-0 prose-code:text-inherit prose-code:font-normal prose-code:before:content-none prose-code:after:content-none',
           'prose-pre:bg-transparent prose-pre:border-0 prose-pre:m-0 prose-pre:p-0',
+          'prose-strong:text-black dark:prose-strong:text-white prose-strong:font-bold',
           'break-words text-black dark:text-white max-w-full',
           className,
         )}
