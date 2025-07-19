@@ -137,6 +137,11 @@ const WidgetConfigModal = ({
     }
 
     onSave(config);
+    handleClose();
+  };
+
+  const handleClose = () => {
+    setPreviewContent(''); // Clear preview content when closing
     onClose();
   };
 
@@ -218,7 +223,7 @@ const WidgetConfigModal = ({
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <Dialog as="div" className="relative z-50" onClose={handleClose}>
         <TransitionChild
           as={Fragment}
           enter="ease-out duration-300"
@@ -249,7 +254,7 @@ const WidgetConfigModal = ({
                 >
                   {editingWidget ? 'Edit Widget' : 'Create New Widget'}
                   <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="p-1 hover:bg-light-secondary dark:hover:bg-dark-secondary rounded"
                   >
                     <X size={20} />
@@ -475,7 +480,7 @@ const WidgetConfigModal = ({
                 {/* Action Buttons */}
                 <div className="mt-6 flex justify-end gap-3">
                   <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="px-4 py-2 text-sm font-medium text-black dark:text-white bg-light-secondary dark:bg-dark-secondary hover:bg-light-200 dark:hover:bg-dark-200 rounded-md"
                   >
                     Cancel

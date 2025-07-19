@@ -1,18 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { ChevronDown, ChevronUp, BrainCircuit } from 'lucide-react';
 
 interface ThinkBoxProps {
-  content: string;
+  content: ReactNode;
   expanded?: boolean;
   onToggle?: () => void;
 }
 
 const ThinkBox = ({ content, expanded, onToggle }: ThinkBoxProps) => {
-  // Don't render anything if content is empty or only whitespace
-  if (!content || content.trim().length === 0) {
+  // Don't render anything if content is empty
+  console.log('ThinkBox content:', content);
+  if (!content) {
     return null;
   }
 
