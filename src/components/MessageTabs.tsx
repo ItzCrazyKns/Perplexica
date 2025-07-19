@@ -5,8 +5,6 @@ import { getSuggestions } from '@/lib/actions';
 import { cn } from '@/lib/utils';
 import {
   BookCopy,
-  CheckCheck,
-  Copy as CopyIcon,
   Disc3,
   ImagesIcon,
   Layers3,
@@ -16,86 +14,16 @@ import {
   VideoIcon,
   Volume2,
 } from 'lucide-react';
-import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import { useCallback, useEffect, useState } from 'react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { useSpeech } from 'react-text-to-speech';
 import { Message } from './ChatWindow';
+import MarkdownRenderer from './MarkdownRenderer';
 import Copy from './MessageActions/Copy';
 import ModelInfoButton from './MessageActions/ModelInfo';
 import Rewrite from './MessageActions/Rewrite';
 import MessageSources from './MessageSources';
 import SearchImages from './SearchImages';
 import SearchVideos from './SearchVideos';
-import ThinkBox from './ThinkBox';
-
-const ThinkTagProcessor = ({ children }: { children: React.ReactNode }) => {
-  return <ThinkBox content={children as string} />;
-};
-
-const CodeBlock = ({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) => {
-  // Extract language from className (format could be "language-javascript" or "lang-javascript")
-  let language = '';
-  if (className) {
-    if (className.startsWith('language-')) {
-      language = className.replace('language-', '');
-    } else if (className.startsWith('lang-')) {
-      language = className.replace('lang-', '');
-    }
-  }
-
-  const content = children as string;
-  const [isCopied, setIsCopied] = useState(false);
-
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(content);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
-  };
-
-  return (
-    <div className="rounded-md overflow-hidden my-4 relative group border border-dark-secondary">
-      <div className="flex justify-between items-center px-4 py-2 bg-dark-200 border-b border-dark-secondary text-xs text-white/70 font-mono">
-        <span>{language}</span>
-        <button
-          onClick={handleCopyCode}
-          className="p-1 rounded-md hover:bg-dark-secondary transition duration-200"
-          aria-label="Copy code to clipboard"
-        >
-          {isCopied ? (
-            <CheckCheck size={14} className="text-green-500" />
-          ) : (
-            <CopyIcon size={14} className="text-white/70" />
-          )}
-        </button>
-      </div>
-      <SyntaxHighlighter
-        language={language || 'text'}
-        style={oneDark}
-        customStyle={{
-          margin: 0,
-          padding: '1rem',
-          borderRadius: 0,
-          backgroundColor: '#1c1c1c',
-        }}
-        wrapLines={true}
-        wrapLongLines={true}
-        showLineNumbers={language !== '' && content.split('\n').length > 1}
-        useInlineStyles={true}
-        PreTag="div"
-      >
-        {content}
-      </SyntaxHighlighter>
-    </div>
-  );
-};
 
 type TabType = 'text' | 'sources' | 'images' | 'videos';
 
@@ -236,33 +164,6 @@ const MessageTabs = ({
     }
   }, [isLast, loading, message.role, handleLoadSuggestions]);
 
-  // Markdown formatting options
-  const markdownOverrides: MarkdownToJSX.Options = {
-    overrides: {
-      think: {
-        component: ThinkTagProcessor,
-      },
-      code: {
-        component: ({ className, children }) => {
-          // Check if it's an inline code block or a fenced code block
-          if (className) {
-            // This is a fenced code block (```code```)
-            return <CodeBlock className={className}>{children}</CodeBlock>;
-          }
-          // This is an inline code block (`code`)
-          return (
-            <code className="px-1.5 py-0.5 rounded bg-dark-secondary text-white font-mono text-sm">
-              {children}
-            </code>
-          );
-        },
-      },
-      pre: {
-        component: ({ children }) => children,
-      },
-    },
-  };
-
   return (
     <div className="flex flex-col w-full">
       {/* Tabs */}
@@ -372,17 +273,10 @@ const MessageTabs = ({
         {/* Answer Tab */}
         {activeTab === 'text' && (
           <div className="flex flex-col space-y-4 animate-fadeIn">
-            <Markdown
-              className={cn(
-                'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
-                'prose-code:bg-transparent prose-code:p-0 prose-code:text-inherit prose-code:font-normal prose-code:before:content-none prose-code:after:content-none',
-                'prose-pre:bg-transparent prose-pre:border-0 prose-pre:m-0 prose-pre:p-0',
-                'max-w-none break-words px-4 text-black dark:text-white',
-              )}
-              options={markdownOverrides}
-            >
-              {parsedMessage}
-            </Markdown>
+            <MarkdownRenderer 
+              content={parsedMessage}
+              className="px-4"
+            />
 
             {loading && isLast ? null : (
               <div className="flex flex-row items-center justify-between w-full text-black dark:text-white px-4 py-4">

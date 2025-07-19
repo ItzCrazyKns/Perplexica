@@ -6,15 +6,26 @@ import { ChevronDown, ChevronUp, BrainCircuit } from 'lucide-react';
 
 interface ThinkBoxProps {
   content: string;
+  expanded?: boolean;
+  onToggle?: () => void;
 }
 
-const ThinkBox = ({ content }: ThinkBoxProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+const ThinkBox = ({ content, expanded, onToggle }: ThinkBoxProps) => {
+  // Don't render anything if content is empty or only whitespace
+  if (!content || content.trim().length === 0) {
+    return null;
+  }
+
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  
+  // Use external expanded state if provided, otherwise use internal state
+  const isExpanded = expanded !== undefined ? expanded : internalExpanded;
+  const handleToggle = onToggle || (() => setInternalExpanded(!internalExpanded));
 
   return (
     <div className="my-4 bg-light-secondary/50 dark:bg-dark-secondary/50 rounded-xl border border-light-200 dark:border-dark-200 overflow-hidden">
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleToggle}
         className="w-full flex items-center justify-between px-4 py-1 text-black/90 dark:text-white/90 hover:bg-light-200 dark:hover:bg-dark-200 transition duration-200"
       >
         <div className="flex items-center space-x-2">
