@@ -14,12 +14,12 @@ const extractThinkContent = (content: string): string | null => {
   const thinkRegex = /<think>([\s\S]*?)<\/think>/g;
   const matches = content.match(thinkRegex);
   if (!matches) return null;
-  
+
   // Extract content between think tags and join if multiple
   const extractedContent = matches
-    .map(match => match.replace(/<\/?think>/g, ''))
+    .map((match) => match.replace(/<\/?think>/g, ''))
     .join('\n\n');
-  
+
   // Return null if content is empty or only whitespace
   return extractedContent.trim().length === 0 ? null : extractedContent;
 };
@@ -28,10 +28,10 @@ const removeThinkTags = (content: string): string => {
   return content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 };
 
-const ThinkTagProcessor = ({ 
-  children, 
-  isOverlayMode = false 
-}: { 
+const ThinkTagProcessor = ({
+  children,
+  isOverlayMode = false,
+}: {
   children: React.ReactNode;
   isOverlayMode?: boolean;
 }) => {
@@ -111,9 +111,13 @@ interface MarkdownRendererProps {
   thinkOverlay?: boolean;
 }
 
-const MarkdownRenderer = ({ content, className, thinkOverlay = false }: MarkdownRendererProps) => {
+const MarkdownRenderer = ({
+  content,
+  className,
+  thinkOverlay = false,
+}: MarkdownRendererProps) => {
   const [showThinkBox, setShowThinkBox] = useState(false);
-  
+
   // Extract think content from the markdown
   const thinkContent = thinkOverlay ? extractThinkContent(content) : null;
   const contentWithoutThink = thinkOverlay ? removeThinkTags(content) : content;
@@ -153,27 +157,27 @@ const MarkdownRenderer = ({ content, className, thinkOverlay = false }: Markdown
       {/* Think box when expanded - shows above markdown */}
       {thinkOverlay && thinkContent && showThinkBox && (
         <div className="mb-4">
-          <ThinkBox 
-            content={thinkContent} 
+          <ThinkBox
+            content={thinkContent}
             expanded={true}
             onToggle={() => setShowThinkBox(false)}
           />
         </div>
       )}
-      
+
       <Markdown
         className={cn(
           'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
           'prose-code:bg-transparent prose-code:p-0 prose-code:text-inherit prose-code:font-normal prose-code:before:content-none prose-code:after:content-none',
           'prose-pre:bg-transparent prose-pre:border-0 prose-pre:m-0 prose-pre:p-0',
-          'max-w-none break-words text-black dark:text-white',
-          className
+          'break-words text-black dark:text-white',
+          className,
         )}
         options={markdownOverrides}
       >
         {thinkOverlay ? contentWithoutThink : content}
       </Markdown>
-      
+
       {/* Overlay icon when think box is collapsed */}
       {thinkOverlay && thinkContent && !showThinkBox && (
         <button
@@ -181,7 +185,10 @@ const MarkdownRenderer = ({ content, className, thinkOverlay = false }: Markdown
           className="absolute top-2 right-2 p-2 rounded-lg bg-black/20 dark:bg-white/20 backdrop-blur-sm opacity-30 hover:opacity-100 transition-opacity duration-200 group"
           title="Show thinking process"
         >
-          <Brain size={16} className="text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+          <Brain
+            size={16}
+            className="text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
+          />
         </button>
       )}
     </div>

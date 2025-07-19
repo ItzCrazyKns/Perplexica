@@ -1,6 +1,14 @@
 'use client';
 
-import { RefreshCw, Edit, Trash2, Clock, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  RefreshCw,
+  Edit,
+  Trash2,
+  Clock,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { useState } from 'react';
@@ -32,12 +40,17 @@ interface WidgetDisplayProps {
   onRefresh: (widgetId: string) => void;
 }
 
-const WidgetDisplay = ({ widget, onEdit, onDelete, onRefresh }: WidgetDisplayProps) => {
+const WidgetDisplay = ({
+  widget,
+  onEdit,
+  onDelete,
+  onRefresh,
+}: WidgetDisplayProps) => {
   const [isFooterExpanded, setIsFooterExpanded] = useState(false);
 
   const formatLastUpdated = (date: Date | null) => {
     if (!date) return 'Never';
-    
+
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / (1000 * 60));
@@ -61,16 +74,16 @@ const WidgetDisplay = ({ widget, onEdit, onDelete, onRefresh }: WidgetDisplayPro
           <CardTitle className="text-lg font-medium truncate">
             {widget.title}
           </CardTitle>
-          
+
           <div className="flex items-center space-x-2">
             {/* Last updated date with refresh frequency tooltip */}
-            <span 
+            <span
               className="text-xs text-gray-500 dark:text-gray-400"
               title={getRefreshFrequencyText()}
             >
               {formatLastUpdated(widget.lastUpdated)}
             </span>
-            
+
             {/* Refresh button */}
             <button
               onClick={() => onRefresh(widget.id)}
@@ -78,9 +91,9 @@ const WidgetDisplay = ({ widget, onEdit, onDelete, onRefresh }: WidgetDisplayPro
               className="p-1.5 hover:bg-light-secondary dark:hover:bg-dark-secondary rounded transition-colors disabled:opacity-50"
               title="Refresh Widget"
             >
-              <RefreshCw 
-                size={16} 
-                className={`text-gray-600 dark:text-gray-400 ${widget.isLoading ? 'animate-spin' : ''}`} 
+              <RefreshCw
+                size={16}
+                className={`text-gray-600 dark:text-gray-400 ${widget.isLoading ? 'animate-spin' : ''}`}
               />
             </button>
           </div>
@@ -95,14 +108,21 @@ const WidgetDisplay = ({ widget, onEdit, onDelete, onRefresh }: WidgetDisplayPro
           </div>
         ) : widget.error ? (
           <div className="flex items-start space-x-2 p-3 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
-            <AlertCircle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+            <AlertCircle
+              size={16}
+              className="text-red-500 mt-0.5 flex-shrink-0"
+            />
             <div className="flex-1">
-              <p className="text-sm font-medium text-red-800 dark:text-red-300">Error Loading Content</p>
-              <p className="text-xs text-red-600 dark:text-red-400 mt-1">{widget.error}</p>
+              <p className="text-sm font-medium text-red-800 dark:text-red-300">
+                Error Loading Content
+              </p>
+              <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                {widget.error}
+              </p>
             </div>
           </div>
         ) : widget.content ? (
-          <div className="prose prose-sm dark:prose-invert max-w-none">
+          <div className="prose prose-sm dark:prose-invert">
             <MarkdownRenderer content={widget.content} thinkOverlay={true} />
           </div>
         ) : (
@@ -134,10 +154,15 @@ const WidgetDisplay = ({ widget, onEdit, onDelete, onRefresh }: WidgetDisplayPro
             {/* Sources */}
             {widget.sources.length > 0 && (
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Sources:</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                  Sources:
+                </p>
                 <div className="space-y-1">
                   {widget.sources.map((source, index) => (
-                    <div key={index} className="flex items-center space-x-2 text-xs">
+                    <div
+                      key={index}
+                      className="flex items-center space-x-2 text-xs"
+                    >
                       <span className="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
                       <span className="text-gray-600 dark:text-gray-300 truncate">
                         {source.url}
@@ -160,7 +185,7 @@ const WidgetDisplay = ({ widget, onEdit, onDelete, onRefresh }: WidgetDisplayPro
                 <Edit size={12} />
                 <span>Edit</span>
               </button>
-              
+
               <button
                 onClick={() => onDelete(widget.id)}
                 className="flex items-center space-x-1 px-2 py-1 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"

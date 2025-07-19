@@ -17,10 +17,11 @@ const ThinkBox = ({ content, expanded, onToggle }: ThinkBoxProps) => {
   }
 
   const [internalExpanded, setInternalExpanded] = useState(false);
-  
+
   // Use external expanded state if provided, otherwise use internal state
   const isExpanded = expanded !== undefined ? expanded : internalExpanded;
-  const handleToggle = onToggle || (() => setInternalExpanded(!internalExpanded));
+  const handleToggle =
+    onToggle || (() => setInternalExpanded(!internalExpanded));
 
   return (
     <div className="my-4 bg-light-secondary/50 dark:bg-dark-secondary/50 rounded-xl border border-light-200 dark:border-dark-200 overflow-hidden">

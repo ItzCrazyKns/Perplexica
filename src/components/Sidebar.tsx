@@ -1,7 +1,14 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { BookOpenText, Home, Search, SquarePen, Settings, LayoutDashboard } from 'lucide-react';
+import {
+  BookOpenText,
+  Home,
+  Search,
+  SquarePen,
+  Settings,
+  LayoutDashboard,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useSelectedLayoutSegments } from 'next/navigation';
 import React, { useState, type ReactNode } from 'react';

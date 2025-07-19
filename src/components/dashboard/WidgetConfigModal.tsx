@@ -1,6 +1,12 @@
 'use client';
 
-import { Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from '@headlessui/react';
+import {
+  Dialog,
+  DialogPanel,
+  DialogTitle,
+  Transition,
+  TransitionChild,
+} from '@headlessui/react';
 import { X, Plus, Trash2, Play, Save } from 'lucide-react';
 import { Fragment, useState, useEffect } from 'react';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
@@ -9,20 +15,28 @@ import ModelSelector from '@/components/MessageInputActions/ModelSelector';
 // Helper function to replace date/time variables in prompts on the client side
 const replaceDateTimeVariables = (prompt: string): string => {
   let processedPrompt = prompt;
-  
+
   // Replace UTC datetime
   if (processedPrompt.includes('{{current_utc_datetime}}')) {
     const utcDateTime = new Date().toISOString();
-    processedPrompt = processedPrompt.replace(/\{\{current_utc_datetime\}\}/g, utcDateTime);
+    processedPrompt = processedPrompt.replace(
+      /\{\{current_utc_datetime\}\}/g,
+      utcDateTime,
+    );
   }
-  
+
   // Replace local datetime
   if (processedPrompt.includes('{{current_local_datetime}}')) {
     const now = new Date();
-    const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString();
-    processedPrompt = processedPrompt.replace(/\{\{current_local_datetime\}\}/g, localDateTime);
+    const localDateTime = new Date(
+      now.getTime() - now.getTimezoneOffset() * 60000,
+    ).toISOString();
+    processedPrompt = processedPrompt.replace(
+      /\{\{current_local_datetime\}\}/g,
+      localDateTime,
+    );
   }
-  
+
   return processedPrompt;
 };
 
@@ -67,7 +81,10 @@ const WidgetConfigModal = ({
 
   const [previewContent, setPreviewContent] = useState<string>('');
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<{ provider: string; model: string } | null>(null);
+  const [selectedModel, setSelectedModel] = useState<{
+    provider: string;
+    model: string;
+  } | null>(null);
 
   // Update config when editingWidget changes
   useEffect(() => {
@@ -106,7 +123,7 @@ const WidgetConfigModal = ({
   // Update config when model selection changes
   useEffect(() => {
     if (selectedModel) {
-      setConfig(prev => ({
+      setConfig((prev) => ({
         ...prev,
         provider: selectedModel.provider,
         model: selectedModel.model,
@@ -118,7 +135,7 @@ const WidgetConfigModal = ({
     if (!config.title.trim() || !config.prompt.trim()) {
       return; // TODO: Add proper validation feedback
     }
-    
+
     onSave(config);
     onClose();
   };
@@ -129,8 +146,13 @@ const WidgetConfigModal = ({
       return;
     }
 
-    if (config.sources.length === 0 || config.sources.every(s => !s.url.trim())) {
-      setPreviewContent('Please add at least one source URL before running preview.');
+    if (
+      config.sources.length === 0 ||
+      config.sources.every((s) => !s.url.trim())
+    ) {
+      setPreviewContent(
+        'Please add at least one source URL before running preview.',
+      );
       return;
     }
 
@@ -145,7 +167,7 @@ const WidgetConfigModal = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          sources: config.sources.filter(s => s.url.trim()), // Only send sources with URLs
+          sources: config.sources.filter((s) => s.url.trim()), // Only send sources with URLs
           prompt: processedPrompt,
           provider: config.provider,
           model: config.model,
@@ -153,40 +175,44 @@ const WidgetConfigModal = ({
       });
 
       const result = await response.json();
-      
+
       if (result.success) {
         setPreviewContent(result.content);
       } else {
-        setPreviewContent(`**Preview Error:** ${result.error || 'Unknown error occurred'}\n\n${result.content || ''}`);
+        setPreviewContent(
+          `**Preview Error:** ${result.error || 'Unknown error occurred'}\n\n${result.content || ''}`,
+        );
       }
     } catch (error) {
       console.error('Preview error:', error);
-      setPreviewContent(`**Network Error:** Failed to connect to the preview service.\n\n${error instanceof Error ? error.message : 'Unknown error'}`);
+      setPreviewContent(
+        `**Network Error:** Failed to connect to the preview service.\n\n${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     } finally {
       setIsPreviewLoading(false);
     }
   };
 
   const addSource = () => {
-    setConfig(prev => ({
+    setConfig((prev) => ({
       ...prev,
-      sources: [...prev.sources, { url: '', type: 'Web Page' }]
+      sources: [...prev.sources, { url: '', type: 'Web Page' }],
     }));
   };
 
   const removeSource = (index: number) => {
-    setConfig(prev => ({
+    setConfig((prev) => ({
       ...prev,
-      sources: prev.sources.filter((_, i) => i !== index)
+      sources: prev.sources.filter((_, i) => i !== index),
     }));
   };
 
   const updateSource = (index: number, field: keyof Source, value: string) => {
-    setConfig(prev => ({
+    setConfig((prev) => ({
       ...prev,
-      sources: prev.sources.map((source, i) => 
-        i === index ? { ...source, [field]: value } : source
-      )
+      sources: prev.sources.map((source, i) =>
+        i === index ? { ...source, [field]: value } : source,
+      ),
     }));
   };
 
@@ -241,7 +267,12 @@ const WidgetConfigModal = ({
                       <input
                         type="text"
                         value={config.title}
-                        onChange={(e) => setConfig(prev => ({ ...prev, title: e.target.value }))}
+                        onChange={(e) =>
+                          setConfig((prev) => ({
+                            ...prev,
+                            title: e.target.value,
+                          }))
+                        }
                         className="w-full px-3 py-2 border border-light-200 dark:border-dark-200 rounded-md bg-light-primary dark:bg-dark-primary text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter widget title..."
                       />
@@ -258,13 +289,21 @@ const WidgetConfigModal = ({
                             <input
                               type="url"
                               value={source.url}
-                              onChange={(e) => updateSource(index, 'url', e.target.value)}
+                              onChange={(e) =>
+                                updateSource(index, 'url', e.target.value)
+                              }
                               className="flex-1 px-3 py-2 border border-light-200 dark:border-dark-200 rounded-md bg-light-primary dark:bg-dark-primary text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                               placeholder="https://example.com"
                             />
                             <select
                               value={source.type}
-                              onChange={(e) => updateSource(index, 'type', e.target.value as Source['type'])}
+                              onChange={(e) =>
+                                updateSource(
+                                  index,
+                                  'type',
+                                  e.target.value as Source['type'],
+                                )
+                              }
                               className="px-3 py-2 border border-light-200 dark:border-dark-200 rounded-md bg-light-primary dark:bg-dark-primary text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                               <option value="Web Page">Web Page</option>
@@ -297,7 +336,12 @@ const WidgetConfigModal = ({
                       </label>
                       <textarea
                         value={config.prompt}
-                        onChange={(e) => setConfig(prev => ({ ...prev, prompt: e.target.value }))}
+                        onChange={(e) =>
+                          setConfig((prev) => ({
+                            ...prev,
+                            prompt: e.target.value,
+                          }))
+                        }
                         rows={6}
                         className="w-full px-3 py-2 border border-light-200 dark:border-dark-200 rounded-md bg-light-primary dark:bg-dark-primary text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter your prompt here..."
@@ -310,13 +354,14 @@ const WidgetConfigModal = ({
                         Model & Provider
                       </label>
                       <ModelSelector
-                            selectedModel={selectedModel}
-                            setSelectedModel={setSelectedModel}
-                            truncateModelName={false}
-                            showModelName={true}
-                          />
+                        selectedModel={selectedModel}
+                        setSelectedModel={setSelectedModel}
+                        truncateModelName={false}
+                        showModelName={true}
+                      />
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Select the AI model and provider to process your widget content
+                        Select the AI model and provider to process your widget
+                        content
                       </p>
                     </div>
 
@@ -330,12 +375,24 @@ const WidgetConfigModal = ({
                           type="number"
                           min="1"
                           value={config.refreshFrequency}
-                          onChange={(e) => setConfig(prev => ({ ...prev, refreshFrequency: parseInt(e.target.value) || 1 }))}
+                          onChange={(e) =>
+                            setConfig((prev) => ({
+                              ...prev,
+                              refreshFrequency: parseInt(e.target.value) || 1,
+                            }))
+                          }
                           className="flex-1 px-3 py-2 border border-light-200 dark:border-dark-200 rounded-md bg-light-primary dark:bg-dark-primary text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <select
                           value={config.refreshUnit}
-                          onChange={(e) => setConfig(prev => ({ ...prev, refreshUnit: e.target.value as 'minutes' | 'hours' }))}
+                          onChange={(e) =>
+                            setConfig((prev) => ({
+                              ...prev,
+                              refreshUnit: e.target.value as
+                                | 'minutes'
+                                | 'hours',
+                            }))
+                          }
                           className="px-3 py-2 border border-light-200 dark:border-dark-200 rounded-md bg-light-primary dark:bg-dark-primary text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           <option value="minutes">Minutes</option>
@@ -360,11 +417,14 @@ const WidgetConfigModal = ({
                         {isPreviewLoading ? 'Loading...' : 'Run Preview'}
                       </button>
                     </div>
-                    
-                    <div className="h-80 p-4 border border-light-200 dark:border-dark-200 rounded-md bg-light-secondary dark:bg-dark-secondary overflow-y-auto">
+
+                    <div className="h-80 p-4 border border-light-200 dark:border-dark-200 rounded-md bg-light-secondary dark:bg-dark-secondary overflow-y-auto max-w-full">
                       {previewContent ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                          <MarkdownRenderer thinkOverlay={true} content={previewContent} />
+                        <div className="prose prose-sm dark:prose-invert max-w-full">
+                          <MarkdownRenderer
+                            thinkOverlay={true}
+                            content={previewContent}
+                          />
                         </div>
                       ) : (
                         <div className="text-sm text-black/50 dark:text-white/50 italic">
@@ -377,11 +437,36 @@ const WidgetConfigModal = ({
                     <div className="text-xs text-black/70 dark:text-white/70">
                       <h5 className="font-medium mb-2">Available Variables:</h5>
                       <div className="space-y-1">
-                        <div><code className="bg-light-200 dark:bg-dark-200 px-1 rounded">{'{{current_utc_datetime}}'}</code> - Current UTC date and time</div>
-                        <div><code className="bg-light-200 dark:bg-dark-200 px-1 rounded">{'{{current_local_datetime}}'}</code> - Current local date and time</div>
-                        <div><code className="bg-light-200 dark:bg-dark-200 px-1 rounded">{'{{source_content_1}}'}</code> - Content from first source</div>
-                        <div><code className="bg-light-200 dark:bg-dark-200 px-1 rounded">{'{{source_content_2}}'}</code> - Content from second source</div>
-                        <div><code className="bg-light-200 dark:bg-dark-200 px-1 rounded">{'{{location}}'}</code> - Your current location</div>
+                        <div>
+                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
+                            {'{{current_utc_datetime}}'}
+                          </code>{' '}
+                          - Current UTC date and time
+                        </div>
+                        <div>
+                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
+                            {'{{current_local_datetime}}'}
+                          </code>{' '}
+                          - Current local date and time
+                        </div>
+                        <div>
+                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
+                            {'{{source_content_1}}'}
+                          </code>{' '}
+                          - Content from first source
+                        </div>
+                        <div>
+                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
+                            {'{{source_content_2}}'}
+                          </code>{' '}
+                          - Content from second source
+                        </div>
+                        <div>
+                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
+                            {'{{location}}'}
+                          </code>{' '}
+                          - Your current location
+                        </div>
                       </div>
                     </div>
                   </div>

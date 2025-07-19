@@ -273,10 +273,7 @@ const MessageTabs = ({
         {/* Answer Tab */}
         {activeTab === 'text' && (
           <div className="flex flex-col space-y-4 animate-fadeIn">
-            <MarkdownRenderer 
-              content={parsedMessage}
-              className="px-4"
-            />
+            <MarkdownRenderer content={parsedMessage} className="px-4" />
 
             {loading && isLast ? null : (
               <div className="flex flex-row items-center justify-between w-full text-black dark:text-white px-4 py-4">

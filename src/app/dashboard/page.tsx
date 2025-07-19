@@ -1,12 +1,28 @@
 'use client';
 
-import { Plus, RefreshCw, Download, Upload, LayoutDashboard, Layers, List } from 'lucide-react';
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Plus,
+  RefreshCw,
+  Download,
+  Upload,
+  LayoutDashboard,
+  Layers,
+  List,
+} from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import WidgetConfigModal from '@/components/dashboard/WidgetConfigModal';
 import WidgetDisplay from '@/components/dashboard/WidgetDisplay';
 import { useDashboard } from '@/lib/hooks/useDashboard';
 import { Widget, WidgetConfig } from '@/lib/types';
+import { toast } from 'sonner';
 
 const DashboardPage = () => {
   const {
@@ -24,7 +40,19 @@ const DashboardPage = () => {
   } = useDashboard();
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [editingWidget, setEditingWidget] = useState<Widget | null>(null);  const handleAddWidget = () => {
+  const [editingWidget, setEditingWidget] = useState<Widget | null>(null);
+  const hasAutoRefreshed = useRef(false);
+
+  // Auto-refresh stale widgets when dashboard loads (only once)
+  useEffect(() => {
+    if (!isLoading && widgets.length > 0 && !hasAutoRefreshed.current) {
+      hasAutoRefreshed.current = true;
+
+      refreshAllWidgets();
+    }
+  }, [isLoading, widgets, refreshAllWidgets]);
+
+  const handleAddWidget = () => {
     setEditingWidget(null);
     setShowAddModal(true);
   };
@@ -60,18 +88,18 @@ const DashboardPage = () => {
   };
 
   const handleRefreshAll = () => {
-    refreshAllWidgets();
+    refreshAllWidgets(true);
   };
 
   const handleExport = async () => {
     try {
       const configJson = await exportDashboard();
       await navigator.clipboard.writeText(configJson);
-      // TODO: Add toast notification for success
+      toast.success('Dashboard configuration copied to clipboard');
       console.log('Dashboard configuration copied to clipboard');
     } catch (error) {
       console.error('Export failed:', error);
-      // TODO: Add toast notification for error
+      toast.error('Failed to copy dashboard configuration');
     }
   };
 
@@ -79,11 +107,11 @@ const DashboardPage = () => {
     try {
       const configJson = await navigator.clipboard.readText();
       await importDashboard(configJson);
-      // TODO: Add toast notification for success
+      toast.success('Dashboard configuration imported successfully');
       console.log('Dashboard configuration imported successfully');
     } catch (error) {
       console.error('Import failed:', error);
-      // TODO: Add toast notification for error
+      toast.error('Failed to import dashboard configuration');
     }
   };
 
@@ -98,18 +126,20 @@ const DashboardPage = () => {
         <CardHeader>
           <CardTitle>Welcome to your Dashboard</CardTitle>
           <CardDescription>
-            Create your first widget to get started with personalized information
+            Create your first widget to get started with personalized
+            information
           </CardDescription>
         </CardHeader>
-        
+
         <CardContent>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Widgets let you fetch content from any URL and process it with AI to show exactly what you need.
+            Widgets let you fetch content from any URL and process it with AI to
+            show exactly what you need.
           </p>
         </CardContent>
-        
+
         <CardFooter className="justify-center">
-          <button 
+          <button
             onClick={handleAddWidget}
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-200 flex items-center space-x-2"
           >
@@ -130,7 +160,7 @@ const DashboardPage = () => {
             <LayoutDashboard />
             <h1 className="text-3xl font-medium p-2">Dashboard</h1>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <button
               onClick={handleRefreshAll}
@@ -139,7 +169,7 @@ const DashboardPage = () => {
             >
               <RefreshCw size={18} className="text-black dark:text-white" />
             </button>
-            
+
             <button
               onClick={handleToggleProcessingMode}
               className="p-2 hover:bg-light-secondary dark:hover:bg-dark-secondary rounded-lg transition duration-200"
@@ -151,7 +181,7 @@ const DashboardPage = () => {
                 <List size={18} className="text-black dark:text-white" />
               )}
             </button>
-            
+
             <button
               onClick={handleExport}
               className="p-2 hover:bg-light-secondary dark:hover:bg-dark-secondary rounded-lg transition duration-200"
@@ -159,7 +189,7 @@ const DashboardPage = () => {
             >
               <Download size={18} className="text-black dark:text-white" />
             </button>
-            
+
             <button
               onClick={handleImport}
               className="p-2 hover:bg-light-secondary dark:hover:bg-dark-secondary rounded-lg transition duration-200"
@@ -167,7 +197,7 @@ const DashboardPage = () => {
             >
               <Upload size={18} className="text-black dark:text-white" />
             </button>
-            
+
             <button
               onClick={handleAddWidget}
               className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition duration-200"
@@ -186,7 +216,9 @@ const DashboardPage = () => {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-500 dark:text-gray-400">Loading dashboard...</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                Loading dashboard...
+              </p>
             </div>
           </div>
         ) : widgets.length === 0 ? (
