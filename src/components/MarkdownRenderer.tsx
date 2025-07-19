@@ -149,6 +149,11 @@ const MarkdownRenderer = ({
       pre: {
         component: ({ children }) => children,
       },
+      a: {
+        component: (props) => (
+          <a {...props} target='_blank' rel='noopener noreferrer' />
+        ),
+      },
       // Prevent rendering of certain HTML elements for security
       iframe: () => null, // Don't render iframes
       script: () => null, // Don't render scripts

@@ -12,7 +12,6 @@ interface ThinkBoxProps {
 
 const ThinkBox = ({ content, expanded, onToggle }: ThinkBoxProps) => {
   // Don't render anything if content is empty
-  console.log('ThinkBox content:', content);
   if (!content) {
     return null;
   }
