@@ -112,7 +112,8 @@ export const getAvailableChatModelProviders = async () => {
   const customOpenAiApiUrl = getCustomOpenaiApiUrl();
   const customOpenAiModelName = getCustomOpenaiModelName();
 
-  models['custom_openai'] = {
+  if (customOpenAiApiKey && customOpenAiApiUrl && customOpenAiModelName) {
+    models['custom_openai'] = {
     ...(customOpenAiApiKey && customOpenAiApiUrl && customOpenAiModelName
       ? {
           [customOpenAiModelName]: {
@@ -128,6 +129,7 @@ export const getAvailableChatModelProviders = async () => {
           },
         }
       : {}),
+    };
   };
 
   return models;
