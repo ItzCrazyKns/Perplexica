@@ -6,7 +6,10 @@ import { CheckCheck, Copy as CopyIcon, Brain } from 'lucide-react';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark, oneLight } from 'react-syntax-highlighter/dist/cjs/styles/prism';
+import {
+  oneDark,
+  oneLight,
+} from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { useTheme } from 'next-themes';
 import ThinkBox from './ThinkBox';
 
@@ -51,7 +54,7 @@ const CodeBlock = ({
   children: React.ReactNode;
 }) => {
   const { theme } = useTheme();
-  
+
   // Extract language from className (format could be "language-javascript" or "lang-javascript")
   let language = '';
   if (className) {
@@ -165,7 +168,7 @@ const MarkdownRenderer = ({
       },
       a: {
         component: (props) => (
-          <a {...props} target='_blank' rel='noopener noreferrer' />
+          <a {...props} target="_blank" rel="noopener noreferrer" />
         ),
       },
       // Prevent rendering of certain HTML elements for security

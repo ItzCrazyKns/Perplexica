@@ -3,7 +3,7 @@ import { getWebContent, getWebContentLite } from '@/lib/utils/documents';
 import { Document } from '@langchain/core/documents';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatOpenAI } from '@langchain/openai';
-import { HumanMessage } from '@langchain/core/messages';
+import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { getAvailableChatModelProviders } from '@/lib/providers';
 import {
   getCustomOpenaiApiKey,
@@ -11,6 +11,8 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { ChatOllama } from '@langchain/ollama';
+import { createReactAgent } from '@langchain/langgraph/prebuilt';
+import { timezoneConverterTool, dateDifferenceTool } from '@/lib/tools';
 import axios from 'axios';
 
 interface Source {
@@ -122,7 +124,7 @@ async function getLLMInstance(
   }
 }
 
-// Helper function to process the prompt with LLM
+// Helper function to process the prompt with LLM using agentic workflow
 async function processWithLLM(
   prompt: string,
   provider: string,
@@ -134,10 +136,30 @@ async function processWithLLM(
     throw new Error(`Invalid or unavailable model: ${provider}/${model}`);
   }
 
-  const message = new HumanMessage({ content: prompt });
-  const response = await llm.invoke([message]);
+  const tools = [
+    timezoneConverterTool,
+    dateDifferenceTool,
+  ];
 
-  return response.content as string;
+  // Create the React agent with tools
+  const agent = createReactAgent({
+    llm,
+    tools,
+  });
+
+  // Invoke the agent with the prompt
+  const response = await agent.invoke({
+    messages: [ 
+      //new SystemMessage({ content: `You have the following tools available: ${tools.map(tool => tool.name).join(', ')} use them as necessary to complete the task.` }), 
+      new HumanMessage({ content: prompt })
+    ],
+  },{
+    recursionLimit: 15, // Limit recursion depth to prevent infinite loops
+  });
+
+  // Extract the final response content
+  const lastMessage = response.messages[response.messages.length - 1];
+  return lastMessage.content as string;
 }
 
 export async function POST(request: NextRequest) {
@@ -145,51 +167,48 @@ export async function POST(request: NextRequest) {
     const body: WidgetProcessRequest = await request.json();
 
     // Validate required fields
-    if (!body.sources || !body.prompt || !body.provider || !body.model) {
+    if (!body.prompt || !body.provider || !body.model) {
       return NextResponse.json(
-        { error: 'Missing required fields: sources, prompt, provider, model' },
+        { error: 'Missing required fields: prompt, provider, model' },
         { status: 400 },
       );
     }
 
-    // Validate sources
-    if (!Array.isArray(body.sources) || body.sources.length === 0) {
-      return NextResponse.json(
-        { error: 'At least one source URL is required' },
-        { status: 400 },
+    const sources = body.sources;
+    let sourceContents: string[] = [];
+    let fetchErrors: string[] = [];
+    let processedPrompt = body.prompt;
+    let sourcesFetched = 0;
+    let totalSources = sources ? sources.length : 0;
+
+    if (sources && sources.length > 0) {
+      // Fetch content from all sources
+      console.log(`Processing widget with ${sources.length} source(s)`);
+      const sourceResults = await Promise.all(
+        sources.map((source) => fetchSourceContent(source)),
       );
+      // Check for fetch errors
+      fetchErrors = sourceResults
+        .map((result, index) =>
+          result.error ? `Source ${index + 1}: ${result.error}` : null,
+        )
+        .filter((msg): msg is string => Boolean(msg));
+      if (fetchErrors.length > 0) {
+        console.warn('Some sources failed to fetch:', fetchErrors);
+      }
+      // Extract successful content
+      sourceContents = sourceResults.map((result) => result.content);
+      sourcesFetched = sourceContents.filter((content) => content).length;
+      // If all sources failed, return error
+      if (sourceContents.length > 0 && sourceContents.every((content) => !content)) {
+        return NextResponse.json(
+          { error: 'Failed to fetch content from all sources' },
+          { status: 500 },
+        );
+      }
+      // Replace variables in prompt
+      processedPrompt = replacePromptVariables(body.prompt, sourceContents);
     }
-
-    // Fetch content from all sources
-    console.log(`Processing widget with ${body.sources.length} source(s)`);
-    const sourceResults = await Promise.all(
-      body.sources.map((source) => fetchSourceContent(source)),
-    );
-
-    // Check for fetch errors
-    const fetchErrors = sourceResults
-      .map((result, index) =>
-        result.error ? `Source ${index + 1}: ${result.error}` : null,
-      )
-      .filter(Boolean);
-
-    if (fetchErrors.length > 0) {
-      console.warn('Some sources failed to fetch:', fetchErrors);
-    }
-
-    // Extract successful content
-    const sourceContents = sourceResults.map((result) => result.content);
-
-    // If all sources failed, return error
-    if (sourceContents.every((content) => !content)) {
-      return NextResponse.json(
-        { error: 'Failed to fetch content from all sources' },
-        { status: 500 },
-      );
-    }
-
-    // Replace variables in prompt
-    const processedPrompt = replacePromptVariables(body.prompt, sourceContents);
 
     console.log('Processing prompt:', processedPrompt);
 
@@ -205,8 +224,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         content: llmResponse,
         success: true,
-        sourcesFetched: sourceContents.filter((content) => content).length,
-        totalSources: body.sources.length,
+        sourcesFetched,
+        totalSources,
         warnings: fetchErrors.length > 0 ? fetchErrors : undefined,
       });
     } catch (llmError) {
@@ -221,7 +240,7 @@ export async function POST(request: NextRequest) {
 ${processedPrompt}
 
 ## Sources Successfully Fetched
-${sourceContents.filter((content) => content).length} of ${body.sources.length} sources
+${sourcesFetched} of ${totalSources} sources
 
 ${fetchErrors.length > 0 ? `## Source Errors\n${fetchErrors.join('\n')}` : ''}`;
 
@@ -232,8 +251,8 @@ ${fetchErrors.length > 0 ? `## Source Errors\n${fetchErrors.join('\n')}` : ''}`;
           llmError instanceof Error
             ? llmError.message
             : 'LLM processing failed',
-        sourcesFetched: sourceContents.filter((content) => content).length,
-        totalSources: body.sources.length,
+        sourcesFetched,
+        totalSources,
       });
     }
   } catch (error) {

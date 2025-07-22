@@ -136,7 +136,13 @@ const WidgetConfigModal = ({
       return; // TODO: Add proper validation feedback
     }
 
-    onSave(config);
+    // Filter out sources with empty or whitespace-only URLs
+    const filteredConfig = {
+      ...config,
+      sources: config.sources.filter((s) => s.url.trim()),
+    };
+
+    onSave(filteredConfig);
     handleClose();
   };
 
@@ -148,16 +154,6 @@ const WidgetConfigModal = ({
   const handlePreview = async () => {
     if (!config.prompt.trim()) {
       setPreviewContent('Please enter a prompt before running preview.');
-      return;
-    }
-
-    if (
-      config.sources.length === 0 ||
-      config.sources.every((s) => !s.url.trim())
-    ) {
-      setPreviewContent(
-        'Please add at least one source URL before running preview.',
-      );
       return;
     }
 
@@ -233,7 +229,7 @@ const WidgetConfigModal = ({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
+          <div className="fixed inset-0 bg-black bg-opacity-75" />
         </TransitionChild>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -247,7 +243,7 @@ const WidgetConfigModal = ({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <DialogPanel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-light-primary dark:bg-dark-primary p-6 text-left align-middle shadow-xl transition-all">
+              <DialogPanel className="w-full lg:max-w-[85vw]  transform overflow-hidden rounded-2xl bg-light-primary dark:bg-dark-primary p-6 text-left align-middle shadow-xl transition-all">
                 <DialogTitle
                   as="h3"
                   className="text-lg font-medium leading-6 text-black dark:text-white flex items-center justify-between"
@@ -347,7 +343,7 @@ const WidgetConfigModal = ({
                             prompt: e.target.value,
                           }))
                         }
-                        rows={6}
+                        rows={8}
                         className="w-full px-3 py-2 border border-light-200 dark:border-dark-200 rounded-md bg-light-primary dark:bg-dark-primary text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         placeholder="Enter your prompt here..."
                       />
@@ -468,9 +464,33 @@ const WidgetConfigModal = ({
                         </div>
                         <div>
                           <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
+                            {'{{source_content_...}}'}
+                          </code>{' '}
+                          - Content from nth source
+                        </div>
+                        <div>
+                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
                             {'{{location}}'}
                           </code>{' '}
                           - Your current location
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-black/70 dark:text-white/70">
+                      <h5 className="font-medium mb-2">Available Tools (Your model must support tool calling):</h5>
+                      <div className="space-y-1">
+                        <div>
+                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
+                            {'date_difference'}
+                          </code>{' '}
+                          - Get the difference between two dates (Works best with <a className='text-blue-500' href="https://en.wikipedia.org/wiki/ISO_8601" target="_blank" rel="noopener noreferrer">ISO 8601</a> formatted dates)
+                        </div>
+                        <div>
+                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
+                            {'timezone_converter'}
+                          </code>{' '}
+                          - Convert a date from one timezone to another (Works best with <a className='text-blue-500' href="https://en.wikipedia.org/wiki/ISO_8601" target="_blank" rel="noopener noreferrer">ISO 8601</a> formatted dates)
+                          - Expects target timezone in the <a className='text-blue-500' href="https://nodatime.org/TimeZones" target="_blank" rel="noopener noreferrer">IANA</a> format (e.g., 'America/New_York', 'Europe/London', etc.)
                         </div>
                       </div>
                     </div>

@@ -100,7 +100,7 @@ const WidgetDisplay = ({
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1">
+      <CardContent className="flex-1 max-h-[50vh] overflow-y-auto">
         {widget.isLoading ? (
           <div className="flex items-center justify-center py-8 text-gray-500 dark:text-gray-400">
             <RefreshCw size={20} className="animate-spin mr-2" />

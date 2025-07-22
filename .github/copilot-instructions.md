@@ -113,7 +113,7 @@ When working on this codebase, you might need to:
 - Ask for clarification when requirements are unclear
 - Do not add dependencies unless explicitly requested
 - Only make changes relevant to the specific task
-- Do not create test files or run the application unless requested
+- **Do not create test files or run the application unless requested**
 - Prioritize existing patterns and architectural decisions
 - Use the established component structure and styling patterns
 
