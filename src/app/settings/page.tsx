@@ -13,6 +13,8 @@ import {
   RotateCcw,
   ChevronDown,
   ChevronRight,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -589,6 +591,39 @@ export default function SettingsPage() {
     } else {
       // Model should be hidden, add to hidden list
       updatedHiddenModels = [...hiddenModels, modelKey];
+    }
+
+    // Update local state immediately
+    setHiddenModels(updatedHiddenModels);
+
+    // Persist changes to backend
+    try {
+      await saveConfig('hiddenModels', updatedHiddenModels);
+    } catch (error) {
+      console.error('Failed to save hidden models:', error);
+      // Revert local state on error
+      setHiddenModels(hiddenModels);
+    }
+  };
+
+  const handleProviderVisibilityToggle = async (
+    providerModels: Record<string, any>,
+    showAll: boolean,
+  ) => {
+    const modelKeys = Object.keys(providerModels);
+    let updatedHiddenModels: string[];
+
+    if (showAll) {
+      // Show all models in this provider, remove all from hidden list
+      updatedHiddenModels = hiddenModels.filter(
+        (modelKey) => !modelKeys.includes(modelKey),
+      );
+    } else {
+      // Hide all models in this provider, add all to hidden list
+      const modelsToHide = modelKeys.filter(
+        (modelKey) => !hiddenModels.includes(modelKey),
+      );
+      updatedHiddenModels = [...hiddenModels, ...modelsToHide];
     }
 
     // Update local state immediately
@@ -1593,6 +1628,36 @@ export default function SettingsPage() {
 
                           {isExpanded && (
                             <div className="p-3 bg-light-100 dark:bg-dark-100 border-t border-light-200 dark:border-dark-200">
+                              <div className="flex justify-end mb-3 space-x-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleProviderVisibilityToggle(
+                                      models,
+                                      true,
+                                    );
+                                  }}
+                                  className="px-3 py-1.5 text-xs rounded-md bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-700 dark:text-green-400 flex items-center gap-1.5 transition-colors"
+                                  title="Show all models in this provider"
+                                >
+                                  <Eye size={14} />
+                                  Show All
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleProviderVisibilityToggle(
+                                      models,
+                                      false,
+                                    );
+                                  }}
+                                  className="px-3 py-1.5 text-xs rounded-md bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 flex items-center gap-1.5 transition-colors"
+                                  title="Hide all models in this provider"
+                                >
+                                  <EyeOff size={14} />
+                                  Hide All
+                                </button>
+                              </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                 {modelEntries.map(([modelKey, model]) => (
                                   <div

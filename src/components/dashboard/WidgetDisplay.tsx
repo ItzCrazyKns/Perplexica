@@ -11,27 +11,8 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
+import { Widget } from '@/lib/types/widget';
 import { useState } from 'react';
-
-interface Source {
-  url: string;
-  type: 'Web Page' | 'HTTP Data';
-}
-
-interface Widget {
-  id: string;
-  title: string;
-  sources: Source[];
-  prompt: string;
-  provider: string;
-  model: string;
-  refreshFrequency: number;
-  refreshUnit: 'minutes' | 'hours';
-  lastUpdated: Date | null;
-  isLoading: boolean;
-  content: string | null;
-  error: string | null;
-}
 
 interface WidgetDisplayProps {
   widget: Widget;

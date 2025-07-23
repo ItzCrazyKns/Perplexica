@@ -9,51 +9,76 @@ import { parseDate, getDateParseErrorMessage } from '@/lib/utils/dates';
 export const dateDifferenceTool = tool(
   ({ startDate, endDate }: { startDate: string; endDate: string }): string => {
     try {
-      console.log(`Calculating difference between "${startDate}" and "${endDate}"`);
-      
+      console.log(
+        `Calculating difference between "${startDate}" and "${endDate}"`,
+      );
+
       // Parse the dates using the extracted utility function
       const startDateTime = parseDate(startDate);
       const endDateTime = parseDate(endDate);
-      
+
       // Check if dates are valid
       if (!startDateTime.isValid) {
         return getDateParseErrorMessage(startDate, startDateTime, 'start date');
       }
-      
+
       if (!endDateTime.isValid) {
         return getDateParseErrorMessage(endDate, endDateTime, 'end date');
       }
-      
+
       // Create an interval between the two dates for accurate calculations
       const interval = Interval.fromDateTimes(startDateTime, endDateTime);
-      
+
       if (!interval.isValid) {
         return `Error: Invalid interval between dates. Reason: ${interval.invalidReason}`;
       }
-      
+
       // Calculate differences in various units using Luxon's accurate methods
-      const diffMilliseconds = Math.abs(endDateTime.diff(startDateTime).toMillis());
-      const diffSeconds = Math.abs(endDateTime.diff(startDateTime, 'seconds').seconds);
-      const diffMinutes = Math.abs(endDateTime.diff(startDateTime, 'minutes').minutes);
-      const diffHours = Math.abs(endDateTime.diff(startDateTime, 'hours').hours);
+      const diffMilliseconds = Math.abs(
+        endDateTime.diff(startDateTime).toMillis(),
+      );
+      const diffSeconds = Math.abs(
+        endDateTime.diff(startDateTime, 'seconds').seconds,
+      );
+      const diffMinutes = Math.abs(
+        endDateTime.diff(startDateTime, 'minutes').minutes,
+      );
+      const diffHours = Math.abs(
+        endDateTime.diff(startDateTime, 'hours').hours,
+      );
       const diffDays = Math.abs(endDateTime.diff(startDateTime, 'days').days);
-      const diffWeeks = Math.abs(endDateTime.diff(startDateTime, 'weeks').weeks);
-      const diffMonths = Math.abs(endDateTime.diff(startDateTime, 'months').months);
-      const diffYears = Math.abs(endDateTime.diff(startDateTime, 'years').years);
-      
+      const diffWeeks = Math.abs(
+        endDateTime.diff(startDateTime, 'weeks').weeks,
+      );
+      const diffMonths = Math.abs(
+        endDateTime.diff(startDateTime, 'months').months,
+      );
+      const diffYears = Math.abs(
+        endDateTime.diff(startDateTime, 'years').years,
+      );
+
       // Get multi-unit breakdown for more human-readable output
-      const multiUnitDiff = endDateTime.diff(startDateTime, ['years', 'months', 'days', 'hours', 'minutes', 'seconds']).toObject();
-      
+      const multiUnitDiff = endDateTime
+        .diff(startDateTime, [
+          'years',
+          'months',
+          'days',
+          'hours',
+          'minutes',
+          'seconds',
+        ])
+        .toObject();
+
       // Determine which date is earlier
       const isStartEarlier = startDateTime <= endDateTime;
       const earlierDate = isStartEarlier ? startDateTime : endDateTime;
       const laterDate = isStartEarlier ? endDateTime : startDateTime;
-      
+
       // Format the dates for display with ISO format
       const formatDate = (dt: DateTime) => {
         return `${dt.toLocaleString(DateTime.DATETIME_FULL)} (${dt.toISO()})`;
       };
-      
+
       let result = `Date difference calculation:
 From: ${formatDate(earlierDate)}
 To: ${formatDate(laterDate)}
@@ -93,7 +118,6 @@ Human-readable breakdown:`;
 Direction: Start date is ${isStartEarlier ? 'earlier than' : 'later than'} the end date.`;
 
       return result;
-      
     } catch (error) {
       console.error('Error during date difference calculation:', error);
       return `Error: ${error instanceof Error ? error.message : 'Unknown error occurred during date difference calculation'}`;
@@ -101,10 +125,19 @@ Direction: Start date is ${isStartEarlier ? 'earlier than' : 'later than'} the e
   },
   {
     name: 'date_difference',
-    description: 'Calculate the time difference between two dates. Returns a detailed breakdown of years, months, days, hours, etc. If no timezone is specified, dates will be treated as local to the server time.',
+    description:
+      'Get the difference between two dates (Works best with ISO 8601 formatted dates)',
     schema: z.object({
-      startDate: z.string().describe('The start date (e.g., "2024-01-15", "Jan 15, 2024", "2024-01-15 14:30:00Z", "2024-01-15T14:30:00-05:00")'),
-      endDate: z.string().describe('The end date (e.g., "2024-12-25", "Dec 25, 2024", "2024-12-25 18:00:00Z", "2024-12-25T18:00:00-05:00")'),
+      startDate: z
+        .string()
+        .describe(
+          'The start date (e.g., "2024-01-15", "Jan 15, 2024", "2024-01-15 14:30:00Z", "2024-01-15T14:30:00-05:00")',
+        ),
+      endDate: z
+        .string()
+        .describe(
+          'The end date (e.g., "2024-12-25", "Dec 25, 2024", "2024-12-25 18:00:00Z", "2024-12-25T18:00:00-05:00")',
+        ),
     }),
-  }
+  },
 );

@@ -11,6 +11,8 @@ import { X, Plus, Trash2, Play, Save } from 'lucide-react';
 import { Fragment, useState, useEffect } from 'react';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import ModelSelector from '@/components/MessageInputActions/ModelSelector';
+import ToolSelector from '@/components/MessageInputActions/ToolSelector';
+import { WidgetConfig, Source } from '@/lib/types/widget';
 
 // Helper function to replace date/time variables in prompts on the client side
 const replaceDateTimeVariables = (prompt: string): string => {
@@ -39,22 +41,6 @@ const replaceDateTimeVariables = (prompt: string): string => {
 
   return processedPrompt;
 };
-
-interface Source {
-  url: string;
-  type: 'Web Page' | 'HTTP Data';
-}
-
-interface WidgetConfig {
-  id?: string;
-  title: string;
-  sources: Source[];
-  prompt: string;
-  provider: string;
-  model: string;
-  refreshFrequency: number;
-  refreshUnit: 'minutes' | 'hours';
-}
 
 interface WidgetConfigModalProps {
   isOpen: boolean;
@@ -85,6 +71,7 @@ const WidgetConfigModal = ({
     provider: string;
     model: string;
   } | null>(null);
+  const [selectedTools, setSelectedTools] = useState<string[]>([]);
 
   // Update config when editingWidget changes
   useEffect(() => {
@@ -102,6 +89,7 @@ const WidgetConfigModal = ({
         provider: editingWidget.provider,
         model: editingWidget.model,
       });
+      setSelectedTools(editingWidget.tool_names || []);
     } else {
       // Reset to default values for new widget
       setConfig({
@@ -117,6 +105,7 @@ const WidgetConfigModal = ({
         provider: 'openai',
         model: 'gpt-4',
       });
+      setSelectedTools([]);
     }
   }, [editingWidget]);
 
@@ -140,6 +129,7 @@ const WidgetConfigModal = ({
     const filteredConfig = {
       ...config,
       sources: config.sources.filter((s) => s.url.trim()),
+      tool_names: selectedTools,
     };
 
     onSave(filteredConfig);
@@ -172,6 +162,7 @@ const WidgetConfigModal = ({
           prompt: processedPrompt,
           provider: config.provider,
           model: config.model,
+          tool_names: selectedTools,
         }),
       });
 
@@ -366,6 +357,21 @@ const WidgetConfigModal = ({
                       </p>
                     </div>
 
+                    {/* Tool Selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-black dark:text-white mb-2">
+                        Available Tools
+                      </label>
+                      <ToolSelector
+                        selectedToolNames={selectedTools}
+                        onSelectedToolNamesChange={setSelectedTools}
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Select tools to assist the AI in processing your widget.
+                        Your model must support tool calling.
+                      </p>
+                    </div>
+
                     {/* Refresh Frequency */}
                     <div>
                       <label className="block text-sm font-medium text-black dark:text-white mb-1">
@@ -429,7 +435,7 @@ const WidgetConfigModal = ({
                         </div>
                       ) : (
                         <div className="text-sm text-black/50 dark:text-white/50 italic">
-                          Click "Run Preview" to see how your widget will look
+                          Click &quot;Run Preview&quot; to see how your widget will look
                         </div>
                       )}
                     </div>
@@ -473,24 +479,6 @@ const WidgetConfigModal = ({
                             {'{{location}}'}
                           </code>{' '}
                           - Your current location
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-xs text-black/70 dark:text-white/70">
-                      <h5 className="font-medium mb-2">Available Tools (Your model must support tool calling):</h5>
-                      <div className="space-y-1">
-                        <div>
-                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
-                            {'date_difference'}
-                          </code>{' '}
-                          - Get the difference between two dates (Works best with <a className='text-blue-500' href="https://en.wikipedia.org/wiki/ISO_8601" target="_blank" rel="noopener noreferrer">ISO 8601</a> formatted dates)
-                        </div>
-                        <div>
-                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
-                            {'timezone_converter'}
-                          </code>{' '}
-                          - Convert a date from one timezone to another (Works best with <a className='text-blue-500' href="https://en.wikipedia.org/wiki/ISO_8601" target="_blank" rel="noopener noreferrer">ISO 8601</a> formatted dates)
-                          - Expects target timezone in the <a className='text-blue-500' href="https://nodatime.org/TimeZones" target="_blank" rel="noopener noreferrer">IANA</a> format (e.g., 'America/New_York', 'Europe/London', etc.)
                         </div>
                       </div>
                     </div>

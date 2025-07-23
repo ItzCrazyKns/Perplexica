@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Widget, WidgetConfig } from '@/lib/types/widget';
 import {
-  Widget,
-  WidgetConfig,
   DashboardState,
   DashboardConfig,
   DASHBOARD_STORAGE_KEYS,
-  WidgetCache,
-} from '@/lib/types';
+} from '@/lib/types/dashboard';
+import { WidgetCache } from '@/lib/types/cache';
 
 // Helper function to request location permission and get user's location
 const requestLocationPermission = async (): Promise<string | undefined> => {
@@ -103,29 +102,6 @@ export const useDashboard = (): UseDashboardReturn => {
     },
   });
 
-  // Load dashboard data from localStorage on mount
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  // Save widgets to localStorage whenever they change (but not on initial load)
-  useEffect(() => {
-    if (!state.isLoading) {
-      localStorage.setItem(
-        DASHBOARD_STORAGE_KEYS.WIDGETS,
-        JSON.stringify(state.widgets),
-      );
-    }
-  }, [state.widgets, state.isLoading]);
-
-  // Save settings to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem(
-      DASHBOARD_STORAGE_KEYS.SETTINGS,
-      JSON.stringify(state.settings),
-    );
-  }, [state.settings]);
-
   const loadDashboardData = useCallback(() => {
     try {
       // Load widgets
@@ -166,6 +142,29 @@ export const useDashboard = (): UseDashboardReturn => {
       }));
     }
   }, []);
+
+  // Load dashboard data from localStorage on mount
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
+
+  // Save widgets to localStorage whenever they change (but not on initial load)
+  useEffect(() => {
+    if (!state.isLoading) {
+      localStorage.setItem(
+        DASHBOARD_STORAGE_KEYS.WIDGETS,
+        JSON.stringify(state.widgets),
+      );
+    }
+  }, [state.widgets, state.isLoading]);
+
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(
+      DASHBOARD_STORAGE_KEYS.SETTINGS,
+      JSON.stringify(state.settings),
+    );
+  }, [state.settings]);
 
   const addWidget = useCallback((config: WidgetConfig) => {
     const newWidget: Widget = {
@@ -215,7 +214,7 @@ export const useDashboard = (): UseDashboardReturn => {
     }
   };
 
-  const isWidgetCacheValid = (widget: Widget): boolean => {
+  const isWidgetCacheValid = useCallback((widget: Widget): boolean => {
     const cache = getWidgetCache();
     const cachedData = cache[widget.id];
 
@@ -225,15 +224,15 @@ export const useDashboard = (): UseDashboardReturn => {
     const expiresAt = new Date(cachedData.expiresAt);
 
     return now < expiresAt;
-  };
+  }, []);
 
-  const getCacheExpiryTime = (widget: Widget): Date => {
+  const getCacheExpiryTime = useCallback((widget: Widget): Date => {
     const now = new Date();
     const refreshMs =
       widget.refreshFrequency *
       (widget.refreshUnit === 'hours' ? 3600000 : 60000);
     return new Date(now.getTime() + refreshMs);
-  };
+  }, []);
 
   const refreshWidget = useCallback(
     async (id: string, forceRefresh: boolean = false) => {
@@ -287,6 +286,7 @@ export const useDashboard = (): UseDashboardReturn => {
             prompt: processedPrompt,
             provider: widget.provider,
             model: widget.model,
+            tool_names: widget.tool_names,
             location,
           }),
         });
@@ -351,7 +351,7 @@ export const useDashboard = (): UseDashboardReturn => {
         }));
       }
     },
-    [state.widgets],
+    [state.widgets, isWidgetCacheValid, getCacheExpiryTime],
   );
 
   const refreshAllWidgets = useCallback(

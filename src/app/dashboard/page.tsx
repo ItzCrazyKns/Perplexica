@@ -21,7 +21,7 @@ import {
 import WidgetConfigModal from '@/components/dashboard/WidgetConfigModal';
 import WidgetDisplay from '@/components/dashboard/WidgetDisplay';
 import { useDashboard } from '@/lib/hooks/useDashboard';
-import { Widget, WidgetConfig } from '@/lib/types';
+import { Widget, WidgetConfig } from '@/lib/types/widget';
 import { toast } from 'sonner';
 
 const DashboardPage = () => {

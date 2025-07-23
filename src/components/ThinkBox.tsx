@@ -11,12 +11,12 @@ interface ThinkBoxProps {
 }
 
 const ThinkBox = ({ content, expanded, onToggle }: ThinkBoxProps) => {
+  const [internalExpanded, setInternalExpanded] = useState(false);
+
   // Don't render anything if content is empty
   if (!content) {
     return null;
   }
-
-  const [internalExpanded, setInternalExpanded] = useState(false);
 
   // Use external expanded state if provided, otherwise use internal state
   const isExpanded = expanded !== undefined ? expanded : internalExpanded;

@@ -12,20 +12,10 @@ import {
 } from '@/lib/config';
 import { ChatOllama } from '@langchain/ollama';
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
-import { timezoneConverterTool, dateDifferenceTool } from '@/lib/tools';
+import { allTools } from '@/lib/tools';
+import { Source } from '@/lib/types/widget';
+import { WidgetProcessRequest } from '@/lib/types/api';
 import axios from 'axios';
-
-interface Source {
-  url: string;
-  type: 'Web Page' | 'HTTP Data';
-}
-
-interface WidgetProcessRequest {
-  sources: Source[];
-  prompt: string;
-  provider: string;
-  model: string;
-}
 
 // Helper function to fetch content from a single source
 async function fetchSourceContent(
@@ -129,6 +119,7 @@ async function processWithLLM(
   prompt: string,
   provider: string,
   model: string,
+  tool_names?: string[],
 ): Promise<string> {
   const llm = await getLLMInstance(provider, model);
 
@@ -136,10 +127,11 @@ async function processWithLLM(
     throw new Error(`Invalid or unavailable model: ${provider}/${model}`);
   }
 
-  const tools = [
-    timezoneConverterTool,
-    dateDifferenceTool,
-  ];
+  // Filter tools based on tool_names parameter
+  const tools =
+    tool_names && tool_names.length > 0
+      ? allTools.filter((tool) => tool_names.includes(tool.name))
+      : [];
 
   // Create the React agent with tools
   const agent = createReactAgent({
@@ -148,14 +140,17 @@ async function processWithLLM(
   });
 
   // Invoke the agent with the prompt
-  const response = await agent.invoke({
-    messages: [ 
-      //new SystemMessage({ content: `You have the following tools available: ${tools.map(tool => tool.name).join(', ')} use them as necessary to complete the task.` }), 
-      new HumanMessage({ content: prompt })
-    ],
-  },{
-    recursionLimit: 15, // Limit recursion depth to prevent infinite loops
-  });
+  const response = await agent.invoke(
+    {
+      messages: [
+        //new SystemMessage({ content: `You have the following tools available: ${tools.map(tool => tool.name).join(', ')} use them as necessary to complete the task.` }),
+        new HumanMessage({ content: prompt }),
+      ],
+    },
+    {
+      recursionLimit: 15, // Limit recursion depth to prevent infinite loops
+    },
+  );
 
   // Extract the final response content
   const lastMessage = response.messages[response.messages.length - 1];
@@ -200,7 +195,10 @@ export async function POST(request: NextRequest) {
       sourceContents = sourceResults.map((result) => result.content);
       sourcesFetched = sourceContents.filter((content) => content).length;
       // If all sources failed, return error
-      if (sourceContents.length > 0 && sourceContents.every((content) => !content)) {
+      if (
+        sourceContents.length > 0 &&
+        sourceContents.every((content) => !content)
+      ) {
         return NextResponse.json(
           { error: 'Failed to fetch content from all sources' },
           { status: 500 },
@@ -218,6 +216,7 @@ export async function POST(request: NextRequest) {
         processedPrompt,
         body.provider,
         body.model,
+        body.tool_names,
       );
 
       console.log('LLM response:', llmResponse);
