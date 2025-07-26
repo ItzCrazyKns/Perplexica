@@ -1,6 +1,11 @@
+/* React Grid Layout styles */
+@import "react-grid-layout/css/styles.css";
+@import "react-resizable/css/styles.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
 
 @layer base {
   .overflow-hidden-scrollable {

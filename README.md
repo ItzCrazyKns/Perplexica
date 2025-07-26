@@ -217,10 +217,6 @@ This fork adds several enhancements to the original Perplexica project:
 - ✅ OpenSearch support with dynamic XML generation
   - Added BASE_URL config to support reverse proxy deployments
   - Added autocomplete functionality proxied to SearxNG
-- ✅ Enhanced Reddit focus mode to work around SearxNG limitations
-- ✅ Enhanced Balance mode that uses a headless web browser to retrieve web content and use relevant excerpts to enhance responses
-- ✅ Adds Agent mode that uses the full content of web pages to answer queries and an agentic flow to intelligently answer complex queries with accuracy
-  - See the [README.md](docs/architecture/README.md) in the docs architecture directory for more info
 - ✅ Query-based settings override for browser search engine integration
   - Automatically applies user's saved optimization mode and AI model preferences when accessing via URL with `q` parameter
   - Enables seamless browser search bar integration with personalized settings
@@ -239,6 +235,20 @@ This fork adds several enhancements to the original Perplexica project:
   - Remove non-functional or problematic models from user selection
   - Configurable via settings UI with collapsible provider interface for better organization
   - API support with `include_hidden` parameter for administrative access
+
+### Unique Features
+
+- ✅ **Agent Mode**: A new mode that uses a headless web browser to retrieve web content and use relevant excerpts to enhance responses.
+  - Automatically extracts relevant information from web pages
+  - Provides more accurate and contextually rich answers
+  - Ideal for complex queries requiring detailed information
+
+- ✅ **Dashboard Widgets**: Create customizable AI-powered widgets for personalized information displays.
+  - Build widgets that combine web content with AI processing using custom prompts
+  - Support for multiple data sources (web pages, HTTP endpoints) with automatic content extraction
+  - Configurable refresh intervals (minutes/hours) for keeping information current
+  - Real-time preview system to test widget output before saving
+  - Automatic refresh of stale widgets when navigating to dashboard
 
 ### Bug Fixes
 

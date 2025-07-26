@@ -4,6 +4,17 @@ export interface Source {
   type: 'Web Page' | 'HTTP Data';
 }
 
+// Grid layout properties for widgets (only position and size data that should be persisted)
+export interface WidgetLayout {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  static?: boolean;
+  isDraggable?: boolean;
+  isResizable?: boolean;
+}
+
 export interface WidgetConfig {
   id?: string;
   title: string;
@@ -14,6 +25,7 @@ export interface WidgetConfig {
   refreshFrequency: number;
   refreshUnit: 'minutes' | 'hours';
   tool_names?: string[];
+  layout?: WidgetLayout;
 }
 
 export interface Widget extends WidgetConfig {
@@ -22,4 +34,5 @@ export interface Widget extends WidgetConfig {
   isLoading: boolean;
   content: string | null;
   error: string | null;
+  layout: WidgetLayout;
 }

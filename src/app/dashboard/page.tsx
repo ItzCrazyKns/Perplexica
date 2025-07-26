@@ -9,7 +9,8 @@ import {
   Layers,
   List,
 } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { Responsive, WidthProvider } from 'react-grid-layout';
 import {
   Card,
   CardContent,
@@ -22,7 +23,10 @@ import WidgetConfigModal from '@/components/dashboard/WidgetConfigModal';
 import WidgetDisplay from '@/components/dashboard/WidgetDisplay';
 import { useDashboard } from '@/lib/hooks/useDashboard';
 import { Widget, WidgetConfig } from '@/lib/types/widget';
+import { DASHBOARD_CONSTRAINTS } from '@/lib/constants/dashboard';
 import { toast } from 'sonner';
+
+const ResponsiveGridLayout = WidthProvider(Responsive);
 
 const DashboardPage = () => {
   const {
@@ -37,17 +41,21 @@ const DashboardPage = () => {
     importDashboard,
     settings,
     updateSettings,
+    getLayouts,
+    updateLayouts,
   } = useDashboard();
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingWidget, setEditingWidget] = useState<Widget | null>(null);
   const hasAutoRefreshed = useRef(false);
 
+  // Memoize the ResponsiveGridLayout to prevent re-renders
+  const ResponsiveGrid = useMemo(() => ResponsiveGridLayout, []);
+
   // Auto-refresh stale widgets when dashboard loads (only once)
   useEffect(() => {
     if (!isLoading && widgets.length > 0 && !hasAutoRefreshed.current) {
       hasAutoRefreshed.current = true;
-
       refreshAllWidgets();
     }
   }, [isLoading, widgets, refreshAllWidgets]);
@@ -118,6 +126,25 @@ const DashboardPage = () => {
   const handleToggleProcessingMode = () => {
     updateSettings({ parallelLoading: !settings.parallelLoading });
   };
+
+  // Handle layout changes from react-grid-layout
+  const handleLayoutChange = (layout: any, layouts: any) => {
+    updateLayouts(layouts);
+  };
+
+  // Memoize grid children to prevent unnecessary re-renders
+  const gridChildren = useMemo(() => {
+    return widgets.map((widget) => (
+      <div key={widget.id}>
+        <WidgetDisplay
+          widget={widget}
+          onEdit={handleEditWidget}
+          onDelete={handleDeleteWidget}
+          onRefresh={handleRefreshWidget}
+        />
+      </div>
+    ));
+  }, [widgets]);
 
   // Empty state component
   const EmptyDashboard = () => (
@@ -224,22 +251,23 @@ const DashboardPage = () => {
         ) : widgets.length === 0 ? (
           <EmptyDashboard />
         ) : (
-          <div
-            className="grid gap-6 auto-rows-min"
-            style={{
-              gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-            }}
+          <ResponsiveGrid
+            className="layout"
+            layouts={getLayouts()}
+            breakpoints={DASHBOARD_CONSTRAINTS.GRID_BREAKPOINTS}
+            cols={DASHBOARD_CONSTRAINTS.GRID_COLUMNS}
+            rowHeight={DASHBOARD_CONSTRAINTS.GRID_ROW_HEIGHT}
+            margin={DASHBOARD_CONSTRAINTS.GRID_MARGIN}
+            containerPadding={DASHBOARD_CONSTRAINTS.GRID_CONTAINER_PADDING}
+            onLayoutChange={handleLayoutChange}
+            isDraggable={true}
+            isResizable={true}
+            compactType="vertical"
+            preventCollision={false}
+            draggableHandle=".widget-drag-handle"
           >
-            {widgets.map((widget) => (
-              <WidgetDisplay
-                key={widget.id}
-                widget={widget}
-                onEdit={handleEditWidget}
-                onDelete={handleDeleteWidget}
-                onRefresh={handleRefreshWidget}
-              />
-            ))}
-          </div>
+            {gridChildren}
+          </ResponsiveGrid>
         )}
       </div>
 

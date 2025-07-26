@@ -1,11 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Widget, WidgetConfig } from '@/lib/types/widget';
+import { Layout } from 'react-grid-layout';
+import { Widget, WidgetConfig, WidgetLayout } from '@/lib/types/widget';
 import {
   DashboardState,
   DashboardConfig,
+  DashboardLayouts,
+  GridLayoutItem,
   DASHBOARD_STORAGE_KEYS,
 } from '@/lib/types/dashboard';
 import { WidgetCache } from '@/lib/types/cache';
+import { DASHBOARD_CONSTRAINTS, getResponsiveConstraints } from '@/lib/constants/dashboard';
 
 // Helper function to request location permission and get user's location
 const requestLocationPermission = async (): Promise<string | undefined> => {
@@ -81,6 +85,10 @@ interface UseDashboardReturn {
   refreshWidget: (id: string, forceRefresh?: boolean) => Promise<void>;
   refreshAllWidgets: (forceRefresh?: boolean) => Promise<void>;
 
+  // Layout management
+  updateLayouts: (layouts: DashboardLayouts) => void;
+  getLayouts: () => DashboardLayouts;
+
   // Storage management
   exportDashboard: () => Promise<string>;
   importDashboard: (configJson: string) => Promise<void>;
@@ -108,10 +116,23 @@ export const useDashboard = (): UseDashboardReturn => {
       const savedWidgets = localStorage.getItem(DASHBOARD_STORAGE_KEYS.WIDGETS);
       const widgets: Widget[] = savedWidgets ? JSON.parse(savedWidgets) : [];
 
-      // Convert date strings back to Date objects
-      widgets.forEach((widget) => {
+      // Convert date strings back to Date objects and ensure layout exists
+      widgets.forEach((widget, index) => {
         if (widget.lastUpdated) {
           widget.lastUpdated = new Date(widget.lastUpdated);
+        }
+        
+        // Migration: Add default layout if missing
+        if (!widget.layout) {
+          const defaultLayout: WidgetLayout = {
+            x: (index % 2) * 6, // Alternate between columns
+            y: Math.floor(index / 2) * 4, // Stack rows
+            w: DASHBOARD_CONSTRAINTS.DEFAULT_WIDGET_WIDTH,
+            h: DASHBOARD_CONSTRAINTS.DEFAULT_WIDGET_HEIGHT,
+            isDraggable: true,
+            isResizable: true,
+          };
+          widget.layout = defaultLayout;
         }
       });
 
@@ -167,6 +188,44 @@ export const useDashboard = (): UseDashboardReturn => {
   }, [state.settings]);
 
   const addWidget = useCallback((config: WidgetConfig) => {
+    // Find the next available position in the grid
+    const getNextPosition = () => {
+      const existingWidgets = state.widgets;
+      let x = 0;
+      let y = 0;
+      
+      // Simple algorithm: try to place in first available spot
+      for (let row = 0; row < 20; row++) {
+        for (let col = 0; col < 12; col += 6) { // Start with half-width widgets
+          const position = { x: col, y: row };
+          const hasCollision = existingWidgets.some(widget => 
+            widget.layout.x < position.x + 6 && 
+            widget.layout.x + widget.layout.w > position.x &&
+            widget.layout.y < position.y + 3 && 
+            widget.layout.y + widget.layout.h > position.y
+          );
+          
+          if (!hasCollision) {
+            return { x: position.x, y: position.y };
+          }
+        }
+      }
+      
+      // Fallback: place at bottom
+      const maxY = Math.max(0, ...existingWidgets.map(w => w.layout.y + w.layout.h));
+      return { x: 0, y: maxY };
+    };
+
+    const position = getNextPosition();
+    const defaultLayout: WidgetLayout = {
+      x: position.x,
+      y: position.y,
+      w: DASHBOARD_CONSTRAINTS.DEFAULT_WIDGET_WIDTH,
+      h: DASHBOARD_CONSTRAINTS.DEFAULT_WIDGET_HEIGHT,
+      isDraggable: true,
+      isResizable: true,
+    };
+
     const newWidget: Widget = {
       ...config,
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
@@ -174,20 +233,26 @@ export const useDashboard = (): UseDashboardReturn => {
       isLoading: false,
       content: null,
       error: null,
+      layout: config.layout || defaultLayout,
     };
 
     setState((prev) => ({
       ...prev,
       widgets: [...prev.widgets, newWidget],
     }));
-  }, []);
+  }, [state.widgets]);
 
   const updateWidget = useCallback((id: string, config: WidgetConfig) => {
     setState((prev) => ({
       ...prev,
       widgets: prev.widgets.map((widget) =>
         widget.id === id
-          ? { ...widget, ...config, id } // Preserve the ID
+          ? { 
+              ...widget, 
+              ...config, 
+              id, // Preserve the ID
+              layout: config.layout || widget.layout, // Preserve existing layout if not provided
+            }
           : widget,
       ),
     }));
@@ -436,6 +501,63 @@ export const useDashboard = (): UseDashboardReturn => {
     [],
   );
 
+  const getLayouts = useCallback((): DashboardLayouts => {
+    const createBreakpointLayout = (breakpoint: keyof typeof DASHBOARD_CONSTRAINTS.GRID_COLUMNS) => {
+      const constraints = getResponsiveConstraints(breakpoint);
+      const maxCols = DASHBOARD_CONSTRAINTS.GRID_COLUMNS[breakpoint];
+      
+      return state.widgets.map(widget => ({
+        i: widget.id,
+        x: widget.layout.x,
+        y: widget.layout.y,
+        w: Math.min(widget.layout.w, maxCols), // Constrain width to available columns
+        h: widget.layout.h,
+        minW: constraints.minW,
+        maxW: constraints.maxW,
+        minH: constraints.minH,
+        maxH: constraints.maxH,
+        static: widget.layout.static,
+        isDraggable: widget.layout.isDraggable,
+        isResizable: widget.layout.isResizable,
+      }));
+    };
+
+    return {
+      lg: createBreakpointLayout('lg'),
+      md: createBreakpointLayout('md'),
+      sm: createBreakpointLayout('sm'),
+      xs: createBreakpointLayout('xs'),
+      xxs: createBreakpointLayout('xxs'),
+    };
+  }, [state.widgets]);
+
+  const updateLayouts = useCallback((layouts: DashboardLayouts) => {
+    const updatedWidgets = state.widgets.map(widget => {
+      // Use lg layout as the primary layout for position and size updates
+      const newLayout = layouts.lg.find((layout: Layout) => layout.i === widget.id);
+      if (newLayout) {
+        return {
+          ...widget,
+          layout: {
+            x: newLayout.x,
+            y: newLayout.y,
+            w: newLayout.w,
+            h: newLayout.h,
+            static: newLayout.static || widget.layout.static,
+            isDraggable: newLayout.isDraggable ?? widget.layout.isDraggable,
+            isResizable: newLayout.isResizable ?? widget.layout.isResizable,
+          },
+        };
+      }
+      return widget;
+    });
+
+    setState(prev => ({
+      ...prev,
+      widgets: updatedWidgets,
+    }));
+  }, [state.widgets]);
+
   return {
     // State
     widgets: state.widgets,
@@ -449,6 +571,10 @@ export const useDashboard = (): UseDashboardReturn => {
     deleteWidget,
     refreshWidget,
     refreshAllWidgets,
+
+    // Layout management
+    updateLayouts,
+    getLayouts,
 
     // Storage management
     exportDashboard,
