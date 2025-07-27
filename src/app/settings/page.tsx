@@ -1867,25 +1867,6 @@ export default function SettingsPage() {
 
                 <div className="flex flex-col space-y-1">
                   <p className="text-black/70 dark:text-white/70 text-sm">
-                    AI/ML API Key
-                  </p>
-                  <InputComponent
-                    type="text"
-                    placeholder="AI/ML API Key"
-                    value={config.aimlApiKey}
-                    isSaving={savingStates['aimlApiKey']}
-                    onChange={(e) => {
-                      setConfig((prev) => ({
-                        ...prev!,
-                        aimlApiKey: e.target.value,
-                      }));
-                    }}
-                    onSave={(value) => saveConfig('aimlApiKey', value)}
-                  />
-                </div>
-
-                <div className="flex flex-col space-y-1">
-                  <p className="text-black/70 dark:text-white/70 text-sm">
                     LM Studio API URL
                   </p>
                   <InputComponent
