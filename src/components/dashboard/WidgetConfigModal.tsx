@@ -435,7 +435,8 @@ const WidgetConfigModal = ({
                         </div>
                       ) : (
                         <div className="text-sm text-black/50 dark:text-white/50 italic">
-                          Click &quot;Run Preview&quot; to see how your widget will look
+                          Click &quot;Run Preview&quot; to see how your widget
+                          will look
                         </div>
                       )}
                     </div>

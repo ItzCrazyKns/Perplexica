@@ -19,7 +19,9 @@ const RelevanceCheckSchema = z.object({
     .describe('Whether the content is relevant to the user query'),
   reason: z
     .string()
-    .describe("Brief explanation of why content is or isn't relevant"),
+    .describe(
+      "Brief explanation of why content is or isn't relevant. 20 words or less.",
+    ),
 });
 
 export const summarizeWebContent = async (

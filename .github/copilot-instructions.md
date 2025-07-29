@@ -143,3 +143,9 @@ When working on this codebase, you might need to:
 
 - Use try/catch blocks for async operations
 - Return structured error responses from API routes
+
+## Available Tools and Help
+
+- You can use the context7 tool to get help using the following identifiers for libraries used in this project
+  - `/langchain-ai/langchainjs` for LangChain
+  - `/langchain-ai/langgraph` for LangGraph

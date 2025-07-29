@@ -55,13 +55,16 @@ const WidgetDisplay = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 flex-1 min-w-0">
             {/* Drag Handle */}
-            <div 
+            <div
               className="widget-drag-handle flex-shrink-0 p-1 rounded hover:bg-light-secondary dark:hover:bg-dark-secondary cursor-move transition-colors"
               title="Drag to move widget"
             >
-              <GripVertical size={16} className="text-gray-400 dark:text-gray-500" />
+              <GripVertical
+                size={16}
+                className="text-gray-400 dark:text-gray-500"
+              />
             </div>
-            
+
             <CardTitle className="text-lg font-medium truncate">
               {widget.title}
             </CardTitle>
