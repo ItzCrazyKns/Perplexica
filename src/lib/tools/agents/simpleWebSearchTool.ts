@@ -68,35 +68,9 @@ export const simpleWebSearchTool = tool(
       const llm = config.configurable.llm;
       const embeddings: Embeddings = config.configurable.embeddings;
 
-      // Step 1: Generate optimized search query
-      const template = PromptTemplate.fromTemplate(
-        webSearchRetrieverAgentPrompt,
-      );
-      const prompt = await template.format({
-        systemInstructions:
-          config.configurable?.systemInstructions ||
-          'You are a helpful AI assistant.',
-        query: query,
-        date: formatDateForLLM(new Date()),
-        supervisor: searchInstructions || query,
-      });
-
-      // Use structured output for search query generation
-      const structuredLlm = withStructuredOutput(llm, SearchQuerySchema, {
-        name: 'generate_search_query',
-      });
-
-      const searchQueryResult = await structuredLlm.invoke(prompt, {
-        signal: config?.signal,
-      });
-
-      const searchQuery = searchQueryResult.searchQuery;
+      const searchQuery = query;
       console.log(
         `SimpleWebSearchTool: Performing web search for query: "${searchQuery}"`,
-      );
-      console.log(
-        'SimpleWebSearchTool: Search query reasoning:',
-        searchQueryResult.reasoning,
       );
 
       // Step 2: Execute web search
@@ -116,8 +90,7 @@ export const simpleWebSearchTool = tool(
             messages: [
               new ToolMessage({
                 content: 'No search results found.',
-                //Generate a random tool call id
-                tool_call_id: Math.random().toString(36).substring(2, 15),
+                tool_call_id: (config as any)?.toolCall.id,
               }),
             ],
           },
@@ -138,7 +111,6 @@ export const simpleWebSearchTool = tool(
         }),
       );
 
-      // Step 4: Select top 15 results using the same logic as webSearchTool
       const documents: Document[] = [];
 
       // Always take the top 3 results first
@@ -152,7 +124,7 @@ export const simpleWebSearchTool = tool(
               title: result.title || 'Untitled',
               url: result.url,
               source: result.url,
-              processingType: 'preview-content',
+              processingType: 'preview-only',
               searchQuery: searchQuery,
               rank: 'top-3',
             },
@@ -160,11 +132,11 @@ export const simpleWebSearchTool = tool(
         }),
       );
 
-      // Sort by relevance score and take top 12 from the remaining results
+      // Sort by relevance score and take top 5 from the remaining results
       const remainingResults = resultsWithSimilarity
         .slice(3)
         .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, 12);
+        .slice(0, 5);
 
       documents.push(
         ...remainingResults.map(({ result }) => {
@@ -175,7 +147,7 @@ export const simpleWebSearchTool = tool(
               title: result.title || 'Untitled',
               url: result.url,
               source: result.url,
-              processingType: 'preview-content',
+              processingType: 'preview-only',
               searchQuery: searchQuery,
               rank: 'ranked',
             },
@@ -187,15 +159,16 @@ export const simpleWebSearchTool = tool(
         `SimpleWebSearchTool: Created ${documents.length} documents from search results`,
       );
 
+      //return { documents };
       return new Command({
         update: {
           relevantDocuments: documents,
-          searchQuery,
           messages: [
             new ToolMessage({
-              content: `Retrieved ${documents.length} documents from web search.`,
-              //Generate a random tool call id
-              tool_call_id: Math.random().toString(36).substring(2, 15),
+              content: JSON.stringify({
+                document: documents,
+              }),
+              tool_call_id: (config as any)?.toolCall.id,
             }),
           ],
         },
@@ -205,14 +178,14 @@ export const simpleWebSearchTool = tool(
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
 
+      //return { documents: [] };
       return new Command({
         update: {
           relevantDocuments: [],
           messages: [
             new ToolMessage({
               content: 'Error occurred during web search: ' + errorMessage,
-              //Generate a random tool call id
-              tool_call_id: Math.random().toString(36).substring(2, 15),
+              tool_call_id: (config as any)?.toolCall.id,
             }),
           ],
         },

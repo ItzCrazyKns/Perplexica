@@ -4,6 +4,9 @@ import { RunnableConfig } from '@langchain/core/runnables';
 import { Document } from 'langchain/document';
 import { getWebContent } from '@/lib/utils/documents';
 import { removeThinkingBlocks } from '@/lib/utils/contentUtils';
+import { Command, getCurrentTaskInput } from '@langchain/langgraph';
+import { SimplifiedAgentStateType } from '@/lib/state/chatAgentState';
+import { ToolMessage } from '@langchain/core/messages';
 
 // Schema for URL summarization tool input
 const URLSummarizationToolSchema = z.object({
@@ -11,6 +14,11 @@ const URLSummarizationToolSchema = z.object({
   query: z
     .string()
     .describe('The user query to guide content extraction and summarization'),
+  retrieveHtml: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe('Whether to retrieve the full HTML content of the pages'),
   intent: z
     .string()
     .optional()
@@ -31,26 +39,34 @@ export const urlSummarizationTool = tool(
   async (
     input: z.infer<typeof URLSummarizationToolSchema>,
     config?: RunnableConfig,
-  ): Promise<{
-    relevantDocuments: Document[];
-    processedUrls: number;
-    successfulExtractions: number;
-  }> => {
+  ) => {
     try {
-      const { urls, query, intent = 'extract relevant content' } = input;
+      const {
+        urls,
+        query,
+        retrieveHtml = false,
+        intent = 'extract relevant content',
+      } = input;
+
+      const currentState = getCurrentTaskInput() as SimplifiedAgentStateType;
+      let currentDocCount = currentState.relevantDocuments.length;
 
       console.log(
-        `URLSummarizationTool: Processing ${urls.length} URLs for query: "${query}"`,
+        `URLSummarizationTool: Processing ${urls.length} \n  URLs for query: "${query}"\n  retrieveHtml: ${retrieveHtml}\n  intent: ${intent}`,
       );
-      console.log(`URLSummarizationTool: Processing intent: ${intent}`);
 
       if (!urls || urls.length === 0) {
         console.log('URLSummarizationTool: No URLs provided for processing');
-        return {
-          relevantDocuments: [],
-          processedUrls: 0,
-          successfulExtractions: 0,
-        };
+        return new Command({
+          update: {
+            messages: [
+              new ToolMessage({
+                content: 'No search results found.',
+                tool_call_id: (config as any)?.toolCall.id,
+              }),
+            ],
+          },
+        });
       }
 
       // Get LLM from config
@@ -72,7 +88,7 @@ export const urlSummarizationTool = tool(
           console.log(`URLSummarizationTool: Processing ${url}`);
 
           // Fetch full content using the enhanced web content retrieval
-          const webContent = await getWebContent(url, true);
+          const webContent = await getWebContent(url, retrieveHtml);
 
           if (!webContent || !webContent.pageContent) {
             console.warn(
@@ -107,7 +123,7 @@ export const urlSummarizationTool = tool(
 
 # Critical Instructions
 - Output ONLY a summary of the web page content provided below
-- Focus on information that relates to or helps answer the user's query
+- Focus on information that relates to or helps answer the user's query and processing intent
 - Do NOT add pleasantries, greetings, or conversational elements
 - Do NOT mention missing URLs, other pages, or content not provided
 - Do NOT ask follow-up questions or suggest additional actions
@@ -116,12 +132,13 @@ export const urlSummarizationTool = tool(
 - Include all relevant details that could help answer the user's question
 
 # User's Query: ${query}
+# Processing Intent: ${intent}
 
 # Content Title: ${webContent.metadata.title || 'Web Page'}
 # Content URL: ${url}
 
 # Web Page Content to Summarize:
-${webContent.pageContent}
+${retrieveHtml && webContent.metadata?.html ? webContent.metadata.html : webContent.pageContent}
 
 Provide a comprehensive summary of the above web page content, focusing on information relevant to the user's query:`;
 
@@ -133,10 +150,12 @@ Provide a comprehensive summary of the above web page content, focusing on infor
             processingType = 'url-content-extraction';
           }
 
-          if (finalContent && finalContent.trim().length > 0) {
+          // Web content less than 100 characters probably isn't useful so discard it.
+          if (finalContent && finalContent.trim().length > 100) {
             const document = new Document({
               pageContent: finalContent,
               metadata: {
+                sourceId: ++currentDocCount,
                 title: webContent.metadata.title || 'URL Content',
                 url: url,
                 source: url,
@@ -170,11 +189,19 @@ Provide a comprehensive summary of the above web page content, focusing on infor
         `URLSummarizationTool: Successfully processed ${documents.length} out of ${urls.length} URLs`,
       );
 
-      return {
-        relevantDocuments: documents,
-        processedUrls: urls.length,
-        successfulExtractions: documents.length,
-      };
+      return new Command({
+        update: {
+          relevantDocuments: documents,
+          messages: [
+            new ToolMessage({
+              content: JSON.stringify({
+                document: documents,
+              }),
+              tool_call_id: (config as any)?.toolCall.id,
+            }),
+          ],
+        },
+      });
     } catch (error) {
       console.error(
         'URLSummarizationTool: Error during URL processing:',
@@ -183,18 +210,22 @@ Provide a comprehensive summary of the above web page content, focusing on infor
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
 
-      // Return empty results on error, but don't throw to allow graceful handling
-      return {
-        relevantDocuments: [],
-        processedUrls: input.urls?.length || 0,
-        successfulExtractions: 0,
-      };
+      return new Command({
+        update: {
+          messages: [
+            new ToolMessage({
+              content: 'Error occurred during URL processing: ' + errorMessage,
+              tool_call_id: (config as any)?.toolCall.id,
+            }),
+          ],
+        },
+      });
     }
   },
   {
     name: 'url_summarization',
     description:
-      'Fetches content from URLs and either uses it directly or summarizes it based on length, focusing on information relevant to the user query',
+      'Fetches content from URLs and either uses it directly or summarizes it based on length, focusing on information relevant to the user query. URLs must be real and should not be invented.',
     schema: URLSummarizationToolSchema,
   },
 );

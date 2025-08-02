@@ -34,7 +34,6 @@ export class AgentSearch {
       systemInstructions,
       personaInstructions,
       signal,
-      focusMode,
     );
   }
 
@@ -61,11 +60,13 @@ export class AgentSearch {
       }),
     );
 
-    // Update focus mode in simplified agent if needed
-    this.simplifiedAgent.updateFocusMode(this.focusMode);
-
-    // Delegate to simplified agent
-    await this.simplifiedAgent.searchAndAnswer(query, history, fileIds);
+    // Delegate to simplified agent with focus mode
+    await this.simplifiedAgent.searchAndAnswer(
+      query,
+      history,
+      fileIds,
+      this.focusMode,
+    );
   }
 
   /**

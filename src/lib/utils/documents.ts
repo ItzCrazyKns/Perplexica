@@ -178,11 +178,41 @@ export const getWebContent = async (
     // Fallback to CheerioWebBaseLoader for simpler content extraction
     try {
       console.log(`Fallback to Cheerio for URL: ${url}`);
-      const cheerioLoader = new CheerioWebBaseLoader(url);
+      const cheerioLoader = new CheerioWebBaseLoader(url, { maxRetries: 2 });
       const docs = await cheerioLoader.load();
 
       if (docs && docs.length > 0) {
-        return docs[0];
+        const doc = docs[0];
+
+        // Apply Readability to extract meaningful content from Cheerio HTML
+        const dom = new JSDOM(doc.pageContent, { url });
+        const reader = new Readability(dom.window.document, {
+          charThreshold: 25,
+        });
+        const article = reader.parse();
+
+        // Normalize the text content
+        const normalizedText =
+          article?.textContent
+            ?.split('\n')
+            .map((line: string) => line.trim())
+            .filter((line: string) => line.length > 0)
+            .join('\n') || '';
+
+        const returnDoc = new Document({
+          pageContent: normalizedText,
+          metadata: {
+            title: article?.title || doc.metadata.title || '',
+            url: url,
+            html: getHtml ? article?.content : undefined,
+          },
+        });
+
+        console.log(
+          `Got content with Cheerio fallback + Readability, URL: ${url}, Text Length: ${returnDoc.pageContent.length}`,
+        );
+
+        return returnDoc;
       }
     } catch (fallbackError) {
       console.error(

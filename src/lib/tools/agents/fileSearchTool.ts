@@ -3,6 +3,9 @@ import { z } from 'zod';
 import { RunnableConfig } from '@langchain/core/runnables';
 import { Document } from 'langchain/document';
 import { Embeddings } from '@langchain/core/embeddings';
+import { Command, getCurrentTaskInput } from '@langchain/langgraph';
+import { ToolMessage } from '@langchain/core/messages';
+import { SimplifiedAgentStateType } from '@/lib/state/chatAgentState';
 import {
   processFilesToDocuments,
   getRankedDocs,
@@ -13,7 +16,6 @@ const FileSearchToolSchema = z.object({
   query: z
     .string()
     .describe('The search query to find relevant content in files'),
-  fileIds: z.array(z.string()).describe('Array of file IDs to search through'),
   maxResults: z
     .number()
     .optional()
@@ -39,19 +41,15 @@ export const fileSearchTool = tool(
   async (
     input: z.infer<typeof FileSearchToolSchema>,
     config?: RunnableConfig,
-  ): Promise<{
-    documents: Document[];
-    processedFiles: number;
-    relevantSections: number;
-    relevantDocuments?: any[];
-  }> => {
+  ) => {
     try {
-      const {
-        query,
-        fileIds,
-        maxResults = 12,
-        similarityThreshold = 0.3,
-      } = input;
+      const { query, maxResults = 12, similarityThreshold = 0.3 } = input;
+
+      const currentState = getCurrentTaskInput() as SimplifiedAgentStateType;
+      let currentDocCount = currentState.relevantDocuments.length;
+
+      // Get fileIds from config (provided by the agent)
+      const fileIds: string[] = config?.configurable?.fileIds || [];
 
       console.log(
         `FileSearchTool: Processing ${fileIds.length} files for query: "${query}"`,
@@ -60,11 +58,17 @@ export const fileSearchTool = tool(
       // Check if we have files to process
       if (!fileIds || fileIds.length === 0) {
         console.log('FileSearchTool: No files provided for search');
-        return {
-          documents: [],
-          processedFiles: 0,
-          relevantSections: 0,
-        };
+        return new Command({
+          update: {
+            relevantDocuments: [],
+            messages: [
+              new ToolMessage({
+                content: 'No files attached to search.',
+                tool_call_id: (config as any)?.toolCall.id,
+              }),
+            ],
+          },
+        });
       }
 
       // Get embeddings from config
@@ -80,11 +84,17 @@ export const fileSearchTool = tool(
 
       if (fileDocuments.length === 0) {
         console.log('FileSearchTool: No processable content found in files');
-        return {
-          documents: [],
-          processedFiles: fileIds.length,
-          relevantSections: 0,
-        };
+        return new Command({
+          update: {
+            relevantDocuments: [],
+            messages: [
+              new ToolMessage({
+                content: 'No searchable content found in attached files.',
+                tool_call_id: (config as any)?.toolCall.id,
+              }),
+            ],
+          },
+        });
       }
 
       console.log(
@@ -108,12 +118,17 @@ export const fileSearchTool = tool(
         `FileSearchTool: Found ${rankedDocuments.length} relevant file sections`,
       );
 
-      // Add search metadata to documents
+      // Add search metadata to documents and remove embeddings to reduce context size
       const documentsWithMetadata = rankedDocuments.map((doc) => {
+        // Extract metadata and exclude embeddings
+        const { embeddings: _, ...metadataWithoutEmbeddings } =
+          doc.metadata || {};
+
         return new Document({
           pageContent: doc.pageContent,
           metadata: {
-            ...doc.metadata,
+            ...metadataWithoutEmbeddings,
+            sourceId: ++currentDocCount,
             source: 'file_search',
             searchQuery: query,
             similarityScore: doc.metadata?.similarity || 0,
@@ -121,28 +136,47 @@ export const fileSearchTool = tool(
         });
       });
 
-      return {
-        documents: documentsWithMetadata,
-        processedFiles: fileIds.length,
-        relevantSections: rankedDocuments.length,
-      };
+      console.log(
+        `FileSearchTool: Created ${documentsWithMetadata.length} documents from file search`,
+      );
+
+      return new Command({
+        update: {
+          relevantDocuments: documentsWithMetadata,
+          messages: [
+            new ToolMessage({
+              content: JSON.stringify({
+                documents: documentsWithMetadata,
+                processedFiles: fileIds.length,
+                relevantSections: rankedDocuments.length,
+              }),
+              tool_call_id: (config as any)?.toolCall.id,
+            }),
+          ],
+        },
+      });
     } catch (error) {
       console.error('FileSearchTool: Error during file search:', error);
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
 
-      // Return empty results on error, but don't throw to allow graceful handling
-      return {
-        documents: [],
-        processedFiles: input.fileIds?.length || 0,
-        relevantSections: 0,
-      };
+      return new Command({
+        update: {
+          relevantDocuments: [],
+          messages: [
+            new ToolMessage({
+              content: 'Error occurred during file search: ' + errorMessage,
+              tool_call_id: (config as any)?.toolCall.id,
+            }),
+          ],
+        },
+      });
     }
   },
   {
     name: 'file_search',
     description:
-      'Searches through uploaded files to find relevant content sections based on a query using semantic similarity',
+      'Searches through all uploaded files to find relevant content sections based on a query using semantic similarity. Automatically searches all available files - no need to specify file IDs.',
     schema: FileSearchToolSchema,
   },
 );

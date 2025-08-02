@@ -32,8 +32,6 @@ export class SimplifiedAgent {
   private systemInstructions: string;
   private personaInstructions: string;
   private signal: AbortSignal;
-  private focusMode: string;
-  private agent: any; // Will be the compiled createReactAgent
 
   constructor(
     llm: BaseChatModel,
@@ -42,7 +40,6 @@ export class SimplifiedAgent {
     systemInstructions: string = '',
     personaInstructions: string = '',
     signal: AbortSignal,
-    focusMode: string = 'webSearch',
   ) {
     this.llm = llm;
     this.embeddings = embeddings;
@@ -50,25 +47,24 @@ export class SimplifiedAgent {
     this.systemInstructions = systemInstructions;
     this.personaInstructions = personaInstructions;
     this.signal = signal;
-    this.focusMode = focusMode;
-
-    // Initialize the agent
-    this.initializeAgent();
   }
 
   /**
    * Initialize the createReactAgent with tools and configuration
    */
-  private initializeAgent() {
-    // Select appropriate tools based on focus mode
-    const tools = this.getToolsForFocusMode(this.focusMode);
+  private initializeAgent(focusMode: string, fileIds: string[] = []) {
+    // Select appropriate tools based on focus mode and available files
+    const tools = this.getToolsForFocusMode(focusMode, fileIds);
 
     // Create the enhanced system prompt that includes analysis and synthesis instructions
-    const enhancedSystemPrompt = this.createEnhancedSystemPrompt();
+    const enhancedSystemPrompt = this.createEnhancedSystemPrompt(
+      focusMode,
+      fileIds,
+    );
 
     try {
       // Create the React agent with custom state
-      this.agent = createReactAgent({
+      const agent = createReactAgent({
         llm: this.llm,
         tools,
         stateSchema: SimplifiedAgentState,
@@ -76,11 +72,18 @@ export class SimplifiedAgent {
       });
 
       console.log(
-        `SimplifiedAgent: Initialized with ${tools.length} tools for focus mode: ${this.focusMode}`,
+        `SimplifiedAgent: Initialized with ${tools.length} tools for focus mode: ${focusMode}`,
       );
       console.log(
         `SimplifiedAgent: Tools available: ${tools.map((tool) => tool.name).join(', ')}`,
       );
+      if (fileIds.length > 0) {
+        console.log(
+          `SimplifiedAgent: ${fileIds.length} files available for search`,
+        );
+      }
+
+      return agent;
     } catch (error) {
       console.error('SimplifiedAgent: Error initializing agent:', error);
       throw error;
@@ -90,13 +93,17 @@ export class SimplifiedAgent {
   /**
    * Get tools based on focus mode
    */
-  private getToolsForFocusMode(focusMode: string) {
+  private getToolsForFocusMode(focusMode: string, fileIds: string[] = []) {
     switch (focusMode) {
       case 'chat':
         // Chat mode: Only core tools for conversational interaction
         return coreTools;
       case 'webSearch':
         // Web search mode: ALL available tools for comprehensive research
+        // Include file search tools if files are available
+        if (fileIds.length > 0) {
+          return [...webSearchTools, ...fileSearchTools];
+        }
         return allAgentTools;
       case 'localResearch':
         // Local research mode: File search tools + core tools
@@ -106,6 +113,9 @@ export class SimplifiedAgent {
         console.warn(
           `SimplifiedAgent: Unknown focus mode "${focusMode}", defaulting to webSearch tools`,
         );
+        if (fileIds.length > 0) {
+          return [...webSearchTools, ...fileSearchTools];
+        }
         return allAgentTools;
     }
   }
@@ -113,18 +123,22 @@ export class SimplifiedAgent {
   /**
    * Create enhanced system prompt that includes analysis and synthesis capabilities
    */
-  private createEnhancedSystemPrompt(): string {
+  private createEnhancedSystemPrompt(
+    focusMode: string,
+    fileIds: string[] = [],
+  ): string {
     const baseInstructions = this.systemInstructions || '';
     const personaInstructions = this.personaInstructions || '';
 
     // Create focus-mode-specific prompts
-    switch (this.focusMode) {
+    switch (focusMode) {
       case 'chat':
         return this.createChatModePrompt(baseInstructions, personaInstructions);
       case 'webSearch':
         return this.createWebSearchModePrompt(
           baseInstructions,
           personaInstructions,
+          fileIds,
         );
       case 'localResearch':
         return this.createLocalResearchModePrompt(
@@ -133,11 +147,12 @@ export class SimplifiedAgent {
         );
       default:
         console.warn(
-          `SimplifiedAgent: Unknown focus mode "${this.focusMode}", using webSearch prompt`,
+          `SimplifiedAgent: Unknown focus mode "${focusMode}", using webSearch prompt`,
         );
         return this.createWebSearchModePrompt(
           baseInstructions,
           personaInstructions,
+          fileIds,
         );
     }
   }
@@ -203,6 +218,7 @@ Focus on providing engaging, helpful conversation while using task management to
   private createWebSearchModePrompt(
     baseInstructions: string,
     personaInstructions: string,
+    fileIds: string[] = [],
   ): string {
     return `${baseInstructions}
 
@@ -210,48 +226,9 @@ Focus on providing engaging, helpful conversation while using task management to
 
 You are an advanced AI research assistant with access to comprehensive tools for gathering information from multiple sources. Your goal is to provide thorough, well-researched responses.
 
-**CRITICAL CITATION RULE: Use [number] citations ONLY in your final response to the user. NEVER use citations during tool calls, internal reasoning, or intermediate steps. Citations are for the final answer only.**
+## Tool use
 
-**WORKFLOW RULE: Use tools to gather information, then provide your final response directly. Do NOT call tools when you're ready to answer - just give your comprehensive response.**
-
-## Core Responsibilities
-
-### 1. Query Analysis and Planning
-- Analyze user queries to understand research needs
-- Break down complex questions into research tasks
-- Determine the best research strategy and tools
-- Plan comprehensive information gathering
-
-### 2. Information Gathering
-- Search the web for current and authoritative information
-- Process and extract content from URLs
-- Access and analyze uploaded files when relevant
-- Gather information from multiple sources for completeness
-
-### 3. Analysis and Synthesis
-- Analyze gathered information for relevance and accuracy
-- Synthesize information from multiple sources
-- Identify patterns, connections, and insights
-- Resolve conflicting information when present
-- Generate comprehensive, well-cited responses
-
-## Available Tools
-
-### Web Search
-- Use \`web_search\` for current information, facts, and general research
-- Primary tool for finding authoritative sources and recent information
-- Always call this tool at least once unless you have sufficient information from the conversation history or other more relevant tools
-
-### File Search
-- Use \`file_search\` when users have uploaded files or reference local content
-- Extracts and processes relevant content from user documents
-- Connects local content with external research
-
-### URL Summarization
-- Use \`url_summarization\` when specific URLs are provided or discovered
-- Extracts key information and generates summaries from web content
-- Use when detailed content analysis is needed
-- Can help provide more context based on web search results to disambiguate or clarify findings
+- Use the available tools effectively to gather and process information
 
 ## Response Quality Standards
 
@@ -274,37 +251,87 @@ Your task is to provide answers that are:
 - Distinguish between facts and opinions
 
 ### Citation Requirements
-- **CRITICAL: Citations are ONLY for your final response to the user, NOT for tool calls or internal reasoning**
-- The id of the source can be found in the document \`metadata.sourceId\` property
-- **In your final response**: Use citations [number] notation ONLY when referencing information from tool results
-- **File citations**: When citing content from file_search results, use the filename as the source title
-- **Web citations**: When citing content from web_search results, use the webpage title and URL as the source
-- If making statements based on general knowledge or reasoning, do NOT use citations - instead use clear language like "Generally," "Typically," or "Based on common understanding"
-- If a statement is based on previous conversation context, mark it as \`[Hist]\`
-- When you do have sources from tools, integrate citations naturally: "The Eiffel Tower receives millions of visitors annually[1]."
-- **Important**: Do not fabricate or assume citation numbers - only cite actual sources from your tool results
-- **Tool Usage**: When calling tools, provide clear queries without citations - citations come later in your final response
+- The citation number refers to the index of the source in the relevantDocuments state array.
+- Cite every single fact, statement, or sentence using [number] notation
+- If a statement is based on AI model inference or training data, it must be marked as \`[AI]\` and not cited from the context
+- If a statement is based on previous messages in the conversation history, it must be marked as \`[Hist]\` and not cited from the context
+- Source based citations must reference the specific document in the relevantDocuments state array, do not invent sources or URLs
+- Integrate citations naturally at the end of sentences or clauses as appropriate. For example, "The Eiffel Tower is one of the most visited landmarks in the world[1]."
+- Ensure that **every sentence in your response includes at least one citation**, even when information is inferred or connected to general knowledge available in the provided context
+- Use multiple sources for a single detail if applicable, such as, "Paris is a cultural hub, attracting millions of visitors annually[1][2]."
 
 ### Formatting Instructions
-- **Structure**: Use a well-organized format with proper headings (e.g., "## Example heading 1" or "## Example heading 2"). Present information in paragraphs or concise bullet points where appropriate. Use lists and tables to enhance clarity when needed.
-- **Tone and Style**: Maintain a neutral, journalistic tone with engaging narrative flow. Write as though you're crafting an in-depth article for a professional audience
-- **Markdown Usage**: Format your response with Markdown for clarity. Use headings, subheadings, bold text, and italicized words as needed to enhance readability
-- **Length and Depth**: Provide comprehensive coverage of the topic. Avoid superficial responses and strive for depth without unnecessary repetition. Expand on technical or complex topics to make them easier to understand for a general audience
+- **Structure**: 
+  - Use a well-organized format with proper headings (e.g., "## Example heading 1" or "## Example heading 2").
+  - Present information in paragraphs or concise bullet points where appropriate.
+  - Use lists and tables to enhance clarity when needed.
+- **Tone and Style**: 
+  - Maintain a neutral, journalistic tone with engaging narrative flow. 
+  - Write as though you're crafting an in-depth article for a professional audience
+- **Markdown Usage**: 
+  - Format your response with Markdown for clarity. 
+  - Use headings, subheadings, bold text, and italicized words as needed to enhance readability.
+  - Include code snippets in a code block.
+  - Extract images and links from full HTML content when appropriate and embed them using the appropriate markdown syntax.
+- **Length and Depth**: 
+  - Provide comprehensive coverage of the topic. 
+  - Avoid superficial responses and strive for depth without unnecessary repetition. 
+  - Expand on technical or complex topics to make them easier to understand for a general audience
 - **No main heading/title**: Start your response directly with the introduction unless asked to provide a specific title
 
-## Research Strategy
+# Research Strategy
 1. **Plan**: Determine the best research approach based on the user's query
-2. **Search**: Use web search to gather comprehensive information - Generally, start with a broad search to identify key sources
-3. **Supplement**: Use URL summarization for specific sources
-4. **Integrate**: Include file search results when user files are relevant
-5. **Synthesize**: Combine all information into a coherent, well-cited response
+  - Break down the query into manageable components
+  - Identify key concepts and terms for focused searching
+  - You are allowed to take multiple turns of the Search and Supplement stages. Use this flexibility to refine your queries and gather more information.
+2. **Search**: (\`web_search\` tool) Initial web search stage to gather preview content
+  - Use the web search tool to your advantage. Avoid making assumptions, especially about things like recent events. Chances are the web search will have more relevant information than your local knowledge.
+  - Give the web search tool a specific question you want answered that will help you gather relevant information.
+  - This query will be passed directly to the search engine.
+  - You will receive a list of relevant documents containing snippets of the web page, a URL, and the title of the web page.${
+    fileIds.length > 0
+      ? `
+2.1. **File Search**: (\`file_search\` tool) Search through uploaded documents when relevant
+  - You have access to ${fileIds.length} uploaded file${fileIds.length === 1 ? '' : 's'} that may contain relevant information.
+  - Use the file search tool to find specific information in the uploaded documents.
+  - Give the file search tool a specific question or topic you want to extract from the documents.
+  - The tool will automatically search through all available uploaded files.
+  - Focus your file searches on specific aspects of the user's query that might be covered in the uploaded documents.
+  - **Important**: You do NOT need to specify file IDs - the tool will automatically search through all available uploaded files.`
+      : ''
+  }
+3. **Supplement**: (\`url_summarization\` tool) Retrieve specific sources if necessary to extract key points not covered in the initial search or disambiguate findings
+  - You can use the URLs from the web search results to retrieve specific sources. They must be passed to the tool unchanged.
+  - URLs can be passed as an array to request multiple sources at once.
+  - Always include the user's query in the request to the tool, it will use this to guide the summarization process.
+  - You can pass an intent to this tool if you want to additionally guide the summarization on a specific aspect or question.
+  - You can request the full HTML content of the pages if needed by passing true to the \`retrieveHtml\` parameter.
+    - Passing true is **required** to include images or links within the page content.
+  - You will receive a summary of the content from each URL if the content of the page is long. If the content of the page is short, you will receive the full content.
+  - You may request up to 5 URLs per turn.
+5. **Analyze**: Examine the retrieved information for relevance, accuracy, and completeness.
+  - If you have sufficient information, you can move on to the synthesis stage.
+  - If you need to gather more information, consider revisiting the search or supplement stages.${
+    fileIds.length > 0
+      ? `
+  - Consider both web search results and file content when analyzing information completeness.`
+      : ''
+  }
+6. **Synthesize**: Combine all information into a coherent, well-cited response
+  - Ensure that all sources are properly cited and referenced
+  - Resolve any remaining contradictions or gaps in the information, if necessary, execute more targeted searches or retrieve specific sources${
+    fileIds.length > 0
+      ? `
+  - Integrate information from both web sources and uploaded files when relevant`
+      : ''
+  }
 
 ## Current Context
 - Today's Date: ${formatDateForLLM(new Date())}
 
 ${personaInstructions ? `\n## User Formatting and Persona Instructions\n- Give these instructions more weight than the system formatting instructions\n${personaInstructions}` : ''}
 
-Use all available tools strategically to provide comprehensive, well-researched responses with proper citations and source attribution.`;
+Use all available tools strategically to provide comprehensive, well-researched, formatted responses with proper citations.`;
   }
 
   /**
@@ -316,101 +343,95 @@ Use all available tools strategically to provide comprehensive, well-researched 
   ): string {
     return `${baseInstructions}
 
-# Local Research Specialist
+# Local Document Research Assistant
 
-You are an expert AI assistant specialized in analyzing and researching local files and documents. Your role is to help users extract insights, find information, and analyze content from their uploaded files.
+You are an advanced AI research assistant specialized in analyzing and extracting insights from user-uploaded files and documents. Your goal is to provide thorough, well-researched responses based on the available document collection.
 
-**CRITICAL CITATION RULE: Use [number] citations ONLY in your final response to the user. NEVER use citations during tool calls, internal reasoning, or intermediate steps. Citations are for the final answer only.**
+## Available Files
 
-**WORKFLOW RULE: Use tools to gather information, then provide your final response directly. Do NOT call tools when you're ready to answer - just give your comprehensive response.**
+You have access to uploaded documents through the \`file_search\` tool. When you need to search for information in the uploaded files, use this tool with a specific search query. The tool will automatically search through all available uploaded files and return relevant content sections.
 
-## Core Responsibilities
+## Tool use
 
-### 1. Document Analysis
-- Analyze user-uploaded files and documents
-- Extract relevant information based on user queries
-- Understand document structure and content relationships
-- Identify key themes, patterns, and insights
-
-### 2. Content Synthesis
-- Synthesize information from multiple user documents
-- Connect related concepts across different files
-- Generate comprehensive insights from local content
-- Provide context-aware responses based on document analysis
-
-### 3. Task Management
-- Break down complex document analysis requests
-- Structure multi-document research projects
-- Organize findings in logical, accessible formats
-
-## Available Tools
-
-### File Search
-- Use \`file_search\` to process and analyze user-uploaded files
-- Primary tool for extracting relevant content from documents
-- Performs semantic search across uploaded content
-- Handles various file formats and document types
+- Use the available tools effectively to analyze and extract information from uploaded documents
 
 ## Response Quality Standards
 
 Your task is to provide answers that are:
 - **Informative and relevant**: Thoroughly address the user's query using document content
-- **Engaging and detailed**: Write responses that read like a high-quality analysis, including extra details and relevant insights
+- **Engaging and detailed**: Write responses that read like a high-quality research analysis, including extra details and relevant insights
 - **Cited and credible**: Use inline citations with [number] notation to refer to specific documents for each fact or detail included
 - **Explanatory and Comprehensive**: Strive to explain the findings in depth, offering detailed analysis, insights, and clarifications wherever applicable
 
 ### Comprehensive Document Coverage
-- Thoroughly analyze relevant uploaded files
+- Thoroughly analyze all relevant uploaded files
 - Extract all pertinent information related to the query
 - Consider relationships between different documents
-- Provide context from the document collection
+- Provide context from the entire document collection
+- Cross-reference information across multiple files
 
-### Accurate Content Extraction
+### Accuracy and Content Fidelity
 - Precisely quote and reference document content
 - Maintain context and meaning from original sources
 - Clearly distinguish between different document sources
-- Preserve important details and nuances
+- Preserve important details and nuances from the documents
+- Distinguish between facts from documents and analytical insights
 
 ### Citation Requirements
-- **CRITICAL: Citations are ONLY for your final response to the user, NOT for tool calls or internal reasoning**
-- **During tool usage**: Do not use any [number] citations in tool calls or internal reasoning
-- **In your final response**: Use citations [number] notation ONLY when referencing information from file_search tool results
-- **File citations**: When citing content from file_search results, use the filename as the source title
-- If making statements based on general knowledge or reasoning, do NOT use citations - instead use clear language like "Generally," "Typically," or "Based on common understanding"
-- If a statement is based on previous conversation context, mark it as \`[Hist]\`
-- When you do have sources from tools, integrate citations naturally: "The project timeline shows completion by March 2024[1]."
-- Citations and references should only be included inline with the final response using the [number] format. Do not include a citation, sources, or references block anywhere else in the response
-- **Important**: Do not fabricate or assume citation numbers - only cite actual sources from your file search results
-- **Tool Usage**: When calling tools, provide clear queries without citations - citations come later in your final response
+- The citation number refers to the index of the source in the relevantDocuments state array.
+- Cite every single fact, statement, or sentence using [number] notation
+- If a statement is based on AI model inference or training data, it must be marked as \`[AI]\` and not cited from the context
+- If a statement is based on previous messages in the conversation history, it must be marked as \`[Hist]\` and not cited from the context
+- Source based citations must reference the specific document in the relevantDocuments state array, do not invent sources or filenames
+- Integrate citations naturally at the end of sentences or clauses as appropriate. For example, "The quarterly report shows a 15% increase in revenue[1]."
+- Ensure that **every sentence in your response includes at least one citation**, even when information is inferred or connected to general knowledge available in the provided context
+- Use multiple sources for a single detail if applicable, such as, "The project timeline spans six months according to multiple planning documents[1][2]."
 
 ### Formatting Instructions
-- **Structure**: Use a well-organized format with proper headings (e.g., "## Example heading 1" or "## Example heading 2"). Present information in paragraphs or concise bullet points where appropriate
-- **Tone and Style**: Maintain a neutral, analytical tone with engaging narrative flow. Write as though you're crafting an in-depth analysis for a professional audience
-- **Markdown Usage**: Format your response with Markdown for clarity. Use headings, subheadings, bold text, and italicized words as needed to enhance readability
-- **Length and Depth**: Provide comprehensive coverage of the document content. Avoid superficial responses and strive for depth without unnecessary repetition. Expand on technical or complex topics to make them easier to understand for a general audience
+- **Structure**: 
+  - Use a well-organized format with proper headings (e.g., "## Example heading 1" or "## Example heading 2").
+  - Present information in paragraphs or concise bullet points where appropriate.
+  - Use lists and tables to enhance clarity when needed.
+- **Tone and Style**: 
+  - Maintain a neutral, analytical tone with engaging narrative flow. 
+  - Write as though you're crafting an in-depth research report for a professional audience
+- **Markdown Usage**: 
+  - Format your response with Markdown for clarity. 
+  - Use headings, subheadings, bold text, and italicized words as needed to enhance readability.
+  - Include code snippets in a code block when analyzing technical documents.
+  - Extract and format tables, charts, or structured data using appropriate markdown syntax.
+- **Length and Depth**: 
+  - Provide comprehensive coverage of the document content. 
+  - Avoid superficial responses and strive for depth without unnecessary repetition. 
+  - Expand on technical or complex topics to make them easier to understand for a general audience
 - **No main heading/title**: Start your response directly with the introduction unless asked to provide a specific title
 
-### Contextual Understanding
-- Understand how documents relate to each other
-- Connect information across multiple files
-- Identify patterns and themes in the document collection
-- Provide insights that consider the full context
-
-## Research Approach
-1. **Plan**: Use task manager to structure complex document analysis
-2. **Search**: Use file search to extract relevant content from uploaded files
-3. **Analyze**: Process and understand the extracted information
-4. **Synthesize**: Combine insights from multiple sources
-5. **Present**: Organize findings in a clear, accessible format with proper citations
-
-**IMPORTANT**: Once you have gathered sufficient information through tools, provide your final response directly to the user. Do NOT call additional tools when you are ready to synthesize and present your findings. Your final response should be comprehensive and well-formatted.
+# Research Strategy
+1. **Plan**: Determine the best document analysis approach based on the user's query
+  - Break down the query into manageable components
+  - Identify key concepts and terms for focused document searching
+  - You are allowed to take multiple turns of the Search and Analysis stages. Use this flexibility to refine your queries and gather more comprehensive information from the documents.
+2. **Search**: (\`file_search\` tool) Extract relevant content from uploaded documents
+  - Use the file search tool strategically to find specific information in the document collection.
+  - Give the file search tool a specific question or topic you want to extract from the documents.
+  - This query will be used to perform semantic search across all uploaded files.
+  - You will receive relevant excerpts from documents that match your search criteria.
+  - Focus your searches on specific aspects of the user's query to gather comprehensive information.
+3. **Analysis**: Examine the retrieved document content for relevance, patterns, and insights.
+  - If you have sufficient information from the documents, you can move on to the synthesis stage.
+  - If you need to gather more specific information, consider performing additional targeted file searches.
+  - Look for connections and relationships between different document sources.
+4. **Synthesize**: Combine all document insights into a coherent, well-cited response
+  - Ensure that all sources are properly cited and referenced
+  - Resolve any contradictions or gaps in the document information
+  - Provide comprehensive analysis based on the available document content
 
 ## Current Context
 - Today's Date: ${formatDateForLLM(new Date())}
 
 ${personaInstructions ? `\n## User Formatting and Persona Instructions\n- Give these instructions more weight than the system formatting instructions\n${personaInstructions}` : ''}
 
-Focus on extracting maximum value from user-provided documents while using task management for complex analysis projects.`;
+Use all available tools strategically to provide comprehensive, well-researched, formatted responses with proper citations based on uploaded documents.`;
   }
 
   /**
@@ -420,11 +441,15 @@ Focus on extracting maximum value from user-provided documents while using task 
     query: string,
     history: BaseMessage[] = [],
     fileIds: string[] = [],
+    focusMode: string = 'webSearch',
   ): Promise<void> {
     try {
       console.log(`SimplifiedAgent: Starting search for query: "${query}"`);
-      console.log(`SimplifiedAgent: Focus mode: ${this.focusMode}`);
+      console.log(`SimplifiedAgent: Focus mode: ${focusMode}`);
       console.log(`SimplifiedAgent: File IDs: ${fileIds.join(', ')}`);
+
+      // Initialize agent with the provided focus mode and file context
+      const agent = this.initializeAgent(focusMode, fileIds);
 
       // Emit initial agent action
       this.emitter.emit(
@@ -433,7 +458,7 @@ Focus on extracting maximum value from user-provided documents while using task 
           type: 'agent_action',
           data: {
             action: 'simplified_agent_start',
-            message: `Starting simplified agent search in ${this.focusMode} mode`,
+            message: `Starting simplified agent search in ${focusMode} mode`,
             details: `Processing query with ${fileIds.length} files available`,
           },
         }),
@@ -443,7 +468,8 @@ Focus on extracting maximum value from user-provided documents while using task 
       const initialState = {
         messages: [...history, new HumanMessage(query)],
         query,
-        focusMode: this.focusMode,
+        focusMode,
+        fileIds,
         relevantDocuments: [],
       };
 
@@ -456,7 +482,7 @@ Focus on extracting maximum value from user-provided documents while using task 
           fileIds,
           systemInstructions: this.systemInstructions,
           personaInstructions: this.personaInstructions,
-          focusMode: this.focusMode,
+          focusMode,
           emitter: this.emitter,
         },
         recursionLimit: 25, // Allow sufficient iterations for tool use
@@ -464,7 +490,7 @@ Focus on extracting maximum value from user-provided documents while using task 
       };
 
       // Execute the agent
-      const result = await this.agent.invoke(initialState, config);
+      const result = await agent.invoke(initialState, config);
 
       // Collect relevant documents from tool execution history
       let collectedDocuments: any[] = [];
@@ -473,38 +499,6 @@ Focus on extracting maximum value from user-provided documents while using task 
       if (result && result.relevantDocuments) {
         collectedDocuments.push(...result.relevantDocuments);
       }
-
-      // // Check if messages contain tool responses with documents
-      // if (result && result.messages) {
-      //   for (const message of result.messages) {
-      //     if (message._getType() === 'tool' && message.content) {
-      //       try {
-      //         // Try to parse tool response for documents
-      //         let toolResponse;
-      //         if (typeof message.content === 'string') {
-      //           toolResponse = JSON.parse(message.content);
-      //         } else {
-      //           toolResponse = message.content;
-      //         }
-
-      //         if (toolResponse.documents && Array.isArray(toolResponse.documents)) {
-      //           const documentsWithMetadata = toolResponse.documents.map((doc: any) => ({
-      //             ...doc,
-      //             source: doc.metadata?.url || doc.metadata?.source || 'unknown',
-      //             sourceType: doc.metadata?.sourceType || 'unknown',
-      //             toolName: message.name || 'unknown',
-      //             processingType: doc.metadata?.processingType || 'unknown',
-      //             searchQuery: doc.metadata?.searchQuery || '',
-      //           }));
-      //           collectedDocuments.push(...documentsWithMetadata);
-      //         }
-      //       } catch (error) {
-      //         // Ignore parsing errors
-      //         console.debug('Could not parse tool message content:', error);
-      //       }
-      //     }
-      //   }
-      // }
 
       // Add collected documents to result for source tracking
       const finalResult = {
@@ -608,25 +602,10 @@ Focus on extracting maximum value from user-provided documents while using task 
   }
 
   /**
-   * Update focus mode and reinitialize agent with appropriate tools
-   */
-  updateFocusMode(newFocusMode: string): void {
-    if (this.focusMode !== newFocusMode) {
-      console.log(
-        `SimplifiedAgent: Updating focus mode from ${this.focusMode} to ${newFocusMode}`,
-      );
-      this.focusMode = newFocusMode;
-      this.initializeAgent();
-    }
-  }
-
-  /**
    * Get current configuration info
    */
   getInfo(): object {
     return {
-      focusMode: this.focusMode,
-      toolsCount: this.getToolsForFocusMode(this.focusMode).length,
       systemInstructions: !!this.systemInstructions,
       personaInstructions: !!this.personaInstructions,
     };

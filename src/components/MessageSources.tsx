@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { Document } from '@langchain/core/documents';
-import { File, Zap, Microscope } from 'lucide-react';
+import { File, Zap, Microscope, FileText, Sparkles } from 'lucide-react';
 
 const MessageSources = ({ sources }: { sources: Document[] }) => {
   return (
@@ -49,6 +49,22 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
               {source.metadata.processingType === 'full-content' && (
                 <span title="Full content analyzed" className="inline-flex">
                   <Microscope
+                    size={14}
+                    className="text-black/40 dark:text-white/40 ml-1"
+                  />
+                </span>
+              )}
+              {source.metadata.processingType === 'url-direct-content' && (
+                <span title="Direct URL content" className="inline-flex">
+                  <FileText
+                    size={14}
+                    className="text-black/40 dark:text-white/40 ml-1"
+                  />
+                </span>
+              )}
+              {source.metadata.processingType === 'url-content-extraction' && (
+                <span title="Summarized URL content" className="inline-flex">
+                  <Sparkles
                     size={14}
                     className="text-black/40 dark:text-white/40 ml-1"
                   />

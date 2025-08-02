@@ -9,14 +9,12 @@
 
 // Import all agent tools (will be uncommented as tools are implemented)
 import { taskManagerTool } from './taskManagerTool';
-import { webSearchTool } from './webSearchTool';
 import { simpleWebSearchTool } from './simpleWebSearchTool';
 import { fileSearchTool } from './fileSearchTool';
 import { urlSummarizationTool } from './urlSummarizationTool';
 
 // Export individual tools (will be uncommented as tools are implemented)
 export { taskManagerTool };
-export { webSearchTool };
 export { simpleWebSearchTool };
 export { fileSearchTool };
 
