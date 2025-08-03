@@ -43,6 +43,11 @@ interface SearchTabsProps {
       suggestions?: string[];
     },
   ) => void;
+  onThinkBoxToggle: (
+    messageId: string,
+    thinkBoxId: string,
+    expanded: boolean,
+  ) => void;
 }
 
 const MessageTabs = ({
@@ -54,6 +59,7 @@ const MessageTabs = ({
   loading,
   rewrite,
   sendMessage,
+  onThinkBoxToggle,
 }: SearchTabsProps) => {
   const [activeTab, setActiveTab] = useState<TabType>('text');
   const [imageCount, setImageCount] = useState(0);
@@ -273,9 +279,14 @@ const MessageTabs = ({
         {/* Answer Tab */}
         {activeTab === 'text' && (
           <div className="flex flex-col space-y-4 animate-fadeIn">
-            <MarkdownRenderer content={parsedMessage} className="px-4" />
-
-            {loading && isLast ? null : (
+            <MarkdownRenderer 
+              content={parsedMessage} 
+              className="px-4" 
+              messageId={message.messageId}
+              expandedThinkBoxes={message.expandedThinkBoxes}
+              onThinkBoxToggle={onThinkBoxToggle}
+              showThinking={true}
+            />            {loading && isLast ? null : (
               <div className="flex flex-row items-center justify-between w-full text-black dark:text-white px-4 py-4">
                 <div className="flex flex-row items-center space-x-1">
                   <Rewrite rewrite={rewrite} messageId={message.messageId} />

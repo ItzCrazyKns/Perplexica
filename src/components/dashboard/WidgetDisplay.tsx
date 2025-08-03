@@ -119,7 +119,7 @@ const WidgetDisplay = ({
             </div>
           ) : widget.content ? (
             <div className="prose prose-sm dark:prose-invert max-w-none">
-              <MarkdownRenderer content={widget.content} thinkOverlay={true} />
+              <MarkdownRenderer content={widget.content} showThinking={false} />
             </div>
           ) : (
             <div className="flex items-center justify-center py-8 text-gray-500 dark:text-gray-400">

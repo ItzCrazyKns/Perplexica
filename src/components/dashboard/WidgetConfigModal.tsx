@@ -6,8 +6,9 @@ import {
   DialogTitle,
   Transition,
   TransitionChild,
+  Switch,
 } from '@headlessui/react';
-import { X, Plus, Trash2, Play, Save } from 'lucide-react';
+import { X, Plus, Trash2, Play, Save, Brain } from 'lucide-react';
 import { Fragment, useState, useEffect } from 'react';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import ModelSelector from '@/components/MessageInputActions/ModelSelector';
@@ -72,6 +73,7 @@ const WidgetConfigModal = ({
     model: string;
   } | null>(null);
   const [selectedTools, setSelectedTools] = useState<string[]>([]);
+  const [showThinking, setShowThinking] = useState(false);
 
   // Update config when editingWidget changes
   useEffect(() => {
@@ -415,21 +417,41 @@ const WidgetConfigModal = ({
                       <h4 className="text-sm font-medium text-black dark:text-white">
                         Preview
                       </h4>
-                      <button
-                        onClick={handlePreview}
-                        disabled={isPreviewLoading}
-                        className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                      >
-                        <Play size={16} />
-                        {isPreviewLoading ? 'Loading...' : 'Run Preview'}
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
+                          <Brain size={16} className="text-gray-600 dark:text-gray-400" />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">Thinking</span>
+                          <Switch
+                            checked={showThinking}
+                            onChange={setShowThinking}
+                            className="bg-light-secondary dark:bg-dark-secondary border border-light-200/70 dark:border-dark-200 relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full"
+                          >
+                            <span className="sr-only">Show thinking tags</span>
+                            <span
+                              className={`${
+                                showThinking
+                                  ? 'translate-x-6 bg-purple-600'
+                                  : 'translate-x-1 bg-black/50 dark:bg-white/50'
+                              } inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full transition-all duration-200`}
+                            />
+                          </Switch>
+                        </div>
+                        <button
+                          onClick={handlePreview}
+                          disabled={isPreviewLoading}
+                          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          <Play size={16} />
+                          {isPreviewLoading ? 'Loading...' : 'Run Preview'}
+                        </button>
+                      </div>
                     </div>
 
                     <div className="h-80 p-4 border border-light-200 dark:border-dark-200 rounded-md bg-light-secondary dark:bg-dark-secondary overflow-y-auto max-w-full">
                       {previewContent ? (
                         <div className="prose prose-sm dark:prose-invert max-w-full">
                           <MarkdownRenderer
-                            thinkOverlay={true}
+                            showThinking={showThinking}
                             content={previewContent}
                           />
                         </div>

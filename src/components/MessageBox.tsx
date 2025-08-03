@@ -13,6 +13,7 @@ const MessageBox = ({
   rewrite,
   sendMessage,
   handleEditMessage,
+  onThinkBoxToggle,
 }: {
   message: Message;
   messageIndex: number;
@@ -29,6 +30,11 @@ const MessageBox = ({
     },
   ) => void;
   handleEditMessage: (messageId: string, content: string) => void;
+  onThinkBoxToggle: (
+    messageId: string,
+    thinkBoxId: string,
+    expanded: boolean,
+  ) => void;
 }) => {
   // Local state for editing functionality
   const [isEditing, setIsEditing] = useState(false);
@@ -123,6 +129,7 @@ const MessageBox = ({
           loading={loading}
           rewrite={rewrite}
           sendMessage={sendMessage}
+          onThinkBoxToggle={onThinkBoxToggle}
         />
       )}
     </div>

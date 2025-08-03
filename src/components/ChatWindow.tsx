@@ -36,13 +36,13 @@ export type Message = {
   modelStats?: ModelStats;
   searchQuery?: string;
   searchUrl?: string;
-  agentActions?: AgentActionEvent[];
   progress?: {
     message: string;
     current: number;
     total: number;
     subMessage?: string;
   };
+  expandedThinkBoxes?: Set<string>;
 };
 
 export interface File {
@@ -467,33 +467,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
         return;
       }
 
-      if (data.type === 'agent_action') {
-        const agentActionEvent: AgentActionEvent = {
-          action: data.data.action,
-          message: data.data.message,
-          details: data.data.details || {},
-          timestamp: new Date(),
-        };
-
-        // Update the user message with agent actions
-        setMessages((prev) =>
-          prev.map((message) => {
-            if (
-              message.messageId === data.messageId &&
-              message.role === 'user'
-            ) {
-              const updatedActions = [
-                ...(message.agentActions || []),
-                agentActionEvent,
-              ];
-              return { ...message, agentActions: updatedActions };
-            }
-            return message;
-          }),
-        );
-        return;
-      }
-
       if (data.type === 'sources') {
         sources = data.data;
         if (!added) {
@@ -512,23 +485,68 @@ const ChatWindow = ({ id }: { id?: string }) => {
           ]);
           added = true;
           setScrollTrigger((prev) => prev + 1);
+        } else {
+          // set the sources
+          setMessages((prev) =>
+            prev.map((message) => {
+              if (message.messageId === data.messageId) {
+                return { ...message, sources: sources };
+              }
+              return message;
+            }),
+          );
         }
       }
 
-      if (data.type === 'message') {
+      if (data.type === 'tool_call') {
+        // Add the tool content to the current assistant message (already formatted with newlines)
+        const toolContent = data.data.content;
+
+        if (!added) {
+          // Create initial message with tool content
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            {
+              content: toolContent,
+              messageId: data.messageId, // Use the AI message ID from the backend
+              chatId: chatId!,
+              role: 'assistant',
+              sources: sources,
+              createdAt: new Date(),
+            },
+          ]);
+          added = true;
+        } else {
+          // Append tool content to existing message
+          setMessages((prev) =>
+            prev.map((message) => {
+              if (message.messageId === data.messageId) {
+                return {
+                  ...message,
+                  content: message.content + toolContent,
+                };
+              }
+              return message;
+            }),
+          );
+        }
+
+        recievedMessage += toolContent;
+        setScrollTrigger((prev) => prev + 1);
+        return;
+      }
+
+      if (data.type === 'response') {
         if (!added) {
           setMessages((prevMessages) => [
             ...prevMessages,
             {
               content: data.data,
-              messageId: data.messageId,
+              messageId: data.messageId, // Use the AI message ID from the backend
               chatId: chatId!,
               role: 'assistant',
               sources: sources,
               createdAt: new Date(),
-              modelStats: {
-                modelName: data.modelName,
-              },
             },
           ]);
           added = true;
@@ -703,6 +721,27 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
   };
 
+  const handleThinkBoxToggle = (
+    messageId: string,
+    thinkBoxId: string,
+    expanded: boolean,
+  ) => {
+    setMessages((prev) =>
+      prev.map((message) => {
+        if (message.messageId === messageId) {
+          const expandedThinkBoxes = new Set(message.expandedThinkBoxes || []);
+          if (expanded) {
+            expandedThinkBoxes.add(thinkBoxId);
+          } else {
+            expandedThinkBoxes.delete(thinkBoxId);
+          }
+          return { ...message, expandedThinkBoxes };
+        }
+        return message;
+      }),
+    );
+  };
+
   useEffect(() => {
     if (isReady && initialMessage && isConfigReady) {
       // Check if we have an initial query and apply saved search settings
@@ -788,6 +827,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
               analysisProgress={analysisProgress}
               systemPromptIds={systemPromptIds}
               setSystemPromptIds={setSystemPromptIds}
+              onThinkBoxToggle={handleThinkBoxToggle}
             />
           </>
         ) : (

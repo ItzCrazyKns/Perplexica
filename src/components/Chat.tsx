@@ -5,7 +5,6 @@ import { File, Message } from './ChatWindow';
 import MessageBox from './MessageBox';
 import MessageBoxLoading from './MessageBoxLoading';
 import MessageInput from './MessageInput';
-import AgentActionDisplay from './AgentActionDisplay';
 
 const Chat = ({
   loading,
@@ -25,6 +24,7 @@ const Chat = ({
   analysisProgress,
   systemPromptIds,
   setSystemPromptIds,
+  onThinkBoxToggle,
 }: {
   messages: Message[];
   sendMessage: (
@@ -54,6 +54,11 @@ const Chat = ({
   } | null;
   systemPromptIds: string[];
   setSystemPromptIds: (ids: string[]) => void;
+  onThinkBoxToggle: (
+    messageId: string,
+    thinkBoxId: string,
+    expanded: boolean,
+  ) => void;
 }) => {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [manuallyScrolledUp, setManuallyScrolledUp] = useState(false);
@@ -224,30 +229,8 @@ const Chat = ({
               rewrite={rewrite}
               sendMessage={sendMessage}
               handleEditMessage={handleEditMessage}
+              onThinkBoxToggle={onThinkBoxToggle}
             />
-            {/* Show agent actions after user messages - either completed or in progress */}
-            {msg.role === 'user' && (
-              <>
-                {/* Show agent actions if they exist */}
-                {msg.agentActions && msg.agentActions.length > 0 && (
-                  <AgentActionDisplay
-                    messageId={msg.messageId}
-                    events={msg.agentActions}
-                    isLoading={loading}
-                  />
-                )}
-                {/* Show empty agent action display if this is the last user message and we're loading */}
-                {loading &&
-                  isLast &&
-                  (!msg.agentActions || msg.agentActions.length === 0) && (
-                    <AgentActionDisplay
-                      messageId={msg.messageId}
-                      events={[]}
-                      isLoading={loading}
-                    />
-                  )}
-              </>
-            )}
             {!isLast && msg.role === 'assistant' && (
               <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
             )}

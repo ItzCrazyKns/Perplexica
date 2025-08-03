@@ -47,19 +47,6 @@ export class AgentSearch {
   ): Promise<void> {
     console.log('AgentSearch: Using simplified agent implementation');
 
-    // Emit agent action to indicate simplified agent usage
-    this.emitter.emit(
-      'data',
-      JSON.stringify({
-        type: 'agent_action',
-        data: {
-          action: 'agent_implementation_selection',
-          message: 'Using simplified agent implementation (experimental)',
-          details: `Focus mode: ${this.focusMode}, Files: ${fileIds.length}`,
-        },
-      }),
-    );
-
     // Delegate to simplified agent with focus mode
     await this.simplifiedAgent.searchAndAnswer(
       query,

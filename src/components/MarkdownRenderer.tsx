@@ -2,7 +2,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { CheckCheck, Copy as CopyIcon, Brain } from 'lucide-react';
+import { CheckCheck, Copy as CopyIcon, Search, FileText, Globe, Settings } from 'lucide-react';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -15,13 +15,13 @@ import ThinkBox from './ThinkBox';
 
 // Helper functions for think overlay
 const extractThinkContent = (content: string): string | null => {
-  const thinkRegex = /<think>([\s\S]*?)<\/think>/g;
+  const thinkRegex = /<think[^>]*>([\s\S]*?)<\/think>/g;
   const matches = content.match(thinkRegex);
   if (!matches) return null;
 
   // Extract content between think tags and join if multiple
   const extractedContent = matches
-    .map((match) => match.replace(/<\/?think>/g, ''))
+    .map((match) => match.replace(/<\/?think[^>]*>/g, ''))
     .join('\n\n');
 
   // Return null if content is empty or only whitespace
@@ -29,24 +29,150 @@ const extractThinkContent = (content: string): string | null => {
 };
 
 const removeThinkTags = (content: string): string => {
-  return content.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+  return content.replace(/<think[^>]*>[\s\S]*?<\/think>/g, '').trim();
+};
+
+// Add stable IDs to think tags if they don't already have them
+const addThinkBoxIds = (content: string): string => {
+  let thinkCounter = 0;
+  return content.replace(/<think(?![^>]*\sid=)/g, () => {
+    return `<think id="think-${thinkCounter++}"`;
+  });
+};
+
+interface MarkdownRendererProps {
+  content: string;
+  className?: string;
+  showThinking?: boolean;
+  messageId?: string;
+  expandedThinkBoxes?: Set<string>;
+  onThinkBoxToggle?: (
+    messageId: string,
+    thinkBoxId: string,
+    expanded: boolean,
+  ) => void;
+}
+
+// Custom ToolCall component for markdown
+const ToolCall = ({
+  type,
+  query,
+  urls,
+  count,
+  children,
+}: {
+  type?: string;
+  query?: string;
+  urls?: string;
+  count?: string;
+  children?: React.ReactNode;
+}) => {
+  const getIcon = (toolType: string) => {
+    switch (toolType) {
+      case 'search':
+      case 'web_search':
+        return (
+          <Search size={16} className="text-blue-600 dark:text-blue-400" />
+        );
+      case 'file':
+      case 'file_search':
+        return (
+          <FileText size={16} className="text-green-600 dark:text-green-400" />
+        );
+      case 'url':
+      case 'url_summarization':
+        return (
+          <Globe size={16} className="text-purple-600 dark:text-purple-400" />
+        );
+      default:
+        return (
+          <Settings size={16} className="text-gray-600 dark:text-gray-400" />
+        );
+    }
+  };
+
+  const formatToolMessage = () => {
+    if (type === 'search' || type === 'web_search') {
+      return (
+        <>
+          <span className="mr-2">{getIcon(type)}</span>
+          <span className="text-black/60 dark:text-white/60">Web search:</span>
+          <span className="ml-2 px-2 py-0.5 bg-black/5 dark:bg-white/5 rounded font-mono text-sm">
+            {query || children}
+          </span>
+        </>
+      );
+    }
+
+    if (type === 'file' || type === 'file_search') {
+      return (
+        <>
+          <span className="mr-2">{getIcon(type)}</span>
+          <span className="text-black/60 dark:text-white/60">File search:</span>
+          <span className="ml-2 px-2 py-0.5 bg-black/5 dark:bg-white/5 rounded font-mono text-sm">
+            {query || children}
+          </span>
+        </>
+      );
+    }
+
+    if (type === 'url' || type === 'url_summarization') {
+      const urlCount = count ? parseInt(count) : 1;
+      return (
+        <>
+          <span className="mr-2">{getIcon(type)}</span>
+          <span className="text-black/60 dark:text-white/60">
+            Analyzing {urlCount} web page{urlCount === 1 ? '' : 's'} for
+            additional details
+          </span>
+        </>
+      );
+    }
+
+    // Fallback for unknown tool types
+    return (
+      <>
+        <span className="mr-2">{getIcon(type || 'default')}</span>
+        <span className="text-black/60 dark:text-white/60">Using tool:</span>
+        <span className="ml-2 px-2 py-0.5 bg-black/5 dark:bg-white/5 rounded font-mono text-sm border">
+          {type || 'unknown'}
+        </span>
+      </>
+    );
+  };
+
+  return (
+    <div className="my-3 px-4 py-3 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200/30 dark:border-blue-700/30 rounded-lg">
+      <div className="flex items-center text-sm font-medium">
+        {formatToolMessage()}
+      </div>
+    </div>
+  );
 };
 
 const ThinkTagProcessor = ({
   children,
-  isOverlayMode = false,
+  id,
+  isExpanded,
+  onToggle,
 }: {
   children: React.ReactNode;
-  isOverlayMode?: boolean;
+  id?: string;
+  isExpanded?: boolean;
+  onToggle?: (thinkBoxId: string, expanded: boolean) => void;
 }) => {
-  // In overlay mode, don't render anything (content will be handled by overlay)
-  if (isOverlayMode) {
-    return null;
-  }
-  return <ThinkBox content={children} />;
-};
-
-const CodeBlock = ({
+  return (
+    <ThinkBox 
+      content={children} 
+      expanded={isExpanded}
+      onToggle={() => {
+        if (id && onToggle) {
+          onToggle(id, !isExpanded);
+        }
+      }}
+    />
+  );
+};const CodeBlock = ({
   className,
   children,
 }: {
@@ -115,31 +241,55 @@ const CodeBlock = ({
   );
 };
 
-interface MarkdownRendererProps {
-  content: string;
-  className?: string;
-  thinkOverlay?: boolean;
-}
-
 const MarkdownRenderer = ({
   content,
   className,
-  thinkOverlay = false,
+  showThinking = true,
+  messageId,
+  expandedThinkBoxes,
+  onThinkBoxToggle,
 }: MarkdownRendererProps) => {
-  const [showThinkBox, setShowThinkBox] = useState(false);
+  // Preprocess content to add stable IDs to think tags
+  const processedContent = addThinkBoxIds(content);
 
-  // Extract think content from the markdown
-  const thinkContent = thinkOverlay ? extractThinkContent(content) : null;
-  const contentWithoutThink = thinkOverlay ? removeThinkTags(content) : content;
+  // Check if a think box is expanded
+  const isThinkBoxExpanded = (thinkBoxId: string) => {
+    return expandedThinkBoxes?.has(thinkBoxId) || false;
+  };
+
+  // Handle think box toggle
+  const handleThinkBoxToggle = (thinkBoxId: string, expanded: boolean) => {
+    if (messageId && onThinkBoxToggle) {
+      onThinkBoxToggle(messageId, thinkBoxId, expanded);
+    }
+  };
+
+  // Determine what content to render based on showThinking parameter
+  const contentToRender = showThinking 
+    ? processedContent
+    : removeThinkTags(processedContent);
   // Markdown formatting options
   const markdownOverrides: MarkdownToJSX.Options = {
     overrides: {
+      ToolCall: {
+        component: ToolCall,
+      },
       think: {
-        component: ({ children }) => (
-          <ThinkTagProcessor isOverlayMode={thinkOverlay}>
-            {children}
-          </ThinkTagProcessor>
-        ),
+        component: ({ children, id, ...props }) => {
+          // Use the id from the HTML attribute
+          const thinkBoxId = id || 'think-unknown';
+          const isExpanded = isThinkBoxExpanded(thinkBoxId);
+
+          return (
+            <ThinkTagProcessor
+              id={thinkBoxId}
+              isExpanded={isExpanded}
+              onToggle={handleThinkBoxToggle}
+            >
+              {children}
+            </ThinkTagProcessor>
+          );
+        },
       },
       code: {
         component: ({ className, children }) => {
@@ -181,17 +331,6 @@ const MarkdownRenderer = ({
 
   return (
     <div className="relative">
-      {/* Think box when expanded - shows above markdown */}
-      {thinkOverlay && thinkContent && showThinkBox && (
-        <div className="mb-4">
-          <ThinkBox
-            content={thinkContent}
-            expanded={true}
-            onToggle={() => setShowThinkBox(false)}
-          />
-        </div>
-      )}
-
       <Markdown
         className={cn(
           'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
@@ -203,22 +342,8 @@ const MarkdownRenderer = ({
         )}
         options={markdownOverrides}
       >
-        {thinkOverlay ? contentWithoutThink : content}
+        {contentToRender}
       </Markdown>
-
-      {/* Overlay icon when think box is collapsed */}
-      {thinkOverlay && thinkContent && !showThinkBox && (
-        <button
-          onClick={() => setShowThinkBox(true)}
-          className="absolute top-2 right-2 p-2 rounded-lg bg-black/20 dark:bg-white/20 backdrop-blur-sm opacity-30 hover:opacity-100 transition-opacity duration-200 group"
-          title="Show thinking process"
-        >
-          <Brain
-            size={16}
-            className="text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors"
-          />
-        </button>
-      )}
     </div>
   );
 };
