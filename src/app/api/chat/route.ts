@@ -56,6 +56,11 @@ type Body = {
 type ModelStats = {
   modelName: string;
   responseTime?: number;
+  usage?: {
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+  };
 };
 
 const handleEmitterEvents = async (

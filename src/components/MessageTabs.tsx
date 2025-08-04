@@ -138,7 +138,7 @@ const MessageTabs = ({
                 const url = source?.metadata?.url;
 
                 if (url) {
-                  return `<a href="${url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${numStr}</a>`;
+                  return `<a href="${url}" target="_blank" data-citation="${number}" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative hover:bg-light-200 dark:hover:bg-dark-200 transition-colors duration-200">${numStr}</a>`;
                 } else {
                   return `[${numStr}]`;
                 }
@@ -279,14 +279,16 @@ const MessageTabs = ({
         {/* Answer Tab */}
         {activeTab === 'text' && (
           <div className="flex flex-col space-y-4 animate-fadeIn">
-            <MarkdownRenderer 
-              content={parsedMessage} 
-              className="px-4" 
+            <MarkdownRenderer
+              content={parsedMessage}
+              className="px-4"
               messageId={message.messageId}
               expandedThinkBoxes={message.expandedThinkBoxes}
               onThinkBoxToggle={onThinkBoxToggle}
               showThinking={true}
-            />            {loading && isLast ? null : (
+              sources={message.sources}
+            />{' '}
+            {loading && isLast ? null : (
               <div className="flex flex-row items-center justify-between w-full text-black dark:text-white px-4 py-4">
                 <div className="flex flex-row items-center space-x-1">
                   <Rewrite rewrite={rewrite} messageId={message.messageId} />
@@ -315,7 +317,6 @@ const MessageTabs = ({
                 </div>
               </div>
             )}
-
             {isLast && message.role === 'assistant' && !loading && (
               <>
                 <div className="border-t border-light-secondary dark:border-dark-secondary px-4 pt-4 mt-4">

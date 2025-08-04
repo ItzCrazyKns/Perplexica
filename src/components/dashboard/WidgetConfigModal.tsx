@@ -419,8 +419,13 @@ const WidgetConfigModal = ({
                       </h4>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-2">
-                          <Brain size={16} className="text-gray-600 dark:text-gray-400" />
-                          <span className="text-sm text-gray-700 dark:text-gray-300">Thinking</span>
+                          <Brain
+                            size={16}
+                            className="text-gray-600 dark:text-gray-400"
+                          />
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                            Thinking
+                          </span>
                           <Switch
                             checked={showThinking}
                             onChange={setShowThinking}

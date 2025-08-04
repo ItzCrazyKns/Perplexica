@@ -150,3 +150,4 @@ When working on this codebase, you might need to:
   - `/langchain-ai/langchainjs` for LangChain
   - `/langchain-ai/langgraph` for LangGraph
   - `/quantizor/markdown-to-jsx` for Markdown to JSX conversion
+  - `/context7/headlessui_com` for Headless UI components

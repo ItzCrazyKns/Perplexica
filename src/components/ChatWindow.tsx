@@ -16,6 +16,11 @@ import NextError from 'next/error';
 export type ModelStats = {
   modelName: string;
   responseTime?: number;
+  usage?: {
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+  };
 };
 
 export type AgentActionEvent = {

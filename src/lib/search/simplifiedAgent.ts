@@ -21,6 +21,43 @@ import { getModelName } from '../utils/modelUtils';
 import { removeThinkingBlocks } from '../utils/contentUtils';
 
 /**
+ * Normalize usage metadata from different LLM providers
+ */
+function normalizeUsageMetadata(usageData: any): {
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+} {
+  if (!usageData) return { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
+
+  // Handle different provider formats
+  const inputTokens =
+    usageData.input_tokens ||
+    usageData.prompt_tokens ||
+    usageData.promptTokens ||
+    usageData.usedTokens ||
+    0;
+
+  const outputTokens =
+    usageData.output_tokens ||
+    usageData.completion_tokens ||
+    usageData.completionTokens ||
+    0;
+
+  const totalTokens =
+    usageData.total_tokens ||
+    usageData.totalTokens ||
+    usageData.usedTokens ||
+    inputTokens + outputTokens;
+
+  return {
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    total_tokens: totalTokens,
+  };
+}
+
+/**
  * Simplified Agent using createReactAgent
  *
  * This agent replaces the complex LangGraph supervisor pattern with a single
@@ -487,6 +524,11 @@ Use all available tools strategically to provide comprehensive, well-researched,
       let finalResult: any = null;
       let collectedDocuments: any[] = [];
       let currentResponseBuffer = '';
+      let totalUsage = {
+        input_tokens: 0,
+        output_tokens: 0,
+        total_tokens: 0,
+      };
 
       // Process the event stream
       for await (const event of eventStream) {
@@ -540,6 +582,31 @@ Use all available tools strategically to provide comprehensive, well-researched,
         // Handle streaming tool calls (for thought messages)
         if (event.event === 'on_chat_model_end' && event.data.output) {
           const output = event.data.output;
+
+          // Collect token usage from chat model end events
+          if (output.usage_metadata) {
+            const normalized = normalizeUsageMetadata(output.usage_metadata);
+            totalUsage.input_tokens += normalized.input_tokens;
+            totalUsage.output_tokens += normalized.output_tokens;
+            totalUsage.total_tokens += normalized.total_tokens;
+            console.log(
+              'SimplifiedAgent: Collected usage from usage_metadata:',
+              normalized,
+            );
+          } else if (output.response_metadata?.usage) {
+            // Fallback to response_metadata for different model providers
+            const normalized = normalizeUsageMetadata(
+              output.response_metadata.usage,
+            );
+            totalUsage.input_tokens += normalized.input_tokens;
+            totalUsage.output_tokens += normalized.output_tokens;
+            totalUsage.total_tokens += normalized.total_tokens;
+            console.log(
+              'SimplifiedAgent: Collected usage from response_metadata:',
+              normalized,
+            );
+          }
+
           if (
             output._getType() === 'ai' &&
             output.tool_calls &&
@@ -586,6 +653,25 @@ Use all available tools strategically to provide comprehensive, well-researched,
                 );
               }
             }
+          }
+        }
+
+        // Handle LLM end events for token usage tracking
+        if (event.event === 'on_llm_end' && event.data.output) {
+          const output = event.data.output;
+
+          // Collect token usage from LLM end events
+          if (output.llmOutput?.tokenUsage) {
+            const normalized = normalizeUsageMetadata(
+              output.llmOutput.tokenUsage,
+            );
+            totalUsage.input_tokens += normalized.input_tokens;
+            totalUsage.output_tokens += normalized.output_tokens;
+            totalUsage.total_tokens += normalized.total_tokens;
+            console.log(
+              'SimplifiedAgent: Collected usage from llmOutput:',
+              normalized,
+            );
           }
         }
 
@@ -676,11 +762,15 @@ Use all available tools strategically to provide comprehensive, well-researched,
 
       // Emit model stats and end signal after streaming is complete
       const modelName = getModelName(this.llm);
+      console.log('SimplifiedAgent: Total usage collected:', totalUsage);
       this.emitter.emit(
         'stats',
         JSON.stringify({
           type: 'modelStats',
-          data: { modelName },
+          data: {
+            modelName,
+            usage: totalUsage,
+          },
         }),
       );
 

@@ -2,7 +2,14 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { CheckCheck, Copy as CopyIcon, Search, FileText, Globe, Settings } from 'lucide-react';
+import {
+  CheckCheck,
+  Copy as CopyIcon,
+  Search,
+  FileText,
+  Globe,
+  Settings,
+} from 'lucide-react';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import { useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -12,6 +19,8 @@ import {
 } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { useTheme } from 'next-themes';
 import ThinkBox from './ThinkBox';
+import { Document } from '@langchain/core/documents';
+import CitationLink from './CitationLink';
 
 // Helper functions for think overlay
 const extractThinkContent = (content: string): string | null => {
@@ -51,6 +60,7 @@ interface MarkdownRendererProps {
     thinkBoxId: string,
     expanded: boolean,
   ) => void;
+  sources?: Document[];
 }
 
 // Custom ToolCall component for markdown
@@ -162,8 +172,8 @@ const ThinkTagProcessor = ({
   onToggle?: (thinkBoxId: string, expanded: boolean) => void;
 }) => {
   return (
-    <ThinkBox 
-      content={children} 
+    <ThinkBox
+      content={children}
       expanded={isExpanded}
       onToggle={() => {
         if (id && onToggle) {
@@ -172,7 +182,8 @@ const ThinkTagProcessor = ({
       }}
     />
   );
-};const CodeBlock = ({
+};
+const CodeBlock = ({
   className,
   children,
 }: {
@@ -248,6 +259,7 @@ const MarkdownRenderer = ({
   messageId,
   expandedThinkBoxes,
   onThinkBoxToggle,
+  sources,
 }: MarkdownRendererProps) => {
   // Preprocess content to add stable IDs to think tags
   const processedContent = addThinkBoxIds(content);
@@ -265,7 +277,7 @@ const MarkdownRenderer = ({
   };
 
   // Determine what content to render based on showThinking parameter
-  const contentToRender = showThinking 
+  const contentToRender = showThinking
     ? processedContent
     : removeThinkTags(processedContent);
   // Markdown formatting options
@@ -317,9 +329,28 @@ const MarkdownRenderer = ({
         component: ({ children }) => children,
       },
       a: {
-        component: (props) => (
-          <a {...props} target="_blank" rel="noopener noreferrer" />
-        ),
+        component: (props) => {
+          // Check if this is a citation link with data-citation attribute
+          const citationNumber = props['data-citation'];
+
+          if (sources && citationNumber) {
+            const number = parseInt(citationNumber);
+            const source = sources[number - 1];
+
+            if (source) {
+              return (
+                <CitationLink
+                  number={number.toString()}
+                  source={source}
+                  url={props.href}
+                />
+              );
+            }
+          }
+
+          // Default link behavior
+          return <a {...props} target="_blank" rel="noopener noreferrer" />;
+        },
       },
       // Prevent rendering of certain HTML elements for security
       iframe: () => null, // Don't render iframes
