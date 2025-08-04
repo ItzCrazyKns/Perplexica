@@ -11,7 +11,12 @@ import {
   RunnableMap,
   RunnableSequence,
 } from '@langchain/core/runnables';
-import { BaseMessage } from '@langchain/core/messages';
+import {
+  AIMessage,
+  BaseMessage,
+  isAIMessage,
+  ToolMessage,
+} from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
 import LineListOutputParser from '../outputParsers/listLineOutputParser';
 import LineOutputParser from '../outputParsers/lineOutputParser';
@@ -24,6 +29,15 @@ import computeSimilarity from '../utils/computeSimilarity';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
 import { StreamEvent } from '@langchain/core/tracers/log_stream';
+import { DynamicStructuredTool, tool } from '@langchain/core/tools';
+import { MessagesAnnotation, StateGraph } from '@langchain/langgraph';
+import { z } from 'zod';
+import {
+  IterableReadableStream,
+  IterableReadableStreamInterface,
+} from '@langchain/core/utils/stream';
+import EventEmitter from 'node:events';
+import { BaseLanguageModel } from '@langchain/core/language_models/base';
 
 export interface MetaSearchAgentType {
   searchAndAnswer: (
@@ -58,239 +72,6 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
   constructor(config: Config) {
     this.config = config;
-  }
-
-  private async createSearchRetrieverChain(llm: BaseChatModel) {
-    (llm as unknown as ChatOpenAI).temperature = 0;
-
-    return RunnableSequence.from([
-      PromptTemplate.fromTemplate(this.config.queryGeneratorPrompt),
-      llm,
-      this.strParser,
-      RunnableLambda.from(async (input: string) => {
-        const linksOutputParser = new LineListOutputParser({
-          key: 'links',
-        });
-
-        const questionOutputParser = new LineOutputParser({
-          key: 'question',
-        });
-
-        const links = await linksOutputParser.parse(input);
-        let question = this.config.summarizer
-          ? await questionOutputParser.parse(input)
-          : input;
-
-        if (question === 'not_needed') {
-          return { query: '', docs: [] };
-        }
-
-        if (links.length > 0) {
-          if (question.length === 0) {
-            question = 'summarize';
-          }
-
-          let docs: Document[] = [];
-
-          const linkDocs = await getDocumentsFromLinks({ links });
-
-          const docGroups: Document[] = [];
-
-          linkDocs.map((doc) => {
-            const URLDocExists = docGroups.find(
-              (d) =>
-                d.metadata.url === doc.metadata.url &&
-                d.metadata.totalDocs < 10,
-            );
-
-            if (!URLDocExists) {
-              docGroups.push({
-                ...doc,
-                metadata: {
-                  ...doc.metadata,
-                  totalDocs: 1,
-                },
-              });
-            }
-
-            const docIndex = docGroups.findIndex(
-              (d) =>
-                d.metadata.url === doc.metadata.url &&
-                d.metadata.totalDocs < 10,
-            );
-
-            if (docIndex !== -1) {
-              docGroups[docIndex].pageContent =
-                docGroups[docIndex].pageContent + `\n\n` + doc.pageContent;
-              docGroups[docIndex].metadata.totalDocs += 1;
-            }
-          });
-
-          await Promise.all(
-            docGroups.map(async (doc) => {
-              const res = await llm.invoke(`
-            You are a web search summarizer, tasked with summarizing a piece of text retrieved from a web search. Your job is to summarize the 
-            text into a detailed, 2-4 paragraph explanation that captures the main ideas and provides a comprehensive answer to the query.
-            If the query is \"summarize\", you should provide a detailed summary of the text. If the query is a specific question, you should answer it in the summary.
-            
-            - **Journalistic tone**: The summary should sound professional and journalistic, not too casual or vague.
-            - **Thorough and detailed**: Ensure that every key point from the text is captured and that the summary directly answers the query.
-            - **Not too lengthy, but detailed**: The summary should be informative but not excessively long. Focus on providing detailed information in a concise format.
-
-            The text will be shared inside the \`text\` XML tag, and the query inside the \`query\` XML tag.
-
-            <example>
-            1. \`<text>
-            Docker is a set of platform-as-a-service products that use OS-level virtualization to deliver software in packages called containers. 
-            It was first released in 2013 and is developed by Docker, Inc. Docker is designed to make it easier to create, deploy, and run applications 
-            by using containers.
-            </text>
-
-            <query>
-            What is Docker and how does it work?
-            </query>
-
-            Response:
-            Docker is a revolutionary platform-as-a-service product developed by Docker, Inc., that uses container technology to make application 
-            deployment more efficient. It allows developers to package their software with all necessary dependencies, making it easier to run in 
-            any environment. Released in 2013, Docker has transformed the way applications are built, deployed, and managed.
-            \`
-            2. \`<text>
-            The theory of relativity, or simply relativity, encompasses two interrelated theories of Albert Einstein: special relativity and general
-            relativity. However, the word "relativity" is sometimes used in reference to Galilean invariance. The term "theory of relativity" was based
-            on the expression "relative theory" used by Max Planck in 1906. The theory of relativity usually encompasses two interrelated theories by
-            Albert Einstein: special relativity and general relativity. Special relativity applies to all physical phenomena in the absence of gravity.
-            General relativity explains the law of gravitation and its relation to other forces of nature. It applies to the cosmological and astrophysical
-            realm, including astronomy.
-            </text>
-
-            <query>
-            summarize
-            </query>
-
-            Response:
-            The theory of relativity, developed by Albert Einstein, encompasses two main theories: special relativity and general relativity. Special
-            relativity applies to all physical phenomena in the absence of gravity, while general relativity explains the law of gravitation and its
-            relation to other forces of nature. The theory of relativity is based on the concept of "relative theory," as introduced by Max Planck in
-            1906. It is a fundamental theory in physics that has revolutionized our understanding of the universe.
-            \`
-            </example>
-
-            Everything below is the actual data you will be working with. Good luck!
-
-            <query>
-            ${question}
-            </query>
-
-            <text>
-            ${doc.pageContent}
-            </text>
-
-            Make sure to answer the query in the summary.
-          `);
-
-              const document = new Document({
-                pageContent: res.content as string,
-                metadata: {
-                  title: doc.metadata.title,
-                  url: doc.metadata.url,
-                },
-              });
-
-              docs.push(document);
-            }),
-          );
-
-          return { query: question, docs: docs };
-        } else {
-          question = question.replace(/<think>.*?<\/think>/g, '');
-
-          const res = await searchSearxng(question, {
-            language: 'en',
-            engines: this.config.activeEngines,
-          });
-
-          const documents = res.results.map(
-            (result) =>
-              new Document({
-                pageContent:
-                  result.content ||
-                  (this.config.activeEngines.includes('youtube')
-                    ? result.title
-                    : '') /* Todo: Implement transcript grabbing using Youtubei (source: https://www.npmjs.com/package/youtubei) */,
-                metadata: {
-                  title: result.title,
-                  url: result.url,
-                  ...(result.img_src && { img_src: result.img_src }),
-                },
-              }),
-          );
-
-          return { query: question, docs: documents };
-        }
-      }),
-    ]);
-  }
-
-  private async createAnsweringChain(
-    llm: BaseChatModel,
-    fileIds: string[],
-    embeddings: Embeddings,
-    optimizationMode: 'speed' | 'balanced' | 'quality',
-    systemInstructions: string,
-  ) {
-    return RunnableSequence.from([
-      RunnableMap.from({
-        systemInstructions: () => systemInstructions,
-        query: (input: BasicChainInput) => input.query,
-        chat_history: (input: BasicChainInput) => input.chat_history,
-        date: () => new Date().toISOString(),
-        context: RunnableLambda.from(async (input: BasicChainInput) => {
-          const processedHistory = formatChatHistoryAsString(
-            input.chat_history,
-          );
-
-          let docs: Document[] | null = null;
-          let query = input.query;
-
-          if (this.config.searchWeb) {
-            const searchRetrieverChain =
-              await this.createSearchRetrieverChain(llm);
-
-            const searchRetrieverResult = await searchRetrieverChain.invoke({
-              chat_history: processedHistory,
-              query,
-            });
-
-            query = searchRetrieverResult.query;
-            docs = searchRetrieverResult.docs;
-          }
-
-          const sortedDocs = await this.rerankDocs(
-            query,
-            docs ?? [],
-            fileIds,
-            embeddings,
-            optimizationMode,
-          );
-
-          return sortedDocs;
-        })
-          .withConfig({
-            runName: 'FinalSourceRetriever',
-          })
-          .pipe(this.processDocs),
-      }),
-      ChatPromptTemplate.fromMessages([
-        ['system', this.config.responsePrompt],
-        new MessagesPlaceholder('chat_history'),
-        ['user', '{query}'],
-      ]),
-      llm,
-      this.strParser,
-    ]).withConfig({
-      runName: 'FinalResponseGenerator',
-    });
   }
 
   private async rerankDocs(
@@ -432,36 +213,228 @@ class MetaSearchAgent implements MetaSearchAgentType {
   }
 
   private async handleStream(
-    stream: AsyncGenerator<StreamEvent, any, any>,
+    stream: AsyncIterable<[BaseMessage, Record<string, any>]>,
     emitter: eventEmitter,
   ) {
-    for await (const event of stream) {
-      if (
-        event.event === 'on_chain_end' &&
-        event.name === 'FinalSourceRetriever'
-      ) {
-        ``;
+    for await (const [message, _metadata] of stream) {
+      if (isAIMessage(message) && message.tool_calls?.length) {
+      } else if (isAIMessage(message) && message.content) {
         emitter.emit(
           'data',
-          JSON.stringify({ type: 'sources', data: event.data.output }),
+          JSON.stringify({ type: 'response', data: message.content }),
         );
-      }
-      if (
-        event.event === 'on_chain_stream' &&
-        event.name === 'FinalResponseGenerator'
-      ) {
-        emitter.emit(
-          'data',
-          JSON.stringify({ type: 'response', data: event.data.chunk }),
-        );
-      }
-      if (
-        event.event === 'on_chain_end' &&
-        event.name === 'FinalResponseGenerator'
-      ) {
-        emitter.emit('end');
       }
     }
+
+    emitter.emit('end');
+  }
+
+  getTools({
+    llm,
+    emitter,
+  }: {
+    llm: BaseLanguageModel;
+    emitter: EventEmitter;
+  }): DynamicStructuredTool[] {
+    const searchToolInputSchema = z.object({
+      query: z.string().describe('The query to search the web for.'),
+      links: z
+        .array(z.string().describe('The link to get data from'))
+        .describe(
+          'A list of links (if shared by user) to generate an answer from.',
+        ),
+    });
+
+    const searchTool = tool(
+      async (input: any) => {
+        if (input.links.length > 0) {
+          let docs: Document[] = [];
+
+          const linkDocs = await getDocumentsFromLinks({ links: input.links });
+
+          const docGroups: Document[] = [];
+
+          linkDocs.map((doc) => {
+            const URLDocExists = docGroups.find(
+              (d) =>
+                d.metadata.url === doc.metadata.url &&
+                d.metadata.totalDocs < 10,
+            );
+
+            if (!URLDocExists) {
+              docGroups.push({
+                ...doc,
+                metadata: {
+                  ...doc.metadata,
+                  totalDocs: 1,
+                },
+              });
+            }
+
+            const docIndex = docGroups.findIndex(
+              (d) =>
+                d.metadata.url === doc.metadata.url &&
+                d.metadata.totalDocs < 10,
+            );
+
+            if (docIndex !== -1) {
+              docGroups[docIndex].pageContent =
+                docGroups[docIndex].pageContent + `\n\n` + doc.pageContent;
+              docGroups[docIndex].metadata.totalDocs += 1;
+            }
+          });
+
+          const URLSourcePrompt = `
+              You are a web search question answerer, tasked with finding relevant information from web documents to answer questions. Your job is to extract and summarize the most relevant parts of a document that can help answer the user's query.
+
+              - **Find relevant sections**: Identify parts of the document that directly relate to the question
+              - **Extract key information**: Pull out specific facts, data, or explanations that answer the query
+              - **Summarize concisely**: Provide a focused summary of the relevant information found
+              - **Stay on topic**: Only include information that helps answer the specific question asked
+
+              The document text will be shared inside the \`text\` XML tag, and the query inside the \`query\` XML tag.
+
+              Extract and summarize the relevant information from the document that answers the query.
+              `;
+
+          const URLSourceChatPrompt = ChatPromptTemplate.fromMessages([
+            ['system', URLSourcePrompt],
+            [
+              'human',
+              `
+              <text>
+             Docker is a set of platform-as-a-service products that use OS-level virtualization to deliver software in packages called containers. 
+             It was first released in 2013 and is developed by Docker, Inc. Docker is designed to make it easier to create, deploy, and run applications 
+             by using containers.
+             </text>
+ 
+             <query>
+             What is Docker and how does it work?
+             </query>
+              `,
+            ],
+            [
+              'assistant',
+              `
+                 Docker is a revolutionary platform-as-a-service product developed by Docker, Inc., that uses container technology to make application 
+             deployment more efficient. It allows developers to package their software with all necessary dependencies, making it easier to run in 
+             any environment. Released in 2013, Docker has transformed the way applications are built, deployed, and managed.
+                `,
+            ],
+            [
+              'human',
+              `
+     <text>
+     Rising global temperatures are causing significant changes to Earth's climate system. Ice sheets in Greenland and Antarctica are melting at accelerated rates, contributing to sea level rise. Ocean temperatures are increasing, leading to coral bleaching events. Weather patterns are becoming more extreme, with increased frequency of hurricanes, droughts, and flooding. The Arctic is warming twice as fast as the global average, a phenomenon known as Arctic amplification.
+     </text>
+
+     <query>
+     What are the main effects of climate change on the environment?
+     </query>
+   `,
+            ],
+            [
+              'assistant',
+              `
+     Climate change is causing accelerated melting of ice sheets in Greenland and Antarctica, leading to sea level rise. Rising ocean temperatures are causing coral bleaching, while weather patterns are becoming more extreme with increased hurricanes, droughts, and flooding. The Arctic is experiencing particularly rapid warming at twice the global average rate.
+   `,
+            ],
+
+            [
+              'human',
+              `
+     <text>
+     Pasta is a staple food of Italian cuisine made from wheat flour and water. Common shapes include spaghetti, penne, and fusilli. It can be served with various sauces like marinara, alfredo, or pesto. Pasta cooking involves boiling water with salt and cooking until al dente. Different regions of Italy have their own traditional pasta dishes and preparation methods.
+     </text>
+
+     <query>
+     How do solar panels generate electricity?
+     </query>
+   `,
+            ],
+            [
+              'assistant',
+              `
+     The provided document about pasta and Italian cuisine does not contain information about how solar panels generate electricity. No relevant information found to answer the query.
+   `,
+            ],
+
+            [
+              'human',
+              `
+     <text>
+     {content}
+     </text>
+
+     <query>
+     {query}
+     </query>
+   `,
+            ],
+          ]);
+
+          await Promise.all(
+            docGroups.map(async (doc) => {
+              const formattedPrompt = await URLSourceChatPrompt.formatMessages({
+                query: input.query,
+                content: doc.pageContent,
+              });
+
+              const llmResponse = await llm.invoke(formattedPrompt);
+
+              const document = new Document({
+                pageContent: llmResponse.content as string,
+                metadata: {
+                  title: doc.metadata.title,
+                  url: doc.metadata.url,
+                },
+              });
+
+              docs.push(document);
+            }),
+          );
+
+          emitter.emit('data', JSON.stringify({ type: 'sources', data: docs }));
+
+          return this.processDocs(docs);
+        } else {
+          const res = await searchSearxng(input.query, {
+            language: 'en',
+            engines: this.config.activeEngines,
+          });
+
+          const documents = res.results.map(
+            (result) =>
+              new Document({
+                pageContent:
+                  result.content ||
+                  (this.config.activeEngines.includes('youtube')
+                    ? result.title
+                    : '') /* Todo: Implement transcript grabbing using Youtubei (source: https://www.npmjs.com/package/youtubei) */,
+                metadata: {
+                  title: result.title,
+                  url: result.url,
+                  ...(result.img_src && { img_src: result.img_src }),
+                },
+              }),
+          );
+
+          emitter.emit(
+            'data',
+            JSON.stringify({ type: 'sources', data: documents }),
+          );
+
+          return this.processDocs(documents);
+        }
+      },
+      {
+        name: 'search_web',
+        schema: searchToolInputSchema,
+        description: 'This tool allows you to search the web for information.',
+      },
+    );
+
+    return [searchTool];
   }
 
   async searchAndAnswer(
@@ -475,21 +448,94 @@ class MetaSearchAgent implements MetaSearchAgentType {
   ) {
     const emitter = new eventEmitter();
 
-    const answeringChain = await this.createAnsweringChain(
+    const tools = this.getTools({
+      emitter,
       llm,
-      fileIds,
-      embeddings,
-      optimizationMode,
-      systemInstructions,
-    );
+    });
 
-    const stream = answeringChain.streamEvents(
+    const shouldContinue = (state: typeof MessagesAnnotation.State) => {
+      const lastMessage = state.messages[
+        state.messages.length - 1
+      ] as AIMessage;
+
+      if (lastMessage.tool_calls && lastMessage.tool_calls.length) {
+        return 'tools';
+      }
+
+      return '__end__';
+    };
+
+    const callTools = async (
+      state: typeof MessagesAnnotation.State,
+    ): Promise<Partial<typeof MessagesAnnotation.State>> => {
+      const lastMessage = state.messages[
+        state.messages.length - 1
+      ] as AIMessage;
+
+      const toolResults: BaseMessage[] = [];
+
+      if (lastMessage.tool_calls && lastMessage.tool_calls.length) {
+        await Promise.all(
+          lastMessage.tool_calls.map(async (t) => {
+            const toolToCall = tools.find((i) => i.name === t.name);
+
+            const result = await toolToCall?.invoke(t.args)!;
+
+            toolResults.push(
+              new ToolMessage({
+                content: result,
+                tool_call_id: t.id!,
+              }),
+            );
+          }),
+        );
+      }
+
+      return {
+        messages: [...toolResults],
+      };
+    };
+
+    const boundModel = llm.bindTools?.(tools)!;
+
+    const callModel = async (
+      state: typeof MessagesAnnotation.State,
+    ): Promise<Partial<typeof MessagesAnnotation.State>> => {
+      const { messages } = state;
+      const res = await boundModel?.invoke(messages);
+
+      return {
+        messages: [res!],
+      };
+    };
+
+    const workflow = new StateGraph(MessagesAnnotation)
+      .addNode('agent', callModel)
+      .addNode(
+        'tools',
+        RunnableLambda.from(callTools).withConfig({
+          tags: ['nostream'],
+        }),
+      )
+      .addEdge('__start__', 'agent')
+      .addEdge('tools', 'agent')
+      .addConditionalEdges('agent', shouldContinue);
+
+    const app = workflow.compile();
+
+    const filledPrompt = await PromptTemplate.fromTemplate(
+      this.config.responsePrompt,
+    ).format({
+      systemInstructions: systemInstructions,
+      date: Date.now(),
+    });
+
+    const stream = await app.stream(
       {
-        chat_history: history,
-        query: message,
+        messages: [['system', filledPrompt], ...history, ['human', message]],
       },
       {
-        version: 'v1',
+        streamMode: 'messages',
       },
     );
 
