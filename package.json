@@ -20,6 +20,7 @@
     "@langchain/core": "^0.3.66",
     "@langchain/google-genai": "^0.2.15",
     "@langchain/groq": "^0.2.3",
+    "@langchain/langgraph": "^0.4.0",
     "@langchain/ollama": "^0.2.3",
     "@langchain/openai": "^0.6.2",
     "@langchain/textsplitters": "^0.1.0",
@@ -42,6 +43,7 @@
     "pdf-parse": "^1.1.1",
     "react": "^18",
     "react-dom": "^18",
+    "react-syntax-highlighter": "^15.6.1",
     "react-text-to-speech": "^0.14.5",
     "react-textarea-autosize": "^8.5.3",
     "sonner": "^1.4.41",
@@ -58,6 +60,7 @@
     "@types/pdf-parse": "^1.1.4",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "autoprefixer": "^10.0.1",
     "drizzle-kit": "^0.30.5",
     "eslint": "^8",
@@ -65,6 +68,6 @@
     "postcss": "^8",
     "prettier": "^3.2.5",
     "tailwindcss": "^3.3.0",
-    "typescript": "^5"
+    "typescript": "5.8.3"
   }
 }
