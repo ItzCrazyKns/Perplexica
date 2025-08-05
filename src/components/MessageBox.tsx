@@ -20,6 +20,8 @@ import SearchImages from './SearchImages';
 import SearchVideos from './SearchVideos';
 import { useSpeech } from 'react-text-to-speech';
 import ThinkBox from './ThinkBox';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { SyntaxHighlightedCode } from './SyntaxHighlightedCode';
 
 const ThinkTagProcessor = ({
   children,
@@ -135,6 +137,9 @@ const MessageBox = ({
         props: {
           thinkingEnded: thinkingEnded,
         },
+      },
+      code: {
+        component: SyntaxHighlightedCode,
       },
     },
   };
