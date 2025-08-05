@@ -61,11 +61,6 @@ interface Config {
   activeEngines: string[];
 }
 
-type BasicChainInput = {
-  chat_history: BaseMessage[];
-  query: string;
-};
-
 class MetaSearchAgent implements MetaSearchAgentType {
   private config: Config;
   private strParser = new StringOutputParser();
@@ -237,6 +232,11 @@ class MetaSearchAgent implements MetaSearchAgentType {
     emitter: EventEmitter;
   }): DynamicStructuredTool[] {
     const searchToolInputSchema = z.object({
+      searchMode: z
+        .enum(['normal', 'news'])
+        .describe(
+          'The search mode. If you want latest, live or articles on a topic use the news mode (you also need to use news mode for queries where you think there might be a newswall), otherwise for normal searches use normal mode.',
+        ),
       query: z.string().describe('The query to search the web for.'),
       links: z
         .array(z.string().describe('The link to get data from'))
@@ -400,7 +400,10 @@ class MetaSearchAgent implements MetaSearchAgentType {
         } else {
           const res = await searchSearxng(input.query, {
             language: 'en',
-            engines: this.config.activeEngines,
+            engines:
+              input.searchMode === 'news'
+                ? ['bing_news']
+                : this.config.activeEngines,
           });
 
           const documents = res.results.map(
@@ -434,7 +437,134 @@ class MetaSearchAgent implements MetaSearchAgentType {
       },
     );
 
-    return [searchTool];
+    const summarizeToolInputSchema = z.object({
+      links: z
+        .array(z.string().describe('The URL to summarize'))
+        .describe('The list of URLs to summarize'),
+    });
+
+    const summarizeTool = tool(
+      async (input: any) => {
+        if (input.links.length > 0) {
+          let docs: Document[] = [];
+
+          const linkDocs = await getDocumentsFromLinks({ links: input.links });
+          const docGroups: Document[] = [];
+
+          linkDocs.map((doc) => {
+            const URLDocExists = docGroups.find(
+              (d) =>
+                d.metadata.url === doc.metadata.url &&
+                d.metadata.totalDocs < 10,
+            );
+
+            if (!URLDocExists) {
+              docGroups.push({
+                ...doc,
+                metadata: {
+                  ...doc.metadata,
+                  totalDocs: 1,
+                },
+              });
+            }
+
+            const docIndex = docGroups.findIndex(
+              (d) =>
+                d.metadata.url === doc.metadata.url &&
+                d.metadata.totalDocs < 10,
+            );
+
+            if (docIndex !== -1) {
+              docGroups[docIndex].pageContent =
+                docGroups[docIndex].pageContent + `\n\n` + doc.pageContent;
+              docGroups[docIndex].metadata.totalDocs += 1;
+            }
+          });
+
+          const summarizerPrompt = `
+You are a document summarizer for map-reduce processing of website content. Extract all factual information, data, and key concepts from document chunks into concise paragraph summaries.
+
+**Requirements:**
+- **Extract facts only**: Include concrete information, data, numbers, dates, definitions, and explanations
+- **Ignore fluff**: Skip opinions, filler words, casual language, and non-essential content
+- **Be concise**: Create summaries shorter than the original content
+- **Paragraph format**: Write in plain paragraph form, no markdown, bullet points, or formatting
+- **Preserve specifics**: Keep exact numbers, dates, names, and technical terms
+
+The document text will be provided inside the \`text\` XML tag. Create a factual paragraph summary.
+`;
+
+          const summarizerChatPrompt = ChatPromptTemplate.fromMessages([
+            ['system', summarizerPrompt],
+            [
+              'human',
+              `
+    <text>
+    Docker is a platform-as-a-service product developed by Docker, Inc. and released in 2013 that uses OS-level virtualization to deliver software in containers. Containers are lightweight, portable packages that include application code, runtime, system tools, libraries, and settings.
+    </text>
+    `,
+            ],
+            [
+              'assistant',
+              `Docker is a platform-as-a-service product developed by Docker, Inc. in 2013 that uses OS-level virtualization to deliver software in containers. Containers are lightweight, portable packages containing application code, runtime, system tools, libraries, and settings.`,
+            ],
+            [
+              'human',
+              `
+    <text>
+    Hey there! So like, I was totally thinking about pasta the other day, you know? It's super amazing how there are different shapes. Spaghetti is long and thin, penne has tube shapes, and fusilli is all twisty! Haha, I just love Italian creativity with food.
+    </text>
+    `,
+            ],
+            [
+              'assistant',
+              `Pasta comes in various shapes including spaghetti which is long and thin, penne which has tube shapes, and fusilli which has a twisted form. These are Italian food products.`,
+            ],
+            [
+              'human',
+              `
+    <text>
+    {content}
+    </text>
+    `,
+            ],
+          ]);
+
+          await Promise.all(
+            docGroups.map(async (doc) => {
+              const formattedPrompt = await summarizerChatPrompt.formatMessages(
+                {
+                  content: doc.pageContent,
+                },
+              );
+
+              const llmResponse = await llm.invoke(formattedPrompt);
+
+              const document = new Document({
+                pageContent: llmResponse.content as string,
+                metadata: {
+                  title: doc.metadata.title,
+                  url: doc.metadata.url,
+                },
+              });
+
+              docs.push(document);
+            }),
+          );
+
+          emitter.emit('data', JSON.stringify({ type: 'sources', data: docs }));
+
+          return this.processDocs(docs);
+        }
+      },
+      {
+        name: 'summarize',
+        description: 'This tool can be used to summarize URL(s)',
+        schema: summarizeToolInputSchema,
+      },
+    );
+
+    return [searchTool, summarizeTool];
   }
 
   async searchAndAnswer(
