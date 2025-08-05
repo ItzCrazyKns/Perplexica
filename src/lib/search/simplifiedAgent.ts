@@ -58,11 +58,8 @@ function normalizeUsageMetadata(usageData: any): {
 }
 
 /**
- * Simplified Agent using createReactAgent
- *
- * This agent replaces the complex LangGraph supervisor pattern with a single
- * tool-calling agent that handles analysis and synthesis internally while
- * using specialized tools for search, file processing, and URL summarization.
+ * SimplifiedAgent class that provides a streamlined interface for creating and managing an AI agent
+ * with customizable focus modes and tools.
  */
 export class SimplifiedAgent {
   private llm: BaseChatModel;
@@ -95,7 +92,6 @@ export class SimplifiedAgent {
     // Select appropriate tools based on focus mode and available files
     const tools = this.getToolsForFocusMode(focusMode, fileIds);
 
-    // Create the enhanced system prompt that includes analysis and synthesis instructions
     const enhancedSystemPrompt = this.createEnhancedSystemPrompt(
       focusMode,
       fileIds,
@@ -159,9 +155,6 @@ export class SimplifiedAgent {
     }
   }
 
-  /**
-   * Create enhanced system prompt that includes analysis and synthesis capabilities
-   */
   private createEnhancedSystemPrompt(
     focusMode: string,
     fileIds: string[] = [],
@@ -348,15 +341,16 @@ Your task is to provide answers that are:
     - Passing true is **required** to include images or links within the page content.
   - You will receive a summary of the content from each URL if the content of the page is long. If the content of the page is short, you will receive the full content.
   - You may request up to 5 URLs per turn.
+  - If you recieve a request to summarize a specific URL you **must** use this tool to retrieve it.
 5. **Analyze**: Examine the retrieved information for relevance, accuracy, and completeness.
-  - If you have sufficient information, you can move on to the synthesis stage.
+  - If you have sufficient information, you can move on to the respond stage.
   - If you need to gather more information, consider revisiting the search or supplement stages.${
     fileIds.length > 0
       ? `
   - Consider both web search results and file content when analyzing information completeness.`
       : ''
   }
-6. **Synthesize**: Combine all information into a coherent, well-cited response
+6. **Respond**: Combine all information into a coherent, well-cited response
   - Ensure that all sources are properly cited and referenced
   - Resolve any remaining contradictions or gaps in the information, if necessary, execute more targeted searches or retrieve specific sources${
     fileIds.length > 0
@@ -457,13 +451,14 @@ Your task is to provide answers that are:
   - You will receive relevant excerpts from documents that match your search criteria.
   - Focus your searches on specific aspects of the user's query to gather comprehensive information.
 3. **Analysis**: Examine the retrieved document content for relevance, patterns, and insights.
-  - If you have sufficient information from the documents, you can move on to the synthesis stage.
+  - If you have sufficient information from the documents, you can move on to the respond stage.
   - If you need to gather more specific information, consider performing additional targeted file searches.
   - Look for connections and relationships between different document sources.
-4. **Synthesize**: Combine all document insights into a coherent, well-cited response
+4. **Respond**: Combine all document insights into a coherent, well-cited response
   - Ensure that all sources are properly cited and referenced
   - Resolve any contradictions or gaps in the document information
   - Provide comprehensive analysis based on the available document content
+  - Only respond with your final answer once you've gathered all relevant information and are done with tool use
 
 ## Current Context
 - Today's Date: ${formatDateForLLM(new Date())}

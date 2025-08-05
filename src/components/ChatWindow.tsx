@@ -420,6 +420,9 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
     let sources: Document[] | undefined = undefined;
     let recievedMessage = '';
+    let messageBuffer = '';
+    let tokenCount = 0;
+    const bufferThreshold = 10;
     let added = false;
     let messageChatHistory = chatHistory;
 
@@ -542,50 +545,55 @@ const ChatWindow = ({ id }: { id?: string }) => {
       }
 
       if (data.type === 'response') {
-        if (!added) {
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            {
-              content: data.data,
-              messageId: data.messageId, // Use the AI message ID from the backend
-              chatId: chatId!,
-              role: 'assistant',
-              sources: sources,
-              createdAt: new Date(),
-            },
-          ]);
-          added = true;
-        } else {
-          setMessages((prev) =>
-            prev.map((message) => {
-              if (message.messageId === data.messageId) {
-                return { ...message, content: message.content + data.data };
-              }
-              return message;
-            }),
-          );
-        }
-
+        // Add to buffer instead of immediately updating UI
+        messageBuffer += data.data;
         recievedMessage += data.data;
-        setScrollTrigger((prev) => prev + 1);
+        tokenCount++;
+
+        // Only update UI every bufferThreshold tokens
+        if (tokenCount >= bufferThreshold) {
+          if (!added) {
+            setMessages((prevMessages) => [
+              ...prevMessages,
+              {
+                content: messageBuffer,
+                messageId: data.messageId, // Use the AI message ID from the backend
+                chatId: chatId!,
+                role: 'assistant',
+                sources: sources,
+                createdAt: new Date(),
+              },
+            ]);
+            added = true;
+          } else {
+            setMessages((prev) =>
+              prev.map((message) => {
+                if (message.messageId === data.messageId) {
+                  return { ...message, content: recievedMessage };
+                }
+                return message;
+              }),
+            );
+          }
+
+          // Reset buffer and counter
+          messageBuffer = '';
+          tokenCount = 0;
+          setScrollTrigger((prev) => prev + 1);
+        }
       }
 
       if (data.type === 'messageEnd') {
         // Clear analysis progress
         setAnalysisProgress(null);
 
-        setChatHistory((prevHistory) => [
-          ...prevHistory,
-          ['human', message],
-          ['assistant', recievedMessage],
-        ]);
-
-        // Always update the message, adding modelStats if available
+        // Ensure final message content is displayed (flush any remaining buffer)
         setMessages((prev) =>
           prev.map((message) => {
             if (message.messageId === data.messageId) {
               return {
                 ...message,
+                content: recievedMessage, // Use the complete received message
                 // Include model stats if available, otherwise null
                 modelStats: data.modelStats || null,
                 // Make sure the searchQuery is preserved (if available in the message data)
@@ -596,6 +604,12 @@ const ChatWindow = ({ id }: { id?: string }) => {
             return message;
           }),
         );
+
+        setChatHistory((prevHistory) => [
+          ...prevHistory,
+          ['human', message],
+          ['assistant', recievedMessage],
+        ]);
 
         setLoading(false);
         setScrollTrigger((prev) => prev + 1);

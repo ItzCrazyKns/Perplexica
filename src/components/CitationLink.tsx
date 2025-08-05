@@ -1,5 +1,6 @@
 import { Document } from '@langchain/core/documents';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import MessageSource from './MessageSource';
 
 interface CitationLinkProps {
@@ -10,6 +11,9 @@ interface CitationLinkProps {
 
 const CitationLink = ({ number, source, url }: CitationLinkProps) => {
   const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const spanRef = useRef<HTMLSpanElement>(null);
+
   const linkContent = (
     <a
       href={url}
@@ -21,30 +25,57 @@ const CitationLink = ({ number, source, url }: CitationLinkProps) => {
     </a>
   );
 
+  const handleMouseEnter = () => {
+    if (spanRef.current) {
+      const rect = spanRef.current.getBoundingClientRect();
+      setTooltipPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top,
+      });
+      setShowTooltip(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setShowTooltip(false);
+  };
+
   // If we have source data, wrap with tooltip
   if (source) {
     return (
-      <div className="relative inline-block">
-        <div
-          onMouseEnter={() => setShowTooltip(true)}
-          onMouseLeave={() => setShowTooltip(false)}
+      <>
+        <span
+          ref={spanRef}
+          className="relative inline-block"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           {linkContent}
-        </div>
+        </span>
 
-        {showTooltip && (
-          <div className="absolute z-50 bottom-full mb-2 left-1/2 transform -translate-x-1/2 animate-in fade-in-0 duration-150">
-            <div className="bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 shadow-lg w-96">
-              <MessageSource
-                source={source}
-                className="shadow-none border-none bg-transparent hover:bg-transparent dark:hover:bg-transparent cursor-pointer"
-              />
-            </div>
-            {/* Tooltip arrow */}
-            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-light-200 dark:border-t-dark-200"></div>
-          </div>
-        )}
-      </div>
+        {showTooltip &&
+          typeof window !== 'undefined' &&
+          createPortal(
+            <div
+              className="fixed z-50 animate-in fade-in-0 duration-150"
+              style={{
+                left: tooltipPosition.x,
+                top: tooltipPosition.y - 8,
+                transform: 'translate(-50%, -100%)',
+              }}
+            >
+              <div className="bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 shadow-lg w-96">
+                <MessageSource
+                  source={source}
+                  className="shadow-none border-none bg-transparent hover:bg-transparent dark:hover:bg-transparent cursor-pointer"
+                />
+              </div>
+              {/* Tooltip arrow */}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-light-200 dark:border-t-dark-200"></div>
+            </div>,
+            document.body,
+          )}
+      </>
     );
   }
 

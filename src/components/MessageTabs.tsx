@@ -100,7 +100,6 @@ const MessageTabs = ({
 
   // Process message content
   useEffect(() => {
-    const citationRegex = /\[([^\]]+)\]/g;
     const regex = /\[(\d+)\]/g;
     let processedMessage = message.content;
 
@@ -119,35 +118,32 @@ const MessageTabs = ({
       message.sources.length > 0
     ) {
       setParsedMessage(
-        processedMessage.replace(
-          citationRegex,
-          (_, capturedContent: string) => {
-            const numbers = capturedContent
-              .split(',')
-              .map((numStr) => numStr.trim());
+        processedMessage.replace(regex, (_, capturedContent: string) => {
+          const numbers = capturedContent
+            .split(',')
+            .map((numStr) => numStr.trim());
 
-            const linksHtml = numbers
-              .map((numStr) => {
-                const number = parseInt(numStr);
+          const linksHtml = numbers
+            .map((numStr) => {
+              const number = parseInt(numStr);
 
-                if (isNaN(number) || number <= 0) {
-                  return `[${numStr}]`;
-                }
+              if (isNaN(number) || number <= 0) {
+                return `[${numStr}]`;
+              }
 
-                const source = message.sources?.[number - 1];
-                const url = source?.metadata?.url;
+              const source = message.sources?.[number - 1];
+              const url = source?.metadata?.url;
 
-                if (url) {
-                  return `<a href="${url}" target="_blank" data-citation="${number}" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative hover:bg-light-200 dark:hover:bg-dark-200 transition-colors duration-200">${numStr}</a>`;
-                } else {
-                  return `[${numStr}]`;
-                }
-              })
-              .join('');
+              if (url) {
+                return `<a href="${url}" target="_blank" data-citation="${number}" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative hover:bg-light-200 dark:hover:bg-dark-200 transition-colors duration-200">${numStr}</a>`;
+              } else {
+                return `[${numStr}]`;
+              }
+            })
+            .join('');
 
-            return linksHtml;
-          },
-        ),
+          return linksHtml;
+        }),
       );
       setSpeechMessage(message.content.replace(regex, ''));
       return;
