@@ -407,8 +407,18 @@ const ChatWindow = ({ id }: { id?: string }) => {
             },
           ]);
           added = true;
+          setMessageAppeared(true);
+        } else {
+          setMessages((prev) =>
+            prev.map((message) => {
+              if (message.messageId === data.messageId) {
+                return { ...message, sources: sources };
+              }
+
+              return message;
+            }),
+          );
         }
-        setMessageAppeared(true);
       }
 
       if (data.type === 'message') {
@@ -425,20 +435,20 @@ const ChatWindow = ({ id }: { id?: string }) => {
             },
           ]);
           added = true;
+        } else {
+          setMessages((prev) =>
+            prev.map((message) => {
+              if (message.messageId === data.messageId) {
+                return { ...message, content: message.content + data.data };
+              }
+
+              return message;
+            }),
+          );
+
+          recievedMessage += data.data;
+          setMessageAppeared(true);
         }
-
-        setMessages((prev) =>
-          prev.map((message) => {
-            if (message.messageId === data.messageId) {
-              return { ...message, content: message.content + data.data };
-            }
-
-            return message;
-          }),
-        );
-
-        recievedMessage += data.data;
-        setMessageAppeared(true);
       }
 
       if (data.type === 'messageEnd') {
