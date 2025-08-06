@@ -422,7 +422,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     let recievedMessage = '';
     let messageBuffer = '';
     let tokenCount = 0;
-    const bufferThreshold = 10;
+    const bufferThreshold = 5;
     let added = false;
     let messageChatHistory = chatHistory;
 

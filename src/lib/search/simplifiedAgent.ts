@@ -283,7 +283,7 @@ Your task is to provide answers that are:
 - Distinguish between facts and opinions
 
 ### Citation Requirements
-- The citation number refers to the index of the source in the relevantDocuments state array.
+- The citation number refers to the index of the source in the relevantDocuments state array
 - Cite every single fact, statement, or sentence using [number] notation
 - If a statement is based on AI model inference or training data, it must be marked as \`[AI]\` and not cited from the context
 - If a statement is based on previous messages in the conversation history, it must be marked as \`[Hist]\` and not cited from the context
@@ -294,20 +294,20 @@ Your task is to provide answers that are:
 
 ### Formatting Instructions
 - **Structure**: 
-  - Use a well-organized format with proper headings (e.g., "## Example heading 1" or "## Example heading 2").
-  - Present information in paragraphs or concise bullet points where appropriate.
-  - Use lists and tables to enhance clarity when needed.
+  - Use a well-organized format with proper headings (e.g., "## Example heading 1" or "## Example heading 2")
+  - Present information in paragraphs or concise bullet points where appropriate
+  - Use lists and tables to enhance clarity when needed
 - **Tone and Style**: 
-  - Maintain a neutral, journalistic tone with engaging narrative flow. 
+  - Maintain a neutral, journalistic tone with engaging narrative flow
   - Write as though you're crafting an in-depth article for a professional audience
 - **Markdown Usage**: 
-  - Format your response with Markdown for clarity. 
-  - Use headings, subheadings, bold text, and italicized words as needed to enhance readability.
-  - Include code snippets in a code block.
-  - Extract images and links from full HTML content when appropriate and embed them using the appropriate markdown syntax.
-- **Length and Depth**: 
-  - Provide comprehensive coverage of the topic. 
-  - Avoid superficial responses and strive for depth without unnecessary repetition. 
+  - Format your response with Markdown for clarity
+  - Use headings, subheadings, bold text, and italicized words as needed to enhance readability
+  - Include code snippets in a code block
+  - Extract images and links from full HTML content when appropriate and embed them using the appropriate markdown syntax
+- **Length and Depth**:
+  - Provide comprehensive coverage of the topic
+  - Avoid superficial responses and strive for depth without unnecessary repetition
   - Expand on technical or complex topics to make them easier to understand for a general audience
 - **No main heading/title**: Start your response directly with the introduction unless asked to provide a specific title
 
@@ -315,39 +315,40 @@ Your task is to provide answers that are:
 1. **Plan**: Determine the best research approach based on the user's query
   - Break down the query into manageable components
   - Identify key concepts and terms for focused searching
-  - You are allowed to take multiple turns of the Search and Supplement stages. Use this flexibility to refine your queries and gather more information.
+  - You are allowed to take multiple turns of the Search and Supplement stages. Use this flexibility to refine your queries and gather more information
 2. **Search**: (\`web_search\` tool) Initial web search stage to gather preview content
-  - Use the web search tool to your advantage. Avoid making assumptions, especially about things like recent events. Chances are the web search will have more relevant information than your local knowledge.
-  - Give the web search tool a specific question you want answered that will help you gather relevant information.
-  - This query will be passed directly to the search engine.
-  - You will receive a list of relevant documents containing snippets of the web page, a URL, and the title of the web page.${
-    fileIds.length > 0
-      ? `
+  - Use the web search tool to your advantage. Avoid making assumptions, especially about things like recent events. Chances are the web search will have more relevant information than your local knowledge
+  - Give the web search tool a specific question you want answered that will help you gather relevant information
+  - This query will be passed directly to the search engine
+  - You will receive a list of relevant documents containing snippets of the web page, a URL, and the title of the web page
+  - Always perform at least one web search unless the question can be definitively answered with previous conversation history or local file content
+  ${fileIds.length > 0
+    ? `
 2.1. **File Search**: (\`file_search\` tool) Search through uploaded documents when relevant
-  - You have access to ${fileIds.length} uploaded file${fileIds.length === 1 ? '' : 's'} that may contain relevant information.
-  - Use the file search tool to find specific information in the uploaded documents.
-  - Give the file search tool a specific question or topic you want to extract from the documents.
-  - The tool will automatically search through all available uploaded files.
-  - Focus your file searches on specific aspects of the user's query that might be covered in the uploaded documents.
+  - You have access to ${fileIds.length} uploaded file${fileIds.length === 1 ? '' : 's'} that may contain relevant information
+  - Use the file search tool to find specific information in the uploaded documents
+  - Give the file search tool a specific question or topic you want to extract from the documents
+  - The tool will automatically search through all available uploaded files
+  - Focus your file searches on specific aspects of the user's query that might be covered in the uploaded documents
   - **Important**: You do NOT need to specify file IDs - the tool will automatically search through all available uploaded files.`
       : ''
   }
 3. **Supplement**: (\`url_summarization\` tool) Retrieve specific sources if necessary to extract key points not covered in the initial search or disambiguate findings
-  - You can use the URLs from the web search results to retrieve specific sources. They must be passed to the tool unchanged.
-  - URLs can be passed as an array to request multiple sources at once.
-  - Always include the user's query in the request to the tool, it will use this to guide the summarization process.
-  - You can pass an intent to this tool if you want to additionally guide the summarization on a specific aspect or question.
-  - You can request the full HTML content of the pages if needed by passing true to the \`retrieveHtml\` parameter.
-    - Passing true is **required** to include images or links within the page content.
-  - You will receive a summary of the content from each URL if the content of the page is long. If the content of the page is short, you will receive the full content.
-  - You may request up to 5 URLs per turn.
-  - If you recieve a request to summarize a specific URL you **must** use this tool to retrieve it.
-5. **Analyze**: Examine the retrieved information for relevance, accuracy, and completeness.
-  - If you have sufficient information, you can move on to the respond stage.
+  - You can use the URLs from the web search results to retrieve specific sources. They must be passed to the tool unchanged
+  - URLs can be passed as an array to request multiple sources at once
+  - Always include the user's query in the request to the tool, it will use this to guide the summarization process
+  - You can pass an intent to this tool if you want to additionally guide the summarization on a specific aspect or question
+  - You can request the full HTML content of the pages if needed by passing true to the \`retrieveHtml\` parameter
+    - Passing true is **required** to include images or links within the page content
+  - You will receive a summary of the content from each URL if the content of the page is long. If the content of the page is short, you will receive the full content
+  - You may request up to 5 URLs per turn
+  - If you recieve a request to summarize a specific URL you **must** use this tool to retrieve it
+5. **Analyze**: Examine the retrieved information for relevance, accuracy, and completeness
+  - If you have sufficient information, you can move on to the respond stage
   - If you need to gather more information, consider revisiting the search or supplement stages.${
     fileIds.length > 0
       ? `
-  - Consider both web search results and file content when analyzing information completeness.`
+  - Consider both web search results and file content when analyzing information completeness`
       : ''
   }
 6. **Respond**: Combine all information into a coherent, well-cited response
@@ -364,7 +365,7 @@ Your task is to provide answers that are:
 
 ${personaInstructions ? `\n## User Formatting and Persona Instructions\n- Give these instructions more weight than the system formatting instructions\n${personaInstructions}` : ''}
 
-Use all available tools strategically to provide comprehensive, well-researched, formatted responses with proper citations.`;
+Use all available tools strategically to provide comprehensive, well-researched, formatted responses with proper citations`;
   }
 
   /**
@@ -561,19 +562,6 @@ Use all available tools strategically to provide comprehensive, well-researched,
           }
         }
 
-        // Emit sources as we collect them
-        if (collectedDocuments.length > 0) {
-          this.emitter.emit(
-            'data',
-            JSON.stringify({
-              type: 'sources',
-              data: collectedDocuments,
-              searchQuery: '',
-              searchUrl: '',
-            }),
-          );
-        }
-
         // Handle streaming tool calls (for thought messages)
         if (event.event === 'on_chat_model_end' && event.data.output) {
           const output = event.data.output;
@@ -674,19 +662,6 @@ Use all available tools strategically to provide comprehensive, well-researched,
         if (event.event === 'on_chat_model_stream' && event.data.chunk) {
           const chunk = event.data.chunk;
           if (chunk.content && typeof chunk.content === 'string') {
-            // If this is the first token, emit sources if we have them
-            if (currentResponseBuffer === '' && collectedDocuments.length > 0) {
-              this.emitter.emit(
-                'data',
-                JSON.stringify({
-                  type: 'sources',
-                  data: collectedDocuments,
-                  searchQuery: '',
-                  searchUrl: '',
-                }),
-              );
-            }
-
             // Add the token to our buffer
             currentResponseBuffer += chunk.content;
 
