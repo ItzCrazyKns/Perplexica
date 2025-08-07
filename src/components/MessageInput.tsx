@@ -150,6 +150,7 @@ const MessageInput = ({
             minRows={1}
             className="mb-2 bg-transparent placeholder:text-black/50 dark:placeholder:text-white/50 text-sm text-black dark:text-white resize-none focus:outline-none w-full max-h-24 lg:max-h-36 xl:max-h-48"
             placeholder={firstMessage ? 'Ask anything...' : 'Ask a follow-up'}
+            autoFocus={true}
           />
           <Optimization
             optimizationMode={optimizationMode}
