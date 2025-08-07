@@ -1,3 +1,9 @@
+import { db, riskAnalyses, entityMentions, newsArticles, testConnection, initializeTables } from '@/lib/db/postgres';
+import { eq, desc, like, and, sql } from 'drizzle-orm';
+
+// Initialize database on module load
+initializeTables().catch(console.error);
+
 // Risk level definitions
 type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
@@ -5,6 +11,7 @@ interface RiskAnalysisRequest {
   companyName: string;
   industry?: string;
   description?: string;
+  searchNews?: boolean; // Whether to search for entity mentions in news
   dataPoints?: {
     revenue?: number;
     employees?: number;
@@ -28,11 +35,106 @@ interface RiskAnalysisResponse {
   };
   factors: string[];
   recommendations: string[];
+  entities?: Array<{ // Entities found in news
+    entityName: string;
+    entityType: string;
+    mentions: number;
+    sentiment: string;
+  }>;
   timestamp: string;
 }
 
-// Temporary in-memory storage for risk analyses
-const riskAnalysisHistory: RiskAnalysisResponse[] = [];
+// Lagos-inspired prompts for risk analysis
+const LAGOS_PROMPTS = {
+  entityRecognition: `
+    Identify key entities mentioned in this text:
+    - Company names
+    - Person names (executives, founders, key personnel)
+    - Location names
+    - Product or service names
+    - Regulatory bodies
+    Focus on: {text}
+  `,
+  riskAssessment: `
+    Analyze the legal and business risk for {company} based on:
+    - Industry: {industry}
+    - Known concerns: {concerns}
+    - Recent news mentions: {newsContext}
+    Provide risk factors and recommendations.
+  `,
+  sentimentAnalysis: `
+    Determine the sentiment (positive, negative, neutral) for mentions of {entity} in:
+    {context}
+  `
+};
+
+// Entity recognition using keyword matching (simplified version)
+const recognizeEntities = async (text: string, primaryEntity?: string): Promise<Array<{name: string, type: string}>> => {
+  const entities: Array<{name: string, type: string}> = [];
+  
+  // Common patterns for entity recognition
+  const patterns = {
+    company: [
+      /\b[A-Z][\w&]+(\s+(Inc|LLC|Ltd|Corp|Corporation|Company|Co|Group|Holdings|Technologies|Tech|Systems|Solutions|Services))\.?\b/gi,
+      /\b[A-Z][\w]+\s+[A-Z][\w]+\b/g, // Two capitalized words
+    ],
+    person: [
+      /\b(Mr|Mrs|Ms|Dr|Prof)\.?\s+[A-Z][a-z]+\s+[A-Z][a-z]+\b/g,
+      /\b[A-Z][a-z]+\s+[A-Z][a-z]+\s+(CEO|CFO|CTO|COO|President|Director|Manager|Founder)\b/gi,
+    ],
+    location: [
+      /\b(New York|London|Tokyo|Singapore|Hong Kong|San Francisco|Beijing|Shanghai|Mumbai|Dubai)\b/gi,
+      /\b[A-Z][a-z]+,\s+[A-Z]{2}\b/g, // City, State format
+    ],
+    regulator: [
+      /\b(SEC|FTC|FDA|EPA|DOJ|FBI|CIA|NSA|FCC|CFTC|FINRA|OCC|FDIC)\b/g,
+      /\b(Securities and Exchange Commission|Federal Trade Commission|Department of Justice)\b/gi,
+    ],
+  };
+
+  // Extract entities using patterns
+  for (const [type, patternList] of Object.entries(patterns)) {
+    for (const pattern of patternList) {
+      const matches = text.match(pattern);
+      if (matches) {
+        matches.forEach(match => {
+          const cleanMatch = match.trim();
+          if (!entities.some(e => e.name.toLowerCase() === cleanMatch.toLowerCase())) {
+            entities.push({ name: cleanMatch, type });
+          }
+        });
+      }
+    }
+  }
+
+  // Always include the primary entity if provided
+  if (primaryEntity && !entities.some(e => e.name.toLowerCase() === primaryEntity.toLowerCase())) {
+    entities.push({ name: primaryEntity, type: 'company' });
+  }
+
+  return entities;
+};
+
+// Search for entity mentions in news articles
+const searchEntityInNews = async (entityName: string) => {
+  try {
+    // Search for the entity in news articles
+    const results = await db
+      .select()
+      .from(newsArticles)
+      .where(
+        sql`LOWER(${newsArticles.title}) LIKE LOWER(${'%' + entityName + '%'}) OR 
+            LOWER(${newsArticles.content}) LIKE LOWER(${'%' + entityName + '%'})`
+      )
+      .orderBy(desc(newsArticles.createdAt))
+      .limit(10);
+
+    return results;
+  } catch (error) {
+    console.error('Error searching entity in news:', error);
+    return [];
+  }
+};
 
 // Helper function to calculate risk score based on various factors
 const calculateRiskScore = (data: RiskAnalysisRequest): number => {
@@ -217,6 +319,54 @@ export const POST = async (req: Request) => {
     const factors = generateRiskFactors(body, riskScore);
     const recommendations = generateRecommendations(riskScore, body);
 
+    // Search for entity mentions in news if requested
+    let entityAnalysis = undefined;
+    if (body.searchNews) {
+      const newsResults = await searchEntityInNews(body.companyName);
+      const mentionedEntities = new Map<string, { type: string; mentions: number; sentiment: string }>();
+
+      // Analyze each news article for entities
+      for (const article of newsResults) {
+        const entities = await recognizeEntities(
+          article.title + ' ' + article.content, 
+          body.companyName
+        );
+
+        for (const entity of entities) {
+          const key = entity.name.toLowerCase();
+          if (!mentionedEntities.has(key)) {
+            mentionedEntities.set(key, {
+              type: entity.type,
+              mentions: 0,
+              sentiment: 'neutral', // Simplified sentiment
+            });
+          }
+          mentionedEntities.get(key)!.mentions++;
+
+          // Store entity mention in database
+          try {
+            await db.insert(entityMentions).values({
+              articleId: article.id,
+              entityName: entity.name,
+              entityType: entity.type,
+              mentionContext: article.title.substring(0, 200),
+              sentiment: 'neutral', // Simplified for now
+              createdAt: new Date(),
+            });
+          } catch (err) {
+            console.error('Error storing entity mention:', err);
+          }
+        }
+      }
+
+      entityAnalysis = Array.from(mentionedEntities.entries()).map(([name, data]) => ({
+        entityName: name,
+        entityType: data.type,
+        mentions: data.mentions,
+        sentiment: data.sentiment,
+      }));
+    }
+
     // Create response
     const analysis: RiskAnalysisResponse = {
       companyName: body.companyName,
@@ -225,19 +375,36 @@ export const POST = async (req: Request) => {
       categories,
       factors,
       recommendations,
+      entities: entityAnalysis,
       timestamp: new Date().toISOString(),
     };
 
-    // Store in history (keep last 100 analyses)
-    riskAnalysisHistory.push(analysis);
-    if (riskAnalysisHistory.length > 100) {
-      riskAnalysisHistory.shift();
+    // Store analysis in PostgreSQL
+    try {
+      const isConnected = await testConnection();
+      if (isConnected) {
+        await db.insert(riskAnalyses).values({
+          companyName: body.companyName,
+          industry: body.industry || null,
+          riskLevel,
+          riskScore,
+          categories,
+          factors,
+          recommendations,
+          dataPoints: body.dataPoints || null,
+          concerns: body.concerns || null,
+          createdAt: new Date(),
+        });
+      }
+    } catch (dbError) {
+      console.error('Error storing risk analysis:', dbError);
     }
 
     return Response.json({
       success: true,
       analysis,
       message: `Risk analysis completed for ${body.companyName}`,
+      storage: 'PostgreSQL',
     });
   } catch (err) {
     console.error('Error analyzing legal risk:', err);
@@ -251,32 +418,67 @@ export const POST = async (req: Request) => {
   }
 };
 
-// GET endpoint - Retrieve risk analysis history
+// GET endpoint - Retrieve risk analysis history from PostgreSQL
 export const GET = async (req: Request) => {
   try {
     const url = new URL(req.url);
     const companyName = url.searchParams.get('company');
-    const limit = parseInt(url.searchParams.get('limit') || '10');
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 100);
+    const offset = parseInt(url.searchParams.get('offset') || '0');
 
-    let results = [...riskAnalysisHistory];
-
-    // Filter by company name if provided
-    if (companyName) {
-      results = results.filter(
-        analysis => analysis.companyName.toLowerCase().includes(companyName.toLowerCase())
+    // Test database connection
+    const isConnected = await testConnection();
+    if (!isConnected) {
+      return Response.json(
+        {
+          message: 'Database connection failed',
+          analyses: [],
+        },
+        { status: 503 }
       );
     }
 
-    // Sort by timestamp (newest first) and limit
-    results = results
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, Math.min(limit, 100));
+    // Build query
+    let query = db
+      .select()
+      .from(riskAnalyses)
+      .orderBy(desc(riskAnalyses.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    // Filter by company name if provided
+    if (companyName) {
+      query = query.where(
+        sql`LOWER(${riskAnalyses.companyName}) LIKE LOWER(${'%' + companyName + '%'})`
+      );
+    }
+
+    const results = await query;
+
+    // Get total count
+    const countQuery = db
+      .select({ count: sql<number>`count(*)` })
+      .from(riskAnalyses);
+    
+    if (companyName) {
+      countQuery.where(
+        sql`LOWER(${riskAnalyses.companyName}) LIKE LOWER(${'%' + companyName + '%'})`
+      );
+    }
+
+    const totalCountResult = await countQuery;
+    const totalCount = Number(totalCountResult[0]?.count || 0);
 
     return Response.json({
       success: true,
-      total: riskAnalysisHistory.length,
+      total: totalCount,
       returned: results.length,
       analyses: results,
+      storage: 'PostgreSQL',
+      pagination: {
+        hasMore: offset + limit < totalCount,
+        nextOffset: offset + limit < totalCount ? offset + limit : null,
+      },
     });
   } catch (err) {
     console.error('Error fetching risk analysis history:', err);

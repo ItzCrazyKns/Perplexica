@@ -1,16 +1,8 @@
-// Temporary in-memory storage for news articles
-const newsStorage: Array<{
-  id: string;
-  source: string;
-  title: string;
-  content: string;
-  url?: string;
-  publishedAt: string;
-  author?: string;
-  category?: string;
-  summary?: string;
-  createdAt: string;
-}> = [];
+import { db, newsArticles, testConnection, initializeTables } from '@/lib/db/postgres';
+import { eq, desc, and, sql } from 'drizzle-orm';
+
+// Initialize database on module load
+initializeTables().catch(console.error);
 
 // POST endpoint - Receive batch news data from crawler
 export const POST = async (req: Request) => {
@@ -27,45 +19,71 @@ export const POST = async (req: Request) => {
       );
     }
 
+    // Test database connection
+    const isConnected = await testConnection();
+    if (!isConnected) {
+      return Response.json(
+        {
+          message: 'Database connection failed. Using fallback storage.',
+          warning: 'Data may not be persisted.',
+        },
+        { status: 503 }
+      );
+    }
+
     const { source, articles } = body;
     const processedArticles = [];
-    const timestamp = new Date().toISOString();
+    const timestamp = new Date();
 
-    // Process and store each article
+    // Process and store each article in PostgreSQL
     for (const article of articles) {
       if (!article.title || !article.content) {
         continue; // Skip articles without required fields
       }
 
-      const newsItem = {
-        id: `${source}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        source,
-        title: article.title,
-        content: article.content,
-        url: article.url || '',
-        publishedAt: article.publishedAt || timestamp,
-        author: article.author || '',
-        category: article.category || '',
-        summary: article.summary || article.content.substring(0, 200) + '...',
-        createdAt: timestamp,
-      };
+      try {
+        // Prepare article data for insertion
+        const articleData = {
+          source,
+          title: article.title,
+          content: article.content,
+          url: article.url || null,
+          publishedAt: article.publishedAt ? new Date(article.publishedAt) : timestamp,
+          author: article.author || null,
+          category: article.category || null,
+          summary: article.summary || article.content.substring(0, 200) + '...',
+          metadata: article.metadata || {},
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        };
 
-      newsStorage.push(newsItem);
-      processedArticles.push(newsItem);
+        // Insert into PostgreSQL
+        const [insertedArticle] = await db
+          .insert(newsArticles)
+          .values(articleData)
+          .returning();
+
+        processedArticles.push(insertedArticle);
+      } catch (dbError) {
+        console.error('Error inserting article:', dbError);
+        // Continue processing other articles even if one fails
+      }
     }
 
-    // Keep only the latest 1000 articles in memory
-    if (newsStorage.length > 1000) {
-      newsStorage.splice(0, newsStorage.length - 1000);
-    }
+    // Get total count of articles in database
+    const totalCountResult = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(newsArticles);
+    const totalStored = Number(totalCountResult[0]?.count || 0);
 
     return Response.json({
-      message: 'News articles received successfully',
+      message: 'News articles received and stored successfully',
       source,
       articlesReceived: articles.length,
       articlesProcessed: processedArticles.length,
-      totalStored: newsStorage.length,
+      totalStored,
       processedArticles,
+      storage: 'PostgreSQL',
     });
   } catch (err) {
     console.error('Error processing news batch:', err);
@@ -79,35 +97,75 @@ export const POST = async (req: Request) => {
   }
 };
 
-// GET endpoint - Return latest 10 news articles
+// GET endpoint - Return latest news articles from PostgreSQL
 export const GET = async (req: Request) => {
   try {
     const url = new URL(req.url);
-    const limit = parseInt(url.searchParams.get('limit') || '10');
+    const limit = Math.min(parseInt(url.searchParams.get('limit') || '10'), 100);
     const source = url.searchParams.get('source');
     const category = url.searchParams.get('category');
+    const offset = parseInt(url.searchParams.get('offset') || '0');
 
-    let filteredNews = [...newsStorage];
+    // Test database connection
+    const isConnected = await testConnection();
+    if (!isConnected) {
+      return Response.json(
+        {
+          message: 'Database connection failed',
+          news: [],
+        },
+        { status: 503 }
+      );
+    }
 
-    // Apply filters if provided
+    // Build query conditions
+    const conditions = [];
     if (source) {
-      filteredNews = filteredNews.filter(news => news.source === source);
+      conditions.push(eq(newsArticles.source, source));
     }
     if (category) {
-      filteredNews = filteredNews.filter(news => news.category === category);
+      conditions.push(eq(newsArticles.category, category));
     }
 
-    // Sort by createdAt (newest first) and limit results
-    const latestNews = filteredNews
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, Math.min(limit, 100)); // Max 100 items
+    // Query database with filters
+    const query = db
+      .select()
+      .from(newsArticles)
+      .orderBy(desc(newsArticles.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    // Apply conditions if any
+    if (conditions.length > 0) {
+      query.where(and(...conditions));
+    }
+
+    const results = await query;
+
+    // Get total count for pagination
+    const countQuery = db
+      .select({ count: sql<number>`count(*)` })
+      .from(newsArticles);
+    
+    if (conditions.length > 0) {
+      countQuery.where(and(...conditions));
+    }
+
+    const totalCountResult = await countQuery;
+    const totalCount = Number(totalCountResult[0]?.count || 0);
 
     return Response.json({
       success: true,
-      total: newsStorage.length,
-      filtered: filteredNews.length,
-      returned: latestNews.length,
-      news: latestNews,
+      total: totalCount,
+      returned: results.length,
+      limit,
+      offset,
+      news: results,
+      storage: 'PostgreSQL',
+      pagination: {
+        hasMore: offset + limit < totalCount,
+        nextOffset: offset + limit < totalCount ? offset + limit : null,
+      },
     });
   } catch (err) {
     console.error('Error fetching news:', err);
