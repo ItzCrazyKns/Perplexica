@@ -80,10 +80,10 @@ const ToolSelector = ({
         <>
           <PopoverButton
             className={cn(
-              'flex items-center gap-1 rounded-lg text-sm transition-colors duration-150 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+              'flex items-center gap-1 rounded-lg text-sm transition-colors duration-150 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-accent',
               selectedCount > 0
-                ? 'text-[#24A0ED] hover:text-blue-200'
-                : 'text-black/60 hover:text-black/30 dark:text-white/60 dark:hover:*:text-white/30',
+                ? 'text-accent hover:text-accent'
+                : 'text-fg/60 hover:text-fg/30',
             )}
             title="Select Tools"
           >
@@ -101,23 +101,23 @@ const ToolSelector = ({
             leaveTo="opacity-0 translate-y-1"
           >
             <PopoverPanel className="absolute z-20 w-72 transform bottom-full mb-2">
-              <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black/5 dark:ring-white/5 bg-white dark:bg-dark-secondary">
-                <div className="px-4 py-3 border-b border-light-200 dark:border-dark-200">
-                  <h3 className="text-sm font-medium text-black/90 dark:text-white/90">
+              <div className="overflow-hidden rounded-lg shadow-lg bg-surface border border-surface-2">
+                <div className="px-4 py-3 border-b border-surface-2">
+                  <h3 className="text-sm font-medium text-fg/90">
                     Select Tools
                   </h3>
-                  <p className="text-xs text-black/60 dark:text-white/60 mt-0.5">
+                  <p className="text-xs text-fg/60 mt-0.5">
                     Choose tools to assist the AI.
                   </p>
                 </div>
                 {isLoading ? (
                   <div className="px-4 py-3">
-                    <Loader2 className="animate-spin text-black/70 dark:text-white/70" />
+                    <Loader2 className="animate-spin text-fg/70" />
                   </div>
                 ) : (
                   <div className="max-h-60 overflow-y-auto p-1.5 space-y-0.5">
                     {availableTools.length === 0 && (
-                      <p className="text-xs text-black/50 dark:text-white/50 px-2.5 py-2 text-center">
+                      <p className="text-xs text-fg/50 px-2.5 py-2 text-center">
                         No tools available.
                       </p>
                     )}
@@ -126,27 +126,27 @@ const ToolSelector = ({
                       <div
                         key={tool.name}
                         onClick={() => handleToggleTool(tool.name)}
-                        className="flex items-start gap-2.5 p-2.5 rounded-md hover:bg-light-100 dark:hover:bg-dark-100 cursor-pointer"
+                        className="flex items-start gap-2.5 p-2.5 rounded-md hover:bg-surface-2 cursor-pointer"
                       >
                         {selectedToolNames.includes(tool.name) ? (
                           <CheckSquare
                             size={18}
-                            className="text-[#24A0ED] flex-shrink-0 mt-0.5"
+                            className="text-accent flex-shrink-0 mt-0.5"
                           />
                         ) : (
                           <Square
                             size={18}
-                            className="text-black/40 dark:text-white/40 flex-shrink-0 mt-0.5"
+                            className="text-fg/40 flex-shrink-0 mt-0.5"
                           />
                         )}
                         <div className="flex-1 min-w-0">
                           <span
-                            className="text-sm font-medium text-black/80 dark:text-white/80 block truncate"
+                            className="text-sm font-medium text-fg/80 block truncate"
                             title={tool.name}
                           >
                             {tool.name.replace(/_/g, ' ')}
                           </span>
-                          <p className="text-xs text-black/60 dark:text-white/60 mt-0.5">
+                          <p className="text-xs text-fg/60 mt-0.5">
                             {tool.description}
                           </p>
                         </div>

@@ -222,7 +222,7 @@ const WidgetConfigModal = ({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-75" />
+          <div className="fixed inset-0 bg-fg/75" />
         </TransitionChild>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -236,15 +236,15 @@ const WidgetConfigModal = ({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <DialogPanel className="w-full lg:max-w-[85vw]  transform overflow-hidden rounded-2xl bg-light-primary dark:bg-dark-primary p-6 text-left align-middle shadow-xl transition-all">
+              <DialogPanel className="w-full lg:max-w-[85vw]  transform overflow-hidden rounded-2xl bg-surface p-6 text-left align-middle shadow-xl transition-all">
                 <DialogTitle
                   as="h3"
-                  className="text-lg font-medium leading-6 text-black dark:text-white flex items-center justify-between"
+                  className="text-lg font-medium leading-6 text-fg flex items-center justify-between"
                 >
                   {editingWidget ? 'Edit Widget' : 'Create New Widget'}
                   <button
                     onClick={handleClose}
-                    className="p-1 hover:bg-light-secondary dark:hover:bg-dark-secondary rounded"
+                    className="p-1 hover:bg-surface-2 rounded"
                   >
                     <X size={20} />
                   </button>
@@ -255,7 +255,7 @@ const WidgetConfigModal = ({
                   <div className="space-y-4">
                     {/* Widget Title */}
                     <div>
-                      <label className="block text-sm font-medium text-black dark:text-white mb-1">
+                      <label className="block text-sm font-medium text-fg mb-1">
                         Widget Title
                       </label>
                       <input
@@ -267,14 +267,14 @@ const WidgetConfigModal = ({
                             title: e.target.value,
                           }))
                         }
-                        className="w-full px-3 py-2 border border-light-200 dark:border-dark-200 rounded-md bg-light-primary dark:bg-dark-primary text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-surface-2 rounded-md bg-bg text-fg focus:outline-none focus:ring-2 focus:ring-accent"
                         placeholder="Enter widget title..."
                       />
                     </div>
 
                     {/* Source URLs */}
                     <div>
-                      <label className="block text-sm font-medium text-black dark:text-white mb-1">
+                      <label className="block text-sm font-medium text-fg mb-1">
                         Source URLs
                       </label>
                       <div className="space-y-2">
@@ -286,7 +286,7 @@ const WidgetConfigModal = ({
                               onChange={(e) =>
                                 updateSource(index, 'url', e.target.value)
                               }
-                              className="flex-1 px-3 py-2 border border-light-200 dark:border-dark-200 rounded-md bg-light-primary dark:bg-dark-primary text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="flex-1 px-3 py-2 border border-surface-2 rounded-md bg-bg text-fg focus:outline-none focus:ring-2 focus:ring-accent"
                               placeholder="https://example.com"
                             />
                             <select
@@ -298,7 +298,7 @@ const WidgetConfigModal = ({
                                   e.target.value as Source['type'],
                                 )
                               }
-                              className="px-3 py-2 border border-light-200 dark:border-dark-200 rounded-md bg-light-primary dark:bg-dark-primary text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              className="px-3 py-2 border border-surface-2 rounded-md bg-bg text-fg focus:outline-none focus:ring-2 focus:ring-accent"
                             >
                               <option value="Web Page">Web Page</option>
                               <option value="HTTP Data">HTTP Data</option>
@@ -306,7 +306,7 @@ const WidgetConfigModal = ({
                             {config.sources.length > 1 && (
                               <button
                                 onClick={() => removeSource(index)}
-                                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                                className="p-2 text-red-500 hover:bg-red-50 rounded"
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -315,7 +315,7 @@ const WidgetConfigModal = ({
                         ))}
                         <button
                           onClick={addSource}
-                          className="flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"
+                          className="flex items-center gap-2 px-3 py-2 text-sm text-accent hover:bg-surface-2 rounded"
                         >
                           <Plus size={16} />
                           Add Source
@@ -325,7 +325,7 @@ const WidgetConfigModal = ({
 
                     {/* LLM Prompt */}
                     <div>
-                      <label className="block text-sm font-medium text-black dark:text-white mb-1">
+                      <label className="block text-sm font-medium text-fg mb-1">
                         LLM Prompt
                       </label>
                       <textarea
@@ -337,14 +337,14 @@ const WidgetConfigModal = ({
                           }))
                         }
                         rows={8}
-                        className="w-full px-3 py-2 border border-light-200 dark:border-dark-200 rounded-md bg-light-primary dark:bg-dark-primary text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-surface-2 rounded-md bg-bg text-fg focus:outline-none focus:ring-2 focus:ring-accent"
                         placeholder="Enter your prompt here..."
                       />
                     </div>
 
                     {/* Provider and Model Selection */}
                     <div>
-                      <label className="block text-sm font-medium text-black dark:text-white mb-2">
+                      <label className="block text-sm font-medium text-fg mb-2">
                         Model & Provider
                       </label>
                       <ModelSelector
@@ -353,7 +353,7 @@ const WidgetConfigModal = ({
                         truncateModelName={false}
                         showModelName={true}
                       />
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <p className="text-xs text-fg/60 mt-1">
                         Select the AI model and provider to process your widget
                         content
                       </p>
@@ -361,14 +361,14 @@ const WidgetConfigModal = ({
 
                     {/* Tool Selection */}
                     <div>
-                      <label className="block text-sm font-medium text-black dark:text-white mb-2">
+                      <label className="block text-sm font-medium text-fg mb-2">
                         Available Tools
                       </label>
                       <ToolSelector
                         selectedToolNames={selectedTools}
                         onSelectedToolNamesChange={setSelectedTools}
                       />
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      <p className="text-xs text-fg/60 mt-1">
                         Select tools to assist the AI in processing your widget.
                         Your model must support tool calling.
                       </p>
@@ -376,7 +376,7 @@ const WidgetConfigModal = ({
 
                     {/* Refresh Frequency */}
                     <div>
-                      <label className="block text-sm font-medium text-black dark:text-white mb-1">
+                      <label className="block text-sm font-medium text-fg mb-1">
                         Refresh Frequency
                       </label>
                       <div className="flex gap-2">
@@ -390,7 +390,7 @@ const WidgetConfigModal = ({
                               refreshFrequency: parseInt(e.target.value) || 1,
                             }))
                           }
-                          className="flex-1 px-3 py-2 border border-light-200 dark:border-dark-200 rounded-md bg-light-primary dark:bg-dark-primary text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="flex-1 px-3 py-2 border border-surface-2 rounded-md bg-bg text-fg focus:outline-none focus:ring-2 focus:ring-accent"
                         />
                         <select
                           value={config.refreshUnit}
@@ -402,7 +402,7 @@ const WidgetConfigModal = ({
                                 | 'hours',
                             }))
                           }
-                          className="px-3 py-2 border border-light-200 dark:border-dark-200 rounded-md bg-light-primary dark:bg-dark-primary text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="px-3 py-2 border border-surface-2 rounded-md bg-bg text-fg focus:outline-none focus:ring-2 focus:ring-accent"
                         >
                           <option value="minutes">Minutes</option>
                           <option value="hours">Hours</option>
@@ -414,29 +414,22 @@ const WidgetConfigModal = ({
                   {/* Right Column - Preview */}
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-medium text-black dark:text-white">
-                        Preview
-                      </h4>
+                      <h4 className="text-sm font-medium text-fg">Preview</h4>
                       <div className="flex items-center gap-2">
                         <div className="flex items-center gap-2">
-                          <Brain
-                            size={16}
-                            className="text-gray-600 dark:text-gray-400"
-                          />
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
-                            Thinking
-                          </span>
+                          <Brain size={16} className="text-fg/70" />
+                          <span className="text-sm text-fg/80">Thinking</span>
                           <Switch
                             checked={showThinking}
                             onChange={setShowThinking}
-                            className="bg-light-secondary dark:bg-dark-secondary border border-light-200/70 dark:border-dark-200 relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full"
+                            className="bg-surface border border-surface-2 relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full"
                           >
                             <span className="sr-only">Show thinking tags</span>
                             <span
                               className={`${
                                 showThinking
                                   ? 'translate-x-6 bg-purple-600'
-                                  : 'translate-x-1 bg-black/50 dark:bg-white/50'
+                                  : 'translate-x-1 bg-fg/50'
                               } inline-block h-3 w-3 sm:h-4 sm:w-4 transform rounded-full transition-all duration-200`}
                             />
                           </Switch>
@@ -444,7 +437,7 @@ const WidgetConfigModal = ({
                         <button
                           onClick={handlePreview}
                           disabled={isPreviewLoading}
-                          className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                          className="flex items-center gap-2 px-3 py-2 bg-accent text-white rounded hover:bg-accent-700 disabled:opacity-50"
                         >
                           <Play size={16} />
                           {isPreviewLoading ? 'Loading...' : 'Run Preview'}
@@ -452,16 +445,16 @@ const WidgetConfigModal = ({
                       </div>
                     </div>
 
-                    <div className="h-80 p-4 border border-light-200 dark:border-dark-200 rounded-md bg-light-secondary dark:bg-dark-secondary overflow-y-auto max-w-full">
+                    <div className="h-80 p-4 border border-surface-2 rounded-md bg-surface overflow-y-auto max-w-full">
                       {previewContent ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-full">
+                        <div className="prose prose-sm max-w-full">
                           <MarkdownRenderer
                             showThinking={showThinking}
                             content={previewContent}
                           />
                         </div>
                       ) : (
-                        <div className="text-sm text-black/50 dark:text-white/50 italic">
+                        <div className="text-sm text-fg/50 italic">
                           Click &quot;Run Preview&quot; to see how your widget
                           will look
                         </div>
@@ -469,41 +462,41 @@ const WidgetConfigModal = ({
                     </div>
 
                     {/* Variable Legend */}
-                    <div className="text-xs text-black/70 dark:text-white/70">
+                    <div className="text-xs text-fg/70">
                       <h5 className="font-medium mb-2">Available Variables:</h5>
                       <div className="space-y-1">
                         <div>
-                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
+                          <code className="bg-surface-2 px-1 rounded">
                             {'{{current_utc_datetime}}'}
                           </code>{' '}
                           - Current UTC date and time
                         </div>
                         <div>
-                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
+                          <code className="bg-surface-2 px-1 rounded">
                             {'{{current_local_datetime}}'}
                           </code>{' '}
                           - Current local date and time
                         </div>
                         <div>
-                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
+                          <code className="bg-surface-2 px-1 rounded">
                             {'{{source_content_1}}'}
                           </code>{' '}
                           - Content from first source
                         </div>
                         <div>
-                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
+                          <code className="bg-surface-2 px-1 rounded">
                             {'{{source_content_2}}'}
                           </code>{' '}
                           - Content from second source
                         </div>
                         <div>
-                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
+                          <code className="bg-surface-2 px-1 rounded">
                             {'{{source_content_...}}'}
                           </code>{' '}
                           - Content from nth source
                         </div>
                         <div>
-                          <code className="bg-light-200 dark:bg-dark-200 px-1 rounded">
+                          <code className="bg-surface-2 px-1 rounded">
                             {'{{location}}'}
                           </code>{' '}
                           - Your current location
@@ -517,13 +510,13 @@ const WidgetConfigModal = ({
                 <div className="mt-6 flex justify-end gap-3">
                   <button
                     onClick={handleClose}
-                    className="px-4 py-2 text-sm font-medium text-black dark:text-white bg-light-secondary dark:bg-dark-secondary hover:bg-light-200 dark:hover:bg-dark-200 rounded-md"
+                    className="px-4 py-2 text-sm font-medium text-fg bg-surface hover:bg-surface-2 rounded-md"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSave}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md"
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-700 rounded-md"
                   >
                     <Save size={16} />
                     {editingWidget ? 'Update Widget' : 'Create Widget'}

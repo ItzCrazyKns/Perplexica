@@ -159,7 +159,7 @@ const Navbar = ({
   }, []);
 
   return (
-    <div className="fixed z-40 top-0 left-0 right-0 px-4 lg:pl-[104px] lg:pr-6 lg:px-8 flex flex-row items-center justify-between w-full py-4 text-sm text-black dark:text-white/70 border-b bg-light-primary dark:bg-dark-primary border-light-100 dark:border-dark-200">
+    <div className="fixed z-40 top-0 left-0 right-0 px-4 lg:pl-[104px] lg:pr-6 lg:px-8 flex flex-row items-center justify-between w-full py-4 text-sm border-b bg-bg border-surface-2">
       <a
         href="/"
         className="active:scale-95 transition duration-100 cursor-pointer lg:hidden"
@@ -174,7 +174,7 @@ const Navbar = ({
 
       <div className="flex flex-row items-center space-x-4">
         <Popover className="relative">
-          <PopoverButton className="active:scale-95 transition duration-100 cursor-pointer p-2 rounded-full hover:bg-light-secondary dark:hover:bg-dark-secondary">
+          <PopoverButton className="active:scale-95 transition duration-100 cursor-pointer p-2 rounded-full hover:bg-surface-2">
             <Share size={17} />
           </PopoverButton>
           <Transition
@@ -186,20 +186,20 @@ const Navbar = ({
             leaveFrom="opacity-100 translate-y-0"
             leaveTo="opacity-0 translate-y-1"
           >
-            <PopoverPanel className="absolute right-0 mt-2 w-64 rounded-xl shadow-xl bg-light-primary dark:bg-dark-primary border border-light-200 dark:border-dark-200 z-50">
+            <PopoverPanel className="absolute right-0 mt-2 w-64 rounded-xl shadow-xl bg-surface border border-surface-2 z-50">
               <div className="flex flex-col py-3 px-3 gap-2">
                 <button
-                  className="flex items-center gap-2 px-4 py-2 text-left hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors text-black dark:text-white rounded-lg font-medium"
+                  className="flex items-center gap-2 px-4 py-2 text-left hover:bg-surface-2 transition-colors rounded-lg font-medium"
                   onClick={() => exportAsMarkdown(messages, title || '')}
                 >
-                  <FileText size={17} className="text-[#24A0ED]" />
+                  <FileText size={17} className="text-accent" />
                   Export as Markdown
                 </button>
                 <button
-                  className="flex items-center gap-2 px-4 py-2 text-left hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors text-black dark:text-white rounded-lg font-medium"
+                  className="flex items-center gap-2 px-4 py-2 text-left hover:bg-surface-2 transition-colors rounded-lg font-medium"
                   onClick={() => exportAsPDF(messages, title || '')}
                 >
-                  <FileDown size={17} className="text-[#24A0ED]" />
+                  <FileDown size={17} className="text-accent" />
                   Export as PDF
                 </button>
               </div>

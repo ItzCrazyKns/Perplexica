@@ -10,6 +10,7 @@ import {
   ChevronUp,
   GripVertical,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { Widget } from '@/lib/types/widget';
@@ -56,13 +57,10 @@ const WidgetDisplay = ({
           <div className="flex items-center space-x-2 flex-1 min-w-0">
             {/* Drag Handle */}
             <div
-              className="widget-drag-handle flex-shrink-0 p-1 rounded hover:bg-light-secondary dark:hover:bg-dark-secondary cursor-move transition-colors"
+              className="widget-drag-handle flex-shrink-0 p-1 rounded hover:bg-surface-2 cursor-move transition-colors"
               title="Drag to move widget"
             >
-              <GripVertical
-                size={16}
-                className="text-gray-400 dark:text-gray-500"
-              />
+              <GripVertical size={16} className="text-fg/50" />
             </div>
 
             <CardTitle className="text-lg font-medium truncate">
@@ -73,7 +71,7 @@ const WidgetDisplay = ({
           <div className="flex items-center space-x-2 flex-shrink-0">
             {/* Last updated date with refresh frequency tooltip */}
             <span
-              className="text-xs text-gray-500 dark:text-gray-400"
+              className="text-xs text-fg/60"
               title={getRefreshFrequencyText()}
             >
               {formatLastUpdated(widget.lastUpdated)}
@@ -83,12 +81,15 @@ const WidgetDisplay = ({
             <button
               onClick={() => onRefresh(widget.id)}
               disabled={widget.isLoading}
-              className="p-1.5 hover:bg-light-secondary dark:hover:bg-dark-secondary rounded transition-colors disabled:opacity-50"
+              className="p-1.5 hover:bg-surface-2 rounded transition-colors disabled:opacity-50"
               title="Refresh Widget"
             >
               <RefreshCw
                 size={16}
-                className={`text-gray-600 dark:text-gray-400 ${widget.isLoading ? 'animate-spin' : ''}`}
+                className={cn(
+                  'text-fg/70',
+                  widget.isLoading ? 'animate-spin' : '',
+                )}
               />
             </button>
           </div>
@@ -98,31 +99,29 @@ const WidgetDisplay = ({
       <CardContent className="flex-1 overflow-hidden">
         <div className="h-full overflow-y-auto">
           {widget.isLoading ? (
-            <div className="flex items-center justify-center py-8 text-gray-500 dark:text-gray-400">
+            <div className="flex items-center justify-center py-8 text-fg/60">
               <RefreshCw size={20} className="animate-spin mr-2" />
               <span>Loading content...</span>
             </div>
           ) : widget.error ? (
-            <div className="flex items-start space-x-2 p-3 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
+            <div className="flex items-start space-x-2 p-3 bg-red-50 rounded border border-red-200">
               <AlertCircle
                 size={16}
                 className="text-red-500 mt-0.5 flex-shrink-0"
               />
               <div className="flex-1">
-                <p className="text-sm font-medium text-red-800 dark:text-red-300">
+                <p className="text-sm font-medium text-red-800">
                   Error Loading Content
                 </p>
-                <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                  {widget.error}
-                </p>
+                <p className="text-xs text-red-600 mt-1">{widget.error}</p>
               </div>
             </div>
           ) : widget.content ? (
-            <div className="prose prose-sm dark:prose-invert max-w-none">
+            <div className="prose prose-sm max-w-none">
               <MarkdownRenderer content={widget.content} showThinking={false} />
             </div>
           ) : (
-            <div className="flex items-center justify-center py-8 text-gray-500 dark:text-gray-400">
+            <div className="flex items-center justify-center py-8 text-fg/60">
               <div className="text-center">
                 <p className="text-sm">No content yet</p>
                 <p className="text-xs mt-1">Click refresh to load content</p>
@@ -133,10 +132,10 @@ const WidgetDisplay = ({
       </CardContent>
 
       {/* Collapsible footer with sources and actions */}
-      <div className="bg-light-secondary/30 dark:bg-dark-secondary/30 flex-shrink-0">
+      <div className="bg-surface/30 flex-shrink-0">
         <button
           onClick={() => setIsFooterExpanded(!isFooterExpanded)}
-          className="w-full px-4 py-2 flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400 hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors"
+          className="w-full px-4 py-2 flex items-center space-x-2 text-xs text-fg/60 hover:bg-surface-2 transition-colors"
         >
           {isFooterExpanded ? (
             <ChevronUp size={14} />
@@ -151,22 +150,16 @@ const WidgetDisplay = ({
             {/* Sources */}
             {widget.sources.length > 0 && (
               <div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                  Sources:
-                </p>
+                <p className="text-xs text-fg/60 mb-2">Sources:</p>
                 <div className="space-y-1">
                   {widget.sources.map((source, index) => (
                     <div
                       key={index}
                       className="flex items-center space-x-2 text-xs"
                     >
-                      <span className="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
-                      <span className="text-gray-600 dark:text-gray-300 truncate">
-                        {source.url}
-                      </span>
-                      <span className="text-gray-400 dark:text-gray-500">
-                        ({source.type})
-                      </span>
+                      <span className="inline-block w-2 h-2 bg-accent rounded-full"></span>
+                      <span className="text-fg/70 truncate">{source.url}</span>
+                      <span className="text-fg/60">({source.type})</span>
                     </div>
                   ))}
                 </div>
@@ -177,7 +170,7 @@ const WidgetDisplay = ({
             <div className="flex items-center space-x-2 pt-2">
               <button
                 onClick={() => onEdit(widget)}
-                className="flex items-center space-x-1 px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:bg-light-secondary dark:hover:bg-dark-secondary rounded transition-colors"
+                className="flex items-center space-x-1 px-2 py-1 text-xs text-fg/70 hover:bg-surface-2 rounded transition-colors"
               >
                 <Edit size={12} />
                 <span>Edit</span>
@@ -185,7 +178,7 @@ const WidgetDisplay = ({
 
               <button
                 onClick={() => onDelete(widget.id)}
-                className="flex items-center space-x-1 px-2 py-1 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                className="flex items-center space-x-1 px-2 py-1 text-xs text-red-500 hover:bg-surface-2 rounded transition-colors"
               >
                 <Trash2 size={12} />
                 <span>Delete</span>

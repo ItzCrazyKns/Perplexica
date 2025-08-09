@@ -159,7 +159,7 @@ const DashboardPage = () => {
         </CardHeader>
 
         <CardContent>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          <p className="text-sm text-fg/60 mb-4">
             Widgets let you fetch content from any URL and process it with AI to
             show exactly what you need.
           </p>
@@ -168,7 +168,7 @@ const DashboardPage = () => {
         <CardFooter className="justify-center">
           <button
             onClick={handleAddWidget}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-200 flex items-center space-x-2"
+            className="px-4 py-2 bg-accent text-white rounded hover:bg-accent-700 transition duration-200 flex items-center space-x-2"
           >
             <Plus size={16} />
             <span>Create Your First Widget</span>
@@ -191,50 +191,50 @@ const DashboardPage = () => {
           <div className="flex items-center space-x-2">
             <button
               onClick={handleRefreshAll}
-              className="p-2 hover:bg-light-secondary dark:hover:bg-dark-secondary rounded-lg transition duration-200"
+              className="p-2 hover:bg-surface-2 rounded-lg transition duration-200"
               title="Refresh All Widgets"
             >
-              <RefreshCw size={18} className="text-black dark:text-white" />
+              <RefreshCw size={18} />
             </button>
 
             <button
               onClick={handleToggleProcessingMode}
-              className="p-2 hover:bg-light-secondary dark:hover:bg-dark-secondary rounded-lg transition duration-200"
+              className="p-2 hover:bg-surface-2 rounded-lg transition duration-200"
               title={`Switch to ${settings.parallelLoading ? 'Sequential' : 'Parallel'} Processing`}
             >
               {settings.parallelLoading ? (
-                <Layers size={18} className="text-black dark:text-white" />
+                <Layers size={18} />
               ) : (
-                <List size={18} className="text-black dark:text-white" />
+                <List size={18} />
               )}
             </button>
 
             <button
               onClick={handleExport}
-              className="p-2 hover:bg-light-secondary dark:hover:bg-dark-secondary rounded-lg transition duration-200"
+              className="p-2 hover:bg-surface-2 rounded-lg transition duration-200"
               title="Export Dashboard Configuration"
             >
-              <Download size={18} className="text-black dark:text-white" />
+              <Download size={18} />
             </button>
 
             <button
               onClick={handleImport}
-              className="p-2 hover:bg-light-secondary dark:hover:bg-dark-secondary rounded-lg transition duration-200"
+              className="p-2 hover:bg-surface-2 rounded-lg transition duration-200"
               title="Import Dashboard Configuration"
             >
-              <Upload size={18} className="text-black dark:text-white" />
+              <Upload size={18} />
             </button>
 
             <button
               onClick={handleAddWidget}
-              className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition duration-200"
+              className="p-2 bg-accent hover:bg-accent-700 rounded-lg transition duration-200"
               title="Add New Widget"
             >
-              <Plus size={18} className="text-white" />
+              <Plus size={18} />
             </button>
           </div>
         </div>
-        <hr className="border-t border-[#2B2C2C] my-4 w-full" />
+        <hr className="border-t my-4 w-full" />
       </div>
 
       {/* Main content area */}
@@ -242,10 +242,8 @@ const DashboardPage = () => {
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-500 dark:text-gray-400">
-                Loading dashboard...
-              </p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto mb-4"></div>
+              <p className="text-fg/60">Loading dashboard...</p>
             </div>
           </div>
         ) : widgets.length === 0 ? (

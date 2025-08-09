@@ -812,7 +812,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
           </Link>
         </div>
         <div className="flex flex-col items-center justify-center min-h-screen">
-          <p className="dark:text-white/70 text-black/70 text-sm">
+          <p className="text-sm">
             Failed to connect to the server. Please try again later.
           </p>
         </div>
@@ -870,7 +870,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     <div className="flex flex-row items-center justify-center min-h-screen">
       <svg
         aria-hidden="true"
-        className="w-8 h-8 text-light-200 fill-light-secondary dark:text-[#202020] animate-spin dark:fill-[#ffffff3b]"
+        className="w-8 h-8 text-fg/20 fill-fg/30 animate-spin"
         viewBox="0 0 100 101"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

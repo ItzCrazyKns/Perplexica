@@ -135,7 +135,7 @@ const MessageTabs = ({
               const url = source?.metadata?.url;
 
               if (url) {
-                return `<a href="${url}" target="_blank" data-citation="${number}" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative hover:bg-light-200 dark:hover:bg-dark-200 transition-colors duration-200">${numStr}</a>`;
+                return `<a href="${url}" target="_blank" data-citation="${number}" className="bg-surface px-1 rounded ml-1 no-underline text-xs relative hover:bg-surface-2 transition-colors duration-200">${numStr}</a>`;
               } else {
                 return `[${numStr}]`;
               }
@@ -169,14 +169,14 @@ const MessageTabs = ({
   return (
     <div className="flex flex-col w-full">
       {/* Tabs */}
-      <div className="flex border-b border-light-200 dark:border-dark-200 overflow-x-auto no-scrollbar sticky top-0 bg-light-primary dark:bg-dark-primary z-10 -mx-4 px-4 mb-2 shadow-sm">
+      <div className="flex border-b border-accent overflow-x-auto no-scrollbar sticky top-0 z-10 -mx-4 px-4 mb-2">
         <button
           onClick={() => setActiveTab('text')}
           className={cn(
             'flex items-center px-4 py-3 text-sm font-medium transition-all duration-200 relative',
             activeTab === 'text'
-              ? 'border-b-2 border-[#24A0ED] text-[#24A0ED] bg-light-100 dark:bg-dark-100'
-              : 'text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white hover:bg-light-100 dark:hover:bg-dark-100',
+              ? 'border-b-2 border-accent text-accent bg-surface-2'
+              : 'hover:bg-surface-2',
           )}
           aria-selected={activeTab === 'text'}
           role="tab"
@@ -191,8 +191,8 @@ const MessageTabs = ({
             className={cn(
               'flex items-center space-x-2 px-4 py-3 text-sm font-medium transition-all duration-200 relative',
               activeTab === 'sources'
-                ? 'border-b-2 border-[#24A0ED] text-[#24A0ED] bg-light-100 dark:bg-dark-100'
-                : 'text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white hover:bg-light-100 dark:hover:bg-dark-100',
+                ? 'border-b-2 border-accent text-accent bg-surface-2'
+                : 'hover:bg-surface-2',
             )}
             aria-selected={activeTab === 'sources'}
             role="tab"
@@ -203,8 +203,8 @@ const MessageTabs = ({
               className={cn(
                 'ml-1.5 px-1.5 py-0.5 text-xs rounded-full',
                 activeTab === 'sources'
-                  ? 'bg-[#24A0ED]/20 text-[#24A0ED]'
-                  : 'bg-light-200 dark:bg-dark-200 text-black/70 dark:text-white/70',
+                  ? 'bg-accent/20 text-accent'
+                  : 'bg-surface-2 text-fg/70',
               )}
             >
               {message.sources.length}
@@ -217,8 +217,8 @@ const MessageTabs = ({
           className={cn(
             'flex items-center space-x-2 px-4 py-3 text-sm font-medium transition-all duration-200 relative',
             activeTab === 'images'
-              ? 'border-b-2 border-[#24A0ED] text-[#24A0ED] bg-light-100 dark:bg-dark-100'
-              : 'text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white hover:bg-light-100 dark:hover:bg-dark-100',
+              ? 'border-b-2 border-accent text-accent bg-surface-2'
+              : 'hover:bg-surface-2',
           )}
           aria-selected={activeTab === 'images'}
           role="tab"
@@ -230,8 +230,8 @@ const MessageTabs = ({
               className={cn(
                 'ml-1.5 px-1.5 py-0.5 text-xs rounded-full',
                 activeTab === 'images'
-                  ? 'bg-[#24A0ED]/20 text-[#24A0ED]'
-                  : 'bg-light-200 dark:bg-dark-200 text-black/70 dark:text-white/70',
+                  ? 'bg-accent/20 text-accent'
+                  : 'bg-surface-2 text-fg/70',
               )}
             >
               {imageCount}
@@ -244,8 +244,8 @@ const MessageTabs = ({
           className={cn(
             'flex items-center space-x-2 px-4 py-3 text-sm font-medium transition-all duration-200 relative',
             activeTab === 'videos'
-              ? 'border-b-2 border-[#24A0ED] text-[#24A0ED] bg-light-100 dark:bg-dark-100'
-              : 'text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white hover:bg-light-100 dark:hover:bg-dark-100',
+              ? 'border-b-2 border-accent text-accent bg-surface-2'
+              : 'hover:bg-surface-2',
           )}
           aria-selected={activeTab === 'videos'}
           role="tab"
@@ -257,8 +257,8 @@ const MessageTabs = ({
               className={cn(
                 'ml-1.5 px-1.5 py-0.5 text-xs rounded-full',
                 activeTab === 'videos'
-                  ? 'bg-[#24A0ED]/20 text-[#24A0ED]'
-                  : 'bg-light-200 dark:bg-dark-200 text-black/70 dark:text-white/70',
+                  ? 'bg-accent/20 text-accent'
+                  : 'bg-surface-2 text-fg/70',
               )}
             >
               {videoCount}
@@ -285,7 +285,7 @@ const MessageTabs = ({
               sources={message.sources}
             />{' '}
             {loading && isLast ? null : (
-              <div className="flex flex-row items-center justify-between w-full text-black dark:text-white px-4 py-4">
+              <div className="flex flex-row items-center justify-between w-full px-4 py-4">
                 <div className="flex flex-row items-center space-x-1">
                   <Rewrite rewrite={rewrite} messageId={message.messageId} />
                   {message.modelStats && (
@@ -302,7 +302,7 @@ const MessageTabs = ({
                         start();
                       }
                     }}
-                    className="p-2 text-black/70 dark:text-white/70 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white"
+                    className="p-2 opacity-70 rounded-xl hover:bg-surface-2 transition duration-200"
                   >
                     {speechStatus === 'started' ? (
                       <StopCircle size={18} />
@@ -315,7 +315,7 @@ const MessageTabs = ({
             )}
             {isLast && message.role === 'assistant' && !loading && (
               <>
-                <div className="border-t border-light-secondary dark:border-dark-secondary px-4 pt-4 mt-4">
+                <div className="border-t border-surface-2 px-4 pt-4 mt-4">
                   <div className="flex flex-row items-center space-x-2 mb-3">
                     <Layers3 size={20} />
                     <h3 className="text-xl font-medium">Related</h3>
@@ -325,10 +325,10 @@ const MessageTabs = ({
                       <button
                         onClick={handleLoadSuggestions}
                         disabled={loadingSuggestions}
-                        className="px-4 py-2 flex flex-row items-center justify-center space-x-2 rounded-lg bg-light-secondary dark:bg-dark-secondary hover:bg-light-200 dark:hover:bg-dark-200 transition duration-200 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white"
+                        className="px-4 py-2 flex flex-row items-center justify-center space-x-2 rounded-lg bg-surface hover:bg-surface-2 transition duration-200"
                       >
                         {loadingSuggestions ? (
-                          <div className="w-4 h-4 border-2 border-t-transparent border-gray-400 dark:border-gray-500 rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-t-transparent border-fg/40 rounded-full animate-spin" />
                         ) : (
                           <Sparkles size={16} />
                         )}
@@ -348,19 +348,19 @@ const MessageTabs = ({
                           className="flex flex-col space-y-3 text-sm"
                           key={i}
                         >
-                          <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
+                          <div className="h-px w-full bg-surface-2" />
                           <div
                             onClick={() => {
                               sendMessage(suggestion);
                             }}
                             className="cursor-pointer flex flex-row justify-between font-medium space-x-2 items-center"
                           >
-                            <p className="transition duration-200 hover:text-[#24A0ED]">
+                            <p className="transition duration-200 hover:text-accent">
                               {suggestion}
                             </p>
                             <Plus
                               size={20}
-                              className="text-[#24A0ED] flex-shrink-0"
+                              className="text-accent flex-shrink-0"
                             />
                           </div>
                         </div>
@@ -379,23 +379,19 @@ const MessageTabs = ({
           message.sources.length > 0 && (
             <div className="p-4 animate-fadeIn">
               {message.searchQuery && (
-                <div className="mb-4 text-sm bg-light-secondary dark:bg-dark-secondary rounded-lg p-3">
-                  <span className="font-medium text-black/70 dark:text-white/70">
-                    Search query:
-                  </span>{' '}
+                <div className="mb-4 text-sm bg-surface rounded-lg p-3">
+                  <span className="font-medium opacity-70">Search query:</span>{' '}
                   {message.searchUrl ? (
                     <a
                       href={message.searchUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="dark:text-white text-black hover:underline"
+                      className="hover:underline"
                     >
                       {message.searchQuery}
                     </a>
                   ) : (
-                    <span className="text-black dark:text-white">
-                      {message.searchQuery}
-                    </span>
+                    <span>{message.searchQuery}</span>
                   )}
                 </div>
               )}

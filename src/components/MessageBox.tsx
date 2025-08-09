@@ -70,7 +70,7 @@ const MessageBox = ({
           {isEditing ? (
             <div className="w-full">
               <textarea
-                className="w-full p-3 text-lg bg-light-100 dark:bg-dark-100 rounded-lg border border-light-secondary dark:border-dark-secondary text-black dark:text-white focus:outline-none focus:border-[#24A0ED] transition duration-200 min-h-[120px] font-medium"
+                className="w-full p-3 text-lg bg-surface rounded-lg transition duration-200 min-h-[120px] font-medium text-fg placeholder:text-fg/40 border border-surface-2 focus:outline-none focus:ring-2 focus:ring-accent/40"
                 value={editedContent}
                 onChange={(e) => setEditedContent(e.target.value)}
                 placeholder="Edit your message..."
@@ -79,7 +79,7 @@ const MessageBox = ({
               <div className="flex flex-row space-x-2 mt-3 justify-end">
                 <button
                   onClick={cancelEditMessage}
-                  className="p-2 rounded-full bg-light-secondary dark:bg-dark-secondary hover:bg-light-200 dark:hover:bg-dark-200 transition duration-200 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white"
+                  className="p-2 rounded-full bg-surface hover:bg-surface-2 border border-surface-2 transition duration-200 text-fg/80"
                   aria-label="Cancel"
                   title="Cancel"
                 >
@@ -87,27 +87,24 @@ const MessageBox = ({
                 </button>
                 <button
                   onClick={saveEditMessage}
-                  className="p-2 rounded-full bg-[#24A0ED] hover:bg-[#1a8ad3] transition duration-200 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 rounded-full bg-accent hover:bg-accent-700 transition duration-200 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Save changes"
                   title="Save changes"
                   disabled={!editedContent.trim()}
                 >
-                  <Check size={18} className="text-white" />
+                  <Check size={18} />
                 </button>
               </div>
             </div>
           ) : (
             <>
               <div className="flex items-center">
-                <h2
-                  className="text-black dark:text-white font-medium text-3xl"
-                  onClick={startEditMessage}
-                >
+                <h2 className="font-medium text-3xl" onClick={startEditMessage}>
                   {message.content}
                 </h2>
                 <button
                   onClick={startEditMessage}
-                  className="ml-3 p-2 rounded-xl bg-light-secondary dark:bg-dark-secondary text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white flex-shrink-0"
+                  className="ml-3 p-2 rounded-xl bg-surface hover:bg-surface-2 border border-surface-2 flex-shrink-0"
                   aria-label="Edit message"
                   title="Edit message"
                 >

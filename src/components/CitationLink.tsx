@@ -19,7 +19,7 @@ const CitationLink = ({ number, source, url }: CitationLinkProps) => {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative hover:bg-light-200 dark:hover:bg-dark-200 transition-colors duration-200"
+      className="bg-surface px-1 rounded ml-1 no-underline text-xs text-fg/70 relative hover:bg-surface-2 transition-colors duration-200 border border-surface-2"
     >
       {number}
     </a>
@@ -64,14 +64,14 @@ const CitationLink = ({ number, source, url }: CitationLinkProps) => {
                 transform: 'translate(-50%, -100%)',
               }}
             >
-              <div className="bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 shadow-lg w-96">
+              <div className="bg-surface border rounded-lg border-surface-2 shadow-lg w-96">
                 <MessageSource
                   source={source}
-                  className="shadow-none border-none bg-transparent hover:bg-transparent dark:hover:bg-transparent cursor-pointer"
+                  className="shadow-none border-none bg-transparent hover:bg-transparent cursor-pointer"
                 />
               </div>
               {/* Tooltip arrow */}
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-light-200 dark:border-t-dark-200"></div>
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-surface-2"></div>
             </div>,
             document.body,
           )}

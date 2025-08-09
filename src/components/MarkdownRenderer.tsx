@@ -11,13 +11,12 @@ import {
   Settings,
 } from 'lucide-react';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import {
   oneDark,
   oneLight,
 } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import { useTheme } from 'next-themes';
 import ThinkBox from './ThinkBox';
 import { Document } from '@langchain/core/documents';
 import CitationLink from './CitationLink';
@@ -81,23 +80,15 @@ const ToolCall = ({
     switch (toolType) {
       case 'search':
       case 'web_search':
-        return (
-          <Search size={16} className="text-blue-600 dark:text-blue-400" />
-        );
+        return <Search size={16} className="text-accent" />;
       case 'file':
       case 'file_search':
-        return (
-          <FileText size={16} className="text-green-600 dark:text-green-400" />
-        );
+        return <FileText size={16} className="text-green-600" />;
       case 'url':
       case 'url_summarization':
-        return (
-          <Globe size={16} className="text-purple-600 dark:text-purple-400" />
-        );
+        return <Globe size={16} className="text-purple-600" />;
       default:
-        return (
-          <Settings size={16} className="text-gray-600 dark:text-gray-400" />
-        );
+        return <Settings size={16} className="text-fg/70" />;
     }
   };
 
@@ -106,8 +97,8 @@ const ToolCall = ({
       return (
         <>
           <span className="mr-2">{getIcon(type)}</span>
-          <span className="text-black/60 dark:text-white/60">Web search:</span>
-          <span className="ml-2 px-2 py-0.5 bg-black/5 dark:bg-white/5 rounded font-mono text-sm">
+          <span>Web search:</span>
+          <span className="ml-2 px-2 py-0.5 bg-fg/5 rounded font-mono text-sm">
             {query || children}
           </span>
         </>
@@ -118,8 +109,8 @@ const ToolCall = ({
       return (
         <>
           <span className="mr-2">{getIcon(type)}</span>
-          <span className="text-black/60 dark:text-white/60">File search:</span>
-          <span className="ml-2 px-2 py-0.5 bg-black/5 dark:bg-white/5 rounded font-mono text-sm">
+          <span>File search:</span>
+          <span className="ml-2 px-2 py-0.5 bg-fg/5 rounded font-mono text-sm">
             {query || children}
           </span>
         </>
@@ -131,7 +122,7 @@ const ToolCall = ({
       return (
         <>
           <span className="mr-2">{getIcon(type)}</span>
-          <span className="text-black/60 dark:text-white/60">
+          <span>
             Analyzing {urlCount} web page{urlCount === 1 ? '' : 's'} for
             additional details
           </span>
@@ -143,8 +134,8 @@ const ToolCall = ({
     return (
       <>
         <span className="mr-2">{getIcon(type || 'default')}</span>
-        <span className="text-black/60 dark:text-white/60">Using tool:</span>
-        <span className="ml-2 px-2 py-0.5 bg-black/5 dark:bg-white/5 rounded font-mono text-sm border">
+        <span>Using tool:</span>
+        <span className="ml-2 px-2 py-0.5 bg-fg/5 rounded font-mono text-sm border border-surface-2">
           {type || 'unknown'}
         </span>
       </>
@@ -152,7 +143,7 @@ const ToolCall = ({
   };
 
   return (
-    <div className="my-3 px-4 py-3 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-900/20 dark:to-purple-900/20 border border-blue-200/30 dark:border-blue-700/30 rounded-lg">
+    <div className="my-3 px-4 py-3 bg-surface border border-surface-2 rounded-lg">
       <div className="flex items-center text-sm font-medium">
         {formatToolMessage()}
       </div>
@@ -190,7 +181,24 @@ const CodeBlock = ({
   className?: string;
   children: React.ReactNode;
 }) => {
-  const { theme } = useTheme();
+  // Determine dark mode based on html.dark class so custom themes are respected
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    const getIsDark = () =>
+      typeof document !== 'undefined' &&
+      document.documentElement.classList.contains('dark');
+
+    setIsDark(getIsDark());
+
+    const observer = new MutationObserver(() => setIsDark(getIsDark()));
+    if (typeof document !== 'undefined') {
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class'],
+      });
+    }
+    return () => observer.disconnect();
+  }, []);
 
   // Extract language from className (format could be "language-javascript" or "lang-javascript")
   let language = '';
@@ -211,23 +219,23 @@ const CodeBlock = ({
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  // Choose syntax highlighting style based on theme
-  const syntaxStyle = theme === 'light' ? oneLight : oneDark;
-  const backgroundStyle = theme === 'light' ? '#fafafa' : '#1c1c1c';
+  // Choose syntax highlighting style based on actual dark/light class
+  const syntaxStyle = isDark ? oneDark : oneLight;
+  const backgroundStyle = isDark ? '#1c1c1c' : '#fafafa';
 
   return (
-    <div className="rounded-md overflow-hidden my-4 relative group border border-light-200 dark:border-dark-secondary">
-      <div className="flex justify-between items-center px-4 py-2 bg-light-100 dark:bg-dark-200 border-b border-light-200 dark:border-dark-secondary text-xs text-black/70 dark:text-white/70 font-mono">
+    <div className="rounded-md overflow-hidden my-4 relative group border border-surface-2">
+      <div className="flex justify-between items-center px-4 py-2 bg-surface-2 border-b border-surface-2 text-xs text-fg/70 font-mono">
         <span>{language}</span>
         <button
           onClick={handleCopyCode}
-          className="p-1 rounded-md hover:bg-light-200 dark:hover:bg-dark-secondary transition duration-200"
+          className="p-1 rounded-md hover:bg-surface transition duration-200"
           aria-label="Copy code to clipboard"
         >
           {isCopied ? (
             <CheckCheck size={14} className="text-green-500" />
           ) : (
-            <CopyIcon size={14} className="text-black/70 dark:text-white/70" />
+            <CopyIcon size={14} className="text-fg" />
           )}
         </button>
       </div>
@@ -312,7 +320,7 @@ const MarkdownRenderer = ({
           }
           // This is an inline code block (`code`)
           return (
-            <code className="px-1.5 py-0.5 rounded bg-light-200 dark:bg-dark-secondary text-black dark:text-white font-mono text-sm">
+            <code className="px-1.5 py-0.5 rounded bg-surface-2 font-mono text-sm">
               {children}
             </code>
           );
@@ -320,9 +328,7 @@ const MarkdownRenderer = ({
       },
       strong: {
         component: ({ children }) => (
-          <strong className="font-bold text-black dark:text-white">
-            {children}
-          </strong>
+          <strong className="font-bold">{children}</strong>
         ),
       },
       pre: {
@@ -364,11 +370,11 @@ const MarkdownRenderer = ({
     <div className="relative">
       <Markdown
         className={cn(
-          'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] dark:prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
+          'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] prose-p:leading-relaxed prose-pre:p-0 font-[400]',
           'prose-code:bg-transparent prose-code:p-0 prose-code:text-inherit prose-code:font-normal prose-code:before:content-none prose-code:after:content-none',
           'prose-pre:bg-transparent prose-pre:border-0 prose-pre:m-0 prose-pre:p-0',
-          'prose-strong:text-black dark:prose-strong:text-white prose-strong:font-bold',
-          'break-words text-black dark:text-white max-w-full',
+          'prose-strong:font-bold',
+          'break-words max-w-full',
           className,
         )}
         options={markdownOverrides}

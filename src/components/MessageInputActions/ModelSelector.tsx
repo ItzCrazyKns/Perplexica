@@ -170,7 +170,7 @@ const ModelSelector = ({
           <div className="relative">
             <PopoverButton
               type="button"
-              className="p-2 group flex text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
+              className="p-2 group flex text-fg/50 rounded-xl hover:bg-surface-2 active:scale-95 transition duration-200 hover:text-fg"
             >
               <Cpu size={18} />
               {showModelName && (
@@ -205,22 +205,22 @@ const ModelSelector = ({
             leaveTo="opacity-0 translate-y-1"
           >
             <PopoverPanel className="absolute z-10 w-72 transform bottom-full mb-2">
-              <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black/5 dark:ring-white/5 bg-white dark:bg-dark-secondary divide-y divide-light-200 dark:divide-dark-200">
+              <div className="overflow-hidden rounded-lg shadow-lg bg-surface border border-surface-2 divide-y divide-surface-2">
                 <div className="px-4 py-3">
-                  <h3 className="text-sm font-medium text-black/90 dark:text-white/90">
+                  <h3 className="text-sm font-medium text-fg/90">
                     Select Model
                   </h3>
-                  <p className="text-xs text-black/60 dark:text-white/60 mt-1">
+                  <p className="text-xs text-fg/60 mt-1">
                     Choose a provider and model for your conversation
                   </p>
                 </div>
                 <div className="max-h-72 overflow-y-auto">
                   {loading ? (
-                    <div className="px-4 py-3 text-sm text-black/70 dark:text-white/70">
+                    <div className="px-4 py-3 text-sm text-fg/70">
                       Loading available models...
                     </div>
                   ) : providersList.length === 0 ? (
-                    <div className="px-4 py-3 text-sm text-black/70 dark:text-white/70">
+                    <div className="px-4 py-3 text-sm text-fg/70">
                       No models available
                     </div>
                   ) : (
@@ -232,15 +232,15 @@ const ModelSelector = ({
                         return (
                           <div
                             key={providerKey}
-                            className="border-t border-light-200 dark:border-dark-200 first:border-t-0"
+                            className="border-t border-surface-2 first:border-t-0"
                           >
                             {/* Provider header */}
                             <button
                               className={cn(
                                 'w-full flex items-center justify-between px-4 py-2 text-sm text-left',
-                                'hover:bg-light-100 dark:hover:bg-dark-100',
+                                'hover:bg-surface-2',
                                 selectedModel?.provider === providerKey
-                                  ? 'bg-light-50 dark:bg-dark-50'
+                                  ? 'bg-surface-2'
                                   : '',
                               )}
                               onClick={() =>
@@ -248,13 +248,10 @@ const ModelSelector = ({
                               }
                             >
                               <div className="font-medium flex items-center">
-                                <Cpu
-                                  size={14}
-                                  className="mr-2 text-black/70 dark:text-white/70"
-                                />
+                                <Cpu size={14} className="mr-2 text-fg/70" />
                                 {provider.displayName}
                                 {selectedModel?.provider === providerKey && (
-                                  <span className="ml-2 text-xs text-[#24A0ED]">
+                                  <span className="ml-2 text-xs text-accent">
                                     (active)
                                   </span>
                                 )}
@@ -280,8 +277,8 @@ const ModelSelector = ({
                                         modelOption.provider &&
                                         selectedModel?.model ===
                                           modelOption.model
-                                        ? 'bg-light-100 dark:bg-dark-100 text-black dark:text-white'
-                                        : 'text-black/70 dark:text-white/70 hover:bg-light-100 dark:hover:bg-dark-100',
+                                        ? 'bg-surface-2 text-fg'
+                                        : 'text-fg/70 hover:bg-surface-2',
                                     )}
                                     onClick={() =>
                                       handleSelectModel(modelOption)
@@ -297,7 +294,7 @@ const ModelSelector = ({
                                       modelOption.provider &&
                                       selectedModel?.model ===
                                         modelOption.model && (
-                                        <div className="ml-auto bg-[#24A0ED] text-white text-xs px-1.5 py-0.5 rounded">
+                                        <div className="ml-auto bg-accent text-white text-xs px-1.5 py-0.5 rounded">
                                           Active
                                         </div>
                                       )}

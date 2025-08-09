@@ -322,7 +322,8 @@ Your task is to provide answers that are:
   - This query will be passed directly to the search engine
   - You will receive a list of relevant documents containing snippets of the web page, a URL, and the title of the web page
   - Always perform at least one web search unless the question can be definitively answered with previous conversation history or local file content
-  ${fileIds.length > 0
+${
+  fileIds.length > 0
     ? `
 2.1. **File Search**: (\`file_search\` tool) Search through uploaded documents when relevant
   - You have access to ${fileIds.length} uploaded file${fileIds.length === 1 ? '' : 's'} that may contain relevant information
@@ -331,8 +332,8 @@ Your task is to provide answers that are:
   - The tool will automatically search through all available uploaded files
   - Focus your file searches on specific aspects of the user's query that might be covered in the uploaded documents
   - **Important**: You do NOT need to specify file IDs - the tool will automatically search through all available uploaded files.`
-      : ''
-  }
+    : ''
+}
 3. **Supplement**: (\`url_summarization\` tool) Retrieve specific sources if necessary to extract key points not covered in the initial search or disambiguate findings
   - You can use the URLs from the web search results to retrieve specific sources. They must be passed to the tool unchanged
   - URLs can be passed as an array to request multiple sources at once

@@ -232,7 +232,7 @@ const Chat = ({
               onThinkBoxToggle={onThinkBoxToggle}
             />
             {!isLast && msg.role === 'assistant' && (
-              <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
+              <div className="h-px w-full bg-surface-2" />
             )}
           </Fragment>
         );
@@ -248,7 +248,7 @@ const Chat = ({
                 setIsAtBottom(true);
                 messageEnd.current?.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="bg-[#24A0ED] text-white hover:bg-opacity-85 transition duration-100 rounded-full px-4 py-2 shadow-lg flex items-center justify-center"
+              className="bg-accent text-fg hover:bg-opacity-85 transition duration-100 rounded-full px-4 py-2 shadow-lg flex items-center justify-center"
               aria-label="Scroll to bottom"
             >
               <svg

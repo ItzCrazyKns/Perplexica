@@ -88,10 +88,10 @@ const SystemPromptSelector = ({
           <>
             <PopoverButton
               className={cn(
-                'flex items-center gap-1 rounded-lg text-sm transition-colors duration-150 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+                'flex items-center gap-1 rounded-lg text-sm transition-colors duration-150 ease-in-out focus:outline-none focus-visible:ring-2',
                 selectedCount > 0
-                  ? 'text-[#24A0ED] hover:text-blue-200'
-                  : 'text-black/60 hover:text-black/30 dark:text-white/60 dark:hover:*:text-white/30',
+                  ? 'text-accent hover:text-accent'
+                  : 'text-fg/60 hover:text-fg/30',
               )}
               title="Select Prompts"
             >
@@ -109,25 +109,25 @@ const SystemPromptSelector = ({
               leaveTo="opacity-0 translate-y-1"
             >
               <PopoverPanel className="absolute z-20 w-72 transform bottom-full mb-2">
-                <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black/5 dark:ring-white/5 bg-white dark:bg-dark-secondary">
-                  <div className="px-4 py-3 border-b border-light-200 dark:border-dark-200">
-                    <h3 className="text-sm font-medium text-black/90 dark:text-white/90">
+                <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-surface-2 bg-surface">
+                  <div className="px-4 py-3 border-b border-surface-2">
+                    <h3 className="text-sm font-medium text-fg/90">
                       Select Prompts
                     </h3>
-                    <p className="text-xs text-black/60 dark:text-white/60 mt-0.5">
+                    <p className="text-xs text-fg/60 mt-0.5">
                       Choose instructions to guide the AI.
                     </p>
                   </div>
                   {isLoading ? (
                     <div className="px-4 py-3">
-                      <Loader2 className="animate-spin text-black/70 dark:text-white/70" />
+                      <Loader2 className="animate-spin text-fg/70" />
                     </div>
                   ) : (
                     <div className="max-h-60 overflow-y-auto p-1.5 space-y-3">
                       {availablePrompts.length === 0 && (
-                        <p className="text-xs text-black/50 dark:text-white/50 px-2.5 py-2 text-center">
+                        <p className="text-xs text-fg/50 px-2.5 py-2 text-center">
                           No prompts configured. <br /> Go to{' '}
-                          <a className="text-blue-500" href="/settings">
+                          <a className="text-accent" href="/settings">
                             settings
                           </a>{' '}
                           to add some.
@@ -137,7 +137,7 @@ const SystemPromptSelector = ({
                       {availablePrompts.filter((p) => p.type === 'system')
                         .length > 0 && (
                         <div>
-                          <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-black/70 dark:text-white/70">
+                          <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-fg/70">
                             <Settings size={14} />
                             <span>System Prompts</span>
                           </div>
@@ -148,21 +148,21 @@ const SystemPromptSelector = ({
                                 <div
                                   key={prompt.id}
                                   onClick={() => handleTogglePrompt(prompt.id)}
-                                  className="flex items-center gap-2.5 p-2.5 rounded-md hover:bg-light-100 dark:hover:bg-dark-100 cursor-pointer"
+                                  className="flex items-center gap-2.5 p-2.5 rounded-md hover:bg-surface-2 cursor-pointer"
                                 >
                                   {selectedPromptIds.includes(prompt.id) ? (
                                     <CheckSquare
                                       size={18}
-                                      className="text-[#24A0ED] flex-shrink-0"
+                                      className="text-accent flex-shrink-0"
                                     />
                                   ) : (
                                     <Square
                                       size={18}
-                                      className="text-black/40 dark:text-white/40 flex-shrink-0"
+                                      className="text-fg/40 flex-shrink-0"
                                     />
                                   )}
                                   <span
-                                    className="text-sm text-black/80 dark:text-white/80 truncate"
+                                    className="text-sm text-fg/80 truncate"
                                     title={prompt.name}
                                   >
                                     {prompt.name}
@@ -176,7 +176,7 @@ const SystemPromptSelector = ({
                       {availablePrompts.filter((p) => p.type === 'persona')
                         .length > 0 && (
                         <div>
-                          <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-black/70 dark:text-white/70">
+                          <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-fg/70">
                             <User size={14} />
                             <span>Persona Prompts</span>
                           </div>
@@ -187,21 +187,21 @@ const SystemPromptSelector = ({
                                 <div
                                   key={prompt.id}
                                   onClick={() => handleTogglePrompt(prompt.id)}
-                                  className="flex items-center gap-2.5 p-2.5 rounded-md hover:bg-light-100 dark:hover:bg-dark-100 cursor-pointer"
+                                  className="flex items-center gap-2.5 p-2.5 rounded-md hover:bg-surface-2 cursor-pointer"
                                 >
                                   {selectedPromptIds.includes(prompt.id) ? (
                                     <CheckSquare
                                       size={18}
-                                      className="text-[#24A0ED] flex-shrink-0"
+                                      className="text-accent flex-shrink-0"
                                     />
                                   ) : (
                                     <Square
                                       size={18}
-                                      className="text-black/40 dark:text-white/40 flex-shrink-0"
+                                      className="text-fg/40 flex-shrink-0"
                                     />
                                   )}
                                   <span
-                                    className="text-sm text-black/80 dark:text-white/80 truncate"
+                                    className="text-sm text-fg/80 truncate"
                                     title={prompt.name}
                                   >
                                     {prompt.name}
