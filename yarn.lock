@@ -3546,7 +3546,7 @@ kuler@^2.0.0:
   resolved "https://registry.npmjs.org/kuler/-/kuler-2.0.0.tgz"
   integrity sha512-Xq9nH7KlWZmXAtodXDDRE7vs6DU1gTU8zYDHDiWLSip45Egwq3plLHzPn27NgvzL2r1LMPC1vdqh98sQxtqj4A==
 
-langchain@^0.3.26, "langchain@>=0.2.3 <0.3.0 || >=0.3.4 <0.4.0":
+langchain@^0.3.26, "langchain@>=0.0.157 <0.4.0", "langchain@>=0.2.3 <0.3.0 || >=0.3.4 <0.4.0":
   version "0.3.30"
   resolved "https://registry.npmjs.org/langchain/-/langchain-0.3.30.tgz"
   integrity sha512-UyVsfwHDpHbrnWrjWuhJHqi8Non+Zcsf2kdpDTqyJF8NXrHBOpjdHT5LvPuW9fnE7miDTWf5mLcrWAGZgcrznQ==
@@ -3562,6 +3562,28 @@ langchain@^0.3.26, "langchain@>=0.2.3 <0.3.0 || >=0.3.4 <0.4.0":
     uuid "^10.0.0"
     yaml "^2.2.1"
     zod "^3.25.32"
+
+langfuse-core@^3.38.4:
+  version "3.38.4"
+  resolved "https://registry.npmjs.org/langfuse-core/-/langfuse-core-3.38.4.tgz"
+  integrity sha512-onTAqcEGhoXuBgqDFXe2t+bt9Vi+5YChRgdz3voM49JKoHwtVZQiUdqTfjSivGR75eSbYoiaIL8IRoio+jaqwg==
+  dependencies:
+    mustache "^4.2.0"
+
+langfuse-langchain@^3.38.4:
+  version "3.38.4"
+  resolved "https://registry.npmjs.org/langfuse-langchain/-/langfuse-langchain-3.38.4.tgz"
+  integrity sha512-7HJqouMrVOP9MFdu33M4G4uBFyQAIh/DqGYALfs41xqm7t99eZxKcTvt4rYZy67iQAhd58TG3q8+9haGzuLbOA==
+  dependencies:
+    langfuse "^3.38.4"
+    langfuse-core "^3.38.4"
+
+langfuse@^3.38.4:
+  version "3.38.4"
+  resolved "https://registry.npmjs.org/langfuse/-/langfuse-3.38.4.tgz"
+  integrity sha512-2UqMeHLl3DGNX1Nh/cO4jGhk7TzDJ6gjQLlyS9rwFCKVO81xot6b58yeTsTB5YrWupWsOxQtMNoQYIQGOUlH9Q==
+  dependencies:
+    langfuse-core "^3.38.4"
 
 langsmith@^0.3.33, langsmith@^0.3.46:
   version "0.3.55"

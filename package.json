@@ -39,6 +39,7 @@
     "jsdom": "^26.1.0",
     "jspdf": "^3.0.1",
     "langchain": "^0.3.26",
+    "langfuse-langchain": "^3.38.4",
     "lucide-react": "^0.525.0",
     "luxon": "^3.7.1",
     "mammoth": "^1.9.1",

@@ -19,6 +19,7 @@ import {
 import { formatDateForLLM } from '../utils';
 import { getModelName } from '../utils/modelUtils';
 import { removeThinkingBlocks } from '../utils/contentUtils';
+import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
 
 /**
  * Normalize usage metadata from different LLM providers
@@ -511,12 +512,14 @@ Use all available tools strategically to provide comprehensive, well-researched,
         },
         recursionLimit: 25, // Allow sufficient iterations for tool use
         signal: this.signal,
+        ...getLangfuseCallbacks(),
       };
 
       // Use streamEvents to capture both tool calls and token-level streaming
       const eventStream = agent.streamEvents(initialState, {
         ...config,
         version: 'v2',
+        ...getLangfuseCallbacks(),
       });
 
       let finalResult: any = null;

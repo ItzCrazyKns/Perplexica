@@ -25,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-  <html className="h-full" lang="en" suppressHydrationWarning>
+    <html className="h-full" lang="en" suppressHydrationWarning>
       <head>
         <link
           rel="search"

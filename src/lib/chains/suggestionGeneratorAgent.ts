@@ -5,6 +5,7 @@ import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatOpenAI } from '@langchain/openai';
+import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
 
 const suggestionGeneratorPrompt = `
 You are an AI suggestion generator for an AI powered search engine.
@@ -74,7 +75,9 @@ const generateSuggestions = (
     llm,
     systemInstructions,
   );
-  return suggestionGeneratorChain.invoke(input);
+  return suggestionGeneratorChain.invoke(input, {
+    ...getLangfuseCallbacks(),
+  });
 };
 
 export default generateSuggestions;

@@ -17,6 +17,7 @@ import { ChatOpenAI } from '@langchain/openai';
 import { ChatOllama } from '@langchain/ollama';
 import { z } from 'zod';
 import { withStructuredOutput } from '@/lib/utils/structuredOutput';
+import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
 
 interface FileRes {
   fileName: string;
@@ -71,7 +72,9 @@ Generate topics that describe what this document is about, its domain, and key s
       name: 'generate_topics',
     });
 
-    const result = await structuredLlm.invoke(prompt);
+    const result = await structuredLlm.invoke(prompt, {
+      ...getLangfuseCallbacks(),
+    });
     console.log('Generated topics:', result.topics);
     // Filename is included for context
     return filename + ', ' + result.topics.join(', ');

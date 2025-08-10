@@ -10,6 +10,7 @@ import LineOutputParser from '../outputParsers/lineOutputParser';
 import { searchSearxng } from '../searxng';
 import { formatDateForLLM } from '../utils';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
 
 const VideoSearchChainPrompt = `
 # Instructions
@@ -147,7 +148,7 @@ const handleVideoSearch = (
   systemInstructions?: string,
 ) => {
   const VideoSearchChain = createVideoSearchChain(llm, systemInstructions);
-  return VideoSearchChain.invoke(input);
+  return VideoSearchChain.invoke(input, { ...getLangfuseCallbacks() });
 };
 
 export default handleVideoSearch;

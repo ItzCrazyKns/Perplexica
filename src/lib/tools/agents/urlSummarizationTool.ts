@@ -7,6 +7,7 @@ import { removeThinkingBlocks } from '@/lib/utils/contentUtils';
 import { Command, getCurrentTaskInput } from '@langchain/langgraph';
 import { SimplifiedAgentStateType } from '@/lib/state/chatAgentState';
 import { ToolMessage } from '@langchain/core/messages';
+import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
 
 // Schema for URL summarization tool input
 const URLSummarizationToolSchema = z.object({
@@ -144,6 +145,7 @@ Provide a comprehensive summary of the above web page content, focusing on infor
 
             const result = await llm.invoke(summarizationPrompt, {
               signal: config?.signal,
+              ...getLangfuseCallbacks(),
             });
 
             finalContent = removeThinkingBlocks(result.content as string);

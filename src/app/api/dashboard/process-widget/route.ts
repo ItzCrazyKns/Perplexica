@@ -16,6 +16,7 @@ import { allTools } from '@/lib/tools';
 import { Source } from '@/lib/types/widget';
 import { WidgetProcessRequest } from '@/lib/types/api';
 import axios from 'axios';
+import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
 
 // Helper function to fetch content from a single source
 async function fetchSourceContent(
@@ -149,6 +150,7 @@ async function processWithLLM(
     },
     {
       recursionLimit: 15, // Limit recursion depth to prevent infinite loops
+      ...getLangfuseCallbacks(),
     },
   );
 

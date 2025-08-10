@@ -23,6 +23,7 @@ import { formatDateForLLM } from '../utils';
 import { getDocumentsFromLinks } from '../utils/documents';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { getModelName } from '../utils/modelUtils';
+import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
 
 export interface SpeedSearchAgentType {
   searchAndAnswer: (
@@ -103,7 +104,7 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
 
     this.emitProgress(emitter, 10, `Building search query`);
 
-    return RunnableSequence.from([
+  return RunnableSequence.from([
       PromptTemplate.fromTemplate(this.config.queryGeneratorPrompt),
       llm,
       this.strParser,
@@ -235,8 +236,8 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
             </text>
 
             Make sure to answer the query in the summary.
-          `,
-                  { signal },
+    `,
+      { signal, ...getLangfuseCallbacks() },
                 );
 
                 const document = new Document({
@@ -348,7 +349,7 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
                   date,
                   systemInstructions,
                 },
-                { signal: options?.signal },
+                { signal: options?.signal, ...getLangfuseCallbacks() },
               );
 
               query = searchRetrieverResult.query;
@@ -379,6 +380,7 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
         )
           .withConfig({
             runName: 'FinalSourceRetriever',
+            ...getLangfuseCallbacks(),
           })
           .pipe(this.processDocs),
       }),
@@ -391,6 +393,7 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
       this.strParser,
     ]).withConfig({
       runName: 'FinalResponseGenerator',
+      ...getLangfuseCallbacks(),
     });
   }
 
@@ -539,7 +542,7 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
       personaInstructions,
     );
 
-    const stream = answeringChain.streamEvents(
+  const stream = answeringChain.streamEvents(
       {
         chat_history: history,
         query: message,
@@ -547,7 +550,8 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
       {
         version: 'v1',
         // Pass the abort signal to the LLM streaming chain
-        signal,
+    signal,
+    ...getLangfuseCallbacks(),
       },
     );
 
