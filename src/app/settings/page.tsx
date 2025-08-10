@@ -152,7 +152,8 @@ const Page = () => {
   const [measureUnit, setMeasureUnit] = useState<'Imperial' | 'Metric'>(
     'Metric',
   );
-  const [weatherWidgetEnabled, setWeatherWidgetEnabled] = useState<boolean>(true);
+  const [weatherWidgetEnabled, setWeatherWidgetEnabled] =
+    useState<boolean>(true);
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -464,18 +465,22 @@ const Page = () => {
                   ]}
                 />
               </div>
-
               <div className="flex flex-col space-y-1">
                 <p className="text-black/70 dark:text-white/70 text-sm">
-                  Show Weather Widget
+                  Weather Widget
                 </p>
                 <div className="flex items-center justify-between p-3 bg-light-secondary dark:bg-dark-secondary rounded-lg hover:bg-light-200 dark:hover:bg-dark-200 transition-colors">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-light-200 dark:bg-dark-200 rounded-lg">
-                      <SettingsIcon size={18} className="text-black/70 dark:text-white/70" />
+                      <SettingsIcon
+                        size={18}
+                        className="text-black/70 dark:text-white/70"
+                      />
                     </div>
                     <div>
-                      <p className="text-sm text-black/90 dark:text-white/90 font-medium">Weather Widget</p>
+                      <p className="text-sm text-black/90 dark:text-white/90 font-medium">
+                        Show Weather Widget
+                      </p>
                       <p className="text-xs text-black/60 dark:text-white/60 mt-0.5">
                         Show the weather widget on the Home Page
                       </p>
@@ -488,13 +493,17 @@ const Page = () => {
                       saveConfig('weatherWidgetEnabled', checked);
                     }}
                     className={cn(
-                      weatherWidgetEnabled ? 'bg-[#24A0ED]' : 'bg-light-200 dark:bg-dark-200',
+                      weatherWidgetEnabled
+                        ? 'bg-[#24A0ED]'
+                        : 'bg-light-200 dark:bg-dark-200',
                       'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
                     )}
                   >
                     <span
                       className={cn(
-                        weatherWidgetEnabled ? 'translate-x-6' : 'translate-x-1',
+                        weatherWidgetEnabled
+                          ? 'translate-x-6'
+                          : 'translate-x-1',
                         'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
                       )}
                     />
