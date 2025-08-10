@@ -28,6 +28,10 @@ interface SettingsType {
   customOpenaiApiUrl: string;
   customOpenaiModelName: string;
   weatherWidgetEnabled?: boolean;
+  automaticWeatherLocation?: boolean;
+  weatherLatitude?: string;
+  weatherLongitude?: string;
+  weatherLocationName?: string;
 }
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -154,6 +158,11 @@ const Page = () => {
   );
   const [weatherWidgetEnabled, setWeatherWidgetEnabled] =
     useState<boolean>(true);
+  const [automaticWeatherLocation, setAutomaticWeatherLocation] =
+    useState<boolean>(true);
+  const [weatherLatitude, setWeatherLatitude] = useState<string>('');
+  const [weatherLongitude, setWeatherLongitude] = useState<string>('');
+  const [weatherLocationName, setWeatherLocationName] = useState<string>('');
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -224,6 +233,24 @@ const Page = () => {
         localStorage.getItem('weatherWidgetEnabled') === null
           ? true
           : localStorage.getItem('weatherWidgetEnabled') === 'true',
+      );
+
+      setAutomaticWeatherLocation(
+        localStorage.getItem('automaticWeatherLocation') === null
+          ? true
+          : localStorage.getItem('automaticWeatherLocation') === 'true',
+      );
+
+      setWeatherLatitude(
+        localStorage.getItem('weatherLatitude') ?? data.weatherLatitude ?? '',
+      );
+      setWeatherLongitude(
+        localStorage.getItem('weatherLongitude') ?? data.weatherLongitude ?? '',
+      );
+      setWeatherLocationName(
+        localStorage.getItem('weatherLocationName') ??
+          data.weatherLocationName ??
+          '',
       );
 
       setIsLoading(false);
@@ -388,6 +415,14 @@ const Page = () => {
         localStorage.setItem('measureUnit', value.toString());
       } else if (key === 'weatherWidgetEnabled') {
         localStorage.setItem('weatherWidgetEnabled', value.toString());
+      } else if (key === 'automaticWeatherLocation') {
+        localStorage.setItem('automaticWeatherLocation', value.toString());
+      } else if (key === 'weatherLatitude') {
+        localStorage.setItem('weatherLatitude', value.toString());
+      } else if (key === 'weatherLongitude') {
+        localStorage.setItem('weatherLongitude', value.toString());
+      } else if (key === 'weatherLocationName') {
+        localStorage.setItem('weatherLocationName', value.toString());
       }
     } catch (err) {
       console.error('Failed to save:', err);
@@ -467,7 +502,7 @@ const Page = () => {
               </div>
               <div className="flex flex-col space-y-1">
                 <p className="text-black/70 dark:text-white/70 text-sm">
-                  Weather Widget
+                  Weather
                 </p>
                 <div className="flex items-center justify-between p-3 bg-light-secondary dark:bg-dark-secondary rounded-lg hover:bg-light-200 dark:hover:bg-dark-200 transition-colors">
                   <div className="flex items-center space-x-3">
@@ -510,6 +545,155 @@ const Page = () => {
                   </Switch>
                 </div>
               </div>
+              {weatherWidgetEnabled && (
+                <div className="flex flex-col space-y-1">
+                  <div className="flex items-center justify-between p-3 bg-light-secondary dark:bg-dark-secondary rounded-lg hover:bg-light-200 dark:hover:bg-dark-200 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-light-200 dark:bg-dark-200 rounded-lg">
+                        <SettingsIcon
+                          size={18}
+                          className="text-black/70 dark:text-white/70"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-sm text-black/90 dark:text-white/90 font-medium">
+                          Automatic Weather Location
+                        </p>
+                        <p className="text-xs text-black/60 dark:text-white/60 mt-0.5">
+                          Use device geolocation or IP lookup to determine your
+                          location
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={automaticWeatherLocation}
+                      onChange={(checked) => {
+                        setAutomaticWeatherLocation(checked);
+                        // When enabling automatic mode: clear and persist manual fields.
+                        if (checked) {
+                          setWeatherLatitude('');
+                          setWeatherLongitude('');
+                          setWeatherLocationName('');
+                          saveConfig('weatherLatitude', '');
+                          saveConfig('weatherLongitude', '');
+                          saveConfig('weatherLocationName', '');
+                          saveConfig('automaticWeatherLocation', true);
+                        } else {
+                          const lat = (weatherLatitude ?? '').trim();
+                          const lon = (weatherLongitude ?? '').trim();
+                          const loc = (weatherLocationName ?? '').trim();
+                          // Save manual mode only if all fields are filled
+                          if (lat && lon && loc) {
+                            saveConfig('automaticWeatherLocation', false);
+                          }
+                        }
+                      }}
+                      className={cn(
+                        automaticWeatherLocation
+                          ? 'bg-[#24A0ED]'
+                          : 'bg-light-200 dark:bg-dark-200',
+                        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          automaticWeatherLocation
+                            ? 'translate-x-6'
+                            : 'translate-x-1',
+                          'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                        )}
+                      />
+                    </Switch>
+                  </div>
+
+                  {!automaticWeatherLocation && (
+                    <>
+                      <div className="grid grid-cols-2 gap-3 mt-2">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-black/70 dark:text-white/70 text-xs">
+                            Latitude
+                          </p>
+                          <Input
+                            type="text"
+                            placeholder="e.g. 37.7749"
+                            value={weatherLatitude ?? undefined}
+                            isSaving={savingStates['weatherLatitude']}
+                            onChange={(e) => setWeatherLatitude(e.target.value)}
+                            onSave={(value) => {
+                              const newLat = (value ?? '').trim();
+                              const lon = (weatherLongitude ?? '').trim();
+                              const loc = (weatherLocationName ?? '').trim();
+                              // Save manual location only when all three fields are provided.
+                              if (newLat && lon && loc) {
+                                saveConfig('weatherLatitude', value);
+                                saveConfig('weatherLongitude', lon);
+                                saveConfig('weatherLocationName', loc);
+                                setAutomaticWeatherLocation(false);
+                                saveConfig('automaticWeatherLocation', false);
+                              }
+                            }}
+                          />
+                        </div>
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-black/70 dark:text-white/70 text-xs">
+                            Longitude
+                          </p>
+                          <Input
+                            type="text"
+                            placeholder="e.g. -122.4194"
+                            value={weatherLongitude ?? undefined}
+                            isSaving={savingStates['weatherLongitude']}
+                            onChange={(e) =>
+                              setWeatherLongitude(e.target.value)
+                            }
+                            onSave={(value) => {
+                              const lat = (weatherLatitude ?? '').trim();
+                              const newLon = (value ?? '').trim();
+                              const loc = (weatherLocationName ?? '').trim();
+                              // Save manual location only when all three fields are provided.
+                              if (lat && newLon && loc) {
+                                saveConfig('weatherLatitude', lat);
+                                saveConfig('weatherLongitude', value);
+                                saveConfig('weatherLocationName', loc);
+                                setAutomaticWeatherLocation(false);
+                                saveConfig('automaticWeatherLocation', false);
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col space-y-1 mt-2">
+                        <p className="text-black/70 dark:text-white/70 text-xs">
+                          Location Name
+                        </p>
+                        <Input
+                          type="text"
+                          placeholder="e.g. Home, San Francisco"
+                          value={weatherLocationName ?? undefined}
+                          isSaving={savingStates['weatherLocationName']}
+                          onChange={(e) =>
+                            setWeatherLocationName(e.target.value)
+                          }
+                          onSave={(value) => {
+                            const lat = (weatherLatitude ?? '').trim();
+                            const lon = (weatherLongitude ?? '').trim();
+                            const newLoc = (value ?? '').trim();
+                            // Save manual location only when all three fields are provided.
+                            if (lat && lon && newLoc) {
+                              saveConfig('weatherLatitude', lat);
+                              saveConfig('weatherLongitude', lon);
+                              saveConfig('weatherLocationName', value);
+                              setAutomaticWeatherLocation(false);
+                              saveConfig('automaticWeatherLocation', false);
+                            }
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </SettingsSection>
 
             <SettingsSection title="Automatic Search">
