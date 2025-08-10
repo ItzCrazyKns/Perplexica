@@ -1,3 +1,4 @@
+'use client';
 import { Cloud, Sun, CloudRain, CloudSnow, Wind } from 'lucide-react';
 import { useEffect, useState } from 'react';
 

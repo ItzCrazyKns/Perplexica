@@ -1,4 +1,6 @@
+'use client';
 import { Settings } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import EmptyChatMessageInput from './EmptyChatMessageInput';
 import { File } from './ChatWindow';
 import Link from 'next/link';
@@ -26,6 +28,11 @@ const EmptyChat = ({
   files: File[];
   setFiles: (files: File[]) => void;
 }) => {
+  const [weatherEnabled, setWeatherEnabled] = useState(true);
+  useEffect(() => {
+    const item = localStorage.getItem('weatherWidgetEnabled');
+    setWeatherEnabled(item === null ? true : item === 'true');
+  }, []);
   return (
     <div className="relative">
       <div className="absolute w-full flex flex-row items-center justify-end mr-5 mt-5">
@@ -51,9 +58,11 @@ const EmptyChat = ({
           />
         </div>
         <div className="flex flex-col w-full gap-4 mt-2 sm:flex-row sm:justify-center">
-          <div className="flex-1 w-full">
-            <WeatherWidget />
-          </div>
+          {weatherEnabled && (
+            <div className="flex-1 w-full">
+              <WeatherWidget />
+            </div>
+          )}
           <div className="flex-1 w-full">
             <NewsArticleWidget />
           </div>
