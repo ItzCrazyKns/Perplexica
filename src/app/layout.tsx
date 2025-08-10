@@ -25,12 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      className="h-full dark"
-      lang="en"
-      suppressHydrationWarning
-      data-theme="dark"
-    >
+  <html className="h-full" lang="en" suppressHydrationWarning>
       <head>
         <link
           rel="search"

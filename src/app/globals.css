@@ -3,6 +3,10 @@
 @import 'react-resizable/css/styles.css';
 
 @import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+/* Make dark: variants depend on html.dark or [data-theme="dark"] */
+@custom-variant dark (&:where(.dark, .dark *, [data-theme='dark'], [data-theme='dark'] *));
 
 /* Theme tokens */
 @theme {
