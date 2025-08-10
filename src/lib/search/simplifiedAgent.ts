@@ -89,13 +89,18 @@ export class SimplifiedAgent {
   /**
    * Initialize the createReactAgent with tools and configuration
    */
-  private initializeAgent(focusMode: string, fileIds: string[] = []) {
+  private initializeAgent(
+    focusMode: string,
+    fileIds: string[] = [],
+    messagesCount?: number,
+  ) {
     // Select appropriate tools based on focus mode and available files
     const tools = this.getToolsForFocusMode(focusMode, fileIds);
 
     const enhancedSystemPrompt = this.createEnhancedSystemPrompt(
       focusMode,
       fileIds,
+      messagesCount,
     );
 
     try {
@@ -159,6 +164,7 @@ export class SimplifiedAgent {
   private createEnhancedSystemPrompt(
     focusMode: string,
     fileIds: string[] = [],
+    messagesCount?: number,
   ): string {
     const baseInstructions = this.systemInstructions || '';
     const personaInstructions = this.personaInstructions || '';
@@ -172,6 +178,7 @@ export class SimplifiedAgent {
           baseInstructions,
           personaInstructions,
           fileIds,
+          messagesCount,
         );
       case 'localResearch':
         return this.createLocalResearchModePrompt(
@@ -186,6 +193,7 @@ export class SimplifiedAgent {
           baseInstructions,
           personaInstructions,
           fileIds,
+          messagesCount,
         );
     }
   }
@@ -252,7 +260,13 @@ Focus on providing engaging, helpful conversation while using task management to
     baseInstructions: string,
     personaInstructions: string,
     fileIds: string[] = [],
+    messagesCount: number = 0,
   ): string {
+    // If the number of messages passed to the LLM is < 2 (i.e., first turn), enforce ALWAYS web search.
+    const alwaysSearchInstruction =
+      messagesCount < 2
+        ? '\n  - **You must ALWAYS perform at least one web search on the first turn, regardless of prior knowledge or assumptions. Do not skip this.**'
+        : '';
     return `${baseInstructions}
 
 # Comprehensive Research Assistant
@@ -323,7 +337,7 @@ Your task is to provide answers that are:
   - Give the web search tool a specific question you want answered that will help you gather relevant information
   - This query will be passed directly to the search engine
   - You will receive a list of relevant documents containing snippets of the web page, a URL, and the title of the web page
-  - **Always perform at least one web search** unless the question can be definitively answered with previous conversation history or local file content. If you don't have conversation history or local files, **you must perform a web search**
+  ${alwaysSearchInstruction}
 ${
   fileIds.length > 0
     ? `
@@ -368,7 +382,14 @@ ${
 
 ${personaInstructions ? `\n## User Formatting and Persona Instructions\n- Give these instructions more weight than the system formatting instructions\n${personaInstructions}` : ''}
 
-Use all available tools strategically to provide comprehensive, well-researched, formatted responses with proper citations`;
+Use all available tools strategically to provide comprehensive, well-researched, formatted responses with proper citations.
+${
+  messagesCount < 2
+    ? `
+**DO NOT SKIP WEB SEARCH**
+`
+    : ''
+}`;
   }
 
   /**
@@ -487,7 +508,9 @@ Use all available tools strategically to provide comprehensive, well-researched,
       console.log(`SimplifiedAgent: File IDs: ${fileIds.join(', ')}`);
 
       // Initialize agent with the provided focus mode and file context
-      const agent = this.initializeAgent(focusMode, fileIds);
+      // Pass the number of messages that will be sent to the LLM so prompts can adapt.
+      const llmMessagesCount = [...history, new HumanMessage(query)].length;
+      const agent = this.initializeAgent(focusMode, fileIds, llmMessagesCount);
 
       // Prepare initial state
       const initialState = {

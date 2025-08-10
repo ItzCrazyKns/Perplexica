@@ -8,14 +8,14 @@ const OptimizationModes = [
     title: 'Speed',
     description:
       'Prioritize speed and get the quickest possible answer. Uses only web search results - attached files will not be processed.',
-    icon: <Zap size={20} className="text-[#FF9800]" />,
+    icon: <Zap size={20} className="text-accent" />,
   },
   {
     key: 'agent',
     title: 'Agent (Experimental)',
     description:
       'Use an agentic workflow to answer complex multi-part questions. This mode may take longer and is experimental. It uses large prompts and may not work with all models. Best with at least a 8b model that supports 32k context or more.',
-    icon: <Bot size={20} className="text-[#9C27B0]" />,
+    icon: <Bot size={20} className="text-accent" />,
   },
 ];
 
@@ -57,7 +57,7 @@ const Optimization = ({
               className={cn(
                 'p-2 transition-all duration-200',
                 !isAgentMode
-                  ? 'bg-[#FF9800]/20 text-[#FF9800] scale-105'
+                  ? 'bg-surface-2 text-accent scale-105'
                   : 'text-fg/30 hover:text-fg/50 hover:bg-surface-2/50',
               )}
               onMouseEnter={() => setShowSpeedTooltip(true)}
@@ -74,7 +74,7 @@ const Optimization = ({
               className={cn(
                 'p-2 transition-all duration-200',
                 isAgentMode
-                  ? 'bg-[#9C27B0]/20 text-[#9C27B0] scale-105'
+                  ? 'bg-surface-2 text-accent scale-105'
                   : 'text-fg/30 hover:text-fg/50 hover:bg-surface-2/50',
               )}
               onMouseEnter={() => setShowAgentTooltip(true)}
@@ -89,7 +89,7 @@ const Optimization = ({
             <div className="absolute z-20 bottom-[100%] mb-2 right-0 animate-in fade-in-0 duration-150">
               <div className="bg-surface border rounded-lg border-surface-2 p-4 w-80 shadow-lg">
                 <div className="flex items-center space-x-2 mb-2">
-                  <Zap size={16} className="text-[#FF9800]" />
+                  <Zap size={16} className="text-accent" />
                   <h3 className="font-medium text-sm text-fg text-left">
                     {speedMode?.title}
                   </h3>
@@ -106,7 +106,7 @@ const Optimization = ({
             <div className="absolute z-20 bottom-[100%] mb-2 right-0 animate-in fade-in-0 duration-150">
               <div className="bg-surface border rounded-lg border-surface-2 p-4 w-80 shadow-lg">
                 <div className="flex items-center space-x-2 mb-2">
-                  <Bot size={16} className="text-[#9C27B0]" />
+                  <Bot size={16} className="text-accent" />
                   <h3 className="font-medium text-sm text-fg text-left">
                     {agentMode?.title}
                   </h3>

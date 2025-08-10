@@ -82,7 +82,7 @@ Snippet: ${content.snippet}
       name: 'analyze_preview_content',
     });
 
-  const analysisResult = await structuredLLM.invoke(
+    const analysisResult = await structuredLLM.invoke(
       `You are a preview content analyzer, tasked with determining if search result snippets contain sufficient information to answer the Task Query.
 
 # Instructions
@@ -119,7 +119,7 @@ ${taskQuery}
 # Search Result Previews to Analyze:
 ${formattedPreviewContent}
 `,
-  { signal, ...getLangfuseCallbacks() },
+      { signal, ...getLangfuseCallbacks() },
     );
 
     if (!analysisResult) {

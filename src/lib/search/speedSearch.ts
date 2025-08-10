@@ -104,7 +104,7 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
 
     this.emitProgress(emitter, 10, `Building search query`);
 
-  return RunnableSequence.from([
+    return RunnableSequence.from([
       PromptTemplate.fromTemplate(this.config.queryGeneratorPrompt),
       llm,
       this.strParser,
@@ -237,7 +237,7 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
 
             Make sure to answer the query in the summary.
     `,
-      { signal, ...getLangfuseCallbacks() },
+                  { signal, ...getLangfuseCallbacks() },
                 );
 
                 const document = new Document({
@@ -542,7 +542,7 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
       personaInstructions,
     );
 
-  const stream = answeringChain.streamEvents(
+    const stream = answeringChain.streamEvents(
       {
         chat_history: history,
         query: message,
@@ -550,8 +550,8 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
       {
         version: 'v1',
         // Pass the abort signal to the LLM streaming chain
-    signal,
-    ...getLangfuseCallbacks(),
+        signal,
+        ...getLangfuseCallbacks(),
       },
     );
 

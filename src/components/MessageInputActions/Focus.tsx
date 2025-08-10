@@ -42,7 +42,7 @@ const Focus = ({
   );
 
   return (
-    <div className="rounded-xl hover:bg-surface-2 transition duration-200">
+    <div className="rounded-xl transition duration-200">
       <div className="flex flex-row items-center space-x-1">
         <div className="relative">
           <div className="flex items-center border border-surface-2 rounded-lg overflow-hidden">
@@ -52,7 +52,7 @@ const Focus = ({
                 'p-2 transition-all duration-200',
                 focusMode === 'webSearch'
                   ? 'text-accent scale-105'
-                  : 'text-fg/70',
+                  : 'text-fg/70 hover:bg-surface-2',
               )}
               onMouseEnter={() => setShowWebSearchTooltip(true)}
               onMouseLeave={() => setShowWebSearchTooltip(false)}
@@ -72,8 +72,8 @@ const Focus = ({
               className={cn(
                 'p-2 transition-all duration-200',
                 focusMode === 'chat'
-                  ? 'text-[#10B981] scale-105'
-                  : 'text-fg/70',
+                  ? 'text-accent scale-105'
+                  : 'text-fg/70 hover:bg-surface-2',
               )}
               onMouseEnter={() => setShowChatTooltip(true)}
               onMouseLeave={() => setShowChatTooltip(false)}
@@ -93,8 +93,8 @@ const Focus = ({
               className={cn(
                 'p-2 transition-all duration-200',
                 focusMode === 'localResearch'
-                  ? 'text-[#8B5CF6] scale-105'
-                  : 'text-fg/70',
+                  ? 'text-accent scale-105'
+                  : 'text-fg/70 hover:bg-surface-2',
               )}
               onMouseEnter={() => setShowLocalResearchTooltip(true)}
               onMouseLeave={() => setShowLocalResearchTooltip(false)}
@@ -129,7 +129,7 @@ const Focus = ({
             <div className="absolute z-20 bottom-[100%] mb-2 left-0 transform animate-in fade-in-0 duration-150">
               <div className="bg-surface border rounded-lg border-surface-2 p-4 w-80 shadow-lg">
                 <div className="flex items-center space-x-2 mb-2">
-                  <MessageCircle size={16} className="text-[#10B981]" />
+                  <MessageCircle size={16} className="text-accent" />
                   <h3 className="font-medium text-sm text-left">
                     {chatMode?.title}
                   </h3>
@@ -146,8 +146,8 @@ const Focus = ({
             <div className="absolute z-20 bottom-[100%] mb-2 left-0 animate-in fade-in-0 duration-150">
               <div className="bg-surface border rounded-lg border-surface-2 p-4 w-80 shadow-lg">
                 <div className="flex items-center space-x-2 mb-2">
-                  <Pencil size={16} className="text-[#8B5CF6]" />
-                  <h3 className="font-medium text-smtext-left">
+                  <Pencil size={16} className="text-accent" />
+                  <h3 className="font-medium text-sm text-left">
                     {localResearchMode?.title}
                   </h3>
                 </div>
