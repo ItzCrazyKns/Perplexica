@@ -261,6 +261,7 @@ You are an advanced AI research assistant with access to comprehensive tools for
 ## Tool use
 
 - Use the available tools effectively to gather and process information
+- When using a tool, **always wait for a complete response from the tool before proceeding**
 
 ## Response Quality Standards
 
@@ -321,7 +322,7 @@ Your task is to provide answers that are:
   - Give the web search tool a specific question you want answered that will help you gather relevant information
   - This query will be passed directly to the search engine
   - You will receive a list of relevant documents containing snippets of the web page, a URL, and the title of the web page
-  - Always perform at least one web search unless the question can be definitively answered with previous conversation history or local file content
+  - **Always perform at least one web search** unless the question can be definitively answered with previous conversation history or local file content. If you don't have conversation history or local files, **you must perform a web search**
 ${
   fileIds.length > 0
     ? `

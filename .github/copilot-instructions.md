@@ -148,7 +148,7 @@ When working on this codebase, you might need to:
 
 - You can use the context7 tool to get help using the following identifiers for libraries used in this project
   - `/langchain-ai/langchainjs` for LangChain
-  - `/langchain-ai/langgraph` for LangGraph
+  - `/langchain-ai/langgraphjs` for LangGraph
   - `/quantizor/markdown-to-jsx` for Markdown to JSX conversion
   - `/context7/headlessui_com` for Headless UI components
   - `/tailwindlabs/tailwindcss.com` for Tailwind CSS documentation
