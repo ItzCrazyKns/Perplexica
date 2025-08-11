@@ -173,7 +173,11 @@ const MessageInput = ({
           </div>
           <div className="flex flex-row items-center space-x-2">
             <ModelSelector
-              showModelName={false}
+              showModelName={
+                typeof window !== 'undefined'
+                  ? window.matchMedia('(min-width: 640px)').matches
+                  : false
+              }
               selectedModel={selectedModel}
               setSelectedModel={(selectedModel) => {
                 setSelectedModel(selectedModel);

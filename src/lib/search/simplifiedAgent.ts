@@ -18,7 +18,7 @@ import {
 } from '@/lib/tools/agents';
 import { formatDateForLLM } from '../utils';
 import { getModelName } from '../utils/modelUtils';
-import { removeThinkingBlocks } from '../utils/contentUtils';
+import { removeThinkingBlocks, removeThinkingBlocksFromMessages } from '../utils/contentUtils';
 import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
 
 /**
@@ -265,8 +265,8 @@ Focus on providing engaging, helpful conversation while using task management to
     // If the number of messages passed to the LLM is < 2 (i.e., first turn), enforce ALWAYS web search.
     const alwaysSearchInstruction =
       messagesCount < 2
-        ? '\n  - **You must ALWAYS perform at least one web search on the first turn, regardless of prior knowledge or assumptions. Do not skip this.**'
-        : '';
+        ? '\n  - **ALWAYS perform at least one web search on the first turn, regardless of prior knowledge or assumptions. Do not skip this.**'
+        : "\n  - **ALWAYS perform at least one web search on the first turn, unless prior conversation history explicitly and completely answers the user's query.**\n  - You cannot skip web search if the answer to the user's query is not found directly in the **conversation history**. All other prior knowledge must be verified with up-to-date information.";
     return `${baseInstructions}
 
 # Comprehensive Research Assistant
@@ -305,7 +305,7 @@ Your task is to provide answers that are:
 - If a statement is based on previous messages in the conversation history, it must be marked as \`[Hist]\` and not cited from the context
 - Source based citations must reference the specific document in the relevantDocuments state array, do not invent sources or URLs
 - Integrate citations naturally at the end of sentences or clauses as appropriate. For example, "The Eiffel Tower is one of the most visited landmarks in the world[1]."
-- Ensure that **every sentence in your response includes at least one citation**, even when information is inferred or connected to general knowledge available in the provided context
+- Ensure that **every sentence in the response includes at least one citation**, even when information is inferred or connected to general knowledge available in the provided context
 - Use multiple sources for a single detail if applicable, such as, "Paris is a cultural hub, attracting millions of visitors annually[1][2]."
 
 ### Formatting Instructions
@@ -317,7 +317,7 @@ Your task is to provide answers that are:
   - Maintain a neutral, journalistic tone with engaging narrative flow
   - Write as though you're crafting an in-depth article for a professional audience
 - **Markdown Usage**: 
-  - Format your response with Markdown for clarity
+  - Format the response with Markdown for clarity
   - Use headings, subheadings, bold text, and italicized words as needed to enhance readability
   - Include code snippets in a code block
   - Extract images and links from full HTML content when appropriate and embed them using the appropriate markdown syntax
@@ -325,18 +325,19 @@ Your task is to provide answers that are:
   - Provide comprehensive coverage of the topic
   - Avoid superficial responses and strive for depth without unnecessary repetition
   - Expand on technical or complex topics to make them easier to understand for a general audience
-- **No main heading/title**: Start your response directly with the introduction unless asked to provide a specific title
+- **No main heading/title**: Start the response directly with the introduction unless asked to provide a specific title
+- **No summary or conclusion**: End with the final thoughts or insights without a formal summary or conclusion
+- **No source or citation section**: Do not include a separate section for sources or citations, as all necessary citations should be integrated into the response
 
 # Research Strategy
 1. **Plan**: Determine the best research approach based on the user's query
   - Break down the query into manageable components
   - Identify key concepts and terms for focused searching
-  - You are allowed to take multiple turns of the Search and Supplement stages. Use this flexibility to refine your queries and gather more information
+  - Utilize multiple turns of the Search and Supplement stages when necessary
 2. **Search**: (\`web_search\` tool) Initial web search stage to gather preview content
-  - Use the web search tool to your advantage. Avoid making assumptions, especially about things like recent events. Chances are the web search will have more relevant information than your local knowledge
-  - Give the web search tool a specific question you want answered that will help you gather relevant information
-  - This query will be passed directly to the search engine
-  - You will receive a list of relevant documents containing snippets of the web page, a URL, and the title of the web page
+  - Give the web search tool a specific question to answer that will help gather relevant information
+  - The response will contain a list of relevant documents containing snippets of the web page, a URL, and the title of the web page
+  - Do not simulate searches, utilize the web search tool directly
   ${alwaysSearchInstruction}
 ${
   fileIds.length > 0
@@ -344,25 +345,24 @@ ${
 2.1. **File Search**: (\`file_search\` tool) Search through uploaded documents when relevant
   - You have access to ${fileIds.length} uploaded file${fileIds.length === 1 ? '' : 's'} that may contain relevant information
   - Use the file search tool to find specific information in the uploaded documents
-  - Give the file search tool a specific question or topic you want to extract from the documents
+  - Give the file search tool a specific question or topic to extract from the documents
   - The tool will automatically search through all available uploaded files
-  - Focus your file searches on specific aspects of the user's query that might be covered in the uploaded documents
-  - **Important**: You do NOT need to specify file IDs - the tool will automatically search through all available uploaded files.`
+  - Focus file searches on specific aspects of the user's query that might be covered in the uploaded documents`
     : ''
 }
 3. **Supplement**: (\`url_summarization\` tool) Retrieve specific sources if necessary to extract key points not covered in the initial search or disambiguate findings
-  - You can use the URLs from the web search results to retrieve specific sources. They must be passed to the tool unchanged
+  - Use URLs from web search results to retrieve specific sources. They must be passed to the tool unchanged
   - URLs can be passed as an array to request multiple sources at once
   - Always include the user's query in the request to the tool, it will use this to guide the summarization process
-  - You can pass an intent to this tool if you want to additionally guide the summarization on a specific aspect or question
-  - You can request the full HTML content of the pages if needed by passing true to the \`retrieveHtml\` parameter
-    - Passing true is **required** to include images or links within the page content
-  - You will receive a summary of the content from each URL if the content of the page is long. If the content of the page is short, you will receive the full content
-  - You may request up to 5 URLs per turn
-  - If you recieve a request to summarize a specific URL you **must** use this tool to retrieve it
+  - Pass an intent to this tool to provide additional summarization guidance on a specific aspect or question
+  - Request the full HTML content of the pages if needed by passing true to the \`retrieveHtml\` parameter
+    - Passing true is **required** to retrieve images or links within the page content
+  - Response will contain a summary of the content from each URL if the content of the page is long. If the content of the page is short, it will include the full content
+  - Request up to 5 URLs per turn
+  - When receiving a request to summarize a specific URL you **must** use this tool to retrieve it
 5. **Analyze**: Examine the retrieved information for relevance, accuracy, and completeness
-  - If you have sufficient information, you can move on to the respond stage
-  - If you need to gather more information, consider revisiting the search or supplement stages.${
+  - When sufficient information has been gathered, move on to the respond stage
+  - If more information is needed, consider revisiting the search or supplement stages.${
     fileIds.length > 0
       ? `
   - Consider both web search results and file content when analyzing information completeness`
@@ -380,16 +380,8 @@ ${
 ## Current Context
 - Today's Date: ${formatDateForLLM(new Date())}
 
-${personaInstructions ? `\n## User Formatting and Persona Instructions\n- Give these instructions more weight than the system formatting instructions\n${personaInstructions}` : ''}
-
-Use all available tools strategically to provide comprehensive, well-researched, formatted responses with proper citations.
-${
-  messagesCount < 2
-    ? `
-**DO NOT SKIP WEB SEARCH**
-`
-    : ''
-}`;
+${personaInstructions ? `\n## User specified behavior and formatting instructions\n\n- Give these instructions more weight than the system formatting instructions\n\n${personaInstructions}` : ''}
+`;
   }
 
   /**
@@ -507,14 +499,15 @@ Use all available tools strategically to provide comprehensive, well-researched,
       console.log(`SimplifiedAgent: Focus mode: ${focusMode}`);
       console.log(`SimplifiedAgent: File IDs: ${fileIds.join(', ')}`);
 
+      const messagesHistory = [...removeThinkingBlocksFromMessages(history), new HumanMessage(query)];
       // Initialize agent with the provided focus mode and file context
       // Pass the number of messages that will be sent to the LLM so prompts can adapt.
-      const llmMessagesCount = [...history, new HumanMessage(query)].length;
+      const llmMessagesCount = messagesHistory.length;
       const agent = this.initializeAgent(focusMode, fileIds, llmMessagesCount);
 
       // Prepare initial state
       const initialState = {
-        messages: [...history, new HumanMessage(query)],
+        messages: messagesHistory,
         query,
         focusMode,
         fileIds,
