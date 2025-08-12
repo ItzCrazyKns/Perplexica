@@ -181,25 +181,6 @@ const CodeBlock = ({
   className?: string;
   children: React.ReactNode;
 }) => {
-  // Determine dark mode based on html.dark class so custom themes are respected
-  const [isDark, setIsDark] = useState(false);
-  useEffect(() => {
-    const getIsDark = () =>
-      typeof document !== 'undefined' &&
-      document.documentElement.classList.contains('dark');
-
-    setIsDark(getIsDark());
-
-    const observer = new MutationObserver(() => setIsDark(getIsDark()));
-    if (typeof document !== 'undefined') {
-      observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['class'],
-      });
-    }
-    return () => observer.disconnect();
-  }, []);
-
   // Extract language from className (format could be "language-javascript" or "lang-javascript")
   let language = '';
   if (className) {
@@ -219,7 +200,9 @@ const CodeBlock = ({
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  // Choose syntax highlighting style based on actual dark/light class
+  const root = document.documentElement;
+  const isDark = root.classList.contains('dark');
+
   const syntaxStyle = isDark ? oneDark : oneLight;
   const backgroundStyle = isDark ? '#1c1c1c' : '#fafafa';
 
@@ -248,10 +231,10 @@ const CodeBlock = ({
           borderRadius: 0,
           backgroundColor: backgroundStyle,
         }}
-        wrapLines={true}
-        wrapLongLines={true}
+        wrapLines
+        wrapLongLines
         showLineNumbers={language !== '' && content.split('\n').length > 1}
-        useInlineStyles={true}
+        useInlineStyles
         PreTag="div"
       >
         {content}

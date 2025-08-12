@@ -18,7 +18,10 @@ import {
 } from '@/lib/tools/agents';
 import { formatDateForLLM } from '../utils';
 import { getModelName } from '../utils/modelUtils';
-import { removeThinkingBlocks, removeThinkingBlocksFromMessages } from '../utils/contentUtils';
+import {
+  removeThinkingBlocks,
+  removeThinkingBlocksFromMessages,
+} from '../utils/contentUtils';
 import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
 
 /**
@@ -499,7 +502,10 @@ Use all available tools strategically to provide comprehensive, well-researched,
       console.log(`SimplifiedAgent: Focus mode: ${focusMode}`);
       console.log(`SimplifiedAgent: File IDs: ${fileIds.join(', ')}`);
 
-      const messagesHistory = [...removeThinkingBlocksFromMessages(history), new HumanMessage(query)];
+      const messagesHistory = [
+        ...removeThinkingBlocksFromMessages(history),
+        new HumanMessage(query),
+      ];
       // Initialize agent with the provided focus mode and file context
       // Pass the number of messages that will be sent to the LLM so prompts can adapt.
       const llmMessagesCount = messagesHistory.length;
