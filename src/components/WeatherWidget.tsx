@@ -1,3 +1,4 @@
+'use client';
 import { Cloud, Sun, CloudRain, CloudSnow, Wind } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -70,36 +71,81 @@ const WeatherWidget = () => {
       }
     };
 
-    getLocation(async (location) => {
-      const res = await fetch(`/api/weather`, {
-        method: 'POST',
-        body: JSON.stringify({
-          lat: location.latitude,
-          lng: location.longitude,
-          measureUnit: localStorage.getItem('measureUnit') ?? 'Metric',
-        }),
-      });
+    const fetchWeatherForCoords = async (
+      lat: number,
+      lng: number,
+      city?: string,
+    ) => {
+      try {
+        const res = await fetch(`/api/weather`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            lat,
+            lng,
+            measureUnit: localStorage.getItem('measureUnit') ?? 'Metric',
+          }),
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (res.status !== 200) {
-        console.error('Error fetching weather data');
+        if (res.status !== 200) {
+          console.error('Error fetching weather data');
+          setLoading(false);
+          return;
+        }
+
+        setData({
+          temperature: data.temperature,
+          condition: data.condition,
+          location: city ?? data.location ?? '',
+          humidity: data.humidity,
+          windSpeed: data.windSpeed,
+          icon: data.icon,
+          temperatureUnit: data.temperatureUnit,
+          windSpeedUnit: data.windSpeedUnit,
+        });
+      } catch (err) {
+        console.error('Error fetching weather data', err);
+      } finally {
         setLoading(false);
-        return;
+      }
+    };
+
+    (async () => {
+      // Check automatic setting from localStorage (default true)
+      const automatic =
+        localStorage.getItem('automaticWeatherLocation') === null
+          ? true
+          : localStorage.getItem('automaticWeatherLocation') === 'true';
+
+      if (!automatic) {
+        const latStr = localStorage.getItem('weatherLatitude') ?? '';
+        const lngStr = localStorage.getItem('weatherLongitude') ?? '';
+        const name = localStorage.getItem('weatherLocationName') ?? '';
+        const lat = parseFloat(latStr);
+        const lng = parseFloat(lngStr);
+
+        if (!isNaN(lat) && !isNaN(lng)) {
+          // Use provided coordinates; prefer user-provided name if available
+          const locName = name !== '' ? name : `${lat}, ${lng}`;
+          await fetchWeatherForCoords(lat, lng, locName);
+          return;
+        }
+        // If invalid or missing, fall through to normal location lookup
       }
 
-      setData({
-        temperature: data.temperature,
-        condition: data.condition,
-        location: location.city,
-        humidity: data.humidity,
-        windSpeed: data.windSpeed,
-        icon: data.icon,
-        temperatureUnit: data.temperatureUnit,
-        windSpeedUnit: data.windSpeedUnit,
+      // Normal behavior: use geolocation or IP-based approximate location
+      await getLocation(async (location) => {
+        await fetchWeatherForCoords(
+          location.latitude,
+          location.longitude,
+          location.city,
+        );
       });
-      setLoading(false);
-    });
+    })();
   }, []);
 
   return (
