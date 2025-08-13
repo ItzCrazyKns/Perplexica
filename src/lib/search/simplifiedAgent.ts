@@ -96,6 +96,7 @@ export class SimplifiedAgent {
     focusMode: string,
     fileIds: string[] = [],
     messagesCount?: number,
+    query?: string,
   ) {
     // Select appropriate tools based on focus mode and available files
     const tools = this.getToolsForFocusMode(focusMode, fileIds);
@@ -104,6 +105,7 @@ export class SimplifiedAgent {
       focusMode,
       fileIds,
       messagesCount,
+      query,
     );
 
     try {
@@ -168,6 +170,7 @@ export class SimplifiedAgent {
     focusMode: string,
     fileIds: string[] = [],
     messagesCount?: number,
+    query?: string,
   ): string {
     const baseInstructions = this.systemInstructions || '';
     const personaInstructions = this.personaInstructions || '';
@@ -182,6 +185,7 @@ export class SimplifiedAgent {
           personaInstructions,
           fileIds,
           messagesCount,
+          query,
         );
       case 'localResearch':
         return this.createLocalResearchModePrompt(
@@ -197,6 +201,7 @@ export class SimplifiedAgent {
           personaInstructions,
           fileIds,
           messagesCount,
+          query,
         );
     }
   }
@@ -264,12 +269,24 @@ Focus on providing engaging, helpful conversation while using task management to
     personaInstructions: string,
     fileIds: string[] = [],
     messagesCount: number = 0,
+    query?: string,
   ): string {
-    // If the number of messages passed to the LLM is < 2 (i.e., first turn), enforce ALWAYS web search.
-    const alwaysSearchInstruction =
-      messagesCount < 2
+    // Detect explicit URLs in the user query; if present, we prioritize retrieving them directly.
+    const urlRegex = /https?:\/\/[^\s)>'"`]+/gi;
+    const urlsInQuery = (query || '').match(urlRegex) || [];
+    const uniqueUrls = Array.from(new Set(urlsInQuery));
+    const hasExplicitUrls = uniqueUrls.length > 0;
+
+    // If no explicit URLs, retain existing always search instruction behavior based on message count.
+    const alwaysSearchInstruction = hasExplicitUrls
+      ? ''
+      : messagesCount < 2
         ? '\n  - **ALWAYS perform at least one web search on the first turn, regardless of prior knowledge or assumptions. Do not skip this.**'
         : "\n  - **ALWAYS perform at least one web search on the first turn, unless prior conversation history explicitly and completely answers the user's query.**\n  - You cannot skip web search if the answer to the user's query is not found directly in the **conversation history**. All other prior knowledge must be verified with up-to-date information.";
+
+    const explicitUrlInstruction = hasExplicitUrls
+      ? `\n  - The user query contains explicit URL${uniqueUrls.length === 1 ? '' : 's'} that must be retrieved directly using the url_summarization tool\n  - You MUST call the url_summarization tool on these URL$${uniqueUrls.length === 1 ? '' : 's'} before providing an answer. Pass them exactly as provided (do not alter, trim, or expand them).\n  - Do NOT perform a generic web search on the first pass. Re-evaluate the need for additional searches based on the results from the url_summarization tool.`
+      : '';
     return `${baseInstructions}
 
 # Comprehensive Research Assistant
@@ -342,6 +359,7 @@ Your task is to provide answers that are:
   - The response will contain a list of relevant documents containing snippets of the web page, a URL, and the title of the web page
   - Do not simulate searches, utilize the web search tool directly
   ${alwaysSearchInstruction}
+  ${explicitUrlInstruction}
 ${
   fileIds.length > 0
     ? `
@@ -509,7 +527,12 @@ Use all available tools strategically to provide comprehensive, well-researched,
       // Initialize agent with the provided focus mode and file context
       // Pass the number of messages that will be sent to the LLM so prompts can adapt.
       const llmMessagesCount = messagesHistory.length;
-      const agent = this.initializeAgent(focusMode, fileIds, llmMessagesCount);
+      const agent = this.initializeAgent(
+        focusMode,
+        fileIds,
+        llmMessagesCount,
+        query,
+      );
 
       // Prepare initial state
       const initialState = {
