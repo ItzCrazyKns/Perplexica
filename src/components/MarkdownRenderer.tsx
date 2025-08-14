@@ -9,6 +9,7 @@ import {
   FileText,
   Globe,
   Settings,
+  Image as ImageIcon,
 } from 'lucide-react';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import { useEffect, useState } from 'react';
@@ -20,6 +21,7 @@ import {
 import ThinkBox from './ThinkBox';
 import { Document } from '@langchain/core/documents';
 import CitationLink from './CitationLink';
+import { decodeHtmlEntities } from '@/lib/utils/html';
 
 // Helper functions for think overlay
 const extractThinkContent = (content: string): string | null => {
@@ -87,6 +89,9 @@ const ToolCall = ({
       case 'url':
       case 'url_summarization':
         return <Globe size={16} className="text-purple-600" />;
+      case 'image':
+      case 'image_search':
+        return <ImageIcon size={16} className="text-blue-600" />;
       default:
         return <Settings size={16} className="text-fg/70" />;
     }
@@ -99,7 +104,7 @@ const ToolCall = ({
           <span className="mr-2">{getIcon(type)}</span>
           <span>Web search:</span>
           <span className="ml-2 px-2 py-0.5 bg-fg/5 rounded font-mono text-sm">
-            {query || children}
+            {decodeHtmlEntities(query || (children as string))}
           </span>
         </>
       );
@@ -111,7 +116,7 @@ const ToolCall = ({
           <span className="mr-2">{getIcon(type)}</span>
           <span>File search:</span>
           <span className="ml-2 px-2 py-0.5 bg-fg/5 rounded font-mono text-sm">
-            {query || children}
+            {decodeHtmlEntities(query || (children as string))}
           </span>
         </>
       );
@@ -125,6 +130,18 @@ const ToolCall = ({
           <span>
             Analyzing {urlCount} web page{urlCount === 1 ? '' : 's'} for
             additional details
+          </span>
+        </>
+      );
+    }
+
+    if (type === 'image' || type === 'image_search') {
+      return (
+        <>
+          <span className="mr-2">{getIcon(type)}</span>
+          <span>Image search:</span>
+          <span className="ml-2 px-2 py-0.5 bg-fg/5 rounded font-mono text-sm">
+            {decodeHtmlEntities(query || (children as string))}
           </span>
         </>
       );

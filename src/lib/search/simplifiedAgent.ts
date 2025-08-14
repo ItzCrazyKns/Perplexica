@@ -23,6 +23,7 @@ import {
   removeThinkingBlocksFromMessages,
 } from '../utils/contentUtils';
 import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
+import { encodeHtmlAttribute } from '@/lib/utils/html';
 
 /**
  * Normalize usage metadata from different LLM providers
@@ -360,10 +361,16 @@ Your task is to provide answers that are:
   - Do not simulate searches, utilize the web search tool directly
   ${alwaysSearchInstruction}
   ${explicitUrlInstruction}
+2.1. **Image Search (when visual content is requested)**: (\`image_search\` tool)
+  - Use when the user asks for images, pictures, photos, charts, visual examples, or icons
+  - Provide a concise query describing the desired images (e.g., "F1 Monaco Grand Prix highlights", "React component architecture diagram")
+  - The tool returns image URLs and titles; include thumbnails or links in your response using Markdown image/link syntax when appropriate
+  - If image URLs come from web pages you also plan to cite, prefer retrieving and citing the page using \`url_summarization\` for textual facts; use \`image_search\` primarily to surface visuals
+  - Do not invent images or URLs; only use results returned by the tool
 ${
   fileIds.length > 0
     ? `
-2.1. **File Search**: (\`file_search\` tool) Search through uploaded documents when relevant
+2.2. **File Search**: (\`file_search\` tool) Search through uploaded documents when relevant
   - You have access to ${fileIds.length} uploaded file${fileIds.length === 1 ? '' : 's'} that may contain relevant information
   - Use the file search tool to find specific information in the uploaded documents
   - Give the file search tool a specific question or topic to extract from the documents
@@ -657,10 +664,10 @@ Use all available tools strategically to provide comprehensive, well-researched,
                 let toolMarkdown = '';
                 switch (toolName) {
                   case 'web_search':
-                    toolMarkdown = `<ToolCall type="search" query="${(toolArgs.query || 'relevant information').replace(/"/g, '&quot;')}"></ToolCall>`;
+                    toolMarkdown = `<ToolCall type=\"search\" query=\"${encodeHtmlAttribute(toolArgs.query || 'relevant information')}\"></ToolCall>`;
                     break;
                   case 'file_search':
-                    toolMarkdown = `<ToolCall type="file" query="${(toolArgs.query || 'relevant information').replace(/"/g, '&quot;')}"></ToolCall>`;
+                    toolMarkdown = `<ToolCall type=\"file\" query=\"${encodeHtmlAttribute(toolArgs.query || 'relevant information')}\"></ToolCall>`;
                     break;
                   case 'url_summarization':
                     if (Array.isArray(toolArgs.urls)) {
@@ -668,6 +675,9 @@ Use all available tools strategically to provide comprehensive, well-researched,
                     } else {
                       toolMarkdown = `<ToolCall type="url" count="1"></ToolCall>`;
                     }
+                    break;
+                  case 'image_search':
+                    toolMarkdown = `<ToolCall type=\"image\" query=\"${encodeHtmlAttribute(toolArgs.query || 'relevant images')}\"></ToolCall>`;
                     break;
                   default:
                     toolMarkdown = `<ToolCall type="${toolName}"></ToolCall>`;

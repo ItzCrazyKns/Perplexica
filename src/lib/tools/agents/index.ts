@@ -11,12 +11,14 @@
 import { taskManagerTool } from './taskManagerTool';
 import { simpleWebSearchTool } from './simpleWebSearchTool';
 import { fileSearchTool } from './fileSearchTool';
+import { imageSearchTool } from './imageSearchTool';
 import { urlSummarizationTool } from './urlSummarizationTool';
 
 // Export individual tools (will be uncommented as tools are implemented)
 export { taskManagerTool };
 export { simpleWebSearchTool };
 export { fileSearchTool };
+export { imageSearchTool };
 
 // Array containing all available agent tools for the simplified chat agent
 // This will be used by the createReactAgent implementation
@@ -26,6 +28,7 @@ export const allAgentTools = [
   simpleWebSearchTool,
   fileSearchTool,
   urlSummarizationTool,
+  imageSearchTool,
 ];
 
 // Export tool categories for selective tool loading based on focus mode
@@ -33,6 +36,7 @@ export const webSearchTools = [
   //webSearchTool,
   simpleWebSearchTool,
   urlSummarizationTool,
+  imageSearchTool,
   // analyzerTool,
   // synthesizerTool,
 ];
