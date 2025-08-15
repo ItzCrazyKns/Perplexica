@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { Check, Pencil, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Message } from './ChatWindow';
 import MessageTabs from './MessageTabs';
 
@@ -39,6 +39,29 @@ const MessageBox = ({
   // Local state for editing functionality
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
+  // State for truncation toggle of long user prompts
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const contentRef = useRef<HTMLHeadingElement | null>(null);
+
+  // Measure overflow compared to a 3-line clamped state
+  useEffect(() => {
+    const measureOverflow = () => {
+      const el = contentRef.current;
+      if (!el) return;
+      const hadClamp = el.classList.contains('line-clamp-3');
+      if (!hadClamp) el.classList.add('line-clamp-3');
+      const overflowing = el.scrollHeight > el.clientHeight + 1;
+      setIsOverflowing(overflowing);
+      if (!hadClamp) el.classList.remove('line-clamp-3');
+    };
+
+    measureOverflow();
+    window.addEventListener('resize', measureOverflow);
+    return () => {
+      window.removeEventListener('resize', measureOverflow);
+    };
+  }, [message.content]);
 
   // Initialize editing
   const startEditMessage = () => {
@@ -98,10 +121,43 @@ const MessageBox = ({
             </div>
           ) : (
             <>
-              <div className="flex items-center">
-                <h2 className="font-medium text-3xl" onClick={startEditMessage}>
-                  {message.content}
-                </h2>
+              <div className="flex items-start">
+                <div className="flex-1 min-w-0">
+                  <h2
+                    className={cn(
+                      'font-medium text-3xl',
+                      !isExpanded && 'line-clamp-3',
+                    )}
+                    id={`user-msg-${message.messageId}`}
+                    ref={contentRef}
+                    onClick={startEditMessage}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        if (e.key === ' ') e.preventDefault();
+                        startEditMessage();
+                      }
+                    }}
+                  >
+                    {message.content}
+                  </h2>
+                  {isOverflowing && (
+                    <button
+                      type="button"
+                      className="mt-2 text-sm text-accent hover:underline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsExpanded((v) => !v);
+                      }}
+                      aria-expanded={isExpanded}
+                      aria-controls={`user-msg-${message.messageId}`}
+                      title={isExpanded ? 'Show less' : 'Show more'}
+                    >
+                      {isExpanded ? 'Show less' : 'Show more'}
+                    </button>
+                  )}
+                </div>
                 <button
                   onClick={startEditMessage}
                   className="ml-3 p-2 rounded-xl bg-surface hover:bg-surface-2 border border-surface-2 flex-shrink-0"

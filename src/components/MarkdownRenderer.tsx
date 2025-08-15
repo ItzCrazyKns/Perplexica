@@ -10,6 +10,7 @@ import {
   Globe,
   Settings,
   Image as ImageIcon,
+  BotIcon,
 } from 'lucide-react';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import { useEffect, useState } from 'react';
@@ -92,6 +93,8 @@ const ToolCall = ({
       case 'image':
       case 'image_search':
         return <ImageIcon size={16} className="text-blue-600" />;
+      case 'firefoxAI':
+        return <BotIcon size={16} className="text-indigo-600" />;
       default:
         return <Settings size={16} className="text-fg/70" />;
     }
@@ -143,6 +146,15 @@ const ToolCall = ({
           <span className="ml-2 px-2 py-0.5 bg-fg/5 rounded font-mono text-sm">
             {decodeHtmlEntities(query || (children as string))}
           </span>
+        </>
+      );
+    }
+
+    if (type === 'firefoxAI') {
+      return (
+        <>
+          <span className="mr-2">{getIcon(type)}</span>
+          <span>Firefox AI detected, tools disabled</span>
         </>
       );
     }

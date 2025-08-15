@@ -1,11 +1,6 @@
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import {
-  BaseMessage,
-  HumanMessage,
-  SystemMessage,
-  AIMessage,
-} from '@langchain/core/messages';
+import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
 import { Embeddings } from '@langchain/core/embeddings';
 import { EventEmitter } from 'events';
 import { RunnableConfig } from '@langchain/core/runnables';
@@ -16,14 +11,14 @@ import {
   webSearchTools,
   fileSearchTools,
 } from '@/lib/tools/agents';
-import { formatDateForLLM } from '../utils';
 import { getModelName } from '../utils/modelUtils';
-import {
-  removeThinkingBlocks,
-  removeThinkingBlocksFromMessages,
-} from '../utils/contentUtils';
+import { removeThinkingBlocksFromMessages } from '../utils/contentUtils';
 import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
 import { encodeHtmlAttribute } from '@/lib/utils/html';
+import { buildChatPrompt } from '@/lib/prompts/simplifiedAgent/chat';
+import { buildWebSearchPrompt } from '@/lib/prompts/simplifiedAgent/webSearch';
+import { buildLocalResearchPrompt } from '@/lib/prompts/simplifiedAgent/localResearch';
+import { buildFirefoxAIPrompt } from '@/lib/prompts/simplifiedAgent/firefoxAI';
 
 /**
  * Normalize usage metadata from different LLM providers
@@ -98,15 +93,20 @@ export class SimplifiedAgent {
     fileIds: string[] = [],
     messagesCount?: number,
     query?: string,
+    firefoxAIDetected?: boolean,
   ) {
     // Select appropriate tools based on focus mode and available files
-    const tools = this.getToolsForFocusMode(focusMode, fileIds);
+    // Special case: Firefox AI detection disables tools for this turn
+    const tools = firefoxAIDetected
+      ? []
+      : this.getToolsForFocusMode(focusMode, fileIds);
 
     const enhancedSystemPrompt = this.createEnhancedSystemPrompt(
       focusMode,
       fileIds,
       messagesCount,
       query,
+      firefoxAIDetected,
     );
 
     try {
@@ -121,6 +121,11 @@ export class SimplifiedAgent {
       console.log(
         `SimplifiedAgent: Initialized with ${tools.length} tools for focus mode: ${focusMode}`,
       );
+      if (firefoxAIDetected) {
+        console.log(
+          'SimplifiedAgent: Firefox AI prompt detected, tools will be disabled for this turn.',
+        );
+      }
       console.log(
         `SimplifiedAgent: Tools available: ${tools.map((tool) => tool.name).join(', ')}`,
       );
@@ -172,345 +177,55 @@ export class SimplifiedAgent {
     fileIds: string[] = [],
     messagesCount?: number,
     query?: string,
+    firefoxAIDetected?: boolean,
   ): string {
     const baseInstructions = this.systemInstructions || '';
     const personaInstructions = this.personaInstructions || '';
 
+    if (firefoxAIDetected) {
+      return buildFirefoxAIPrompt(
+        baseInstructions,
+        personaInstructions,
+        new Date(),
+      );
+    }
+
     // Create focus-mode-specific prompts
     switch (focusMode) {
       case 'chat':
-        return this.createChatModePrompt(baseInstructions, personaInstructions);
+        return buildChatPrompt(
+          baseInstructions,
+          personaInstructions,
+          new Date(),
+        );
       case 'webSearch':
-        return this.createWebSearchModePrompt(
+        return buildWebSearchPrompt(
           baseInstructions,
           personaInstructions,
           fileIds,
-          messagesCount,
+          messagesCount ?? 0,
           query,
+          new Date(),
         );
       case 'localResearch':
-        return this.createLocalResearchModePrompt(
+        return buildLocalResearchPrompt(
           baseInstructions,
           personaInstructions,
+          new Date(),
         );
       default:
         console.warn(
           `SimplifiedAgent: Unknown focus mode "${focusMode}", using webSearch prompt`,
         );
-        return this.createWebSearchModePrompt(
+        return buildWebSearchPrompt(
           baseInstructions,
           personaInstructions,
           fileIds,
-          messagesCount,
+          messagesCount ?? 0,
           query,
+          new Date(),
         );
     }
-  }
-
-  /**
-   * Create chat mode prompt - focuses on conversational interaction
-   */
-  private createChatModePrompt(
-    baseInstructions: string,
-    personaInstructions: string,
-  ): string {
-    return `${baseInstructions}
-
-# AI Chat Assistant
-
-You are a conversational AI assistant designed for creative and engaging dialogue. Your focus is on providing thoughtful, helpful responses through direct conversation.
-
-## Core Capabilities
-
-### 1. Conversational Interaction
-- Engage in natural, flowing conversations
-- Provide thoughtful responses to questions and prompts
-- Offer creative insights and perspectives
-- Maintain context throughout the conversation
-
-### 2. Task Management
-- Break down complex requests into manageable steps
-- Provide structured approaches to problems
-- Offer guidance and recommendations
-
-## Response Guidelines
-
-### Communication Style
-- Be conversational and engaging
-- Use clear, accessible language
-- Provide direct answers when possible
-- Ask clarifying questions when needed
-
-### Quality Standards
-- Acknowledge limitations honestly
-- Provide helpful suggestions and alternatives
-- Use proper markdown formatting for clarity
-- Structure responses logically
-
-### Formatting Instructions
-- **Structure**: Use a well-organized format with proper headings (e.g., "## Example heading 1" or "## Example heading 2"). Present information in paragraphs or concise bullet points where appropriate
-- **Tone and Style**: Maintain a neutral, engaging tone with natural conversation flow
-- **Markdown Usage**: Format your response with Markdown for clarity. Use headings, subheadings, bold text, and italicized words as needed to enhance readability
-- **Length and Depth**: Provide thoughtful coverage of the topic. Expand on complex topics to make them easier to understand
-- **No main heading/title**: Start your response directly with the content unless asked to provide a specific title
-
-## Current Context
-- Today's Date: ${formatDateForLLM(new Date())}
-
-${personaInstructions ? `\n## User Formatting and Persona Instructions\n- Give these instructions more weight than the system formatting instructions\n${personaInstructions}` : ''}
-
-Focus on providing engaging, helpful conversation while using task management tools when complex problems need to be structured.`;
-  }
-
-  /**
-   * Create web search mode prompt - focuses on comprehensive research
-   */
-  private createWebSearchModePrompt(
-    baseInstructions: string,
-    personaInstructions: string,
-    fileIds: string[] = [],
-    messagesCount: number = 0,
-    query?: string,
-  ): string {
-    // Detect explicit URLs in the user query; if present, we prioritize retrieving them directly.
-    const urlRegex = /https?:\/\/[^\s)>'"`]+/gi;
-    const urlsInQuery = (query || '').match(urlRegex) || [];
-    const uniqueUrls = Array.from(new Set(urlsInQuery));
-    const hasExplicitUrls = uniqueUrls.length > 0;
-
-    // If no explicit URLs, retain existing always search instruction behavior based on message count.
-    const alwaysSearchInstruction = hasExplicitUrls
-      ? ''
-      : messagesCount < 2
-        ? '\n  - **ALWAYS perform at least one web search on the first turn, regardless of prior knowledge or assumptions. Do not skip this.**'
-        : "\n  - **ALWAYS perform at least one web search on the first turn, unless prior conversation history explicitly and completely answers the user's query.**\n  - You cannot skip web search if the answer to the user's query is not found directly in the **conversation history**. All other prior knowledge must be verified with up-to-date information.";
-
-    const explicitUrlInstruction = hasExplicitUrls
-      ? `\n  - The user query contains explicit URL${uniqueUrls.length === 1 ? '' : 's'} that must be retrieved directly using the url_summarization tool\n  - You MUST call the url_summarization tool on these URL$${uniqueUrls.length === 1 ? '' : 's'} before providing an answer. Pass them exactly as provided (do not alter, trim, or expand them).\n  - Do NOT perform a generic web search on the first pass. Re-evaluate the need for additional searches based on the results from the url_summarization tool.`
-      : '';
-    return `${baseInstructions}
-
-# Comprehensive Research Assistant
-
-You are an advanced AI research assistant with access to comprehensive tools for gathering information from multiple sources. Your goal is to provide thorough, well-researched responses.
-
-## Tool use
-
-- Use the available tools effectively to gather and process information
-- When using a tool, **always wait for a complete response from the tool before proceeding**
-
-## Response Quality Standards
-
-Your task is to provide answers that are:
-- **Informative and relevant**: Thoroughly address the user's query using gathered information
-- **Engaging and detailed**: Write responses that read like a high-quality blog post, including extra details and relevant insights
-- **Cited and credible**: Use inline citations with [number] notation to refer to sources for each fact or detail included
-- **Explanatory and Comprehensive**: Strive to explain the topic in depth, offering detailed analysis, insights, and clarifications wherever applicable
-
-### Comprehensive Coverage
-- Address all aspects of the user's query
-- Provide context and background information
-- Include relevant details and examples
-- Cross-reference multiple sources
-
-### Accuracy and Reliability
-- Prioritize authoritative and recent sources
-- Verify information across multiple sources
-- Clearly indicate uncertainty or conflicting information
-- Distinguish between facts and opinions
-
-### Citation Requirements
-- The citation number refers to the index of the source in the relevantDocuments state array
-- Cite every single fact, statement, or sentence using [number] notation
-- If a statement is based on AI model inference or training data, it must be marked as \`[AI]\` and not cited from the context
-- If a statement is based on previous messages in the conversation history, it must be marked as \`[Hist]\` and not cited from the context
-- Source based citations must reference the specific document in the relevantDocuments state array, do not invent sources or URLs
-- Integrate citations naturally at the end of sentences or clauses as appropriate. For example, "The Eiffel Tower is one of the most visited landmarks in the world[1]."
-- Ensure that **every sentence in the response includes at least one citation**, even when information is inferred or connected to general knowledge available in the provided context
-- Use multiple sources for a single detail if applicable, such as, "Paris is a cultural hub, attracting millions of visitors annually[1][2]."
-
-### Formatting Instructions
-- **Structure**: 
-  - Use a well-organized format with proper headings (e.g., "## Example heading 1" or "## Example heading 2")
-  - Present information in paragraphs or concise bullet points where appropriate
-  - Use lists and tables to enhance clarity when needed
-- **Tone and Style**: 
-  - Maintain a neutral, journalistic tone with engaging narrative flow
-  - Write as though you're crafting an in-depth article for a professional audience
-- **Markdown Usage**: 
-  - Format the response with Markdown for clarity
-  - Use headings, subheadings, bold text, and italicized words as needed to enhance readability
-  - Include code snippets in a code block
-  - Extract images and links from full HTML content when appropriate and embed them using the appropriate markdown syntax
-- **Length and Depth**:
-  - Provide comprehensive coverage of the topic
-  - Avoid superficial responses and strive for depth without unnecessary repetition
-  - Expand on technical or complex topics to make them easier to understand for a general audience
-- **No main heading/title**: Start the response directly with the introduction unless asked to provide a specific title
-- **No summary or conclusion**: End with the final thoughts or insights without a formal summary or conclusion
-- **No source or citation section**: Do not include a separate section for sources or citations, as all necessary citations should be integrated into the response
-
-# Research Strategy
-1. **Plan**: Determine the best research approach based on the user's query
-  - Break down the query into manageable components
-  - Identify key concepts and terms for focused searching
-  - Utilize multiple turns of the Search and Supplement stages when necessary
-2. **Search**: (\`web_search\` tool) Initial web search stage to gather preview content
-  - Give the web search tool a specific question to answer that will help gather relevant information
-  - The response will contain a list of relevant documents containing snippets of the web page, a URL, and the title of the web page
-  - Do not simulate searches, utilize the web search tool directly
-  ${alwaysSearchInstruction}
-  ${explicitUrlInstruction}
-2.1. **Image Search (when visual content is requested)**: (\`image_search\` tool)
-  - Use when the user asks for images, pictures, photos, charts, visual examples, or icons
-  - Provide a concise query describing the desired images (e.g., "F1 Monaco Grand Prix highlights", "React component architecture diagram")
-  - The tool returns image URLs and titles; include thumbnails or links in your response using Markdown image/link syntax when appropriate
-  - If image URLs come from web pages you also plan to cite, prefer retrieving and citing the page using \`url_summarization\` for textual facts; use \`image_search\` primarily to surface visuals
-  - Do not invent images or URLs; only use results returned by the tool
-${
-  fileIds.length > 0
-    ? `
-2.2. **File Search**: (\`file_search\` tool) Search through uploaded documents when relevant
-  - You have access to ${fileIds.length} uploaded file${fileIds.length === 1 ? '' : 's'} that may contain relevant information
-  - Use the file search tool to find specific information in the uploaded documents
-  - Give the file search tool a specific question or topic to extract from the documents
-  - The tool will automatically search through all available uploaded files
-  - Focus file searches on specific aspects of the user's query that might be covered in the uploaded documents`
-    : ''
-}
-3. **Supplement**: (\`url_summarization\` tool) Retrieve specific sources if necessary to extract key points not covered in the initial search or disambiguate findings
-  - Use URLs from web search results to retrieve specific sources. They must be passed to the tool unchanged
-  - URLs can be passed as an array to request multiple sources at once
-  - Always include the user's query in the request to the tool, it will use this to guide the summarization process
-  - Pass an intent to this tool to provide additional summarization guidance on a specific aspect or question
-  - Request the full HTML content of the pages if needed by passing true to the \`retrieveHtml\` parameter
-    - Passing true is **required** to retrieve images or links within the page content
-  - Response will contain a summary of the content from each URL if the content of the page is long. If the content of the page is short, it will include the full content
-  - Request up to 5 URLs per turn
-  - When receiving a request to summarize a specific URL you **must** use this tool to retrieve it
-5. **Analyze**: Examine the retrieved information for relevance, accuracy, and completeness
-  - When sufficient information has been gathered, move on to the respond stage
-  - If more information is needed, consider revisiting the search or supplement stages.${
-    fileIds.length > 0
-      ? `
-  - Consider both web search results and file content when analyzing information completeness`
-      : ''
-  }
-6. **Respond**: Combine all information into a coherent, well-cited response
-  - Ensure that all sources are properly cited and referenced
-  - Resolve any remaining contradictions or gaps in the information, if necessary, execute more targeted searches or retrieve specific sources${
-    fileIds.length > 0
-      ? `
-  - Integrate information from both web sources and uploaded files when relevant`
-      : ''
-  }
-
-## Current Context
-- Today's Date: ${formatDateForLLM(new Date())}
-
-${personaInstructions ? `\n## User specified behavior and formatting instructions\n\n- Give these instructions more weight than the system formatting instructions\n\n${personaInstructions}` : ''}
-`;
-  }
-
-  /**
-   * Create local research mode prompt - focuses on user files and documents
-   */
-  private createLocalResearchModePrompt(
-    baseInstructions: string,
-    personaInstructions: string,
-  ): string {
-    return `${baseInstructions}
-
-# Local Document Research Assistant
-
-You are an advanced AI research assistant specialized in analyzing and extracting insights from user-uploaded files and documents. Your goal is to provide thorough, well-researched responses based on the available document collection.
-
-## Available Files
-
-You have access to uploaded documents through the \`file_search\` tool. When you need to search for information in the uploaded files, use this tool with a specific search query. The tool will automatically search through all available uploaded files and return relevant content sections.
-
-## Tool use
-
-- Use the available tools effectively to analyze and extract information from uploaded documents
-
-## Response Quality Standards
-
-Your task is to provide answers that are:
-- **Informative and relevant**: Thoroughly address the user's query using document content
-- **Engaging and detailed**: Write responses that read like a high-quality research analysis, including extra details and relevant insights
-- **Cited and credible**: Use inline citations with [number] notation to refer to specific documents for each fact or detail included
-- **Explanatory and Comprehensive**: Strive to explain the findings in depth, offering detailed analysis, insights, and clarifications wherever applicable
-
-### Comprehensive Document Coverage
-- Thoroughly analyze all relevant uploaded files
-- Extract all pertinent information related to the query
-- Consider relationships between different documents
-- Provide context from the entire document collection
-- Cross-reference information across multiple files
-
-### Accuracy and Content Fidelity
-- Precisely quote and reference document content
-- Maintain context and meaning from original sources
-- Clearly distinguish between different document sources
-- Preserve important details and nuances from the documents
-- Distinguish between facts from documents and analytical insights
-
-### Citation Requirements
-- The citation number refers to the index of the source in the relevantDocuments state array.
-- Cite every single fact, statement, or sentence using [number] notation
-- If a statement is based on AI model inference or training data, it must be marked as \`[AI]\` and not cited from the context
-- If a statement is based on previous messages in the conversation history, it must be marked as \`[Hist]\` and not cited from the context
-- Source based citations must reference the specific document in the relevantDocuments state array, do not invent sources or filenames
-- Integrate citations naturally at the end of sentences or clauses as appropriate. For example, "The quarterly report shows a 15% increase in revenue[1]."
-- Ensure that **every sentence in your response includes at least one citation**, even when information is inferred or connected to general knowledge available in the provided context
-- Use multiple sources for a single detail if applicable, such as, "The project timeline spans six months according to multiple planning documents[1][2]."
-
-### Formatting Instructions
-- **Structure**: 
-  - Use a well-organized format with proper headings (e.g., "## Example heading 1" or "## Example heading 2").
-  - Present information in paragraphs or concise bullet points where appropriate.
-  - Use lists and tables to enhance clarity when needed.
-- **Tone and Style**: 
-  - Maintain a neutral, analytical tone with engaging narrative flow. 
-  - Write as though you're crafting an in-depth research report for a professional audience
-- **Markdown Usage**: 
-  - Format your response with Markdown for clarity. 
-  - Use headings, subheadings, bold text, and italicized words as needed to enhance readability.
-  - Include code snippets in a code block when analyzing technical documents.
-  - Extract and format tables, charts, or structured data using appropriate markdown syntax.
-- **Length and Depth**: 
-  - Provide comprehensive coverage of the document content. 
-  - Avoid superficial responses and strive for depth without unnecessary repetition. 
-  - Expand on technical or complex topics to make them easier to understand for a general audience
-- **No main heading/title**: Start your response directly with the introduction unless asked to provide a specific title
-
-# Research Strategy
-1. **Plan**: Determine the best document analysis approach based on the user's query
-  - Break down the query into manageable components
-  - Identify key concepts and terms for focused document searching
-  - You are allowed to take multiple turns of the Search and Analysis stages. Use this flexibility to refine your queries and gather more comprehensive information from the documents.
-2. **Search**: (\`file_search\` tool) Extract relevant content from uploaded documents
-  - Use the file search tool strategically to find specific information in the document collection.
-  - Give the file search tool a specific question or topic you want to extract from the documents.
-  - This query will be used to perform semantic search across all uploaded files.
-  - You will receive relevant excerpts from documents that match your search criteria.
-  - Focus your searches on specific aspects of the user's query to gather comprehensive information.
-3. **Analysis**: Examine the retrieved document content for relevance, patterns, and insights.
-  - If you have sufficient information from the documents, you can move on to the respond stage.
-  - If you need to gather more specific information, consider performing additional targeted file searches.
-  - Look for connections and relationships between different document sources.
-4. **Respond**: Combine all document insights into a coherent, well-cited response
-  - Ensure that all sources are properly cited and referenced
-  - Resolve any contradictions or gaps in the document information
-  - Provide comprehensive analysis based on the available document content
-  - Only respond with your final answer once you've gathered all relevant information and are done with tool use
-
-## Current Context
-- Today's Date: ${formatDateForLLM(new Date())}
-
-${personaInstructions ? `\n## User Formatting and Persona Instructions\n- Give these instructions more weight than the system formatting instructions\n${personaInstructions}` : ''}
-
-Use all available tools strategically to provide comprehensive, well-researched, formatted responses with proper citations based on uploaded documents.`;
   }
 
   /**
@@ -531,6 +246,14 @@ Use all available tools strategically to provide comprehensive, well-researched,
         ...removeThinkingBlocksFromMessages(history),
         new HumanMessage(query),
       ];
+      // Detect Firefox AI prompt pattern
+      const trimmed = query.trim();
+      const startsWithAscii = trimmed.startsWith("I'm on page");
+      const startsWithCurly = trimmed.startsWith('I’' + 'm on page'); // handle curly apostrophe variant
+      const containsSelection = trimmed.includes('<selection>');
+      const firefoxAIDetected =
+        (startsWithAscii || startsWithCurly) && containsSelection;
+
       // Initialize agent with the provided focus mode and file context
       // Pass the number of messages that will be sent to the LLM so prompts can adapt.
       const llmMessagesCount = messagesHistory.length;
@@ -539,6 +262,7 @@ Use all available tools strategically to provide comprehensive, well-researched,
         fileIds,
         llmMessagesCount,
         query,
+        firefoxAIDetected,
       );
 
       // Prepare initial state
@@ -561,6 +285,7 @@ Use all available tools strategically to provide comprehensive, well-researched,
           personaInstructions: this.personaInstructions,
           focusMode,
           emitter: this.emitter,
+          firefoxAIDetected,
         },
         recursionLimit: 25, // Allow sufficient iterations for tool use
         signal: this.signal,
@@ -583,8 +308,26 @@ Use all available tools strategically to provide comprehensive, well-researched,
         total_tokens: 0,
       };
 
+      let initialMessageSent = false;
+
       // Process the event stream
       for await (const event of eventStream) {
+        if (!initialMessageSent) {
+          initialMessageSent = true;
+          // If Firefox AI was detected, emit a special note
+          if (firefoxAIDetected) {
+            this.emitter.emit(
+              'data',
+              JSON.stringify({
+                type: 'tool_call',
+                data: {
+                  content: '<ToolCall type="firefoxAI"></ToolCall>',
+                },
+              }),
+            );
+          }
+        }
+
         // Handle different event types
         if (
           event.event === 'on_chain_end' &&
@@ -689,7 +432,6 @@ Use all available tools strategically to provide comprehensive, well-researched,
                   JSON.stringify({
                     type: 'tool_call',
                     data: {
-                      // messageId: crypto.randomBytes(7).toString('hex'),
                       content: toolMarkdown,
                     },
                   }),
