@@ -233,6 +233,8 @@ This fork adds several enhancements to the original Perplexica project:
 - ✅ **Observability**: Built-in support for tracing and monitoring LLM calls using Langfuse or LangSmith.
   - See [Tracing LLM Calls in Perplexica](docs/installation/TRACING.md) for more details.
 
+- ✅ **Firefox AI Integration**: Enhanced support for Firefox users with tailored features and optimizations when Firefox AI prompts are detected.
+
 ### Bug Fixes
 
 - ✅ Improved history rewriting
