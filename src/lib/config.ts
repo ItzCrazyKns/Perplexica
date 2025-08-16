@@ -45,6 +45,7 @@ interface Config {
       API_URL: string;
       API_KEY: string;
       MODEL_NAME: string;
+      EMBEDDING_MODEL_NAME: string;
     };
   };
   API_ENDPOINTS: {
@@ -98,6 +99,9 @@ export const getCustomOpenaiApiUrl = () =>
 
 export const getCustomOpenaiModelName = () =>
   loadConfig().MODELS.CUSTOM_OPENAI.MODEL_NAME;
+
+export const getCustomOpenaiEmbeddingModelName = () =>
+  loadConfig().MODELS.CUSTOM_OPENAI.EMBEDDING_MODEL_NAME;
 
 export const getLMStudioApiEndpoint = () =>
   loadConfig().MODELS.LM_STUDIO.API_URL;

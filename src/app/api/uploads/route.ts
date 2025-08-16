@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { getAvailableEmbeddingModelProviders } from '@/lib/providers';
+import { getCustomOpenaiApiUrl } from '@/lib/config';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
@@ -46,6 +47,14 @@ export async function POST(req: Request) {
     const embeddingModel =
       embedding_model ?? Object.keys(embeddingModels[provider as string])[0];
 
+    console.log('[Models] Upload embeddings request', {
+      embeddingProvider: provider,
+      embeddingModel,
+      ...(provider === 'custom_openai'
+        ? { embeddingBaseURL: getCustomOpenaiApiUrl() }
+        : {}),
+    });
+
     let embeddingsModel =
       embeddingModels[provider as string]?.[embeddingModel as string]?.model;
     if (!embeddingsModel) {
@@ -54,6 +63,28 @@ export async function POST(req: Request) {
         { status: 400 },
       );
     }
+
+    const loggedEmbeddings = new Proxy(embeddingsModel as any, {
+      get(target, prop, receiver) {
+        if (prop === 'embedQuery' || prop === 'embedDocuments') {
+          return (...args: any[]) => {
+            console.log('[Models] Upload embedding model call', {
+              provider,
+              model: embeddingModel,
+              method: String(prop),
+              size:
+                prop === 'embedDocuments'
+                  ? Array.isArray(args[0])
+                    ? args[0].length
+                    : undefined
+                  : undefined,
+            });
+            return (target as any)[prop](...args);
+          };
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
 
     const processedFiles: FileRes[] = [];
 
@@ -98,7 +129,7 @@ export async function POST(req: Request) {
           }),
         );
 
-        const embeddings = await embeddingsModel.embedDocuments(
+        const embeddings = await loggedEmbeddings.embedDocuments(
           splitted.map((doc) => doc.pageContent),
         );
         const embeddingsDataPath = filePath.replace(

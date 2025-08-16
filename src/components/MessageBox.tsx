@@ -42,6 +42,7 @@ const MessageBox = ({
   isLast,
   rewrite,
   sendMessage,
+  statusText,
 }: {
   message: Message;
   messageIndex: number;
@@ -51,6 +52,7 @@ const MessageBox = ({
   isLast: boolean;
   rewrite: (messageId: string) => void;
   sendMessage: (message: string) => void;
+  statusText?: string;
 }) => {
   const [parsedMessage, setParsedMessage] = useState(message.content);
   const [speechMessage, setSpeechMessage] = useState(message.content);
@@ -182,7 +184,7 @@ const MessageBox = ({
                   size={20}
                 />
                 <h3 className="text-black dark:text-white font-medium text-xl">
-                  Answer
+                  {loading && isLast && statusText ? statusText : 'Answer'}
                 </h3>
               </div>
 

@@ -31,5 +31,6 @@ COPY --from=builder /home/perplexica/migrator/index.js ./migrate.js
 RUN mkdir /home/perplexica/uploads
 
 COPY entrypoint.sh ./entrypoint.sh
+RUN sed -i 's/\r$//' ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
-CMD ["./entrypoint.sh"]
+CMD ["/bin/sh","/home/perplexica/entrypoint.sh"]

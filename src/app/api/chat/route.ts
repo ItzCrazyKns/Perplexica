@@ -61,10 +61,22 @@ const handleEmitterEvents = async (
 ) => {
   let recievedMessage = '';
   let sources: any[] = [];
+  let sentGeneratingStatus = false;
 
-  stream.on('data', (data) => {
+  stream.on('data', (data: string) => {
     const parsedData = JSON.parse(data);
     if (parsedData.type === 'response') {
+      if (!sentGeneratingStatus) {
+        writer.write(
+          encoder.encode(
+            JSON.stringify({
+              type: 'status',
+              data: 'Generating answer...',
+            }) + '\n',
+          ),
+        );
+        sentGeneratingStatus = true;
+      }
       writer.write(
         encoder.encode(
           JSON.stringify({
@@ -77,6 +89,17 @@ const handleEmitterEvents = async (
 
       recievedMessage += parsedData.data;
     } else if (parsedData.type === 'sources') {
+      if (!sentGeneratingStatus) {
+        writer.write(
+          encoder.encode(
+            JSON.stringify({
+              type: 'status',
+              data: 'Generating answer...',
+            }) + '\n',
+          ),
+        );
+        sentGeneratingStatus = true;
+      }
       writer.write(
         encoder.encode(
           JSON.stringify({
@@ -114,8 +137,16 @@ const handleEmitterEvents = async (
       })
       .execute();
   });
-  stream.on('error', (data) => {
+  stream.on('error', (data: string) => {
     const parsedData = JSON.parse(data);
+    writer.write(
+      encoder.encode(
+        JSON.stringify({
+          type: 'status',
+          data: 'Chat completion failed.',
+        }) + '\n',
+      ),
+    );
     writer.write(
       encoder.encode(
         JSON.stringify({
@@ -218,6 +249,28 @@ export const POST = async (req: Request) => {
         body.embeddingModel?.name || Object.keys(embeddingProvider)[0]
       ];
 
+    const selectedChatProviderKey =
+      body.chatModel?.provider || Object.keys(chatModelProviders)[0];
+    const selectedChatModelKey =
+      body.chatModel?.name || Object.keys(chatModelProvider)[0];
+    const selectedEmbeddingProviderKey =
+      body.embeddingModel?.provider || Object.keys(embeddingModelProviders)[0];
+    const selectedEmbeddingModelKey =
+      body.embeddingModel?.name || Object.keys(embeddingProvider)[0];
+
+    console.log('[Models] Chat request', {
+      chatProvider: selectedChatProviderKey,
+      chatModel: selectedChatModelKey,
+      embeddingProvider: selectedEmbeddingProviderKey,
+      embeddingModel: selectedEmbeddingModelKey,
+      ...(selectedChatProviderKey === 'custom_openai'
+        ? { chatBaseURL: getCustomOpenaiApiUrl() }
+        : {}),
+      ...(selectedEmbeddingProviderKey === 'custom_openai'
+        ? { embeddingBaseURL: getCustomOpenaiApiUrl() }
+        : {}),
+    });
+
     let llm: BaseChatModel | undefined;
     let embedding = embeddingModel.model;
 
@@ -272,11 +325,54 @@ export const POST = async (req: Request) => {
       );
     }
 
+    const llmProxy = new Proxy(llm as any, {
+      get(target, prop, receiver) {
+        if (
+          prop === 'invoke' ||
+          prop === 'stream' ||
+          prop === 'streamEvents' ||
+          prop === 'generate'
+        ) {
+          return (...args: any[]) => {
+            console.log('[Models] Chat model call', {
+              provider: selectedChatProviderKey,
+              model: selectedChatModelKey,
+              method: String(prop),
+            });
+            return (target as any)[prop](...args);
+          };
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+
+    const embeddingProxy = new Proxy(embedding as any, {
+      get(target, prop, receiver) {
+        if (prop === 'embedQuery' || prop === 'embedDocuments') {
+          return (...args: any[]) => {
+            console.log('[Models] Embedding model call', {
+              provider: selectedEmbeddingProviderKey,
+              model: selectedEmbeddingModelKey,
+              method: String(prop),
+              size:
+                prop === 'embedDocuments'
+                  ? Array.isArray(args[0])
+                    ? args[0].length
+                    : undefined
+                  : undefined,
+            });
+            return (target as any)[prop](...args);
+          };
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+
     const stream = await handler.searchAndAnswer(
       message.content,
       history,
-      llm,
-      embedding,
+      llmProxy as any,
+      embeddingProxy as any,
       body.optimizationMode,
       body.files,
       body.systemInstructions,
@@ -285,6 +381,18 @@ export const POST = async (req: Request) => {
     const responseStream = new TransformStream();
     const writer = responseStream.writable.getWriter();
     const encoder = new TextEncoder();
+
+    writer.write(
+      encoder.encode(
+        JSON.stringify({
+          type: 'status',
+          data:
+            body.focusMode === 'writingAssistant'
+              ? 'Waiting for chat completion...'
+              : 'Searching web...',
+        }) + '\n',
+      ),
+    );
 
     handleEmitterEvents(stream, writer, encoder, aiMessageId, message.chatId);
     handleHistorySave(message, humanMessageId, body.focusMode, body.files);

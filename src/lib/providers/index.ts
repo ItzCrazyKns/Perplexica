@@ -10,8 +10,9 @@ import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
+  getCustomOpenaiEmbeddingModelName,
 } from '../config';
-import { ChatOpenAI } from '@langchain/openai';
+import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import {
   loadOllamaChatModels,
   loadOllamaEmbeddingModels,
@@ -142,6 +143,29 @@ export const getAvailableEmbeddingModelProviders = async () => {
       models[provider] = providerModels;
     }
   }
+
+  const customOpenAiApiKey = getCustomOpenaiApiKey();
+  const customOpenAiApiUrl = getCustomOpenaiApiUrl();
+  const customOpenAiEmbeddingModelName = getCustomOpenaiEmbeddingModelName();
+
+  models['custom_openai'] = {
+    ...(customOpenAiApiKey &&
+    customOpenAiApiUrl &&
+    customOpenAiEmbeddingModelName
+      ? {
+          [customOpenAiEmbeddingModelName]: {
+            displayName: customOpenAiEmbeddingModelName,
+            model: new OpenAIEmbeddings({
+              apiKey: customOpenAiApiKey,
+              modelName: customOpenAiEmbeddingModelName,
+              configuration: {
+                baseURL: customOpenAiApiUrl,
+              },
+            }) as unknown as Embeddings,
+          },
+        }
+      : {}),
+  };
 
   return models;
 };
