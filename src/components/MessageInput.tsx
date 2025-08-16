@@ -6,6 +6,7 @@ import Attach from './MessageInputActions/Attach';
 import CopilotToggle from './MessageInputActions/Copilot';
 import { File } from './ChatWindow';
 import AttachSmall from './MessageInputActions/AttachSmall';
+import { useTranslations } from 'next-intl';
 
 const MessageInput = ({
   sendMessage,
@@ -22,6 +23,7 @@ const MessageInput = ({
   files: File[];
   setFiles: (files: File[]) => void;
 }) => {
+  const t = useTranslations('components.messageInput');
   const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [message, setMessage] = useState('');
   const [textareaRows, setTextareaRows] = useState(1);
@@ -95,7 +97,7 @@ const MessageInput = ({
           setTextareaRows(Math.ceil(height / props.rowHeight));
         }}
         className="transition bg-transparent dark:placeholder:text-white/50 placeholder:text-sm text-sm dark:text-white resize-none focus:outline-none w-full px-2 max-h-24 lg:max-h-36 xl:max-h-48 flex-grow flex-shrink"
-        placeholder="Ask a follow-up"
+        placeholder={t('placeholder')}
       />
       {mode === 'single' && (
         <div className="flex flex-row items-center space-x-4">

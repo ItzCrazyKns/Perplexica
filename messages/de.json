@@ -1,0 +1,251 @@
+{
+  "metadata": {
+    "title": "Perplexica - Mit dem Internet chatten",
+    "description": "Perplexica ist ein KI-Chatbot, der mit dem Internet verbunden ist."
+  },
+  "manifest": {
+    "name": "Perplexica - Mit dem Internet chatten",
+    "shortName": "Perplexica",
+    "description": "Perplexica ist ein KI-Chatbot, der mit dem Internet verbunden ist."
+  },
+  "navigation": {
+    "home": "Startseite",
+    "discover": "Entdecken",
+    "library": "Bibliothek",
+    "settings": "Einstellungen"
+  },
+  "common": {
+    "appName": "Perplexica",
+    "exportedOn": "Exportiert am:",
+    "citations": "Quellen:",
+    "user": "Benutzer",
+    "assistant": "Assistent",
+    "errors": {
+      "noChatModelsAvailable": "Keine Chat-Modelle verfügbar",
+      "chatProviderNotConfigured": "Es scheint, dass kein Chat-Model-Anbieter konfiguriert ist. Bitte konfigurieren Sie diesen auf der Einstellungsseite oder in der Konfigurationsdatei.",
+      "noEmbeddingModelsAvailable": "Keine Embedding-Modelle verfügbar",
+      "cannotSendBeforeConfigReady": "Nachricht kann nicht gesendet werden, bevor die Konfiguration abgeschlossen ist",
+      "failedToDeleteChat": "Chat konnte nicht gelöscht werden"
+    }
+  },
+  "navbar": {
+    "exportAsMarkdown": "Als Markdown exportieren",
+    "exportAsPDF": "Als PDF exportieren"
+  },
+  "export": {
+    "chatExportTitle": "Chat-Export: {title}"
+  },
+  "weather": {
+    "conditions": {
+      "clear": "Klar",
+      "mainlyClear": "Überwiegend klar",
+      "partlyCloudy": "Teilweise bewölkt",
+      "cloudy": "Bewölkt",
+      "fog": "Nebel",
+      "lightDrizzle": "Leichter Nieselregen",
+      "moderateDrizzle": "Mäßiger Nieselregen",
+      "denseDrizzle": "Starker Nieselregen",
+      "lightFreezingDrizzle": "Leichter gefrierender Nieselregen",
+      "denseFreezingDrizzle": "Starker gefrierender Nieselregen",
+      "slightRain": "Leichter Regen",
+      "moderateRain": "Mäßiger Regen",
+      "heavyRain": "Starker Regen",
+      "lightFreezingRain": "Leichter gefrierender Regen",
+      "heavyFreezingRain": "Starker gefrierender Regen",
+      "slightSnowFall": "Leichter Schneefall",
+      "moderateSnowFall": "Mäßiger Schneefall",
+      "heavySnowFall": "Starker Schneefall",
+      "snow": "Schneefall",
+      "slightRainShowers": "Leichte Regenschauer",
+      "moderateRainShowers": "Regenschauer",
+      "heavyRainShowers": "Starke Regenschauer",
+      "slightSnowShowers": "Leichte Schneeschauer",
+      "moderateSnowShowers": "Schneeschauer",
+      "heavySnowShowers": "Starke Schneeschauer",
+      "thunderstorm": "Gewitter",
+      "thunderstormSlightHail": "Gewitter mit kleinem Hagel",
+      "thunderstormHeavyHail": "Gewitter mit starkem Hagel"
+    }
+  },
+  "pages": {
+    "home": {
+      "title": "Chat - Perplexica",
+      "description": "Chatten Sie mit dem Internet, chatten Sie mit Perplexica."
+    },
+    "discover": {
+      "title": "Entdecken",
+      "topics": {
+        "tech": "Technik & Wissenschaft",
+        "finance": "Finanzen",
+        "art": "Kunst & Kultur",
+        "sports": "Sport",
+        "entertainment": "Unterhaltung"
+      },
+      "errorFetchingData": "Fehler beim Abrufen der Daten"
+    },
+    "library": {
+      "title": "Bibliothek",
+      "empty": "Keine Chats gefunden.",
+      "ago": "vor {time}"
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "sections": {
+        "preferences": "Voreinstellungen",
+        "automaticSearch": "Automatische Suche",
+        "systemInstructions": "Systemanweisungen",
+        "modelSettings": "Modelleinstellungen",
+        "apiKeys": "API-Schlüssel"
+      },
+      "preferences": {
+        "theme": "Theme",
+        "measurementUnits": "Maßeinheiten",
+        "language": "Sprache",
+        "metric": "Metrisch",
+        "imperial": "Imperial"
+      },
+      "automaticSearch": {
+        "image": {
+          "title": "Automatische Bildsuche",
+          "desc": "Automatisch relevante Bilder in Chat-Antworten suchen"
+        },
+        "video": {
+          "title": "Automatische Videosuche",
+          "desc": "Automatisch relevante Videos in Chat-Antworten suchen"
+        }
+      },
+      "model": {
+        "chatProvider": "Anbieter des Chat-Modells",
+        "chat": "Chat-Modell",
+        "noModels": "Keine Modelle verfügbar",
+        "invalidProvider": "Ungültiger Anbieter, bitte prüfen Sie die Backend-Logs",
+        "custom": {
+          "modelName": "Modellname",
+          "apiKey": "Benutzerdefinierter OpenAI API-Schlüssel",
+          "baseUrl": "Benutzerdefinierte OpenAI-Basis-URL"
+        }
+      },
+      "embedding": {
+        "provider": "Anbieter des Embedding-Modells",
+        "model": "Embedding-Modell"
+      },
+      "api": {
+        "openaiApiKey": "OpenAI API-Schlüssel",
+        "ollamaApiUrl": "Ollama API-URL",
+        "groqApiKey": "GROQ API-Schlüssel",
+        "anthropicApiKey": "Anthropic API-Schlüssel",
+        "geminiApiKey": "Gemini API-Schlüssel",
+        "deepseekApiKey": "Deepseek API-Schlüssel",
+        "aimlApiKey": "AI/ML API-Schlüssel",
+        "lmStudioApiUrl": "LM Studio API-URL"
+      },
+      "systemInstructions": {
+        "placeholder": "Besondere Anweisungen für das LLM"
+      }
+    }
+  },
+  "components": {
+    "common": {
+      "viewMore": "Weitere {count} anzeigen"
+    },
+    "messageInput": {
+      "placeholder": "Rückfrage stellen"
+    },
+    "messageBox": {
+      "sources": "Quellen",
+      "answer": "Antwort",
+      "related": "Ähnlich"
+    },
+    "copilot": {
+      "label": "Copilot"
+    },
+    "attach": {
+      "attachedFiles": "Angehängte Dateien",
+      "add": "Hinzufügen",
+      "clear": "Leeren",
+      "attach": "Anhängen",
+      "uploading": "Hochladen...",
+      "files": "{count} Dateien"
+    },
+    "focus": {
+      "button": "Fokus",
+      "modes": {
+        "webSearch": {
+          "title": "Alle",
+          "description": "Im gesamten Internet suchen"
+        },
+        "academicSearch": {
+          "title": "Wissenschaftlich",
+          "description": "In veröffentlichten wissenschaftlichen Arbeiten suchen"
+        },
+        "writingAssistant": {
+          "title": "Schreiben",
+          "description": "Ohne Websuche chatten"
+        },
+        "wolframAlphaSearch": {
+          "title": "Wolfram Alpha",
+          "description": "Rechenwissen-Engine"
+        },
+        "youtubeSearch": {
+          "title": "YouTube",
+          "description": "Videos suchen und ansehen"
+        },
+        "redditSearch": {
+          "title": "Reddit",
+          "description": "Diskussionen und Meinungen suchen"
+        }
+      }
+    },
+    "optimization": {
+      "modes": {
+        "speed": {
+          "title": "Geschwindigkeit",
+          "description": "Geschwindigkeit priorisieren und schnellstmögliche Antwort erhalten"
+        },
+        "balanced": {
+          "title": "Ausgewogen",
+          "description": "Das richtige Gleichgewicht zwischen Geschwindigkeit und Genauigkeit finden"
+        },
+        "quality": {
+          "title": "Qualität (bald)",
+          "description": "Die gründlichste und genaueste Antwort erhalten"
+        }
+      }
+    },
+    "messageActions": {
+      "rewrite": "Neu formulieren"
+    },
+    "searchImages": {
+      "searchButton": "Bilder suchen"
+    },
+    "searchVideos": {
+      "searchButton": "Videos suchen",
+      "badge": "Video"
+    },
+    "weather": {
+      "humidity": "Luftfeuchtigkeit",
+      "now": "Jetzt"
+    },
+    "newsArticleWidget": {
+      "error": "News konnten nicht geladen werden."
+    },
+    "emptyChat": {
+      "title": "Forschung beginnt hier."
+    },
+    "emptyChatMessageInput": {
+      "placeholder": "Frag mich alles..."
+    },
+    "deleteChat": {
+      "title": "Löschbestätigung",
+      "description": "Möchten Sie diesen Chat wirklich löschen?",
+      "cancel": "Abbrechen",
+      "delete": "Löschen"
+    },
+    "themeSwitcher": {
+      "options": {
+        "light": "Hell",
+        "dark": "Dunkel"
+      }
+    }
+  }
+}

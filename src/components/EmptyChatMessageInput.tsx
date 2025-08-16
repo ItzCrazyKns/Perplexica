@@ -6,6 +6,7 @@ import Focus from './MessageInputActions/Focus';
 import Optimization from './MessageInputActions/Optimization';
 import Attach from './MessageInputActions/Attach';
 import { File } from './ChatWindow';
+import { useTranslations } from 'next-intl';
 
 const EmptyChatMessageInput = ({
   sendMessage,
@@ -30,6 +31,7 @@ const EmptyChatMessageInput = ({
 }) => {
   const [copilotEnabled, setCopilotEnabled] = useState(false);
   const [message, setMessage] = useState('');
+  const t = useTranslations('components');
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -80,7 +82,7 @@ const EmptyChatMessageInput = ({
           onChange={(e) => setMessage(e.target.value)}
           minRows={2}
           className="bg-transparent placeholder:text-black/50 dark:placeholder:text-white/50 text-sm text-black dark:text-white resize-none focus:outline-none w-full max-h-24 lg:max-h-36 xl:max-h-48"
-          placeholder="Ask anything..."
+          placeholder={t('emptyChatMessageInput.placeholder')}
         />
         <div className="flex flex-row items-center justify-between mt-4">
           <div className="flex flex-row items-center space-x-2 lg:space-x-4">

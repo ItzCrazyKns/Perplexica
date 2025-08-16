@@ -1,4 +1,5 @@
 import { searchSearxng } from '@/lib/searxng';
+import { getLocale } from 'next-intl/server';
 
 const websitesForTopic = {
   tech: {
@@ -37,6 +38,10 @@ export const GET = async (req: Request) => {
 
     let data = [];
 
+    // derive base language from current locale (e.g., zh-TW -> zh)
+    const locale = await getLocale();
+    const searxLanguage = 'en';
+
     if (mode === 'normal') {
       const seenUrls = new Set();
 
@@ -46,9 +51,9 @@ export const GET = async (req: Request) => {
             selectedTopic.query.map(async (query) => {
               return (
                 await searchSearxng(`site:${link} ${query}`, {
-                  engines: ['bing news'],
+                  engines: ['google news', 'bing news'],
                   pageno: 1,
-                  language: 'en',
+                  language: searxLanguage,
                 })
               ).results;
             }),
@@ -68,9 +73,9 @@ export const GET = async (req: Request) => {
         await searchSearxng(
           `site:${selectedTopic.links[Math.floor(Math.random() * selectedTopic.links.length)]} ${selectedTopic.query[Math.floor(Math.random() * selectedTopic.query.length)]}`,
           {
-            engines: ['bing news'],
+            engines: ['google news', 'bing news'],
             pageno: 1,
-            language: 'en',
+            language: searxLanguage,
           },
         )
       ).results;

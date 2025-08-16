@@ -7,24 +7,19 @@ import {
   Transition,
 } from '@headlessui/react';
 import { Fragment } from 'react';
+import { useTranslations } from 'next-intl';
 
 const OptimizationModes = [
   {
     key: 'speed',
-    title: 'Speed',
-    description: 'Prioritize speed and get the quickest possible answer.',
     icon: <Zap size={20} className="text-[#FF9800]" />,
   },
   {
     key: 'balanced',
-    title: 'Balanced',
-    description: 'Find the right balance between speed and accuracy',
     icon: <Sliders size={20} className="text-[#4CAF50]" />,
   },
   {
     key: 'quality',
-    title: 'Quality (Soon)',
-    description: 'Get the most thorough and accurate answer',
     icon: (
       <Star
         size={16}
@@ -41,6 +36,7 @@ const Optimization = ({
   optimizationMode: string;
   setOptimizationMode: (mode: string) => void;
 }) => {
+  const t = useTranslations('components.optimization');
   return (
     <Popover className="relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
       <PopoverButton
@@ -53,10 +49,7 @@ const Optimization = ({
               ?.icon
           }
           <p className="text-xs font-medium">
-            {
-              OptimizationModes.find((mode) => mode.key === optimizationMode)
-                ?.title
-            }
+            {t(`modes.${optimizationMode}.title`)}
           </p>
           <ChevronDown size={20} />
         </div>
@@ -87,10 +80,12 @@ const Optimization = ({
               >
                 <div className="flex flex-row items-center space-x-1 text-black dark:text-white">
                   {mode.icon}
-                  <p className="text-sm font-medium">{mode.title}</p>
+                  <p className="text-sm font-medium">
+                    {t(`modes.${mode.key}.title`)}
+                  </p>
                 </div>
                 <p className="text-black/70 dark:text-white/70 text-xs">
-                  {mode.description}
+                  {t(`modes.${mode.key}.description`)}
                 </p>
               </PopoverButton>
             ))}

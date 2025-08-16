@@ -4,6 +4,7 @@ import { File } from './ChatWindow';
 import Link from 'next/link';
 import WeatherWidget from './WeatherWidget';
 import NewsArticleWidget from './NewsArticleWidget';
+import { useTranslations } from 'next-intl';
 
 const EmptyChat = ({
   sendMessage,
@@ -26,6 +27,7 @@ const EmptyChat = ({
   files: File[];
   setFiles: (files: File[]) => void;
 }) => {
+  const t = useTranslations('components');
   return (
     <div className="relative">
       <div className="absolute w-full flex flex-row items-center justify-end mr-5 mt-5">
@@ -36,7 +38,7 @@ const EmptyChat = ({
       <div className="flex flex-col items-center justify-center min-h-screen max-w-screen-sm mx-auto p-2 space-y-4">
         <div className="flex flex-col items-center justify-center w-full space-y-8">
           <h2 className="text-black/70 dark:text-white/70 text-3xl font-medium -mt-8">
-            Research begins here.
+            {t('emptyChat.title')}
           </h2>
           <EmptyChatMessageInput
             sendMessage={sendMessage}

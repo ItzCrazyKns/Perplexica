@@ -1,11 +1,12 @@
 import type { MetadataRoute } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export default function manifest(): MetadataRoute.Manifest {
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  const t = await getTranslations('manifest');
   return {
-    name: 'Perplexica - Chat with the internet',
-    short_name: 'Perplexica',
-    description:
-      'Perplexica is an AI powered chatbot that is connected to the internet.',
+    name: t('name'),
+    short_name: t('shortName'),
+    description: t('description'),
     start_url: '/',
     display: 'standalone',
     background_color: '#0a0a0a',
