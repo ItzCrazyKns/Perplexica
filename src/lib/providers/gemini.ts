@@ -12,55 +12,34 @@ export const PROVIDER_INFO = {
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { Embeddings } from '@langchain/core/embeddings';
 
-const geminiChatModels: Record<string, string>[] = [
-  {
-    displayName: 'Gemini 2.5 Flash Preview 05-20',
-    key: 'gemini-2.5-flash-preview-05-20',
-  },
-  {
-    displayName: 'Gemini 2.5 Pro Preview',
-    key: 'gemini-2.5-pro-preview-05-06',
-  },
-  {
-    displayName: 'Gemini 2.5 Pro Experimental',
-    key: 'gemini-2.5-pro-preview-05-06',
-  },
-  {
-    displayName: 'Gemini 2.0 Flash',
-    key: 'gemini-2.0-flash',
-  },
-  {
-    displayName: 'Gemini 2.0 Flash-Lite',
-    key: 'gemini-2.0-flash-lite',
-  },
-  {
-    displayName: 'Gemini 2.0 Flash Thinking Experimental',
-    key: 'gemini-2.0-flash-thinking-exp-01-21',
-  },
-  {
-    displayName: 'Gemini 1.5 Flash',
-    key: 'gemini-1.5-flash',
-  },
-  {
-    displayName: 'Gemini 1.5 Flash-8B',
-    key: 'gemini-1.5-flash-8b',
-  },
-  {
-    displayName: 'Gemini 1.5 Pro',
-    key: 'gemini-1.5-pro',
-  },
-];
+// Replace static model lists with dynamic fetch from Gemini API
+const GEMINI_MODELS_ENDPOINT =
+  'https://generativelanguage.googleapis.com/v1beta/models';
 
-const geminiEmbeddingModels: Record<string, string>[] = [
-  {
-    displayName: 'Text Embedding 004',
-    key: 'models/text-embedding-004',
-  },
-  {
-    displayName: 'Embedding 001',
-    key: 'models/embedding-001',
-  },
-];
+async function fetchGeminiModels(apiKey: string): Promise<any[]> {
+  const url = `${GEMINI_MODELS_ENDPOINT}?key=${encodeURIComponent(
+    apiKey,
+  )}&pageSize=1000`;
+
+  const resp = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!resp.ok) {
+    throw new Error(`Gemini models endpoint returned ${resp.status}`);
+  }
+
+  const data = await resp.json();
+
+  if (!data || !Array.isArray(data.models)) {
+    throw new Error('Unexpected Gemini models response format');
+  }
+
+  return data.models;
+}
 
 export const loadGeminiChatModels = async () => {
   const geminiApiKey = getGeminiApiKey();
@@ -68,9 +47,32 @@ export const loadGeminiChatModels = async () => {
   if (!geminiApiKey) return {};
 
   try {
+    const models = await fetchGeminiModels(geminiApiKey);
+    const geminiChatModels = models
+      .map((model: any) => {
+        const rawName = model && model.name ? String(model.name) : '';
+        const stripped = rawName.replace(/^models\//i, '');
+        return {
+          rawName,
+          key: stripped,
+          displayName:
+            model && model.displayName ? String(model.displayName) : stripped,
+        };
+      })
+      .filter((model: any) => {
+        const key = model.key.toLowerCase();
+        const display = (model.displayName || '').toLowerCase();
+        const excluded = ['audio', 'embedding', 'image', 'tts'];
+        return (
+          key.startsWith('gemini') &&
+          !excluded.some((s) => key.includes(s) || display.includes(s))
+        );
+      })
+      .sort((a: any, b: any) => a.key.localeCompare(b.key));
+
     const chatModels: Record<string, ChatModel> = {};
 
-    geminiChatModels.forEach((model) => {
+    geminiChatModels.forEach((model: any) => {
       chatModels[model.key] = {
         displayName: model.displayName,
         model: new ChatGoogleGenerativeAI({
@@ -83,7 +85,7 @@ export const loadGeminiChatModels = async () => {
 
     return chatModels;
   } catch (err) {
-    console.error(`Error loading Gemini models: ${err}`);
+    console.error(`Error loading Gemini chat models: ${err}`);
     return {};
   }
 };
@@ -94,9 +96,28 @@ export const loadGeminiEmbeddingModels = async () => {
   if (!geminiApiKey) return {};
 
   try {
+    const models = await fetchGeminiModels(geminiApiKey);
+    const geminiEmbeddingModels = models
+      .map((model: any) => {
+        const rawName = model && model.name ? String(model.name) : '';
+        const display =
+          model && model.displayName ? String(model.displayName) : rawName;
+        return {
+          rawName,
+          key: rawName,
+          displayName: display,
+        };
+      })
+      .filter(
+        (model: any) =>
+          model.key.toLowerCase().includes('embedding') ||
+          model.displayName.toLowerCase().includes('embedding'),
+      )
+      .sort((a: any, b: any) => a.key.localeCompare(b.key));
+
     const embeddingModels: Record<string, EmbeddingModel> = {};
 
-    geminiEmbeddingModels.forEach((model) => {
+    geminiEmbeddingModels.forEach((model: any) => {
       embeddingModels[model.key] = {
         displayName: model.displayName,
         model: new GoogleGenerativeAIEmbeddings({
@@ -108,7 +129,7 @@ export const loadGeminiEmbeddingModels = async () => {
 
     return embeddingModels;
   } catch (err) {
-    console.error(`Error loading OpenAI embeddings models: ${err}`);
+    console.error(`Error loading Gemini embedding models: ${err}`);
     return {};
   }
 };
