@@ -1,0 +1,251 @@
+{
+  "metadata": {
+    "title": "Perplexica - Chat with the internet",
+    "description": "Perplexica is an AI powered chatbot that is connected to the internet."
+  },
+  "manifest": {
+    "name": "Perplexica - Chat with the internet",
+    "shortName": "Perplexica",
+    "description": "Perplexica is an AI powered chatbot that is connected to the internet."
+  },
+  "navigation": {
+    "home": "Home",
+    "discover": "Discover",
+    "library": "Library",
+    "settings": "Settings"
+  },
+  "common": {
+    "appName": "Perplexica",
+    "exportedOn": "Exported on:",
+    "citations": "Citations:",
+    "user": "User",
+    "assistant": "Assistant",
+    "errors": {
+      "noChatModelsAvailable": "No chat models available",
+      "chatProviderNotConfigured": "Looks like you haven't configured any chat model providers. Please configure them from the settings page or the config file.",
+      "noEmbeddingModelsAvailable": "No embedding models available",
+      "cannotSendBeforeConfigReady": "Cannot send message before the configuration is ready",
+      "failedToDeleteChat": "Failed to delete chat"
+    }
+  },
+  "navbar": {
+    "exportAsMarkdown": "Export as Markdown",
+    "exportAsPDF": "Export as PDF"
+  },
+  "export": {
+    "chatExportTitle": "Chat Export: {title}"
+  },
+  "weather": {
+    "conditions": {
+      "clear": "Clear",
+      "mainlyClear": "Mainly Clear",
+      "partlyCloudy": "Partly Cloudy",
+      "cloudy": "Cloudy",
+      "fog": "Fog",
+      "lightDrizzle": "Light Drizzle",
+      "moderateDrizzle": "Moderate Drizzle",
+      "denseDrizzle": "Dense Drizzle",
+      "lightFreezingDrizzle": "Light Freezing Drizzle",
+      "denseFreezingDrizzle": "Dense Freezing Drizzle",
+      "slightRain": "Slight Rain",
+      "moderateRain": "Moderate Rain",
+      "heavyRain": "Heavy Rain",
+      "lightFreezingRain": "Light Freezing Rain",
+      "heavyFreezingRain": "Heavy Freezing Rain",
+      "slightSnowFall": "Slight Snow Fall",
+      "moderateSnowFall": "Moderate Snow Fall",
+      "heavySnowFall": "Heavy Snow Fall",
+      "snow": "Snow",
+      "slightRainShowers": "Slight Rain Showers",
+      "moderateRainShowers": "Moderate Rain Showers",
+      "heavyRainShowers": "Heavy Rain Showers",
+      "slightSnowShowers": "Slight Snow Showers",
+      "moderateSnowShowers": "Moderate Snow Showers",
+      "heavySnowShowers": "Heavy Snow Showers",
+      "thunderstorm": "Thunderstorm",
+      "thunderstormSlightHail": "Thunderstorm with Slight Hail",
+      "thunderstormHeavyHail": "Thunderstorm with Heavy Hail"
+    }
+  },
+  "pages": {
+    "home": {
+      "title": "Chat - Perplexica",
+      "description": "Chat with the internet, chat with Perplexica."
+    },
+    "discover": {
+      "title": "Discover",
+      "topics": {
+        "tech": "Tech & Science",
+        "finance": "Finance",
+        "art": "Art & Culture",
+        "sports": "Sports",
+        "entertainment": "Entertainment"
+      },
+      "errorFetchingData": "Error fetching data"
+    },
+    "library": {
+      "title": "Library",
+      "empty": "No chats found.",
+      "ago": "{time} Ago"
+    },
+    "settings": {
+      "title": "Settings",
+      "sections": {
+        "preferences": "Preferences",
+        "automaticSearch": "Automatic Search",
+        "systemInstructions": "System Instructions",
+        "modelSettings": "Model Settings",
+        "apiKeys": "API Keys"
+      },
+      "preferences": {
+        "theme": "Theme",
+        "measurementUnits": "Measurement Units",
+        "language": "Language",
+        "metric": "Metric",
+        "imperial": "Imperial"
+      },
+      "automaticSearch": {
+        "image": {
+          "title": "Automatic Image Search",
+          "desc": "Automatically search for relevant images in chat responses"
+        },
+        "video": {
+          "title": "Automatic Video Search",
+          "desc": "Automatically search for relevant videos in chat responses"
+        }
+      },
+      "model": {
+        "chatProvider": "Chat Model Provider",
+        "chat": "Chat Model",
+        "noModels": "No models available",
+        "invalidProvider": "Invalid provider, please check backend logs",
+        "custom": {
+          "modelName": "Model Name",
+          "apiKey": "Custom OpenAI API Key",
+          "baseUrl": "Custom OpenAI Base URL"
+        }
+      },
+      "embedding": {
+        "provider": "Embedding Model Provider",
+        "model": "Embedding Model"
+      },
+      "api": {
+        "openaiApiKey": "OpenAI API Key",
+        "ollamaApiUrl": "Ollama API URL",
+        "groqApiKey": "GROQ API Key",
+        "anthropicApiKey": "Anthropic API Key",
+        "geminiApiKey": "Gemini API Key",
+        "deepseekApiKey": "Deepseek API Key",
+        "aimlApiKey": "AI/ML API Key",
+        "lmStudioApiUrl": "LM Studio API URL"
+      },
+      "systemInstructions": {
+        "placeholder": "Any special instructions for the LLM"
+      }
+    }
+  },
+  "components": {
+    "common": {
+      "viewMore": "View {count} more"
+    },
+    "messageInput": {
+      "placeholder": "Ask a follow-up"
+    },
+    "messageBox": {
+      "sources": "Sources",
+      "answer": "Answer",
+      "related": "Related"
+    },
+    "copilot": {
+      "label": "Copilot"
+    },
+    "attach": {
+      "attachedFiles": "Attached files",
+      "add": "Add",
+      "clear": "Clear",
+      "attach": "Attach",
+      "uploading": "Uploading...",
+      "files": "{count} files"
+    },
+    "focus": {
+      "button": "Focus",
+      "modes": {
+        "webSearch": {
+          "title": "All",
+          "description": "Searches across all of the internet"
+        },
+        "academicSearch": {
+          "title": "Academic",
+          "description": "Search in published academic papers"
+        },
+        "writingAssistant": {
+          "title": "Writing",
+          "description": "Chat without searching the web"
+        },
+        "wolframAlphaSearch": {
+          "title": "Wolfram Alpha",
+          "description": "Computational knowledge engine"
+        },
+        "youtubeSearch": {
+          "title": "YouTube",
+          "description": "Search and watch videos"
+        },
+        "redditSearch": {
+          "title": "Reddit",
+          "description": "Search for discussions and opinions"
+        }
+      }
+    },
+    "optimization": {
+      "modes": {
+        "speed": {
+          "title": "Speed",
+          "description": "Prioritize speed and get the quickest possible answer."
+        },
+        "balanced": {
+          "title": "Balanced",
+          "description": "Find the right balance between speed and accuracy"
+        },
+        "quality": {
+          "title": "Quality (Soon)",
+          "description": "Get the most thorough and accurate answer"
+        }
+      }
+    },
+    "messageActions": {
+      "rewrite": "Rewrite"
+    },
+    "searchImages": {
+      "searchButton": "Search images"
+    },
+    "searchVideos": {
+      "searchButton": "Search videos",
+      "badge": "Video"
+    },
+    "weather": {
+      "humidity": "Humidity",
+      "now": "Now"
+    },
+    "newsArticleWidget": {
+      "error": "Could not load news."
+    },
+    "emptyChat": {
+      "title": "Research begins here."
+    },
+    "emptyChatMessageInput": {
+      "placeholder": "Ask anything..."
+    },
+    "deleteChat": {
+      "title": "Delete Confirmation",
+      "description": "Are you sure you want to delete this chat?",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "themeSwitcher": {
+      "options": {
+        "light": "Light",
+        "dark": "Dark"
+      }
+    }
+  }
+}

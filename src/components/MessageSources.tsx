@@ -9,9 +9,11 @@ import {
 import { Document } from '@langchain/core/documents';
 import { File } from 'lucide-react';
 import { Fragment, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 const MessageSources = ({ sources }: { sources: Document[] }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const t = useTranslations('components');
 
   const closeModal = () => {
     setIsDialogOpen(false);
@@ -88,7 +90,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
             })}
           </div>
           <p className="text-xs text-black/50 dark:text-white/50">
-            View {sources.length - 3} more
+            {t('common.viewMore', { count: sources.length - 3 })}
           </p>
         </button>
       )}
@@ -107,7 +109,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
               >
                 <DialogPanel className="w-full max-w-md transform rounded-2xl bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200 p-6 text-left align-middle shadow-xl transition-all">
                   <DialogTitle className="text-lg font-medium leading-6 dark:text-white">
-                    Sources
+                    {t('messageBox.sources')}
                   </DialogTitle>
                   <div className="grid grid-cols-2 gap-2 overflow-auto max-h-[300px] mt-2 pr-2">
                     {sources.map((source, i) => (

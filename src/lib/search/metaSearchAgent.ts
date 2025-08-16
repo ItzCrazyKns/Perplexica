@@ -18,6 +18,7 @@ import LineOutputParser from '../outputParsers/lineOutputParser';
 import { getDocumentsFromLinks } from '../utils/documents';
 import { Document } from 'langchain/document';
 import { searchSearxng } from '../searxng';
+import { getLocale } from 'next-intl/server';
 import path from 'node:path';
 import fs from 'node:fs';
 import computeSimilarity from '../utils/computeSimilarity';
@@ -205,8 +206,10 @@ class MetaSearchAgent implements MetaSearchAgentType {
         } else {
           question = question.replace(/<think>.*?<\/think>/g, '');
 
+          const currentLocale = await getLocale();
+          const baseLang = (currentLocale?.split('-')[0] || 'en') as string;
           const res = await searchSearxng(question, {
-            language: 'en',
+            language: baseLang,
             engines: this.config.activeEngines,
           });
 

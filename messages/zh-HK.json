@@ -1,0 +1,251 @@
+{
+  "metadata": {
+    "title": "Perplexica - 與網絡對話",
+    "description": "Perplexica 是一個能連接互聯網的 AI 聊天機械人。"
+  },
+  "manifest": {
+    "name": "Perplexica - 與網絡對話",
+    "shortName": "Perplexica",
+    "description": "Perplexica 是一個能連接互聯網的 AI 聊天機械人。"
+  },
+  "navigation": {
+    "home": "主頁",
+    "discover": "探索",
+    "library": "資料庫",
+    "settings": "設定"
+  },
+  "common": {
+    "appName": "Perplexica",
+    "exportedOn": "匯出日期：",
+    "citations": "參考來源：",
+    "user": "用戶",
+    "assistant": "助理",
+    "errors": {
+      "noChatModelsAvailable": "沒有可用的聊天模型",
+      "chatProviderNotConfigured": "你似乎未有設定任何聊天模型供應商，請到設定頁或設定檔進行設定。",
+      "noEmbeddingModelsAvailable": "沒有可用的向量嵌入模型",
+      "cannotSendBeforeConfigReady": "在設定完成前無法發送訊息",
+      "failedToDeleteChat": "刪除聊天失敗"
+    }
+  },
+  "navbar": {
+    "exportAsMarkdown": "匯出為 Markdown",
+    "exportAsPDF": "匯出為 PDF"
+  },
+  "export": {
+    "chatExportTitle": "聊天匯出：{title}"
+  },
+  "weather": {
+    "conditions": {
+      "clear": "天晴",
+      "mainlyClear": "大致天晴",
+      "partlyCloudy": "局部多雲",
+      "cloudy": "多雲",
+      "fog": "霧",
+      "lightDrizzle": "微毛毛雨",
+      "moderateDrizzle": "毛毛雨",
+      "denseDrizzle": "密集毛毛雨",
+      "lightFreezingDrizzle": "輕微凍霧雨",
+      "denseFreezingDrizzle": "強凍霧雨",
+      "slightRain": "微雨",
+      "moderateRain": "雨",
+      "heavyRain": "大雨",
+      "lightFreezingRain": "輕微凍雨",
+      "heavyFreezingRain": "強凍雨",
+      "slightSnowFall": "微雪",
+      "moderateSnowFall": "下雪",
+      "heavySnowFall": "大雪",
+      "snow": "降雪",
+      "slightRainShowers": "驟雨",
+      "moderateRainShowers": "驟雨",
+      "heavyRainShowers": "大驟雨",
+      "slightSnowShowers": "驟雪",
+      "moderateSnowShowers": "驟雪",
+      "heavySnowShowers": "大驟雪",
+      "thunderstorm": "雷暴",
+      "thunderstormSlightHail": "雷暴（小冰雹）",
+      "thunderstormHeavyHail": "雷暴（大冰雹）"
+    }
+  },
+  "pages": {
+    "home": {
+      "title": "聊天 - Perplexica",
+      "description": "連接網絡傾下計，與 Perplexica 對話。"
+    },
+    "discover": {
+      "title": "探索",
+      "topics": {
+        "tech": "科技與科學",
+        "finance": "財經",
+        "art": "藝術與文化",
+        "sports": "體育",
+        "entertainment": "娛樂"
+      },
+      "errorFetchingData": "取得資料時發生錯誤"
+    },
+    "library": {
+      "title": "資料庫",
+      "empty": "未找到任何聊天紀錄。",
+      "ago": "{time} 前"
+    },
+    "settings": {
+      "title": "設定",
+      "sections": {
+        "preferences": "偏好設定",
+        "automaticSearch": "自動搜尋",
+        "systemInstructions": "系統指示",
+        "modelSettings": "模型設定",
+        "apiKeys": "API 金鑰"
+      },
+      "preferences": {
+        "theme": "主題",
+        "measurementUnits": "度量單位",
+        "language": "語言",
+        "metric": "公制",
+        "imperial": "英制"
+      },
+      "automaticSearch": {
+        "image": {
+          "title": "自動圖片搜尋",
+          "desc": "在聊天回應中自動搜尋相關圖片"
+        },
+        "video": {
+          "title": "自動影片搜尋",
+          "desc": "在聊天回應中自動搜尋相關影片"
+        }
+      },
+      "model": {
+        "chatProvider": "聊天模型供應商",
+        "chat": "聊天模型",
+        "noModels": "沒有可用的模型",
+        "invalidProvider": "供應商無效，請檢查後端日誌",
+        "custom": {
+          "modelName": "模型名稱",
+          "apiKey": "自訂 OpenAI API 金鑰",
+          "baseUrl": "自訂 OpenAI Base URL"
+        }
+      },
+      "embedding": {
+        "provider": "向量嵌入供應商",
+        "model": "向量嵌入模型"
+      },
+      "api": {
+        "openaiApiKey": "OpenAI API 金鑰",
+        "ollamaApiUrl": "Ollama API 位址",
+        "groqApiKey": "GROQ API 金鑰",
+        "anthropicApiKey": "Anthropic API 金鑰",
+        "geminiApiKey": "Gemini API 金鑰",
+        "deepseekApiKey": "Deepseek API 金鑰",
+        "aimlApiKey": "AI/ML 金鑰",
+        "lmStudioApiUrl": "LM Studio API 位址"
+      },
+      "systemInstructions": {
+        "placeholder": "任何要給 LLM 的特別指示"
+      }
+    }
+  },
+  "components": {
+    "common": {
+      "viewMore": "查看另外 {count} 項"
+    },
+    "messageInput": {
+      "placeholder": "提出追問"
+    },
+    "messageBox": {
+      "sources": "參考來源",
+      "answer": "回答",
+      "related": "相關內容"
+    },
+    "copilot": {
+      "label": "Copilot"
+    },
+    "attach": {
+      "attachedFiles": "已附加的檔案",
+      "add": "新增",
+      "clear": "清除",
+      "attach": "附加",
+      "uploading": "上載中...",
+      "files": "{count} 個檔案"
+    },
+    "focus": {
+      "button": "焦點",
+      "modes": {
+        "webSearch": {
+          "title": "全部",
+          "description": "在整個網絡上搜尋"
+        },
+        "academicSearch": {
+          "title": "學術",
+          "description": "搜尋已發表的學術論文"
+        },
+        "writingAssistant": {
+          "title": "寫作",
+          "description": "不搜尋網絡，直接聊天"
+        },
+        "wolframAlphaSearch": {
+          "title": "Wolfram Alpha",
+          "description": "計算型知識引擎"
+        },
+        "youtubeSearch": {
+          "title": "YouTube",
+          "description": "搜尋及觀看影片"
+        },
+        "redditSearch": {
+          "title": "Reddit",
+          "description": "搜尋討論與觀點"
+        }
+      }
+    },
+    "optimization": {
+      "modes": {
+        "speed": {
+          "title": "速度",
+          "description": "優先速度，以最快的方式得到答案。"
+        },
+        "balanced": {
+          "title": "平衡",
+          "description": "在速度與準確度之間取得平衡"
+        },
+        "quality": {
+          "title": "品質（即將推出）",
+          "description": "取得最完整與最精確的回答"
+        }
+      }
+    },
+    "messageActions": {
+      "rewrite": "重寫"
+    },
+    "searchImages": {
+      "searchButton": "搜尋圖片"
+    },
+    "searchVideos": {
+      "searchButton": "搜尋影片",
+      "badge": "影片"
+    },
+    "weather": {
+      "humidity": "濕度",
+      "now": "現在"
+    },
+    "newsArticleWidget": {
+      "error": "無法載入新聞。"
+    },
+    "emptyChat": {
+      "title": "研究由此開始。"
+    },
+    "emptyChatMessageInput": {
+      "placeholder": "問我任何事..."
+    },
+    "deleteChat": {
+      "title": "刪除確認",
+      "description": "確定要刪除此聊天嗎？",
+      "cancel": "取消",
+      "delete": "刪除"
+    },
+    "themeSwitcher": {
+      "options": {
+        "light": "淺色",
+        "dark": "深色"
+      }
+    }
+  }
+}

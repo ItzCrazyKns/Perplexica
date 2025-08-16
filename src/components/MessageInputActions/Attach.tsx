@@ -8,6 +8,7 @@ import {
 import { CopyPlus, File, LoaderCircle, Plus, Trash } from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
 import { File as FileType } from '../ChatWindow';
+import { useTranslations } from 'next-intl';
 
 const Attach = ({
   fileIds,
@@ -22,6 +23,7 @@ const Attach = ({
   files: FileType[];
   setFiles: (files: FileType[]) => void;
 }) => {
+  const t = useTranslations('components.attach');
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<any>();
 
@@ -57,7 +59,7 @@ const Attach = ({
     <div className="flex flex-row items-center justify-between space-x-1">
       <LoaderCircle size={18} className="text-sky-400 animate-spin" />
       <p className="text-sky-400 inline whitespace-nowrap text-xs font-medium">
-        Uploading..
+        {t('uploading')}
       </p>
     </div>
   ) : files.length > 0 ? (
@@ -104,7 +106,7 @@ const Attach = ({
           <div className="bg-light-primary dark:bg-dark-primary border rounded-md border-light-200 dark:border-dark-200 w-full max-h-[200px] md:max-h-none overflow-y-auto flex flex-col">
             <div className="flex flex-row items-center justify-between px-3 py-2">
               <h4 className="text-black dark:text-white font-medium text-sm">
-                Attached files
+                {t('attachedFiles')}
               </h4>
               <div className="flex flex-row items-center space-x-4">
                 <button
@@ -121,7 +123,7 @@ const Attach = ({
                     hidden
                   />
                   <Plus size={18} />
-                  <p className="text-xs">Add</p>
+                  <p className="text-xs">{t('add')}</p>
                 </button>
                 <button
                   onClick={() => {
@@ -131,7 +133,7 @@ const Attach = ({
                   className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black hover:dark:text-white transition duration-200"
                 >
                   <Trash size={14} />
-                  <p className="text-xs">Clear</p>
+                  <p className="text-xs">{t('clear')}</p>
                 </button>
               </div>
             </div>
@@ -177,7 +179,9 @@ const Attach = ({
         hidden
       />
       <CopyPlus size={showText ? 18 : undefined} />
-      {showText && <p className="text-xs font-medium pl-[1px]">Attach</p>}
+      {showText && (
+        <p className="text-xs font-medium pl-[1px] w-max">{t('attach')}</p>
+      )}
     </button>
   );
 };

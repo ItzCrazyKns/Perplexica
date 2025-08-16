@@ -7,6 +7,7 @@ import Chat from './Chat';
 import EmptyChat from './EmptyChat';
 import crypto from 'crypto';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { getSuggestions } from '@/lib/actions';
 import { Settings } from 'lucide-react';
@@ -44,6 +45,7 @@ const checkConfig = async (
   setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void,
   setIsConfigReady: (ready: boolean) => void,
   setHasError: (hasError: boolean) => void,
+  t: (key: string) => string,
 ) => {
   try {
     let chatModel = localStorage.getItem('chatModel');
@@ -85,7 +87,7 @@ const checkConfig = async (
         const chatModelProvidersKeys = Object.keys(chatModelProviders);
 
         if (!chatModelProviders || chatModelProvidersKeys.length === 0) {
-          return toast.error('No chat models available');
+          return toast.error(t('common.errors.noChatModelsAvailable'));
         } else {
           chatModelProvider =
             chatModelProvidersKeys.find(
@@ -98,9 +100,7 @@ const checkConfig = async (
           chatModelProvider === 'custom_openai' &&
           Object.keys(chatModelProviders[chatModelProvider]).length === 0
         ) {
-          toast.error(
-            "Looks like you haven't configured any chat model providers. Please configure them from the settings page or the config file.",
-          );
+          toast.error(t('common.errors.chatProviderNotConfigured'));
           return setHasError(true);
         }
 
@@ -114,7 +114,7 @@ const checkConfig = async (
           !embeddingModelProviders ||
           Object.keys(embeddingModelProviders).length === 0
         )
-          return toast.error('No embedding models available');
+          return toast.error(t('common.errors.noEmbeddingModelsAvailable'));
 
         embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
         embeddingModel = Object.keys(
@@ -152,9 +152,7 @@ const checkConfig = async (
           chatModelProvider === 'custom_openai' &&
           Object.keys(chatModelProviders[chatModelProvider]).length === 0
         ) {
-          toast.error(
-            "Looks like you haven't configured any chat model providers. Please configure them from the settings page or the config file.",
-          );
+          toast.error(t('common.errors.chatProviderNotConfigured'));
           return setHasError(true);
         }
 
@@ -265,6 +263,7 @@ const loadMessages = async (
 };
 
 const ChatWindow = ({ id }: { id?: string }) => {
+  const t = useTranslations();
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
 
@@ -294,6 +293,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
       setEmbeddingModelProvider,
       setIsConfigReady,
       setHasError,
+      t,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -361,7 +361,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
   ) => {
     if (loading) return;
     if (!isConfigReady) {
-      toast.error('Cannot send message before the configuration is ready');
+      toast.error(t('common.errors.cannotSendBeforeConfigReady'));
       return;
     }
 

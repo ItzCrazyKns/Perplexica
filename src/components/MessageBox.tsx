@@ -20,6 +20,7 @@ import SearchImages from './SearchImages';
 import SearchVideos from './SearchVideos';
 import { useSpeech } from 'react-text-to-speech';
 import ThinkBox from './ThinkBox';
+import { useTranslations } from 'next-intl';
 
 const ThinkTagProcessor = ({
   children,
@@ -52,6 +53,7 @@ const MessageBox = ({
   rewrite: (messageId: string) => void;
   sendMessage: (message: string) => void;
 }) => {
+  const t = useTranslations('components');
   const [parsedMessage, setParsedMessage] = useState(message.content);
   const [speechMessage, setSpeechMessage] = useState(message.content);
   const [thinkingEnded, setThinkingEnded] = useState(false);
@@ -166,7 +168,7 @@ const MessageBox = ({
                 <div className="flex flex-row items-center space-x-2">
                   <BookCopy className="text-black dark:text-white" size={20} />
                   <h3 className="text-black dark:text-white font-medium text-xl">
-                    Sources
+                    {t('messageBox.sources')}
                   </h3>
                 </div>
                 <MessageSources sources={message.sources} />
@@ -182,7 +184,7 @@ const MessageBox = ({
                   size={20}
                 />
                 <h3 className="text-black dark:text-white font-medium text-xl">
-                  Answer
+                  {t('messageBox.answer')}
                 </h3>
               </div>
 
@@ -216,9 +218,9 @@ const MessageBox = ({
                       className="p-2 text-black/70 dark:text-white/70 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white"
                     >
                       {speechStatus === 'started' ? (
-                        <StopCircle size={18} />
+                        <StopCircle size={18} aria-label="Stop TTS" />
                       ) : (
-                        <Volume2 size={18} />
+                        <Volume2 size={18} aria-label="Start TTS" />
                       )}
                     </button>
                   </div>
@@ -234,7 +236,9 @@ const MessageBox = ({
                     <div className="flex flex-col space-y-3 text-black dark:text-white">
                       <div className="flex flex-row items-center space-x-2 mt-4">
                         <Layers3 />
-                        <h3 className="text-xl font-medium">Related</h3>
+                        <h3 className="text-xl font-medium">
+                          {t('messageBox.related')}
+                        </h3>
                       </div>
                       <div className="flex flex-col space-y-3">
                         {message.suggestions.map((suggestion, i) => (

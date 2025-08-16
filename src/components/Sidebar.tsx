@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSelectedLayoutSegments } from 'next/navigation';
 import React, { useState, type ReactNode } from 'react';
 import Layout from './Layout';
+import { useTranslations } from 'next-intl';
 
 const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
   return (
@@ -15,25 +16,26 @@ const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
 
 const Sidebar = ({ children }: { children: React.ReactNode }) => {
   const segments = useSelectedLayoutSegments();
+  const t = useTranslations('navigation');
 
   const navLinks = [
     {
       icon: Home,
       href: '/',
       active: segments.length === 0 || segments.includes('c'),
-      label: 'Home',
+      label: t('home'),
     },
     {
       icon: Search,
       href: '/discover',
       active: segments.includes('discover'),
-      label: 'Discover',
+      label: t('discover'),
     },
     {
       icon: BookOpenText,
       href: '/library',
       active: segments.includes('library'),
-      label: 'Library',
+      label: t('library'),
     },
   ];
 
