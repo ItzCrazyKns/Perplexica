@@ -52,7 +52,6 @@ const MessageInput = ({
   } | null>(null);
 
   useEffect(() => {
-    // Load saved model preferences from localStorage
     const chatModelProvider = localStorage.getItem('chatModelProvider');
     const chatModel = localStorage.getItem('chatModel');
 
@@ -62,7 +61,9 @@ const MessageInput = ({
         model: chatModel,
       });
     }
+  }, []);
 
+  useEffect(() => {
     const storedPromptIds = localStorage.getItem('selectedSystemPromptIds');
     if (storedPromptIds) {
       try {

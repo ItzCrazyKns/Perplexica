@@ -91,42 +91,7 @@ const ModelSelector = ({
         // Sort providers by name (only those that have models)
         const sortedProviders = Object.keys(providersData).sort();
         setProvidersList(sortedProviders);
-
-        // Initialize expanded state for all providers
-        const initialExpandedState: Record<string, boolean> = {};
-        sortedProviders.forEach((provider) => {
-          initialExpandedState[provider] = selectedModel?.provider === provider;
-        });
-
-        // Expand the first provider if none is selected
-        if (sortedProviders.length > 0 && !selectedModel) {
-          initialExpandedState[sortedProviders[0]] = true;
-        }
-
-        setExpandedProviders(initialExpandedState);
         setProviderModels(providersData);
-
-        // Find the current model in our options to display its name
-        if (selectedModel) {
-          const provider = providersData[selectedModel.provider];
-          if (provider) {
-            const currentModel = provider.models.find(
-              (option) => option.model === selectedModel.model,
-            );
-
-            if (currentModel) {
-              setSelectedModelDisplay(currentModel.displayName);
-              setSelectedProviderDisplay(provider.displayName);
-            }
-          } else {
-            setSelectedModelDisplay('');
-            setSelectedProviderDisplay('');
-          }
-        } else {
-          setSelectedModelDisplay('');
-          setSelectedProviderDisplay('');
-        }
-
         setLoading(false);
       } catch (error) {
         console.error('Error fetching models:', error);
@@ -135,7 +100,48 @@ const ModelSelector = ({
     };
 
     fetchModels();
-  }, [selectedModel]);
+    // Fetch models once on mount; selection mapping handled in a separate effect
+  }, []);
+
+  // Derive display text from providerModels + selectedModel without clearing on null
+  useEffect(() => {
+    if (!selectedModel || !selectedModel.provider || !selectedModel.model || !providerModels || Object.keys(providerModels).length === 0) {
+      // Do not clear existing display to prevent flicker
+      return;
+    }
+
+    const provider = providerModels[selectedModel.provider];
+    if (!provider) {
+      console.warn(`Provider not found: ${selectedModel.provider} available providers: ${JSON.stringify(providerModels)}`);
+      return;
+    }
+
+    const currentModel = provider.models.find(
+      (option) => option.model === selectedModel.model,
+    );
+
+    if (currentModel) {
+      setExpandedProviders((prev) => ({
+        ...prev,
+        [provider.displayName]: !prev[provider.displayName],
+      }));
+      setSelectedModelDisplay(currentModel.displayName);
+      setSelectedProviderDisplay(provider.displayName);
+    } else {
+      console.warn(
+        `Selected model key not found for provider ${selectedModel.provider}: ${selectedModel.model}`,
+      );
+    }
+  }, [providerModels, selectedModel]);
+
+  // Expand selected provider once a selection arrives, without collapsing others
+  useEffect(() => {
+    if (!selectedModel?.provider) return;
+    setExpandedProviders((prev) => ({
+      ...prev,
+      [selectedModel.provider]: true,
+    }));
+  }, [selectedModel?.provider]);
 
   const toggleProviderExpanded = (provider: string) => {
     setExpandedProviders((prev) => ({
@@ -157,7 +163,8 @@ const ModelSelector = ({
   };
 
   const getDisplayText = () => {
-    if (loading) return 'Loading...';
+    // While models are loading or selection hasn't been determined yet, show Loading to avoid flicker
+    if (loading || !selectedModel) return 'Loading...';
     if (!selectedModelDisplay) return 'Select model';
 
     return `${selectedModelDisplay} (${selectedProviderDisplay})`;
