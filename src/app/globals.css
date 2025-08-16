@@ -3,12 +3,56 @@
 @tailwind utilities;
 
 @layer base {
+  /* Apply gradient backgrounds to the main elements */
+  .dark {
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a0d2e 25%, #2d1b4e 50%, #1a0d2e 75%, #0a0a0a 100%);
+    min-height: 100vh;
+  }
+  
+  .light {
+    background: linear-gradient(135deg, #ffffff 0%, #f3f1ff 25%, #e9e5ff 50%, #f3f1ff 75%, #ffffff 100%);
+    min-height: 100vh;
+  }
+
+  /* Custom scrollbar styles */
   .overflow-hidden-scrollable {
     -ms-overflow-style: none;
   }
 
   .overflow-hidden-scrollable::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Custom scrollbar for webkit browsers */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    background: #1a0d2e;
+  }
+
+  .light ::-webkit-scrollbar-track {
+    background: #f3f1ff;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: #4f46e5;
+    border-radius: 4px;
+  }
+
+  .light ::-webkit-scrollbar-thumb {
+    background: #7c3aed;
+    border-radius: 4px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #5b21b6;
+  }
+
+  .light ::-webkit-scrollbar-thumb:hover {
+    background: #6d28d9;
   }
 }
 
@@ -18,4 +62,24 @@
   input {
     font-size: 16px !important;
   }
+}
+
+/* Smooth transitions for theme switching */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* Glass effect for cards in dark mode */
+.dark .glass-effect {
+  background: rgba(26, 13, 46, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(79, 70, 229, 0.2);
+}
+
+/* Soft shadow for cards in light mode */
+.light .glass-effect {
+  background: rgba(243, 241, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(124, 58, 237, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(124, 58, 237, 0.1);
 }
