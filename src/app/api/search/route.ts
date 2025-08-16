@@ -75,6 +75,19 @@ export const POST = async (req: Request) => {
       body.embeddingModel?.name ||
       Object.keys(embeddingModelProviders[embeddingModelProvider])[0];
 
+    console.log('[Models] Search request', {
+      chatProvider: chatModelProvider,
+      chatModel,
+      embeddingProvider: embeddingModelProvider,
+      embeddingModel,
+      ...(chatModelProvider === 'custom_openai'
+        ? { chatBaseURL: getCustomOpenaiApiUrl() }
+        : {}),
+      ...(embeddingModelProvider === 'custom_openai'
+        ? { embeddingBaseURL: getCustomOpenaiApiUrl() }
+        : {}),
+    });
+
     let llm: BaseChatModel | undefined;
     let embeddings: Embeddings | undefined;
 
@@ -118,11 +131,54 @@ export const POST = async (req: Request) => {
       return Response.json({ message: 'Invalid focus mode' }, { status: 400 });
     }
 
+    const llmProxy = new Proxy(llm as any, {
+      get(target, prop, receiver) {
+        if (
+          prop === 'invoke' ||
+          prop === 'stream' ||
+          prop === 'streamEvents' ||
+          prop === 'generate'
+        ) {
+          return (...args: any[]) => {
+            console.log('[Models] Chat model call', {
+              provider: chatModelProvider,
+              model: chatModel,
+              method: String(prop),
+            });
+            return (target as any)[prop](...args);
+          };
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+
+    const embeddingProxy = new Proxy(embeddings as any, {
+      get(target, prop, receiver) {
+        if (prop === 'embedQuery' || prop === 'embedDocuments') {
+          return (...args: any[]) => {
+            console.log('[Models] Embedding model call', {
+              provider: embeddingModelProvider,
+              model: embeddingModel,
+              method: String(prop),
+              size:
+                prop === 'embedDocuments'
+                  ? Array.isArray(args[0])
+                    ? args[0].length
+                    : undefined
+                  : undefined,
+            });
+            return (target as any)[prop](...args);
+          };
+        }
+        return Reflect.get(target, prop, receiver);
+      },
+    });
+
     const emitter = await searchHandler.searchAndAnswer(
       body.query,
       history,
-      llm,
-      embeddings,
+      llmProxy as any,
+      embeddingProxy as any,
       body.optimizationMode,
       [],
       body.systemInstructions || '',

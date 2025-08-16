@@ -313,6 +313,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
   const [notFound, setNotFound] = useState(false);
+  const [statusText, setStatusText] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (
@@ -367,6 +368,11 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
     setLoading(true);
     setMessageAppeared(false);
+    setStatusText(
+      focusMode === 'writingAssistant'
+        ? 'Waiting for chat completion...'
+        : 'Searching web...'
+    );
 
     let sources: Document[] | undefined = undefined;
     let recievedMessage = '';
@@ -386,13 +392,19 @@ const ChatWindow = ({ id }: { id?: string }) => {
     ]);
 
     const messageHandler = async (data: any) => {
+      if (data.type === 'status') {
+        if (typeof data.data === 'string') setStatusText(data.data);
+        return;
+      }
       if (data.type === 'error') {
         toast.error(data.data);
+        setStatusText('Chat completion failed.');
         setLoading(false);
         return;
       }
 
       if (data.type === 'sources') {
+        setStatusText('Generating answer...');
         sources = data.data;
         if (!added) {
           setMessages((prevMessages) => [
@@ -412,6 +424,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
       }
 
       if (data.type === 'message') {
+        setStatusText('Generating answer...');
         if (!added) {
           setMessages((prevMessages) => [
             ...prevMessages,
@@ -442,6 +455,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
       }
 
       if (data.type === 'messageEnd') {
+        setStatusText(undefined);
         setChatHistory((prevHistory) => [
           ...prevHistory,
           ['human', message],
@@ -519,31 +533,61 @@ const ChatWindow = ({ id }: { id?: string }) => {
       }),
     });
 
-    if (!res.body) throw new Error('No response body');
+    if (!res.ok) {
+      const text = await res.text();
+      try {
+        const json = JSON.parse(text);
+        toast.error(json.message || `Request failed: ${res.status} ${res.statusText}`);
+      } catch {
+        toast.error(`Request failed: ${res.status} ${res.statusText}`);
+      }
+      setStatusText('Chat completion failed.');
+      setLoading(false);
+      return;
+    }
+
+    if (!res.body) {
+      toast.error('No response body');
+      setStatusText('Chat completion failed.');
+      setLoading(false);
+      return;
+    }
 
     const reader = res.body?.getReader();
     const decoder = new TextDecoder('utf-8');
 
     let partialChunk = '';
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
 
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
+        partialChunk += decoder.decode(value, { stream: true });
 
-      partialChunk += decoder.decode(value, { stream: true });
-
-      try {
-        const messages = partialChunk.split('\n');
-        for (const msg of messages) {
-          if (!msg.trim()) continue;
-          const json = JSON.parse(msg);
-          messageHandler(json);
+        try {
+          const messages = partialChunk.split('\n');
+          for (const msg of messages) {
+            if (!msg.trim()) continue;
+            const json = JSON.parse(msg);
+            messageHandler(json);
+          }
+          partialChunk = '';
+        } catch (error) {
+          console.warn('Incomplete JSON, waiting for next chunk...');
         }
-        partialChunk = '';
-      } catch (error) {
-        console.warn('Incomplete JSON, waiting for next chunk...');
       }
+    } catch (e) {
+      console.error('Streaming error', e);
+      toast.error('Chat streaming failed.');
+      setStatusText('Chat completion failed.');
+      setLoading(false);
+      return;
     }
+
+    // Fallback: if the stream ended without 'messageEnd' or explicit error,
+    // ensure the UI doesn't stay in a loading state indefinitely.
+    setStatusText(undefined);
+    setLoading(false);
   };
 
   const rewrite = (messageId: string) => {
@@ -605,6 +649,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
               setFileIds={setFileIds}
               files={files}
               setFiles={setFiles}
+              statusText={statusText}
             />
           </>
         ) : (
