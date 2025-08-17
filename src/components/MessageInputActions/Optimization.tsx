@@ -14,7 +14,7 @@ const OptimizationModes = [
     key: 'agent',
     title: 'Agent (Experimental)',
     description:
-      'Use an agentic workflow to answer complex multi-part questions. This mode may take longer and is experimental. It uses large prompts and may not work with all models. Best with at least a 8b model that supports 32k context or more.',
+      'Use an agentic workflow to answer complex multi-part questions. This mode may take longer and is experimental. It requires a model that supports tool calling.',
     icon: <Bot size={20} className="text-accent" />,
   },
 ];
