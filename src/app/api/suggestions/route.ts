@@ -8,6 +8,7 @@ import { getAvailableChatModelProviders } from '@/lib/providers';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 import { ChatOpenAI } from '@langchain/openai';
+import { DEFAULT_LOCALE } from '@/i18n/locales';
 
 interface ChatModel {
   provider: string;
@@ -17,6 +18,7 @@ interface ChatModel {
 interface SuggestionsGenerationBody {
   chatHistory: any[];
   chatModel?: ChatModel;
+  locale?: string;
 }
 
 export const POST = async (req: Request) => {
@@ -66,6 +68,7 @@ export const POST = async (req: Request) => {
     const suggestions = await generateSuggestions(
       {
         chat_history: chatHistory,
+        locale: body.locale || DEFAULT_LOCALE,
       },
       llm,
     );

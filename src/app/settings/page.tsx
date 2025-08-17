@@ -1,15 +1,14 @@
 'use client';
 
 import { Settings as SettingsIcon, ArrowLeft, Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Switch } from '@headlessui/react';
 import ThemeSwitcher from '@/components/theme/Switcher';
+import LocaleSwitcher from '@/components/LocaleSwitcher';
 import { ImagesIcon, VideoIcon } from 'lucide-react';
 import Link from 'next/link';
 import { PROVIDER_METADATA } from '@/lib/providers';
-import LocaleSwitcher from '@/components/LocaleSwitcher';
-import { getPromptLanguageName } from '@/i18n/locales';
 import { useLocale, useTranslations } from 'next-intl';
 
 interface SettingsType {
@@ -216,8 +215,7 @@ const Page = () => {
         localStorage.getItem('autoVideoSearch') === 'true',
       );
 
-      const stored = localStorage.getItem('systemInstructions') || '';
-      setSystemInstructions(stripPrefixedPrompt(stored));
+      setSystemInstructions(localStorage.getItem('systemInstructions')!);
 
       setMeasureUnit(
         localStorage.getItem('measureUnit')! as 'Imperial' | 'Metric',
@@ -227,37 +225,6 @@ const Page = () => {
     };
 
     fetchConfig();
-  }, []);
-
-  // Remove prefix for UI display if it exists in stored value
-  const stripPrefixedPrompt = (text: string) => {
-    const trimmed = (text || '').trim();
-    const starts = 'Always respond to all non-code content and explanations in';
-    if (trimmed.startsWith(starts)) {
-      const parts = trimmed.split('\n\n');
-      // Drop the first block (prefix paragraph and rules)
-      const rest = parts.slice(1).join('\n\n');
-      return rest || '';
-    }
-    return trimmed;
-  };
-
-  const buildPrefixedPrompt = useCallback((base: string, loc: string) => {
-    const langName = getPromptLanguageName(loc);
-    const prefix = `Always respond to all non-code content and explanations in ${langName}.\nRules:\n1. All descriptions, explanations, and example clarifications must be in ${langName}.\n2. Any content inside code blocks and code comments must be entirely in English.\n3. For language-specific or technical terms, use the original term in that specific language (do not translate it).`;
-    const trimmed = (base || '').trim();
-    // If already starts with the prefix (by simple inclusion of first sentence), avoid duplicating
-    if (
-      trimmed.startsWith(
-        `Always respond to all non-code content and explanations in`,
-      )
-    ) {
-      // If locale changed, replace the existing first paragraph block
-      const parts = trimmed.split('\n\n');
-      const rest = parts.slice(1).join('\n\n');
-      return `${prefix}${rest ? '\n\n' + rest : ''}`;
-    }
-    return prefix + (trimmed ? `\n\n${trimmed}` : '');
   }, []);
 
   const saveConfig = async (key: string, value: any) => {
@@ -495,16 +462,7 @@ const Page = () => {
                 <p className="text-black/70 dark:text-white/70 text-sm">
                   {t('preferences.language')}
                 </p>
-                <LocaleSwitcher
-                  onChange={(nextLocale) => {
-                    // Rebuild and persist with new locale prefix; keep UI clean
-                    const prefixed = buildPrefixedPrompt(
-                      systemInstructions,
-                      nextLocale,
-                    );
-                    saveConfig('systemInstructions', prefixed);
-                  }}
-                />
+                <LocaleSwitcher />
               </div>
             </SettingsSection>
 
@@ -602,12 +560,7 @@ const Page = () => {
                   onChange={(e) => {
                     setSystemInstructions(e.target.value);
                   }}
-                  onSave={(value) => {
-                    const prefixed = buildPrefixedPrompt(value, locale);
-                    // Keep UI as user input without prefix
-                    setSystemInstructions(value);
-                    saveConfig('systemInstructions', prefixed);
-                  }}
+                  onSave={(value) => saveConfig('systemInstructions', value)}
                   placeholder={t('systemInstructions.placeholder')}
                 />
               </div>
@@ -857,7 +810,6 @@ const Page = () => {
                   </p>
                   <Input
                     type="text"
-                    placeholder={t('api.ollamaApiUrl')}
                     value={config.ollamaApiUrl}
                     isSaving={savingStates['ollamaApiUrl']}
                     onChange={(e) => {
@@ -966,7 +918,6 @@ const Page = () => {
                   </p>
                   <Input
                     type="text"
-                    placeholder={t('api.lmStudioApiUrl')}
                     value={config.lmStudioApiUrl}
                     isSaving={savingStates['lmStudioApiUrl']}
                     onChange={(e) => {

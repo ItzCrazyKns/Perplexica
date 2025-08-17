@@ -13,6 +13,7 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
+import { DEFAULT_LOCALE } from '@/i18n/locales';
 
 interface chatModel {
   provider: string;
@@ -35,6 +36,7 @@ interface ChatRequestBody {
   history: Array<[string, string]>;
   stream?: boolean;
   systemInstructions?: string;
+  locale?: string;
 }
 
 export const POST = async (req: Request) => {
@@ -126,6 +128,7 @@ export const POST = async (req: Request) => {
       body.optimizationMode,
       [],
       body.systemInstructions || '',
+      body.locale || DEFAULT_LOCALE,
     );
 
     if (!body.stream) {

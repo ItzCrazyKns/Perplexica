@@ -1,3 +1,4 @@
+// IETF BCP 47 codes, see https://www.rfc-editor.org/rfc/bcp/bcp47.txt. {ISO 639-1}-{ISO 3166-1 alpha-2}
 export const LOCALES = [
   'en-US',
   'en-GB',
@@ -10,6 +11,7 @@ export const LOCALES = [
   'fr-CA',
   'de',
 ] as const;
+
 export type AppLocale = (typeof LOCALES)[number];
 
 // Default locale for fallbacks
@@ -19,7 +21,7 @@ export const DEFAULT_LOCALE: AppLocale = 'en-US';
 export const LOCALE_LABELS: Record<AppLocale, string> = {
   'en-US': 'English (US)',
   'en-GB': 'English (UK)',
-  'zh-TW': '繁體中文',
+  'zh-TW': '繁體中文（台灣）',
   'zh-HK': '繁體中文（香港）',
   'zh-CN': '简体中文',
   ja: '日本語',

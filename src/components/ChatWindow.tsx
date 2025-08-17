@@ -7,7 +7,7 @@ import Chat from './Chat';
 import EmptyChat from './EmptyChat';
 import crypto from 'crypto';
 import { toast } from 'sonner';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { getSuggestions } from '@/lib/actions';
 import { Settings } from 'lucide-react';
@@ -264,6 +264,7 @@ const loadMessages = async (
 
 const ChatWindow = ({ id }: { id?: string }) => {
   const t = useTranslations();
+  const locale = useLocale();
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
 
@@ -473,7 +474,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
           lastMsg.sources.length > 0 &&
           !lastMsg.suggestions
         ) {
-          const suggestions = await getSuggestions(messagesRef.current);
+          const suggestions = await getSuggestions(messagesRef.current, locale);
           setMessages((prev) =>
             prev.map((msg) => {
               if (msg.messageId === lastMsg.messageId) {
@@ -516,6 +517,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
           provider: embeddingModelProvider.provider,
         },
         systemInstructions: localStorage.getItem('systemInstructions'),
+        locale: locale,
       }),
     });
 

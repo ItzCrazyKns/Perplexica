@@ -50,6 +50,7 @@ type Body = {
   chatModel: ChatModel;
   embeddingModel: EmbeddingModel;
   systemInstructions: string;
+  locale: string;
 };
 
 const handleEmitterEvents = async (
@@ -280,6 +281,7 @@ export const POST = async (req: Request) => {
       body.optimizationMode,
       body.files,
       body.systemInstructions,
+      body.locale,
     );
 
     const responseStream = new TransformStream();
