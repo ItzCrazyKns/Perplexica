@@ -4,7 +4,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import Sidebar from '@/components/Sidebar';
 import { Toaster } from 'sonner';
-import ThemeProvider from '@/components/theme/Provider';
+import ThemeController from '@/components/theme/Controller';
 
 const montserrat = Montserrat({
   weight: ['300', '400', '500', '700'],
@@ -34,19 +34,19 @@ export default function RootLayout({
           href="/api/opensearch"
         />
       </head>
-      <body className={cn('h-full', montserrat.className)}>
-        <ThemeProvider>
+      <body className={cn('h-full bg-bg text-fg', montserrat.className)}>
+        <ThemeController>
           <Sidebar>{children}</Sidebar>
           <Toaster
             toastOptions={{
               unstyled: true,
               classNames: {
                 toast:
-                  'bg-light-primary dark:bg-dark-secondary dark:text-white/70 text-black-70 rounded-lg p-4 flex flex-row items-center space-x-2',
+                  'bg-surface text-fg rounded-lg p-4 flex flex-row items-center space-x-2',
               },
             }}
           />
-        </ThemeProvider>
+        </ThemeController>
       </body>
     </html>
   );

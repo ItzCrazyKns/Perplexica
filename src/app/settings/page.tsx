@@ -13,6 +13,10 @@ import {
   RotateCcw,
   ChevronDown,
   ChevronRight,
+  Eye,
+  EyeOff,
+  Cloud,
+  LucideNewspaper,
 } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -63,7 +67,7 @@ const InputComponent = ({
       <input
         {...restProps}
         className={cn(
-          'bg-light-secondary dark:bg-dark-secondary w-full px-3 py-2 flex items-center overflow-hidden border border-light-200 dark:border-dark-200 dark:text-white rounded-lg text-sm',
+          'bg-surface w-full px-3 py-2 flex items-center overflow-hidden rounded-lg text-sm',
           isSaving && 'pr-10',
           className,
         )}
@@ -71,10 +75,7 @@ const InputComponent = ({
       />
       {isSaving && (
         <div className="absolute right-3 top-1/2 -translate-y-1/2">
-          <Loader2
-            size={16}
-            className="animate-spin text-black/70 dark:text-white/70"
-          />
+          <Loader2 size={16} className="animate-spin" />
         </div>
       )}
     </div>
@@ -96,17 +97,14 @@ const TextareaComponent = ({
     <div className="relative">
       <textarea
         placeholder="Any special instructions for the LLM"
-        className="placeholder:text-sm text-sm w-full flex items-center justify-between p-3 bg-light-secondary dark:bg-dark-secondary rounded-lg hover:bg-light-200 dark:hover:bg-dark-200 transition-colors"
+        className="placeholder:text-sm text-sm w-full flex items-center justify-between p-3 bg-surface rounded-lg hover:bg-surface-2 transition-colors"
         rows={4}
         onBlur={(e) => onSave?.(e.target.value)}
         {...restProps}
       />
       {isSaving && (
         <div className="absolute right-3 top-3">
-          <Loader2
-            size={16}
-            className="animate-spin text-black/70 dark:text-white/70"
-          />
+          <Loader2 size={16} className="animate-spin" />
         </div>
       )}
     </div>
@@ -124,7 +122,7 @@ const Select = ({
     <select
       {...restProps}
       className={cn(
-        'bg-light-secondary dark:bg-dark-secondary px-3 py-2 flex items-center overflow-hidden border border-light-200 dark:border-dark-200 dark:text-white rounded-lg text-sm',
+        'bg-surface px-3 py-2 flex items-center overflow-hidden border border-surface-2 rounded-lg text-sm',
         className,
       )}
     >
@@ -169,16 +167,14 @@ const SettingsSection = ({
   }, []);
 
   return (
-    <div className="flex flex-col space-y-4 p-4 bg-light-secondary/50 dark:bg-dark-secondary/50 rounded-xl border border-light-200 dark:border-dark-200">
+    <div className="flex flex-col space-y-4 p-4 bg-surface rounded-xl border border-surface-2">
       <div className="flex items-center gap-2">
-        <h2 className="text-black/90 dark:text-white/90 font-medium">
-          {title}
-        </h2>
+        <h2 className="font-medium">{title}</h2>
         {tooltip && (
           <div className="relative">
             <button
               ref={buttonRef}
-              className="p-1 text-black/70 dark:text-white/70 rounded-full hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white"
+              className="p-1 rounded-full hover:bg-surface-2 transition duration-200"
               onClick={() => setShowTooltip(!showTooltip)}
               aria-label="Show section information"
             >
@@ -187,10 +183,10 @@ const SettingsSection = ({
             {showTooltip && (
               <div
                 ref={tooltipRef}
-                className="absolute z-10 left-6 top-0 w-96 rounded-md shadow-lg bg-white dark:bg-dark-secondary border border-light-200 dark:border-dark-200"
+                className="absolute z-10 left-6 top-0 w-96 rounded-md shadow-lg bg-surface border border-surface-2"
               >
                 <div className="py-2 px-3">
-                  <div className="space-y-1 text-xs text-black dark:text-white">
+                  <div className="space-y-1 text-xs">
                     {tooltip.split('\\n').map((line, index) => (
                       <div key={index}>{line}</div>
                     ))}
@@ -232,7 +228,11 @@ export default function SettingsPage() {
   >(null);
   const [isLoading, setIsLoading] = useState(true);
   const [automaticSuggestions, setAutomaticSuggestions] = useState(true);
-  const [temperatureUnit, setTemperatureUnit] = useState<'C' | 'F'>('C');
+  const [showWeatherWidget, setShowWeatherWidget] = useState(true);
+  const [showNewsWidget, setShowNewsWidget] = useState(true);
+  const [measureUnit, setMeasureUnit] = useState<'Imperial' | 'Metric'>(
+    'Metric',
+  );
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
   const [contextWindowSize, setContextWindowSize] = useState(2048);
   const [isCustomContextWindow, setIsCustomContextWindow] = useState(false);
@@ -326,6 +326,10 @@ export default function SettingsPage() {
       setAutomaticSuggestions(
         localStorage.getItem('autoSuggestions') !== 'false', // default to true if not set
       );
+      setShowWeatherWidget(
+        localStorage.getItem('showWeatherWidget') !== 'false',
+      );
+      setShowNewsWidget(localStorage.getItem('showNewsWidget') !== 'false');
       const storedContextWindow = parseInt(
         localStorage.getItem('ollamaContextWindow') ?? '2048',
       );
@@ -334,7 +338,9 @@ export default function SettingsPage() {
         !predefinedContextSizes.includes(storedContextWindow),
       );
 
-      setTemperatureUnit(localStorage.getItem('temperatureUnit')! as 'C' | 'F');
+      setMeasureUnit(
+        localStorage.getItem('measureUnit')! as 'Imperial' | 'Metric',
+      );
 
       setIsLoading(false);
     };
@@ -556,8 +562,8 @@ export default function SettingsPage() {
         localStorage.setItem('embeddingModel', value);
       } else if (key === 'ollamaContextWindow') {
         localStorage.setItem('ollamaContextWindow', value.toString());
-      } else if (key === 'temperatureUnit') {
-        localStorage.setItem('temperatureUnit', value.toString());
+      } else if (key === 'measureUnit') {
+        localStorage.setItem('measureUnit', value.toString());
       }
     } catch (err) {
       console.error('Failed to save:', err);
@@ -585,6 +591,39 @@ export default function SettingsPage() {
     } else {
       // Model should be hidden, add to hidden list
       updatedHiddenModels = [...hiddenModels, modelKey];
+    }
+
+    // Update local state immediately
+    setHiddenModels(updatedHiddenModels);
+
+    // Persist changes to backend
+    try {
+      await saveConfig('hiddenModels', updatedHiddenModels);
+    } catch (error) {
+      console.error('Failed to save hidden models:', error);
+      // Revert local state on error
+      setHiddenModels(hiddenModels);
+    }
+  };
+
+  const handleProviderVisibilityToggle = async (
+    providerModels: Record<string, any>,
+    showAll: boolean,
+  ) => {
+    const modelKeys = Object.keys(providerModels);
+    let updatedHiddenModels: string[];
+
+    if (showAll) {
+      // Show all models in this provider, remove all from hidden list
+      updatedHiddenModels = hiddenModels.filter(
+        (modelKey) => !modelKeys.includes(modelKey),
+      );
+    } else {
+      // Hide all models in this provider, add all to hidden list
+      const modelsToHide = modelKeys.filter(
+        (modelKey) => !hiddenModels.includes(modelKey),
+      );
+      updatedHiddenModels = [...hiddenModels, ...modelsToHide];
     }
 
     // Update local state immediately
@@ -694,21 +733,21 @@ export default function SettingsPage() {
       <div className="flex flex-col pt-4">
         <div className="flex items-center space-x-2">
           <Link href="/" className="lg:hidden">
-            <ArrowLeft className="text-black/70 dark:text-white/70" />
+            <ArrowLeft />
           </Link>
           <div className="flex flex-row space-x-0.5 items-center">
             <SettingsIcon size={23} />
             <h1 className="text-3xl font-medium p-2">Settings</h1>
           </div>
         </div>
-        <hr className="border-t border-[#2B2C2C] my-4 w-full" />
+        <hr className="border-t border-surface-2 my-4 w-full" />
       </div>
 
       {isLoading ? (
         <div className="flex flex-row items-center justify-center min-h-[50vh]">
           <svg
             aria-hidden="true"
-            className="w-8 h-8 text-light-200 fill-light-secondary dark:text-[#202020] animate-spin dark:fill-[#ffffff3b]"
+            className="w-8 h-8 text-surface-2 fill-surface animate-spin"
             viewBox="0 0 100 101"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -728,29 +767,99 @@ export default function SettingsPage() {
           <div className="flex flex-col space-y-6 pb-28 lg:pb-8">
             <SettingsSection title="Preferences">
               <div className="flex flex-col space-y-1">
-                <p className="text-black/70 dark:text-white/70 text-sm">
-                  Theme
-                </p>
+                <p className="text-sm">Theme</p>
                 <ThemeSwitcher />
               </div>
               <div className="flex flex-col space-y-1">
-                <p className="text-black/70 dark:text-white/70 text-sm">
-                  Temperature Unit
-                </p>
+                <p className="text-sm">Home Page Widgets</p>
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center justify-between p-3 bg-surface rounded-lg hover:bg-surface-2 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-surface-2 rounded-lg">
+                        <Cloud size={18} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Weather Widget</p>
+                        <p className="text-xs mt-0.5">
+                          Show or hide the weather widget on the home page
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={showWeatherWidget}
+                      onChange={(checked) => {
+                        setShowWeatherWidget(checked);
+                        localStorage.setItem(
+                          'showWeatherWidget',
+                          checked.toString(),
+                        );
+                      }}
+                      className={cn(
+                        showWeatherWidget ? 'bg-accent' : 'bg-surface-2',
+                        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          showWeatherWidget ? 'translate-x-6' : 'translate-x-1',
+                          'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                        )}
+                      />
+                    </Switch>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-surface rounded-lg hover:bg-surface-2 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-surface-2 rounded-lg">
+                        <LucideNewspaper size={18} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">News Widget</p>
+                        <p className="text-xs mt-0.5">
+                          Show or hide the news widget on the home page
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={showNewsWidget}
+                      onChange={(checked) => {
+                        setShowNewsWidget(checked);
+                        localStorage.setItem(
+                          'showNewsWidget',
+                          checked.toString(),
+                        );
+                      }}
+                      className={cn(
+                        showNewsWidget ? 'bg-accent' : 'bg-surface-2',
+                        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          showNewsWidget ? 'translate-x-6' : 'translate-x-1',
+                          'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                        )}
+                      />
+                    </Switch>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm">Measurement Units</p>
                 <Select
-                  value={temperatureUnit ?? undefined}
+                  value={measureUnit ?? undefined}
                   onChange={(e) => {
-                    setTemperatureUnit(e.target.value as 'C' | 'F');
-                    saveConfig('temperatureUnit', e.target.value);
+                    setMeasureUnit(e.target.value as 'Imperial' | 'Metric');
+                    saveConfig('measureUnit', e.target.value);
                   }}
                   options={[
                     {
-                      label: 'Celsius',
-                      value: 'C',
+                      label: 'Metric',
+                      value: 'Metric',
                     },
                     {
-                      label: 'Fahrenheit',
-                      value: 'F',
+                      label: 'Imperial',
+                      value: 'Imperial',
                     },
                   ]}
                 />
@@ -759,19 +868,16 @@ export default function SettingsPage() {
 
             <SettingsSection title="Automatic Search">
               <div className="flex flex-col space-y-4">
-                <div className="flex items-center justify-between p-3 bg-light-secondary dark:bg-dark-secondary rounded-lg hover:bg-light-200 dark:hover:bg-dark-200 transition-colors">
+                <div className="flex items-center justify-between p-3 bg-surface rounded-lg hover:bg-surface-2 transition-colors">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-light-200 dark:bg-dark-200 rounded-lg">
-                      <Layers3
-                        size={18}
-                        className="text-black/70 dark:text-white/70"
-                      />
+                    <div className="p-2 bg-surface-2 rounded-lg">
+                      <Layers3 size={18} />
                     </div>
                     <div>
-                      <p className="text-sm text-black/90 dark:text-white/90 font-medium">
+                      <p className="text-sm font-medium">
                         Automatic Suggestions
                       </p>
-                      <p className="text-xs text-black/60 dark:text-white/60 mt-0.5">
+                      <p className="text-xs mt-0.5">
                         Automatically show related suggestions after responses
                       </p>
                     </div>
@@ -783,9 +889,7 @@ export default function SettingsPage() {
                       saveConfig('automaticSuggestions', checked);
                     }}
                     className={cn(
-                      automaticSuggestions
-                        ? 'bg-[#24A0ED]'
-                        : 'bg-light-200 dark:bg-dark-200',
+                      automaticSuggestions ? 'bg-accent' : 'bg-surface-2',
                       'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
                     )}
                   >
@@ -813,7 +917,7 @@ export default function SettingsPage() {
                   .map((prompt) => (
                     <div
                       key={prompt.id}
-                      className="p-3 border border-light-secondary dark:border-dark-secondary rounded-md bg-light-100 dark:bg-dark-100"
+                      className="p-3 border border-surface-2 rounded-md bg-surface-2"
                     >
                       {editingPrompt && editingPrompt.id === prompt.id ? (
                         <div className="space-y-3">
@@ -829,7 +933,6 @@ export default function SettingsPage() {
                               })
                             }
                             placeholder="Prompt Name"
-                            className="text-black dark:text-white bg-white dark:bg-dark-secondary"
                           />
                           <Select
                             value={editingPrompt.type}
@@ -843,7 +946,6 @@ export default function SettingsPage() {
                               { value: 'system', label: 'System Prompt' },
                               { value: 'persona', label: 'Persona Prompt' },
                             ]}
-                            className="text-black dark:text-white bg-white dark:bg-dark-secondary"
                           />
                           <TextareaComponent
                             value={editingPrompt.content}
@@ -856,19 +958,19 @@ export default function SettingsPage() {
                               })
                             }
                             placeholder="Prompt Content"
-                            className="min-h-[100px] text-black dark:text-white bg-white dark:bg-dark-secondary"
+                            className="min-h-[100px]"
                           />
                           <div className="flex space-x-2 justify-end">
                             <button
                               onClick={() => setEditingPrompt(null)}
-                              className="px-3 py-2 text-sm rounded-md bg-light-secondary hover:bg-light-200 dark:bg-dark-secondary dark:hover:bg-dark-200 text-black/80 dark:text-white/80 flex items-center gap-1.5"
+                              className="px-3 py-2 text-sm rounded-md bg-surface hover:bg-surface-2 flex items-center gap-1.5"
                             >
                               <X size={16} />
                               Cancel
                             </button>
                             <button
                               onClick={handleAddOrUpdateSystemPrompt}
-                              className="px-3 py-2 text-sm rounded-md bg-[#24A0ED] hover:bg-[#1f8cdb] text-white flex items-center gap-1.5"
+                              className="px-3 py-2 text-sm rounded-md flex items-center gap-1.5 bg-accent"
                             >
                               <Save size={16} />
                               Save
@@ -878,11 +980,9 @@ export default function SettingsPage() {
                       ) : (
                         <div className="flex justify-between items-start">
                           <div className="flex-grow">
-                            <h4 className="font-semibold text-black/90 dark:text-white/90">
-                              {prompt.name}
-                            </h4>
+                            <h4 className="font-semibold">{prompt.name}</h4>
                             <p
-                              className="text-sm text-black/70 dark:text-white/70 mt-1 whitespace-pre-wrap overflow-hidden text-ellipsis"
+                              className="text-sm mt-1 whitespace-pre-wrap overflow-hidden text-ellipsis"
                               style={{
                                 maxHeight: '3.6em',
                                 display: '-webkit-box',
@@ -897,7 +997,7 @@ export default function SettingsPage() {
                             <button
                               onClick={() => setEditingPrompt({ ...prompt })}
                               title="Edit"
-                              className="p-1.5 rounded-md hover:bg-light-200 dark:hover:bg-dark-200 text-black/70 dark:text-white/70"
+                              className="p-1.5 rounded-md hover:bg-surface-2"
                             >
                               <Edit3 size={18} />
                             </button>
@@ -906,7 +1006,7 @@ export default function SettingsPage() {
                                 handleDeleteSystemPrompt(prompt.id)
                               }
                               title="Delete"
-                              className="p-1.5 rounded-md hover:bg-light-200 dark:hover:bg-dark-200 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-500"
+                              className="p-1.5 rounded-md hover:bg-surface-2 text-red-500 hover:text-red-600"
                             >
                               <Trash2 size={18} />
                             </button>
@@ -916,7 +1016,7 @@ export default function SettingsPage() {
                     </div>
                   ))}
                 {isAddingNewPrompt && newPromptType === 'system' && (
-                  <div className="p-3 border border-dashed border-light-secondary dark:border-dark-secondary rounded-md space-y-3 bg-light-100 dark:bg-dark-100">
+                  <div className="p-3 border border-dashed border-surface-2 rounded-md space-y-3 bg-surface-2">
                     <InputComponent
                       type="text"
                       value={newPromptName}
@@ -924,7 +1024,6 @@ export default function SettingsPage() {
                         setNewPromptName(e.target.value)
                       }
                       placeholder="System Prompt Name"
-                      className="text-black dark:text-white bg-white dark:bg-dark-secondary"
                     />
                     <TextareaComponent
                       value={newPromptContent}
@@ -932,7 +1031,7 @@ export default function SettingsPage() {
                         setNewPromptContent(e.target.value)
                       }
                       placeholder="System prompt content (e.g., '/nothink')"
-                      className="min-h-[100px] text-black dark:text-white bg-white dark:bg-dark-secondary"
+                      className="min-h-[100px]"
                     />
                     <div className="flex space-x-2 justify-end">
                       <button
@@ -942,14 +1041,14 @@ export default function SettingsPage() {
                           setNewPromptContent('');
                           setNewPromptType('system');
                         }}
-                        className="px-3 py-2 text-sm rounded-md bg-light-secondary hover:bg-light-200 dark:bg-dark-secondary dark:hover:bg-dark-200 text-black/80 dark:text-white/80 flex items-center gap-1.5"
+                        className="px-3 py-2 text-sm rounded-md bg-surface hover:bg-surface-2 flex items-center gap-1.5"
                       >
                         <X size={16} />
                         Cancel
                       </button>
                       <button
                         onClick={handleAddOrUpdateSystemPrompt}
-                        className="px-3 py-2 text-sm rounded-md bg-[#24A0ED] hover:bg-[#1f8cdb] text-white flex items-center gap-1.5"
+                        className="px-3 py-2 text-sm rounded-md flex items-center gap-1.5 bg-accent"
                       >
                         <Save size={16} />
                         Add System Prompt
@@ -963,7 +1062,7 @@ export default function SettingsPage() {
                       setIsAddingNewPrompt(true);
                       setNewPromptType('system');
                     }}
-                    className="self-start px-3 py-2 text-sm rounded-md border border-light-200 dark:border-dark-200 hover:bg-light-200 dark:hover:bg-dark-200 text-black/80 dark:text-white/80 flex items-center gap-1.5"
+                    className="self-start px-3 py-2 text-sm rounded-md border border-surface-2 hover:bg-surface-2 flex items-center gap-1.5"
                   >
                     <PlusCircle size={18} /> Add System Prompt
                   </button>
@@ -981,7 +1080,7 @@ export default function SettingsPage() {
                   .map((prompt) => (
                     <div
                       key={prompt.id}
-                      className="p-3 border border-light-secondary dark:border-dark-secondary rounded-md bg-light-100 dark:bg-dark-100"
+                      className="p-3 border border-surface-2 rounded-md bg-surface-2"
                     >
                       {editingPrompt && editingPrompt.id === prompt.id ? (
                         <div className="space-y-3">
@@ -997,7 +1096,7 @@ export default function SettingsPage() {
                               })
                             }
                             placeholder="Prompt Name"
-                            className="text-black dark:text-white bg-white dark:bg-dark-secondary"
+                            className=""
                           />
                           <Select
                             value={editingPrompt.type}
@@ -1011,7 +1110,7 @@ export default function SettingsPage() {
                               { value: 'system', label: 'System Prompt' },
                               { value: 'persona', label: 'Persona Prompt' },
                             ]}
-                            className="text-black dark:text-white bg-white dark:bg-dark-secondary"
+                            className=""
                           />
                           <TextareaComponent
                             value={editingPrompt.content}
@@ -1024,19 +1123,19 @@ export default function SettingsPage() {
                               })
                             }
                             placeholder="Prompt Content"
-                            className="min-h-[100px] text-black dark:text-white bg-white dark:bg-dark-secondary"
+                            className="min-h-[100px]"
                           />
                           <div className="flex space-x-2 justify-end">
                             <button
                               onClick={() => setEditingPrompt(null)}
-                              className="px-3 py-2 text-sm rounded-md bg-light-secondary hover:bg-light-200 dark:bg-dark-secondary dark:hover:bg-dark-200 text-black/80 dark:text-white/80 flex items-center gap-1.5"
+                              className="px-3 py-2 text-sm rounded-md bg-surface hover:bg-surface-2 flex items-center gap-1.5"
                             >
                               <X size={16} />
                               Cancel
                             </button>
                             <button
                               onClick={handleAddOrUpdateSystemPrompt}
-                              className="px-3 py-2 text-sm rounded-md bg-[#24A0ED] hover:bg-[#1f8cdb] text-white flex items-center gap-1.5"
+                              className="px-3 py-2 text-sm rounded-md bg-accent flex items-center gap-1.5"
                             >
                               <Save size={16} />
                               Save
@@ -1046,11 +1145,9 @@ export default function SettingsPage() {
                       ) : (
                         <div className="flex justify-between items-start">
                           <div className="flex-grow">
-                            <h4 className="font-semibold text-black/90 dark:text-white/90">
-                              {prompt.name}
-                            </h4>
+                            <h4 className="font-semibold">{prompt.name}</h4>
                             <p
-                              className="text-sm text-black/70 dark:text-white/70 mt-1 whitespace-pre-wrap overflow-hidden text-ellipsis"
+                              className="text-sm mt-1 whitespace-pre-wrap overflow-hidden text-ellipsis"
                               style={{
                                 maxHeight: '3.6em',
                                 display: '-webkit-box',
@@ -1065,7 +1162,7 @@ export default function SettingsPage() {
                             <button
                               onClick={() => setEditingPrompt({ ...prompt })}
                               title="Edit"
-                              className="p-1.5 rounded-md hover:bg-light-200 dark:hover:bg-dark-200 text-black/70 dark:text-white/70"
+                              className="p-1.5 rounded-md hover:bg-surface-2"
                             >
                               <Edit3 size={18} />
                             </button>
@@ -1074,7 +1171,7 @@ export default function SettingsPage() {
                                 handleDeleteSystemPrompt(prompt.id)
                               }
                               title="Delete"
-                              className="p-1.5 rounded-md hover:bg-light-200 dark:hover:bg-dark-200 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-500"
+                              className="p-1.5 rounded-md hover:bg-surface-2 text-red-500 hover:text-red-600"
                             >
                               <Trash2 size={18} />
                             </button>
@@ -1084,7 +1181,7 @@ export default function SettingsPage() {
                     </div>
                   ))}
                 {isAddingNewPrompt && newPromptType === 'persona' && (
-                  <div className="p-3 border border-dashed border-light-secondary dark:border-dark-secondary rounded-md space-y-3 bg-light-100 dark:bg-dark-100">
+                  <div className="p-3 border border-dashed border-surface-2 rounded-md space-y-3 bg-surface-2">
                     <InputComponent
                       type="text"
                       value={newPromptName}
@@ -1092,7 +1189,7 @@ export default function SettingsPage() {
                         setNewPromptName(e.target.value)
                       }
                       placeholder="Persona Prompt Name"
-                      className="text-black dark:text-white bg-white dark:bg-dark-secondary"
+                      className=""
                     />
                     <TextareaComponent
                       value={newPromptContent}
@@ -1100,7 +1197,7 @@ export default function SettingsPage() {
                         setNewPromptContent(e.target.value)
                       }
                       placeholder="Persona prompt content (e.g., You are a helpful assistant that speaks like a pirate and uses nautical metaphors.)"
-                      className="min-h-[100px] text-black dark:text-white bg-white dark:bg-dark-secondary"
+                      className="min-h-[100px]"
                     />
                     <div className="flex space-x-2 justify-end">
                       <button
@@ -1110,14 +1207,14 @@ export default function SettingsPage() {
                           setNewPromptContent('');
                           setNewPromptType('system');
                         }}
-                        className="px-3 py-2 text-sm rounded-md bg-light-secondary hover:bg-light-200 dark:bg-dark-secondary dark:hover:bg-dark-200 text-black/80 dark:text-white/80 flex items-center gap-1.5"
+                        className="px-3 py-2 text-sm rounded-md bg-surface hover:bg-surface-2 flex items-center gap-1.5"
                       >
                         <X size={16} />
                         Cancel
                       </button>
                       <button
                         onClick={handleAddOrUpdateSystemPrompt}
-                        className="px-3 py-2 text-sm rounded-md bg-[#24A0ED] hover:bg-[#1f8cdb] text-white flex items-center gap-1.5"
+                        className="px-3 py-2 text-sm rounded-md bg-accent flex items-center gap-1.5"
                       >
                         <Save size={16} />
                         Add Persona Prompt
@@ -1131,7 +1228,7 @@ export default function SettingsPage() {
                       setIsAddingNewPrompt(true);
                       setNewPromptType('persona');
                     }}
-                    className="self-start px-3 py-2 text-sm rounded-md border border-light-200 dark:border-dark-200 hover:bg-light-200 dark:hover:bg-dark-200 text-black/80 dark:text-white/80 flex items-center gap-1.5"
+                    className="self-start px-3 py-2 text-sm rounded-md border border-surface-2 hover:bg-surface-2 flex items-center gap-1.5"
                   >
                     <PlusCircle size={18} /> Add Persona Prompt
                   </button>
@@ -1145,9 +1242,7 @@ export default function SettingsPage() {
             >
               <div className="flex flex-col space-y-4">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-black/70 dark:text-white/70 text-sm">
-                    Optimization Mode
-                  </p>
+                  <p className="text-sm">Optimization Mode</p>
                   <div className="flex justify-start items-center space-x-2">
                     <Optimization
                       optimizationMode={searchOptimizationMode}
@@ -1163,7 +1258,7 @@ export default function SettingsPage() {
                           setSearchOptimizationMode('');
                           localStorage.removeItem('searchOptimizationMode');
                         }}
-                        className="p-1.5 rounded-md hover:bg-light-200 dark:hover:bg-dark-200 text-black/50 dark:text-white/50 hover:text-black/80 dark:hover:text-white/80 transition-colors"
+                        className="p-1.5 rounded-md hover:bg-surface-2 transition-colors"
                         title="Reset optimization mode"
                       >
                         <RotateCcw size={16} />
@@ -1173,9 +1268,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <p className="text-black/70 dark:text-white/70 text-sm">
-                    Chat Model
-                  </p>
+                  <p className="text-sm">Chat Model</p>
                   <div className="flex justify-start items-center space-x-2">
                     <ModelSelector
                       selectedModel={{
@@ -1201,7 +1294,7 @@ export default function SettingsPage() {
                           localStorage.removeItem('searchChatModelProvider');
                           localStorage.removeItem('searchChatModel');
                         }}
-                        className="p-1.5 rounded-md hover:bg-light-200 dark:hover:bg-dark-200 text-black/50 dark:text-white/50 hover:text-black/80 dark:hover:text-white/80 transition-colors"
+                        className="p-1.5 rounded-md hover:bg-surface-2 transition-colors"
                         title="Reset chat model"
                       >
                         <RotateCcw size={16} />
@@ -1216,9 +1309,7 @@ export default function SettingsPage() {
               {config.chatModelProviders && (
                 <div className="flex flex-col space-y-4">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-black/70 dark:text-white/70 text-sm">
-                      Chat Model Provider
-                    </p>
+                    <p className="text-sm">Chat Model Provider</p>
                     <Select
                       value={selectedChatModelProvider ?? undefined}
                       onChange={(e) => {
@@ -1247,9 +1338,7 @@ export default function SettingsPage() {
                   {selectedChatModelProvider &&
                     selectedChatModelProvider != 'custom_openai' && (
                       <div className="flex flex-col space-y-1">
-                        <p className="text-black/70 dark:text-white/70 text-sm">
-                          Chat Model
-                        </p>
+                        <p className="text-sm">Chat Model</p>
                         <Select
                           value={selectedChatModel ?? undefined}
                           onChange={(e) => {
@@ -1287,9 +1376,7 @@ export default function SettingsPage() {
                         />
                         {selectedChatModelProvider === 'ollama' && (
                           <div className="flex flex-col space-y-1">
-                            <p className="text-black/70 dark:text-white/70 text-sm">
-                              Chat Context Window Size
-                            </p>
+                            <p className="text-sm">Chat Context Window Size</p>
                             <Select
                               value={
                                 isCustomContextWindow
@@ -1350,7 +1437,7 @@ export default function SettingsPage() {
                                 />
                               </div>
                             )}
-                            <p className="text-xs text-black/60 dark:text-white/60 mt-0.5">
+                            <p className="text-xs mt-0.5">
                               {isCustomContextWindow
                                 ? 'Adjust the context window size for Ollama models (minimum 512 tokens)'
                                 : 'Adjust the context window size for Ollama models'}
@@ -1366,9 +1453,7 @@ export default function SettingsPage() {
                 selectedChatModelProvider === 'custom_openai' && (
                   <div className="flex flex-col space-y-4">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-black/70 dark:text-white/70 text-sm">
-                        Model Name
-                      </p>
+                      <p className="text-sm">Model Name</p>
                       <InputComponent
                         type="text"
                         placeholder="Model name"
@@ -1386,9 +1471,7 @@ export default function SettingsPage() {
                       />
                     </div>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-black/70 dark:text-white/70 text-sm">
-                        Custom OpenAI API Key
-                      </p>
+                      <p className="text-sm">Custom OpenAI API Key</p>
                       <InputComponent
                         type="password"
                         placeholder="Custom OpenAI API Key"
@@ -1406,9 +1489,7 @@ export default function SettingsPage() {
                       />
                     </div>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-black/70 dark:text-white/70 text-sm">
-                        Custom OpenAI Base URL
-                      </p>
+                      <p className="text-sm">Custom OpenAI Base URL</p>
                       <InputComponent
                         type="text"
                         placeholder="Custom OpenAI Base URL"
@@ -1429,11 +1510,9 @@ export default function SettingsPage() {
                 )}
 
               {config.embeddingModelProviders && (
-                <div className="flex flex-col space-y-4 mt-4 pt-4 border-t border-light-200 dark:border-dark-200">
+                <div className="flex flex-col space-y-4 mt-4 pt-4 border-t border-surface-2">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-black/70 dark:text-white/70 text-sm">
-                      Embedding Model Provider
-                    </p>
+                    <p className="text-sm">Embedding Model Provider</p>
                     <Select
                       value={selectedEmbeddingModelProvider ?? undefined}
                       onChange={(e) => {
@@ -1461,9 +1540,7 @@ export default function SettingsPage() {
 
                   {selectedEmbeddingModelProvider && (
                     <div className="flex flex-col space-y-1">
-                      <p className="text-black/70 dark:text-white/70 text-sm">
-                        Embedding Model
-                      </p>
+                      <p className="text-sm">Embedding Model</p>
                       <Select
                         value={selectedEmbeddingModel ?? undefined}
                         onChange={(e) => {
@@ -1552,35 +1629,29 @@ export default function SettingsPage() {
                       return (
                         <div
                           key={providerId}
-                          className="border border-light-200 dark:border-dark-200 rounded-lg overflow-hidden"
+                          className="border border-surface-2 rounded-lg overflow-hidden"
                         >
                           <button
                             onClick={() => toggleProviderExpansion(providerId)}
-                            className="w-full p-3 bg-light-secondary dark:bg-dark-secondary hover:bg-light-200 dark:hover:bg-dark-200 transition-colors flex items-center justify-between"
+                            className="w-full p-3 bg-surface hover:bg-surface-2 transition-colors flex items-center justify-between"
                           >
                             <div className="flex items-center space-x-3">
                               {isExpanded ? (
-                                <ChevronDown
-                                  size={16}
-                                  className="text-black/70 dark:text-white/70"
-                                />
+                                <ChevronDown size={16} />
                               ) : (
-                                <ChevronRight
-                                  size={16}
-                                  className="text-black/70 dark:text-white/70"
-                                />
+                                <ChevronRight size={16} />
                               )}
-                              <h4 className="text-sm font-medium text-black/80 dark:text-white/80">
+                              <h4 className="text-sm font-medium">
                                 {(PROVIDER_METADATA as any)[provider]
                                   ?.displayName ||
                                   provider.charAt(0).toUpperCase() +
                                     provider.slice(1)}
                               </h4>
                             </div>
-                            <div className="flex items-center space-x-2 text-xs text-black/60 dark:text-white/60">
+                            <div className="flex items-center space-x-2 text-xs">
                               <span>{totalCount - hiddenCount} visible</span>
                               {hiddenCount > 0 && (
-                                <span className="px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded">
+                                <span className="px-2 py-1 bg-red-100 text-red-700 rounded">
                                   {hiddenCount} hidden
                                 </span>
                               )}
@@ -1588,14 +1659,44 @@ export default function SettingsPage() {
                           </button>
 
                           {isExpanded && (
-                            <div className="p-3 bg-light-100 dark:bg-dark-100 border-t border-light-200 dark:border-dark-200">
+                            <div className="p-3 bg-surface-2 border-t border-surface-2">
+                              <div className="flex justify-end mb-3 space-x-2">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleProviderVisibilityToggle(
+                                      models,
+                                      true,
+                                    );
+                                  }}
+                                  className="px-3 py-1.5 text-xs rounded-md bg-green-100 hover:bg-green-200 text-green-700 flex items-center gap-1.5 transition-colors"
+                                  title="Show all models in this provider"
+                                >
+                                  <Eye size={14} />
+                                  Show All
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleProviderVisibilityToggle(
+                                      models,
+                                      false,
+                                    );
+                                  }}
+                                  className="px-3 py-1.5 text-xs rounded-md bg-red-100 hover:bg-red-200 text-red-700 flex items-center gap-1.5 transition-colors"
+                                  title="Hide all models in this provider"
+                                >
+                                  <EyeOff size={14} />
+                                  Hide All
+                                </button>
+                              </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                                 {modelEntries.map(([modelKey, model]) => (
                                   <div
                                     key={`${provider}-${modelKey}`}
-                                    className="flex items-center justify-between p-2 bg-white dark:bg-dark-secondary rounded-md"
+                                    className="flex items-center justify-between p-2 bg-surface rounded-md"
                                   >
-                                    <span className="text-sm text-black/90 dark:text-white/90">
+                                    <span className="text-sm">
                                       {model.displayName || modelKey}
                                     </span>
                                     <Switch
@@ -1608,8 +1709,8 @@ export default function SettingsPage() {
                                       }}
                                       className={cn(
                                         !hiddenModels.includes(modelKey)
-                                          ? 'bg-[#24A0ED]'
-                                          : 'bg-light-200 dark:bg-dark-200',
+                                          ? 'bg-accent'
+                                          : 'bg-surface-2',
                                         'relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none',
                                       )}
                                     >
@@ -1631,9 +1732,7 @@ export default function SettingsPage() {
                       );
                     })
                   ) : (
-                    <p className="text-sm text-black/60 dark:text-white/60 italic">
-                      No models available
-                    </p>
+                    <p className="text-sm italic">No models available</p>
                   );
                 })()}
               </div>
@@ -1645,9 +1744,7 @@ export default function SettingsPage() {
             >
               <div className="flex flex-col space-y-4">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-black/70 dark:text-white/70 text-sm">
-                    OpenAI API Key
-                  </p>
+                  <p className="text-sm">OpenAI API Key</p>
                   <InputComponent
                     type="password"
                     placeholder="OpenAI API Key"
@@ -1664,9 +1761,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <p className="text-black/70 dark:text-white/70 text-sm">
-                    Ollama API URL
-                  </p>
+                  <p className="text-sm">Ollama API URL</p>
                   <InputComponent
                     type="text"
                     placeholder="Ollama API URL"
@@ -1683,9 +1778,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <p className="text-black/70 dark:text-white/70 text-sm">
-                    GROQ API Key
-                  </p>
+                  <p className="text-sm">GROQ API Key</p>
                   <InputComponent
                     type="password"
                     placeholder="GROQ API Key"
@@ -1702,9 +1795,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <p className="text-black/70 dark:text-white/70 text-sm">
-                    OpenRouter API Key
-                  </p>
+                  <p className="text-sm">OpenRouter API Key</p>
                   <InputComponent
                     type="password"
                     placeholder="OpenRouter API Key"
@@ -1721,9 +1812,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <p className="text-black/70 dark:text-white/70 text-sm">
-                    Anthropic API Key
-                  </p>
+                  <p className="text-sm">Anthropic API Key</p>
                   <InputComponent
                     type="password"
                     placeholder="Anthropic API key"
@@ -1740,9 +1829,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <p className="text-black/70 dark:text-white/70 text-sm">
-                    Gemini API Key
-                  </p>
+                  <p className="text-sm">Gemini API Key</p>
                   <InputComponent
                     type="password"
                     placeholder="Gemini API key"
@@ -1759,9 +1846,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <p className="text-black/70 dark:text-white/70 text-sm">
-                    Deepseek API Key
-                  </p>
+                  <p className="text-sm">Deepseek API Key</p>
                   <InputComponent
                     type="password"
                     placeholder="Deepseek API Key"
@@ -1778,9 +1863,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <p className="text-black/70 dark:text-white/70 text-sm">
-                    AI/ML API Key
-                  </p>
+                  <p className="text-sm">AI/ML API Key</p>
                   <InputComponent
                     type="text"
                     placeholder="AI/ML API Key"
@@ -1797,28 +1880,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <p className="text-black/70 dark:text-white/70 text-sm">
-                    AI/ML API Key
-                  </p>
-                  <InputComponent
-                    type="text"
-                    placeholder="AI/ML API Key"
-                    value={config.aimlApiKey}
-                    isSaving={savingStates['aimlApiKey']}
-                    onChange={(e) => {
-                      setConfig((prev) => ({
-                        ...prev!,
-                        aimlApiKey: e.target.value,
-                      }));
-                    }}
-                    onSave={(value) => saveConfig('aimlApiKey', value)}
-                  />
-                </div>
-
-                <div className="flex flex-col space-y-1">
-                  <p className="text-black/70 dark:text-white/70 text-sm">
-                    LM Studio API URL
-                  </p>
+                  <p className="text-sm">LM Studio API URL</p>
                   <InputComponent
                     type="text"
                     placeholder="LM Studio API URL"

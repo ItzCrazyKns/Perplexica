@@ -9,51 +9,32 @@ export const PROVIDER_INFO = {
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { Embeddings } from '@langchain/core/embeddings';
 
-const openaiChatModels: Record<string, string>[] = [
-  {
-    displayName: 'GPT-3.5 Turbo',
-    key: 'gpt-3.5-turbo',
-  },
-  {
-    displayName: 'GPT-4',
-    key: 'gpt-4',
-  },
-  {
-    displayName: 'GPT-4 turbo',
-    key: 'gpt-4-turbo',
-  },
-  {
-    displayName: 'GPT-4 omni',
-    key: 'gpt-4o',
-  },
-  {
-    displayName: 'GPT-4 omni mini',
-    key: 'gpt-4o-mini',
-  },
-  {
-    displayName: 'GPT 4.1 nano',
-    key: 'gpt-4.1-nano',
-  },
-  {
-    displayName: 'GPT 4.1 mini',
-    key: 'gpt-4.1-mini',
-  },
-  {
-    displayName: 'GPT 4.1',
-    key: 'gpt-4.1',
-  },
-];
+// Dynamically discover models from OpenAI instead of hardcoding
+const OPENAI_MODELS_ENDPOINT = 'https://api.openai.com/v1/models';
 
-const openaiEmbeddingModels: Record<string, string>[] = [
-  {
-    displayName: 'Text Embedding 3 Small',
-    key: 'text-embedding-3-small',
-  },
-  {
-    displayName: 'Text Embedding 3 Large',
-    key: 'text-embedding-3-large',
-  },
-];
+async function fetchOpenAIModels(apiKey: string): Promise<string[]> {
+  const resp = await fetch(OPENAI_MODELS_ENDPOINT, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!resp.ok) {
+    throw new Error(`OpenAI models endpoint returned ${resp.status}`);
+  }
+
+  const data = await resp.json();
+
+  if (!data || !Array.isArray(data.data)) {
+    throw new Error('Unexpected OpenAI models response format');
+  }
+
+  return data.data
+    .map((model: any) => (model && model.id ? String(model.id) : undefined))
+    .filter(Boolean) as string[];
+}
 
 export const loadOpenAIChatModels = async () => {
   const openaiApiKey = getOpenaiApiKey();
@@ -61,22 +42,41 @@ export const loadOpenAIChatModels = async () => {
   if (!openaiApiKey) return {};
 
   try {
+    const modelIds = (await fetchOpenAIModels(openaiApiKey)).sort((a, b) =>
+      a.localeCompare(b),
+    );
+
     const chatModels: Record<string, ChatModel> = {};
 
-    openaiChatModels.forEach((model) => {
-      chatModels[model.key] = {
-        displayName: model.displayName,
+    modelIds.forEach((model) => {
+      const lid = model.toLowerCase();
+      const excludedSubstrings = [
+        'audio',
+        'embedding',
+        'image',
+        'omni-moderation',
+        'transcribe',
+        'tts',
+      ];
+      const isChat =
+        (lid.startsWith('gpt') || lid.startsWith('o')) &&
+        !excludedSubstrings.some((s) => lid.includes(s));
+
+      if (!isChat) return;
+
+      chatModels[model] = {
+        displayName: model,
         model: new ChatOpenAI({
-          openAIApiKey: openaiApiKey,
-          modelName: model.key,
-          // temperature: 0.7,
+          apiKey: openaiApiKey,
+          modelName: model,
+          //temperature: model.includes('gpt-5') ? 1 : 0.7,
         }) as unknown as BaseChatModel,
       };
     });
 
     return chatModels;
   } catch (err) {
-    console.error(`Error loading OpenAI models: ${err}`);
+    console.error(`Error loading OpenAI chat models: ${err}`);
     return {};
   }
 };
@@ -87,21 +87,31 @@ export const loadOpenAIEmbeddingModels = async () => {
   if (!openaiApiKey) return {};
 
   try {
+    const modelIds = (await fetchOpenAIModels(openaiApiKey)).sort((a, b) =>
+      a.localeCompare(b),
+    );
+
     const embeddingModels: Record<string, EmbeddingModel> = {};
 
-    openaiEmbeddingModels.forEach((model) => {
-      embeddingModels[model.key] = {
-        displayName: model.displayName,
+    modelIds.forEach((model) => {
+      const lid = model.toLowerCase();
+
+      const isEmbedding = lid.includes('embedding');
+
+      if (!isEmbedding) return;
+
+      embeddingModels[model] = {
+        displayName: model,
         model: new OpenAIEmbeddings({
-          openAIApiKey: openaiApiKey,
-          modelName: model.key,
+          apiKey: openaiApiKey,
+          modelName: model,
         }) as unknown as Embeddings,
       };
     });
 
     return embeddingModels;
   } catch (err) {
-    console.error(`Error loading OpenAI embeddings models: ${err}`);
+    console.error(`Error loading OpenAI embedding models: ${err}`);
     return {};
   }
 };

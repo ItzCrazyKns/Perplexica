@@ -1,0 +1,86 @@
+import { Document } from '@langchain/core/documents';
+import { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import MessageSource from './MessageSource';
+
+interface CitationLinkProps {
+  number: string;
+  source?: Document;
+  url?: string;
+}
+
+const CitationLink = ({ number, source, url }: CitationLinkProps) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const spanRef = useRef<HTMLSpanElement>(null);
+
+  const linkContent = (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="bg-surface px-1 rounded ml-1 no-underline text-xs text-fg/70 relative hover:bg-surface-2 transition-colors duration-200 border border-surface-2"
+    >
+      {number}
+    </a>
+  );
+
+  const handleMouseEnter = () => {
+    if (spanRef.current) {
+      const rect = spanRef.current.getBoundingClientRect();
+      setTooltipPosition({
+        x: rect.left + rect.width / 2,
+        y: rect.top,
+      });
+      setShowTooltip(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setShowTooltip(false);
+  };
+
+  // If we have source data, wrap with tooltip
+  if (source) {
+    return (
+      <>
+        <span
+          ref={spanRef}
+          className="relative inline-block"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          {linkContent}
+        </span>
+
+        {showTooltip &&
+          typeof window !== 'undefined' &&
+          createPortal(
+            <div
+              className="fixed z-50 animate-in fade-in-0 duration-150"
+              style={{
+                left: tooltipPosition.x,
+                top: tooltipPosition.y - 8,
+                transform: 'translate(-50%, -100%)',
+              }}
+            >
+              <div className="bg-surface border rounded-lg border-surface-2 shadow-lg w-96">
+                <MessageSource
+                  source={source}
+                  className="shadow-none border-none bg-transparent hover:bg-transparent cursor-pointer"
+                />
+              </div>
+              {/* Tooltip arrow */}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-surface-2"></div>
+            </div>,
+            document.body,
+          )}
+      </>
+    );
+  }
+
+  // Otherwise, just return the plain link
+  return linkContent;
+};
+
+export default CitationLink;

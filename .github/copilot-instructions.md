@@ -113,7 +113,7 @@ When working on this codebase, you might need to:
 - Ask for clarification when requirements are unclear
 - Do not add dependencies unless explicitly requested
 - Only make changes relevant to the specific task
-- Do not create test files or run the application unless requested
+- **Do not create test files or run the application unless requested**
 - Prioritize existing patterns and architectural decisions
 - Use the established component structure and styling patterns
 
@@ -143,3 +143,13 @@ When working on this codebase, you might need to:
 
 - Use try/catch blocks for async operations
 - Return structured error responses from API routes
+
+## Available Tools and Help
+
+- You can use the context7 tool to get help using the following identifiers for libraries used in this project
+  - `/langchain-ai/langchainjs` for LangChain
+  - `/langchain-ai/langgraphjs` for LangGraph
+  - `/quantizor/markdown-to-jsx` for Markdown to JSX conversion
+  - `/context7/headlessui_com` for Headless UI components
+  - `/tailwindlabs/tailwindcss.com` for Tailwind CSS documentation
+  - `/vercel/next.js` for Next.js documentation

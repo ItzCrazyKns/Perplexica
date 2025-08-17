@@ -50,7 +50,7 @@ const Page = () => {
     <div className="flex flex-row items-center justify-center min-h-screen">
       <svg
         aria-hidden="true"
-        className="w-8 h-8 text-light-200 fill-light-secondary dark:text-[#202020] animate-spin dark:fill-[#ffffff3b]"
+        className="w-8 h-8 text-fg/20 fill-fg/30 animate-spin"
         viewBox="0 0 100 101"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -73,7 +73,7 @@ const Page = () => {
             <Search />
             <h1 className="text-3xl font-medium p-2">Discover</h1>
           </div>
-          <hr className="border-t border-[#2B2C2C] my-4 w-full" />
+          <hr className="border-t border-surface-2 my-4 w-full" />
         </div>
 
         <div className="grid lg:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-4 pb-28 lg:pb-8 w-full justify-items-center lg:justify-items-start">
@@ -82,7 +82,7 @@ const Page = () => {
               <Link
                 href={`/?q=Summary: ${item.url}`}
                 key={i}
-                className="max-w-sm rounded-lg overflow-hidden bg-light-secondary dark:bg-dark-secondary hover:-translate-y-[1px] transition duration-200"
+                className="max-w-sm rounded-lg overflow-hidden bg-surface border border-surface-2 hover:-translate-y-[1px] transition duration-200"
                 target="_blank"
               >
                 <img
@@ -95,10 +95,10 @@ const Page = () => {
                   alt={item.title}
                 />
                 <div className="px-6 py-4">
-                  <div className="font-bold text-lg mb-2">
+                  <div className="font-bold text-lg mb-2 text-fg">
                     {item.title.slice(0, 100)}...
                   </div>
-                  <p className="text-black-70 dark:text-white/70 text-sm">
+                  <p className="text-fg/70 text-sm">
                     {item.content.slice(0, 100)}...
                   </p>
                 </div>

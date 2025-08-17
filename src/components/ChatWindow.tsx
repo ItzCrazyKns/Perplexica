@@ -16,6 +16,11 @@ import NextError from 'next/error';
 export type ModelStats = {
   modelName: string;
   responseTime?: number;
+  usage?: {
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+  };
 };
 
 export type AgentActionEvent = {
@@ -36,13 +41,13 @@ export type Message = {
   modelStats?: ModelStats;
   searchQuery?: string;
   searchUrl?: string;
-  agentActions?: AgentActionEvent[];
   progress?: {
     message: string;
     current: number;
     total: number;
     subMessage?: string;
   };
+  expandedThinkBoxes?: Set<string>;
 };
 
 export interface File {
@@ -415,6 +420,9 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
     let sources: Document[] | undefined = undefined;
     let recievedMessage = '';
+    let messageBuffer = '';
+    let tokenCount = 0;
+    const bufferThreshold = 5;
     let added = false;
     let messageChatHistory = chatHistory;
 
@@ -467,33 +475,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
         return;
       }
 
-      if (data.type === 'agent_action') {
-        const agentActionEvent: AgentActionEvent = {
-          action: data.data.action,
-          message: data.data.message,
-          details: data.data.details || {},
-          timestamp: new Date(),
-        };
-
-        // Update the user message with agent actions
-        setMessages((prev) =>
-          prev.map((message) => {
-            if (
-              message.messageId === data.messageId &&
-              message.role === 'user'
-            ) {
-              const updatedActions = [
-                ...(message.agentActions || []),
-                agentActionEvent,
-              ];
-              return { ...message, agentActions: updatedActions };
-            }
-            return message;
-          }),
-        );
-        return;
-      }
-
       if (data.type === 'sources') {
         sources = data.data;
         if (!added) {
@@ -512,57 +493,107 @@ const ChatWindow = ({ id }: { id?: string }) => {
           ]);
           added = true;
           setScrollTrigger((prev) => prev + 1);
+        } else {
+          // set the sources
+          setMessages((prev) =>
+            prev.map((message) => {
+              if (message.messageId === data.messageId) {
+                return { ...message, sources: sources };
+              }
+              return message;
+            }),
+          );
         }
       }
 
-      if (data.type === 'message') {
+      if (data.type === 'tool_call') {
+        // Add the tool content to the current assistant message (already formatted with newlines)
+        const toolContent = data.data.content;
+
         if (!added) {
+          // Create initial message with tool content
           setMessages((prevMessages) => [
             ...prevMessages,
             {
-              content: data.data,
-              messageId: data.messageId,
+              content: toolContent,
+              messageId: data.messageId, // Use the AI message ID from the backend
               chatId: chatId!,
               role: 'assistant',
               sources: sources,
               createdAt: new Date(),
-              modelStats: {
-                modelName: data.modelName,
-              },
             },
           ]);
           added = true;
         } else {
+          // Append tool content to existing message
           setMessages((prev) =>
             prev.map((message) => {
               if (message.messageId === data.messageId) {
-                return { ...message, content: message.content + data.data };
+                return {
+                  ...message,
+                  content: message.content + toolContent,
+                };
               }
               return message;
             }),
           );
         }
 
-        recievedMessage += data.data;
+        recievedMessage += toolContent;
         setScrollTrigger((prev) => prev + 1);
+        return;
+      }
+
+      if (data.type === 'response') {
+        // Add to buffer instead of immediately updating UI
+        messageBuffer += data.data;
+        recievedMessage += data.data;
+        tokenCount++;
+
+        // Only update UI every bufferThreshold tokens
+        if (tokenCount >= bufferThreshold) {
+          if (!added) {
+            setMessages((prevMessages) => [
+              ...prevMessages,
+              {
+                content: messageBuffer,
+                messageId: data.messageId, // Use the AI message ID from the backend
+                chatId: chatId!,
+                role: 'assistant',
+                sources: sources,
+                createdAt: new Date(),
+              },
+            ]);
+            added = true;
+          } else {
+            setMessages((prev) =>
+              prev.map((message) => {
+                if (message.messageId === data.messageId) {
+                  return { ...message, content: recievedMessage };
+                }
+                return message;
+              }),
+            );
+          }
+
+          // Reset buffer and counter
+          messageBuffer = '';
+          tokenCount = 0;
+          setScrollTrigger((prev) => prev + 1);
+        }
       }
 
       if (data.type === 'messageEnd') {
         // Clear analysis progress
         setAnalysisProgress(null);
 
-        setChatHistory((prevHistory) => [
-          ...prevHistory,
-          ['human', message],
-          ['assistant', recievedMessage],
-        ]);
-
-        // Always update the message, adding modelStats if available
+        // Ensure final message content is displayed (flush any remaining buffer)
         setMessages((prev) =>
           prev.map((message) => {
             if (message.messageId === data.messageId) {
               return {
                 ...message,
+                content: recievedMessage, // Use the complete received message
                 // Include model stats if available, otherwise null
                 modelStats: data.modelStats || null,
                 // Make sure the searchQuery is preserved (if available in the message data)
@@ -573,6 +604,12 @@ const ChatWindow = ({ id }: { id?: string }) => {
             return message;
           }),
         );
+
+        setChatHistory((prevHistory) => [
+          ...prevHistory,
+          ['human', message],
+          ['assistant', recievedMessage],
+        ]);
 
         setLoading(false);
         setScrollTrigger((prev) => prev + 1);
@@ -703,6 +740,27 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
   };
 
+  const handleThinkBoxToggle = (
+    messageId: string,
+    thinkBoxId: string,
+    expanded: boolean,
+  ) => {
+    setMessages((prev) =>
+      prev.map((message) => {
+        if (message.messageId === messageId) {
+          const expandedThinkBoxes = new Set(message.expandedThinkBoxes || []);
+          if (expanded) {
+            expandedThinkBoxes.add(thinkBoxId);
+          } else {
+            expandedThinkBoxes.delete(thinkBoxId);
+          }
+          return { ...message, expandedThinkBoxes };
+        }
+        return message;
+      }),
+    );
+  };
+
   useEffect(() => {
     if (isReady && initialMessage && isConfigReady) {
       // Check if we have an initial query and apply saved search settings
@@ -754,7 +812,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
           </Link>
         </div>
         <div className="flex flex-col items-center justify-center min-h-screen">
-          <p className="dark:text-white/70 text-black/70 text-sm">
+          <p className="text-sm">
             Failed to connect to the server. Please try again later.
           </p>
         </div>
@@ -788,6 +846,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
               analysisProgress={analysisProgress}
               systemPromptIds={systemPromptIds}
               setSystemPromptIds={setSystemPromptIds}
+              onThinkBoxToggle={handleThinkBoxToggle}
             />
           </>
         ) : (
@@ -811,7 +870,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     <div className="flex flex-row items-center justify-center min-h-screen">
       <svg
         aria-hidden="true"
-        className="w-8 h-8 text-light-200 fill-light-secondary dark:text-[#202020] animate-spin dark:fill-[#ffffff3b]"
+        className="w-8 h-8 text-fg/20 fill-fg/30 animate-spin"
         viewBox="0 0 100 101"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"

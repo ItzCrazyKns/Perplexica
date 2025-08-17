@@ -6,6 +6,7 @@ import { getWebContent } from './documents';
 import { removeThinkingBlocks } from './contentUtils';
 import { setTemperature } from './modelUtils';
 import { withStructuredOutput } from './structuredOutput';
+import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
 
 export type SummarizeResult = {
   document: Document | null;
@@ -19,7 +20,9 @@ const RelevanceCheckSchema = z.object({
     .describe('Whether the content is relevant to the user query'),
   reason: z
     .string()
-    .describe("Brief explanation of why content is or isn't relevant"),
+    .describe(
+      "Brief explanation of why content is or isn't relevant. 20 words or less.",
+    ),
 });
 
 export const summarizeWebContent = async (
@@ -93,7 +96,7 @@ Here is the query you need to answer: ${query}
 
 Here is the content to analyze:
 ${contentToAnalyze}`,
-            { signal },
+            { signal, ...getLangfuseCallbacks() },
           );
 
           if (!relevanceResult) {
@@ -166,7 +169,10 @@ Here is the query you need to answer: ${query}
 Here is the content to summarize:
 ${i === 0 ? content.metadata.html : content.pageContent}`;
 
-          const result = await llm.invoke(prompt, { signal });
+          const result = await llm.invoke(prompt, {
+            signal,
+            ...getLangfuseCallbacks(),
+          });
           summary = removeThinkingBlocks(result.content as string);
           break;
         } catch (error) {

@@ -39,7 +39,7 @@ const ModelInfoButton: React.FC<ModelInfoButtonProps> = ({ modelStats }) => {
     <div className="relative">
       <button
         ref={buttonRef}
-        className="p-1 ml-1 text-black/70 dark:text-white/70 rounded-full hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white"
+        className="p-1 ml-1 rounded-full hover:bg-surface-2 transition duration-200"
         onClick={() => setShowPopover(!showPopover)}
         aria-label="Show model information"
       >
@@ -48,28 +48,44 @@ const ModelInfoButton: React.FC<ModelInfoButtonProps> = ({ modelStats }) => {
       {showPopover && (
         <div
           ref={popoverRef}
-          className="absolute z-10 left-6 top-0 w-64 rounded-md shadow-lg bg-white dark:bg-dark-secondary border border-light-200 dark:border-dark-200"
+          className="absolute z-10 left-6 top-0 w-72 rounded-md shadow-lg border border-surface-2 bg-surface"
         >
           <div className="py-2 px-3">
-            <h4 className="text-sm font-medium mb-2 text-black dark:text-white">
-              Model Information
-            </h4>
+            <h4 className="text-sm font-medium mb-2">Model Information</h4>
             <div className="space-y-1 text-xs">
-              <div className="flex justify-between">
-                <span className="text-black/70 dark:text-white/70">Model:</span>
-                <span className="text-black dark:text-white font-medium">
-                  {modelName}
-                </span>
+              <div className="flex space-x-2">
+                <span className="">Model:</span>
+                <span className="font-medium">{modelName}</span>
               </div>
               {modelStats?.responseTime && (
-                <div className="flex justify-between">
-                  <span className="text-black/70 dark:text-white/70">
-                    Response time:
-                  </span>
-                  <span className="text-black dark:text-white font-medium">
+                <div className="flex space-x-2">
+                  <span>Response time:</span>
+                  <span className="font-medium">
                     {(modelStats.responseTime / 1000).toFixed(2)}s
                   </span>
                 </div>
+              )}
+              {modelStats?.usage && (
+                <>
+                  <div className="flex space-x-2">
+                    <span>Input tokens:</span>
+                    <span className="font-medium">
+                      {modelStats.usage.input_tokens.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex space-x-2">
+                    <span>Output tokens:</span>
+                    <span className="font-medium">
+                      {modelStats.usage.output_tokens.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex space-x-2">
+                    <span>Total tokens:</span>
+                    <span className="font-medium">
+                      {modelStats.usage.total_tokens.toLocaleString()}
+                    </span>
+                  </div>
+                </>
               )}
             </div>
           </div>

@@ -56,6 +56,11 @@ type Body = {
 type ModelStats = {
   modelName: string;
   responseTime?: number;
+  usage?: {
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+  };
 };
 
 const handleEmitterEvents = async (
@@ -108,7 +113,7 @@ const handleEmitterEvents = async (
       writer.write(
         encoder.encode(
           JSON.stringify({
-            type: 'message',
+            type: 'response',
             data: parsedData.data,
             messageId: aiMessageId,
           }) + '\n',
@@ -138,20 +143,23 @@ const handleEmitterEvents = async (
       );
 
       sources = parsedData.data;
+    } else if (parsedData.type === 'tool_call') {
+      // Handle tool call events - stream them directly to the client AND accumulate for database
+      writer.write(
+        encoder.encode(
+          JSON.stringify({
+            type: 'tool_call',
+            data: parsedData.data,
+            messageId: aiMessageId,
+          }) + '\n',
+        ),
+      );
+
+      // Add tool call content to the received message for database storage
+      recievedMessage += parsedData.data.content;
     }
   });
 
-  stream.on('agent_action', (data) => {
-    writer.write(
-      encoder.encode(
-        JSON.stringify({
-          type: 'agent_action',
-          data: data.data,
-          messageId: userMessageId,
-        }) + '\n',
-      ),
-    );
-  });
   let modelStats: ModelStats = {
     modelName: '',
   };

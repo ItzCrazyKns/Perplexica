@@ -5,8 +5,6 @@ import { getSuggestions } from '@/lib/actions';
 import { cn } from '@/lib/utils';
 import {
   BookCopy,
-  CheckCheck,
-  Copy as CopyIcon,
   Disc3,
   ImagesIcon,
   Layers3,
@@ -16,86 +14,16 @@ import {
   VideoIcon,
   Volume2,
 } from 'lucide-react';
-import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import { useCallback, useEffect, useState } from 'react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import { useSpeech } from 'react-text-to-speech';
 import { Message } from './ChatWindow';
+import MarkdownRenderer from './MarkdownRenderer';
 import Copy from './MessageActions/Copy';
 import ModelInfoButton from './MessageActions/ModelInfo';
 import Rewrite from './MessageActions/Rewrite';
 import MessageSources from './MessageSources';
 import SearchImages from './SearchImages';
 import SearchVideos from './SearchVideos';
-import ThinkBox from './ThinkBox';
-
-const ThinkTagProcessor = ({ children }: { children: React.ReactNode }) => {
-  return <ThinkBox content={children as string} />;
-};
-
-const CodeBlock = ({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) => {
-  // Extract language from className (format could be "language-javascript" or "lang-javascript")
-  let language = '';
-  if (className) {
-    if (className.startsWith('language-')) {
-      language = className.replace('language-', '');
-    } else if (className.startsWith('lang-')) {
-      language = className.replace('lang-', '');
-    }
-  }
-
-  const content = children as string;
-  const [isCopied, setIsCopied] = useState(false);
-
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(content);
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000);
-  };
-
-  return (
-    <div className="rounded-md overflow-hidden my-4 relative group border border-dark-secondary">
-      <div className="flex justify-between items-center px-4 py-2 bg-dark-200 border-b border-dark-secondary text-xs text-white/70 font-mono">
-        <span>{language}</span>
-        <button
-          onClick={handleCopyCode}
-          className="p-1 rounded-md hover:bg-dark-secondary transition duration-200"
-          aria-label="Copy code to clipboard"
-        >
-          {isCopied ? (
-            <CheckCheck size={14} className="text-green-500" />
-          ) : (
-            <CopyIcon size={14} className="text-white/70" />
-          )}
-        </button>
-      </div>
-      <SyntaxHighlighter
-        language={language || 'text'}
-        style={oneDark}
-        customStyle={{
-          margin: 0,
-          padding: '1rem',
-          borderRadius: 0,
-          backgroundColor: '#1c1c1c',
-        }}
-        wrapLines={true}
-        wrapLongLines={true}
-        showLineNumbers={language !== '' && content.split('\n').length > 1}
-        useInlineStyles={true}
-        PreTag="div"
-      >
-        {content}
-      </SyntaxHighlighter>
-    </div>
-  );
-};
 
 type TabType = 'text' | 'sources' | 'images' | 'videos';
 
@@ -115,6 +43,11 @@ interface SearchTabsProps {
       suggestions?: string[];
     },
   ) => void;
+  onThinkBoxToggle: (
+    messageId: string,
+    thinkBoxId: string,
+    expanded: boolean,
+  ) => void;
 }
 
 const MessageTabs = ({
@@ -126,6 +59,7 @@ const MessageTabs = ({
   loading,
   rewrite,
   sendMessage,
+  onThinkBoxToggle,
 }: SearchTabsProps) => {
   const [activeTab, setActiveTab] = useState<TabType>('text');
   const [imageCount, setImageCount] = useState(0);
@@ -166,7 +100,6 @@ const MessageTabs = ({
 
   // Process message content
   useEffect(() => {
-    const citationRegex = /\[([^\]]+)\]/g;
     const regex = /\[(\d+)\]/g;
     let processedMessage = message.content;
 
@@ -185,35 +118,32 @@ const MessageTabs = ({
       message.sources.length > 0
     ) {
       setParsedMessage(
-        processedMessage.replace(
-          citationRegex,
-          (_, capturedContent: string) => {
-            const numbers = capturedContent
-              .split(',')
-              .map((numStr) => numStr.trim());
+        processedMessage.replace(regex, (_, capturedContent: string) => {
+          const numbers = capturedContent
+            .split(',')
+            .map((numStr) => numStr.trim());
 
-            const linksHtml = numbers
-              .map((numStr) => {
-                const number = parseInt(numStr);
+          const linksHtml = numbers
+            .map((numStr) => {
+              const number = parseInt(numStr);
 
-                if (isNaN(number) || number <= 0) {
-                  return `[${numStr}]`;
-                }
+              if (isNaN(number) || number <= 0) {
+                return `[${numStr}]`;
+              }
 
-                const source = message.sources?.[number - 1];
-                const url = source?.metadata?.url;
+              const source = message.sources?.[number - 1];
+              const url = source?.metadata?.url;
 
-                if (url) {
-                  return `<a href="${url}" target="_blank" className="bg-light-secondary dark:bg-dark-secondary px-1 rounded ml-1 no-underline text-xs text-black/70 dark:text-white/70 relative">${numStr}</a>`;
-                } else {
-                  return `[${numStr}]`;
-                }
-              })
-              .join('');
+              if (url) {
+                return `<a href="${url}" target="_blank" data-citation="${number}" className="bg-surface px-1 rounded ml-1 no-underline text-xs relative hover:bg-surface-2 transition-colors duration-200">${numStr}</a>`;
+              } else {
+                return `[${numStr}]`;
+              }
+            })
+            .join('');
 
-            return linksHtml;
-          },
-        ),
+          return linksHtml;
+        }),
       );
       setSpeechMessage(message.content.replace(regex, ''));
       return;
@@ -236,44 +166,17 @@ const MessageTabs = ({
     }
   }, [isLast, loading, message.role, handleLoadSuggestions]);
 
-  // Markdown formatting options
-  const markdownOverrides: MarkdownToJSX.Options = {
-    overrides: {
-      think: {
-        component: ThinkTagProcessor,
-      },
-      code: {
-        component: ({ className, children }) => {
-          // Check if it's an inline code block or a fenced code block
-          if (className) {
-            // This is a fenced code block (```code```)
-            return <CodeBlock className={className}>{children}</CodeBlock>;
-          }
-          // This is an inline code block (`code`)
-          return (
-            <code className="px-1.5 py-0.5 rounded bg-dark-secondary text-white font-mono text-sm">
-              {children}
-            </code>
-          );
-        },
-      },
-      pre: {
-        component: ({ children }) => children,
-      },
-    },
-  };
-
   return (
     <div className="flex flex-col w-full">
       {/* Tabs */}
-      <div className="flex border-b border-light-200 dark:border-dark-200 overflow-x-auto no-scrollbar sticky top-0 bg-light-primary dark:bg-dark-primary z-10 -mx-4 px-4 mb-2 shadow-sm">
+      <div className="flex border-b border-accent overflow-x-auto no-scrollbar sticky top-0 z-10 -mx-4 px-4 mb-2">
         <button
           onClick={() => setActiveTab('text')}
           className={cn(
             'flex items-center px-4 py-3 text-sm font-medium transition-all duration-200 relative',
             activeTab === 'text'
-              ? 'border-b-2 border-[#24A0ED] text-[#24A0ED] bg-light-100 dark:bg-dark-100'
-              : 'text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white hover:bg-light-100 dark:hover:bg-dark-100',
+              ? 'border-b-2 border-accent text-accent bg-surface-2'
+              : 'hover:bg-surface-2',
           )}
           aria-selected={activeTab === 'text'}
           role="tab"
@@ -288,8 +191,8 @@ const MessageTabs = ({
             className={cn(
               'flex items-center space-x-2 px-4 py-3 text-sm font-medium transition-all duration-200 relative',
               activeTab === 'sources'
-                ? 'border-b-2 border-[#24A0ED] text-[#24A0ED] bg-light-100 dark:bg-dark-100'
-                : 'text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white hover:bg-light-100 dark:hover:bg-dark-100',
+                ? 'border-b-2 border-accent text-accent bg-surface-2'
+                : 'hover:bg-surface-2',
             )}
             aria-selected={activeTab === 'sources'}
             role="tab"
@@ -300,8 +203,8 @@ const MessageTabs = ({
               className={cn(
                 'ml-1.5 px-1.5 py-0.5 text-xs rounded-full',
                 activeTab === 'sources'
-                  ? 'bg-[#24A0ED]/20 text-[#24A0ED]'
-                  : 'bg-light-200 dark:bg-dark-200 text-black/70 dark:text-white/70',
+                  ? 'bg-accent/20 text-accent'
+                  : 'bg-surface-2 text-fg/70',
               )}
             >
               {message.sources.length}
@@ -314,8 +217,8 @@ const MessageTabs = ({
           className={cn(
             'flex items-center space-x-2 px-4 py-3 text-sm font-medium transition-all duration-200 relative',
             activeTab === 'images'
-              ? 'border-b-2 border-[#24A0ED] text-[#24A0ED] bg-light-100 dark:bg-dark-100'
-              : 'text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white hover:bg-light-100 dark:hover:bg-dark-100',
+              ? 'border-b-2 border-accent text-accent bg-surface-2'
+              : 'hover:bg-surface-2',
           )}
           aria-selected={activeTab === 'images'}
           role="tab"
@@ -327,8 +230,8 @@ const MessageTabs = ({
               className={cn(
                 'ml-1.5 px-1.5 py-0.5 text-xs rounded-full',
                 activeTab === 'images'
-                  ? 'bg-[#24A0ED]/20 text-[#24A0ED]'
-                  : 'bg-light-200 dark:bg-dark-200 text-black/70 dark:text-white/70',
+                  ? 'bg-accent/20 text-accent'
+                  : 'bg-surface-2 text-fg/70',
               )}
             >
               {imageCount}
@@ -341,8 +244,8 @@ const MessageTabs = ({
           className={cn(
             'flex items-center space-x-2 px-4 py-3 text-sm font-medium transition-all duration-200 relative',
             activeTab === 'videos'
-              ? 'border-b-2 border-[#24A0ED] text-[#24A0ED] bg-light-100 dark:bg-dark-100'
-              : 'text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white hover:bg-light-100 dark:hover:bg-dark-100',
+              ? 'border-b-2 border-accent text-accent bg-surface-2'
+              : 'hover:bg-surface-2',
           )}
           aria-selected={activeTab === 'videos'}
           role="tab"
@@ -354,8 +257,8 @@ const MessageTabs = ({
               className={cn(
                 'ml-1.5 px-1.5 py-0.5 text-xs rounded-full',
                 activeTab === 'videos'
-                  ? 'bg-[#24A0ED]/20 text-[#24A0ED]'
-                  : 'bg-light-200 dark:bg-dark-200 text-black/70 dark:text-white/70',
+                  ? 'bg-accent/20 text-accent'
+                  : 'bg-surface-2 text-fg/70',
               )}
             >
               {videoCount}
@@ -372,20 +275,17 @@ const MessageTabs = ({
         {/* Answer Tab */}
         {activeTab === 'text' && (
           <div className="flex flex-col space-y-4 animate-fadeIn">
-            <Markdown
-              className={cn(
-                'prose prose-h1:mb-3 prose-h2:mb-2 prose-h2:mt-6 prose-h2:font-[800] prose-h3:mt-4 prose-h3:mb-1.5 prose-h3:font-[600] prose-invert prose-p:leading-relaxed prose-pre:p-0 font-[400]',
-                'prose-code:bg-transparent prose-code:p-0 prose-code:text-inherit prose-code:font-normal prose-code:before:content-none prose-code:after:content-none',
-                'prose-pre:bg-transparent prose-pre:border-0 prose-pre:m-0 prose-pre:p-0',
-                'max-w-none break-words px-4 text-black dark:text-white',
-              )}
-              options={markdownOverrides}
-            >
-              {parsedMessage}
-            </Markdown>
-
+            <MarkdownRenderer
+              content={parsedMessage}
+              className="px-4"
+              messageId={message.messageId}
+              expandedThinkBoxes={message.expandedThinkBoxes}
+              onThinkBoxToggle={onThinkBoxToggle}
+              showThinking={true}
+              sources={message.sources}
+            />{' '}
             {loading && isLast ? null : (
-              <div className="flex flex-row items-center justify-between w-full text-black dark:text-white px-4 py-4">
+              <div className="flex flex-row items-center justify-between w-full px-4 py-4">
                 <div className="flex flex-row items-center space-x-1">
                   <Rewrite rewrite={rewrite} messageId={message.messageId} />
                   {message.modelStats && (
@@ -402,7 +302,7 @@ const MessageTabs = ({
                         start();
                       }
                     }}
-                    className="p-2 text-black/70 dark:text-white/70 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white"
+                    className="p-2 opacity-70 rounded-xl hover:bg-surface-2 transition duration-200"
                   >
                     {speechStatus === 'started' ? (
                       <StopCircle size={18} />
@@ -413,10 +313,9 @@ const MessageTabs = ({
                 </div>
               </div>
             )}
-
             {isLast && message.role === 'assistant' && !loading && (
               <>
-                <div className="border-t border-light-secondary dark:border-dark-secondary px-4 pt-4 mt-4">
+                <div className="border-t border-surface-2 px-4 pt-4 mt-4">
                   <div className="flex flex-row items-center space-x-2 mb-3">
                     <Layers3 size={20} />
                     <h3 className="text-xl font-medium">Related</h3>
@@ -426,10 +325,10 @@ const MessageTabs = ({
                       <button
                         onClick={handleLoadSuggestions}
                         disabled={loadingSuggestions}
-                        className="px-4 py-2 flex flex-row items-center justify-center space-x-2 rounded-lg bg-light-secondary dark:bg-dark-secondary hover:bg-light-200 dark:hover:bg-dark-200 transition duration-200 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white"
+                        className="px-4 py-2 flex flex-row items-center justify-center space-x-2 rounded-lg bg-surface hover:bg-surface-2 transition duration-200"
                       >
                         {loadingSuggestions ? (
-                          <div className="w-4 h-4 border-2 border-t-transparent border-gray-400 dark:border-gray-500 rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-t-transparent border-fg/40 rounded-full animate-spin" />
                         ) : (
                           <Sparkles size={16} />
                         )}
@@ -449,19 +348,19 @@ const MessageTabs = ({
                           className="flex flex-col space-y-3 text-sm"
                           key={i}
                         >
-                          <div className="h-px w-full bg-light-secondary dark:bg-dark-secondary" />
+                          <div className="h-px w-full bg-surface-2" />
                           <div
                             onClick={() => {
                               sendMessage(suggestion);
                             }}
                             className="cursor-pointer flex flex-row justify-between font-medium space-x-2 items-center"
                           >
-                            <p className="transition duration-200 hover:text-[#24A0ED]">
+                            <p className="transition duration-200 hover:text-accent">
                               {suggestion}
                             </p>
                             <Plus
                               size={20}
-                              className="text-[#24A0ED] flex-shrink-0"
+                              className="text-accent flex-shrink-0"
                             />
                           </div>
                         </div>
@@ -480,23 +379,19 @@ const MessageTabs = ({
           message.sources.length > 0 && (
             <div className="p-4 animate-fadeIn">
               {message.searchQuery && (
-                <div className="mb-4 text-sm bg-light-secondary dark:bg-dark-secondary rounded-lg p-3">
-                  <span className="font-medium text-black/70 dark:text-white/70">
-                    Search query:
-                  </span>{' '}
+                <div className="mb-4 text-sm bg-surface rounded-lg p-3">
+                  <span className="font-medium opacity-70">Search query:</span>{' '}
                   {message.searchUrl ? (
                     <a
                       href={message.searchUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="dark:text-white text-black hover:underline"
+                      className="hover:underline"
                     >
                       {message.searchQuery}
                     </a>
                   ) : (
-                    <span className="text-black dark:text-white">
-                      {message.searchQuery}
-                    </span>
+                    <span>{message.searchQuery}</span>
                   )}
                 </div>
               )}

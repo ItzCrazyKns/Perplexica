@@ -1,6 +1,41 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* React Grid Layout styles */
+@import 'react-grid-layout/css/styles.css';
+@import 'react-resizable/css/styles.css';
+
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+/* Make dark: variants depend on html.dark or [data-theme="dark"] */
+@custom-variant dark (&:where(.dark, .dark *, [data-theme='dark'], [data-theme='dark'] *));
+
+/* Theme tokens */
+@theme {
+  /* Base palette (light by default) */
+  --color-bg: oklch(0.98 0 0); /* canvas/background */
+  --color-fg: oklch(0.21 0 0); /* text */
+  --color-accent-600: var(--color-blue-600);
+  --color-accent-700: var(--color-blue-700);
+  --color-accent-500: var(--color-blue-500);
+  --color-surface: color-mix(in oklch, var(--color-bg), black 6%);
+  --color-surface-2: color-mix(in oklch, var(--color-bg), black 10%);
+
+  /* Shorthands that Tailwind maps into utilities */
+  --color-accent: var(--color-accent-600);
+}
+
+:root {
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg: oklch(0.16 0 0);
+  --color-fg: oklch(0.95 0 0);
+  --color-surface: color-mix(in oklch, var(--color-bg), white 8%);
+  --color-surface-2: color-mix(in oklch, var(--color-bg), white 12%);
+}
+
+/* Custom theme overrides are applied via CSS variables on :root by ThemeController */
 
 @layer base {
   .overflow-hidden-scrollable {
@@ -9,6 +44,39 @@
 
   .overflow-hidden-scrollable::-webkit-scrollbar {
     display: none;
+  }
+
+  html,
+  body {
+    min-height: 100dvh;
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled),
+  input[type='button']:not(:disabled),
+  input[type='submit']:not(:disabled),
+  input[type='reset']:not(:disabled) {
+    cursor: pointer;
+    color: var(--color-fg);
+  }
+
+  button:not(:disabled):hover,
+  [role='button']:not(:disabled):hover,
+  input[type='button']:not(:disabled):hover,
+  input[type='submit']:not(:disabled):hover,
+  input[type='reset']:not(:disabled):hover {
+    color: var(--color-accent);
+  }
+
+  input[type='text']:focus,
+  textarea:focus {
+    border-color: var(--color-accent);
+    outline: none;
+    border: 1px solid var(--color-accent);
+  }
+
+  a:hover {
+    color: var(--color-accent);
   }
 }
 
@@ -31,5 +99,57 @@
   textarea,
   input {
     font-size: 16px !important;
+  }
+}
+
+/* Utilities are auto-generated from @theme tokens */
+@layer utilities {
+  /* Backwards-compat for prior custom palette names */
+  .bg-light-primary {
+    background-color: var(--color-bg);
+  }
+  .dark .bg-dark-primary {
+    background-color: var(--color-bg);
+  }
+  .bg-light-secondary {
+    background-color: var(--color-surface);
+  }
+  .dark .bg-dark-secondary {
+    background-color: var(--color-surface);
+  }
+  .bg-light-100 {
+    background-color: var(--color-surface-2);
+  }
+  .dark .bg-dark-100 {
+    background-color: var(--color-surface-2);
+  }
+  .hover\:bg-light-200:hover {
+    background-color: var(--color-surface-2);
+  }
+  .dark .hover\:bg-dark-200:hover {
+    background-color: var(--color-surface-2);
+  }
+  .border-light-200 {
+    border-color: var(--color-surface-2);
+  }
+  .dark .border-dark-200 {
+    border-color: var(--color-surface-2);
+  }
+
+  /* Preferred token utilities */
+  .bg-bg {
+    background-color: var(--color-bg);
+  }
+  .bg-surface {
+    background-color: var(--color-surface);
+  }
+  .bg-surface-2 {
+    background-color: var(--color-surface-2);
+  }
+  .text-fg {
+    color: var(--color-fg);
+  }
+  .border-surface-2 {
+    border-color: var(--color-surface-2);
   }
 }

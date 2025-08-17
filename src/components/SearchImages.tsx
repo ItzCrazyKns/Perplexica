@@ -126,7 +126,7 @@ const SearchImages = ({
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="bg-light-secondary dark:bg-dark-secondary h-32 w-full rounded-lg animate-pulse aspect-video object-cover"
+              className="bg-surface-2 h-32 w-full rounded-lg animate-pulse aspect-video object-cover"
             />
           ))}
         </div>
@@ -158,7 +158,7 @@ const SearchImages = ({
             <div className="flex justify-center mt-4">
               <button
                 onClick={handleShowMore}
-                className="px-4 py-2 bg-light-secondary dark:bg-dark-secondary hover:bg-light-200 dark:hover:bg-dark-200 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white rounded-md transition duration-200 flex items-center space-x-2"
+                className="px-4 py-2 bg-surface hover:bg-surface-2 text-fg/70 hover:text-fg rounded-md transition duration-200 flex items-center space-x-2 border border-surface-2"
               >
                 <span>Show More Images</span>
                 <span className="text-sm opacity-75">

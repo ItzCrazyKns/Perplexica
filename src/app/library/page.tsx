@@ -41,7 +41,7 @@ const Page = () => {
     <div className="flex flex-row items-center justify-center min-h-screen">
       <svg
         aria-hidden="true"
-        className="w-8 h-8 text-light-200 fill-light-secondary dark:text-[#202020] animate-spin dark:fill-[#ffffff3b]"
+        className="w-8 h-8 text-fg/20 fill-fg/30 animate-spin"
         viewBox="0 0 100 101"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
@@ -63,13 +63,11 @@ const Page = () => {
           <BookOpenText />
           <h1 className="text-3xl font-medium p-2">Library</h1>
         </div>
-        <hr className="border-t border-[#2B2C2C] my-4 w-full" />
+        <hr className="border-t border-surface-2 my-4 w-full" />
       </div>
       {chats.length === 0 && (
         <div className="flex flex-row items-center justify-center min-h-screen">
-          <p className="text-black/70 dark:text-white/70 text-sm">
-            No chats found.
-          </p>
+          <p className="text-fg/70 text-sm">No chats found.</p>
         </div>
       )}
       {chats.length > 0 && (
@@ -78,20 +76,18 @@ const Page = () => {
             <div
               className={cn(
                 'flex flex-col space-y-4 py-6',
-                i !== chats.length - 1
-                  ? 'border-b border-white-200 dark:border-dark-200'
-                  : '',
+                i !== chats.length - 1 ? 'border-b border-surface-2' : '',
               )}
               key={i}
             >
               <Link
                 href={`/c/${chat.id}`}
-                className="text-black dark:text-white lg:text-xl font-medium truncate transition duration-200 hover:text-[#24A0ED] dark:hover:text-[#24A0ED] cursor-pointer"
+                className="lg:text-xl font-medium truncate transition duration-200 cursor-pointer"
               >
                 {chat.title}
               </Link>
               <div className="flex flex-row items-center justify-between w-full">
-                <div className="flex flex-row items-center space-x-1 lg:space-x-1.5 text-black/70 dark:text-white/70">
+                <div className="flex flex-row items-center space-x-1 lg:space-x-1.5 opacity-70">
                   <ClockIcon size={15} />
                   <p className="text-xs">
                     {formatTimeDifference(new Date(), chat.createdAt)} Ago

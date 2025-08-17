@@ -10,6 +10,7 @@ import LineOutputParser from '../outputParsers/lineOutputParser';
 import { searchSearxng } from '../searxng';
 import { formatDateForLLM } from '../utils';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
 
 const imageSearchChainPrompt = `
 # Instructions
@@ -140,7 +141,7 @@ const handleImageSearch = (
   systemInstructions?: string,
 ) => {
   const imageSearchChain = createImageSearchChain(llm, systemInstructions);
-  return imageSearchChain.invoke(input);
+  return imageSearchChain.invoke(input, { ...getLangfuseCallbacks() });
 };
 
 export default handleImageSearch;

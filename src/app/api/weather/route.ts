@@ -1,7 +1,19 @@
+const CACHE_TTL_MS = 1000 * 60 * 20; // 20 minutes
+
+type CacheEntry = {
+  ts: number;
+  weather: any;
+};
+
+const weatherCache = new Map<string, CacheEntry>();
+
 export const POST = async (req: Request) => {
   try {
-    const body: { lat: number; lng: number; temperatureUnit: 'C' | 'F' } =
-      await req.json();
+    const body: {
+      lat: number;
+      lng: number;
+      measureUnit: 'Imperial' | 'Metric';
+    } = await req.json();
 
     if (!body.lat || !body.lng) {
       return Response.json(
@@ -12,8 +24,20 @@ export const POST = async (req: Request) => {
       );
     }
 
+    const cacheKey = `${body.lat.toFixed(4)},${body.lng.toFixed(4)},${body.measureUnit}`;
+
+    // Return cached entry if fresh
+    const cached = weatherCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+      console.log('Returning cached weather data for ', cacheKey);
+      return Response.json(cached.weather);
+    }
+    console.log('Fetching new weather data for ', cacheKey);
+
     const res = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${body.lat}&longitude=${body.lng}&current=weather_code,temperature_2m,is_day,relative_humidity_2m,wind_speed_10m&timezone=auto${body.temperatureUnit === 'C' ? '' : '&temperature_unit=fahrenheit'}`,
+      `https://api.open-meteo.com/v1/forecast?latitude=${body.lat}&longitude=${body.lng}&current=weather_code,temperature_2m,is_day,relative_humidity_2m,wind_speed_10m&timezone=auto${
+        body.measureUnit === 'Metric' ? '' : '&temperature_unit=fahrenheit'
+      }${body.measureUnit === 'Metric' ? '' : '&wind_speed_unit=mph'}`,
     );
 
     const data = await res.json();
@@ -35,13 +59,15 @@ export const POST = async (req: Request) => {
       windSpeed: number;
       icon: string;
       temperatureUnit: 'C' | 'F';
+      windSpeedUnit: 'm/s' | 'mph';
     } = {
       temperature: data.current.temperature_2m,
       condition: '',
       humidity: data.current.relative_humidity_2m,
       windSpeed: data.current.wind_speed_10m,
       icon: '',
-      temperatureUnit: body.temperatureUnit,
+      temperatureUnit: body.measureUnit === 'Metric' ? 'C' : 'F',
+      windSpeedUnit: body.measureUnit === 'Metric' ? 'm/s' : 'mph',
     };
 
     const code = data.current.weather_code;
@@ -150,6 +176,13 @@ export const POST = async (req: Request) => {
         weather.icon = `clear-${dayOrNight}`;
         weather.condition = 'Clear';
         break;
+    }
+
+    // store in cache
+    try {
+      weatherCache.set(cacheKey, { ts: Date.now(), weather });
+    } catch (e) {
+      // ignore cache failures
     }
 
     return Response.json(weather);

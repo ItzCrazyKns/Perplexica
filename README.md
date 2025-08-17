@@ -50,10 +50,6 @@ Want to know more about its architecture and how it works? You can read it [here
   - **All Mode:** Searches the entire web to find the best results.
   - **Local Research Mode:** Research and interact with local files with citations.
   - **Chat Mode:** Have a truly creative conversation without web search.
-  - **Academic Search Mode:** Finds articles and papers, ideal for academic research.
-  - **YouTube Search Mode:** Finds YouTube videos based on the search query.
-  - **Wolfram Alpha Search Mode:** Answers queries that need calculations or data analysis using Wolfram Alpha.
-  - **Reddit Search Mode:** Searches Reddit for discussions and opinions related to the query.
 - **Current Information:** Some search tools might give you outdated info because they use data from crawling bots and convert them into embeddings and store them in a index. Unlike them, Perplexica uses SearxNG, a metasearch engine to get the results and rerank and get the most relevant source out of it, ensuring you always get the latest information without the overhead of daily data updates.
 - **API**: Integrate Perplexica into your existing applications and make use of its capibilities.
 
@@ -178,22 +174,6 @@ When running Perplexica behind a reverse proxy (like Nginx, Apache, or Traefik),
 
 This ensures that OpenSearch descriptions, browser integrations, and all URLs work properly when accessing Perplexica through your reverse proxy.
 
-## One-Click Deployment
-
-[![Deploy to Sealos](https://raw.githubusercontent.com/labring-actions/templates/main/Deploy-on-Sealos.svg)](https://usw.sealos.io/?openapp=system-template%3FtemplateName%3Dperplexica)
-[![Deploy to RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/?app_id=267)
-[![Run on ClawCloud](https://raw.githubusercontent.com/ClawCloud/Run-Template/refs/heads/main/Run-on-ClawCloud.svg)](https://template.run.claw.cloud/?referralCode=U11MRQ8U9RM4&openapp=system-fastdeploy%3FtemplateName%3Dperplexica)
-
-## Upcoming Features
-
-- [x] Add settings page
-- [x] Adding support for local LLMs
-- [x] History Saving features
-- [x] Introducing various Focus Modes
-- [x] Adding API support
-- [x] Adding Discover
-- [ ] Finalizing Copilot Mode
-
 ## Fork Improvements
 
 This fork adds several enhancements to the original Perplexica project:
@@ -217,10 +197,6 @@ This fork adds several enhancements to the original Perplexica project:
 - ✅ OpenSearch support with dynamic XML generation
   - Added BASE_URL config to support reverse proxy deployments
   - Added autocomplete functionality proxied to SearxNG
-- ✅ Enhanced Reddit focus mode to work around SearxNG limitations
-- ✅ Enhanced Balance mode that uses a headless web browser to retrieve web content and use relevant excerpts to enhance responses
-- ✅ Adds Agent mode that uses the full content of web pages to answer queries and an agentic flow to intelligently answer complex queries with accuracy
-  - See the [README.md](docs/architecture/README.md) in the docs architecture directory for more info
 - ✅ Query-based settings override for browser search engine integration
   - Automatically applies user's saved optimization mode and AI model preferences when accessing via URL with `q` parameter
   - Enables seamless browser search bar integration with personalized settings
@@ -239,6 +215,25 @@ This fork adds several enhancements to the original Perplexica project:
   - Remove non-functional or problematic models from user selection
   - Configurable via settings UI with collapsible provider interface for better organization
   - API support with `include_hidden` parameter for administrative access
+
+### Unique Features
+
+- ✅ **Agent Mode**: A new mode that uses a headless web browser to retrieve web content and use relevant excerpts to enhance responses.
+  - Automatically extracts relevant information from web pages
+  - Provides more accurate and contextually rich answers
+  - Ideal for complex queries requiring detailed information
+
+- ✅ **Dashboard Widgets**: Create customizable AI-powered widgets for personalized information displays.
+  - Build widgets that combine web content with AI processing using custom prompts
+  - Support for multiple data sources (web pages, HTTP endpoints) with automatic content extraction
+  - Configurable refresh intervals (minutes/hours) for keeping information current
+  - Real-time preview system to test widget output before saving
+  - Automatic refresh of stale widgets when navigating to dashboard
+
+- ✅ **Observability**: Built-in support for tracing and monitoring LLM calls using Langfuse or LangSmith.
+  - See [Tracing LLM Calls in Perplexica](docs/installation/TRACING.md) for more details.
+
+- ✅ **Firefox AI Integration**: Enhanced support for Firefox users with tailored features and optimizations when Firefox AI prompts are detected.
 
 ### Bug Fixes
 

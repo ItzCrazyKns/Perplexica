@@ -75,7 +75,7 @@ const DeleteChat = ({
             }
           }}
         >
-          <DialogBackdrop className="fixed inset-0 bg-black/30" />
+          <DialogBackdrop className="fixed inset-0 bg-fg/30" />
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
               <TransitionChild
@@ -87,11 +87,11 @@ const DeleteChat = ({
                 leaveFrom="opacity-100 scale-200"
                 leaveTo="opacity-0 scale-95"
               >
-                <DialogPanel className="w-full max-w-md transform rounded-2xl bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200 p-6 text-left align-middle shadow-xl transition-all">
-                  <DialogTitle className="text-lg font-medium leading-6 dark:text-white">
+                <DialogPanel className="w-full max-w-md transform rounded-2xl bg-surface border border-surface-2 p-6 text-left align-middle shadow-xl transition-all">
+                  <DialogTitle className="text-lg font-medium leading-6">
                     Delete Confirmation
                   </DialogTitle>
-                  <Description className="text-sm dark:text-white/70 text-black/70">
+                  <Description className="text-sm">
                     Are you sure you want to delete this chat?
                   </Description>
                   <div className="flex flex-row items-end justify-end space-x-4 mt-6">
@@ -101,7 +101,7 @@ const DeleteChat = ({
                           setConfirmationDialogOpen(false);
                         }
                       }}
-                      className="text-black/50 dark:text-white/50 text-sm hover:text-black/70 hover:dark:text-white/70 transition duration-200"
+                      className="text-sm transition duration-200"
                     >
                       Cancel
                     </button>

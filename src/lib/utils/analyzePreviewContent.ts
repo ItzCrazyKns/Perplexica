@@ -5,6 +5,7 @@ import { formatDateForLLM } from '../utils';
 import { ChatOpenAI, OpenAIClient } from '@langchain/openai';
 import { removeThinkingBlocks } from './contentUtils';
 import { withStructuredOutput } from './structuredOutput';
+import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
 
 export type PreviewAnalysisResult = {
   isSufficient: boolean;
@@ -88,7 +89,7 @@ Snippet: ${content.snippet}
 - Analyze the provided search result previews (titles + snippets), and chat history context to determine if they collectively contain enough information to provide a complete and accurate answer to the Task Query
 - If the preview content can provide a complete answer to the Task Query, consider it sufficient
 - If the preview content lacks important details, requires deeper analysis, or cannot fully answer the Task Query, consider it insufficient
-- Be specific in your reasoning when the content is not sufficient
+- Be specific in your reasoning when the content is not sufficient but keep the answer under 35 words
 - The original query is provided for additional context, only use it for clarification of overall expectations and intent. You do **not** need to answer the original query directly or completely
 
 # System Instructions
@@ -118,7 +119,7 @@ ${taskQuery}
 # Search Result Previews to Analyze:
 ${formattedPreviewContent}
 `,
-      { signal },
+      { signal, ...getLangfuseCallbacks() },
     );
 
     if (!analysisResult) {
