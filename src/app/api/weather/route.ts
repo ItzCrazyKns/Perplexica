@@ -1,3 +1,12 @@
+const CACHE_TTL_MS = 1000 * 60 * 20; // 20 minutes
+
+type CacheEntry = {
+  ts: number;
+  weather: any;
+};
+
+const weatherCache = new Map<string, CacheEntry>();
+
 export const POST = async (req: Request) => {
   try {
     const body: {
@@ -14,6 +23,16 @@ export const POST = async (req: Request) => {
         { status: 400 },
       );
     }
+
+    const cacheKey = `${body.lat.toFixed(4)},${body.lng.toFixed(4)},${body.measureUnit}`;
+
+    // Return cached entry if fresh
+    const cached = weatherCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+      console.log('Returning cached weather data for ', cacheKey);
+      return Response.json(cached.weather);
+    }
+    console.log('Fetching new weather data for ', cacheKey);
 
     const res = await fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${body.lat}&longitude=${body.lng}&current=weather_code,temperature_2m,is_day,relative_humidity_2m,wind_speed_10m&timezone=auto${
@@ -157,6 +176,13 @@ export const POST = async (req: Request) => {
         weather.icon = `clear-${dayOrNight}`;
         weather.condition = 'Clear';
         break;
+    }
+
+    // store in cache
+    try {
+      weatherCache.set(cacheKey, { ts: Date.now(), weather });
+    } catch (e) {
+      // ignore cache failures
     }
 
     return Response.json(weather);

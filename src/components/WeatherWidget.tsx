@@ -16,15 +16,42 @@ const WeatherWidget = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const getApproxLocation = async () => {
-      const res = await fetch('https://ipwhois.app/json/');
-      const data = await res.json();
+    const IPWHOIS_CACHE_KEY = 'ipwhois_cache_v1';
+    const IPWHOIS_TTL_MS = 1000 * 60 * 20; // 20 minutes
 
-      return {
-        latitude: data.latitude,
-        longitude: data.longitude,
-        city: data.city,
-      };
+    const getApproxLocation = async () => {
+      try {
+        const raw = sessionStorage.getItem(IPWHOIS_CACHE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed?.ts && Date.now() - parsed.ts < IPWHOIS_TTL_MS && parsed?.data) {
+            return parsed.data;
+          }
+        }
+
+        const res = await fetch('https://ipwhois.app/json/');
+        const data = await res.json();
+
+        const payload = {
+          ts: Date.now(),
+          data: {
+            latitude: data.latitude,
+            longitude: data.longitude,
+            city: data.city,
+          },
+        };
+
+        try {
+          sessionStorage.setItem(IPWHOIS_CACHE_KEY, JSON.stringify(payload));
+        } catch (e) {
+          // ignore storage errors (e.g., quota)
+        }
+
+        return payload.data;
+      } catch (err) {
+        // If anything goes wrong, fall back to a safe default
+        return { latitude: 0, longitude: 0, city: '' };
+      }
     };
 
     const getLocation = async (
