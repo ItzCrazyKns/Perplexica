@@ -15,6 +15,8 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
+  Cloud,
+  LucideNewspaper,
 } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -226,6 +228,8 @@ export default function SettingsPage() {
   >(null);
   const [isLoading, setIsLoading] = useState(true);
   const [automaticSuggestions, setAutomaticSuggestions] = useState(true);
+  const [showWeatherWidget, setShowWeatherWidget] = useState(true);
+  const [showNewsWidget, setShowNewsWidget] = useState(true);
   const [measureUnit, setMeasureUnit] = useState<'Imperial' | 'Metric'>(
     'Metric',
   );
@@ -322,6 +326,10 @@ export default function SettingsPage() {
       setAutomaticSuggestions(
         localStorage.getItem('autoSuggestions') !== 'false', // default to true if not set
       );
+      setShowWeatherWidget(
+        localStorage.getItem('showWeatherWidget') !== 'false',
+      );
+      setShowNewsWidget(localStorage.getItem('showNewsWidget') !== 'false');
       const storedContextWindow = parseInt(
         localStorage.getItem('ollamaContextWindow') ?? '2048',
       );
@@ -761,6 +769,80 @@ export default function SettingsPage() {
               <div className="flex flex-col space-y-1">
                 <p className="text-sm">Theme</p>
                 <ThemeSwitcher />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm">Home Page Widgets</p>
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center justify-between p-3 bg-surface rounded-lg hover:bg-surface-2 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-surface-2 rounded-lg">
+                        <Cloud size={18} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Weather Widget</p>
+                        <p className="text-xs mt-0.5">
+                          Show or hide the weather widget on the home page
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={showWeatherWidget}
+                      onChange={(checked) => {
+                        setShowWeatherWidget(checked);
+                        localStorage.setItem(
+                          'showWeatherWidget',
+                          checked.toString(),
+                        );
+                      }}
+                      className={cn(
+                        showWeatherWidget ? 'bg-accent' : 'bg-surface-2',
+                        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          showWeatherWidget ? 'translate-x-6' : 'translate-x-1',
+                          'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                        )}
+                      />
+                    </Switch>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 bg-surface rounded-lg hover:bg-surface-2 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2 bg-surface-2 rounded-lg">
+                        <LucideNewspaper size={18} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">News Widget</p>
+                        <p className="text-xs mt-0.5">
+                          Show or hide the news widget on the home page
+                        </p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={showNewsWidget}
+                      onChange={(checked) => {
+                        setShowNewsWidget(checked);
+                        localStorage.setItem(
+                          'showNewsWidget',
+                          checked.toString(),
+                        );
+                      }}
+                      className={cn(
+                        showNewsWidget ? 'bg-accent' : 'bg-surface-2',
+                        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          showNewsWidget ? 'translate-x-6' : 'translate-x-1',
+                          'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                        )}
+                      />
+                    </Switch>
+                  </div>
+                </div>
               </div>
               <div className="flex flex-col space-y-1">
                 <p className="text-sm">Measurement Units</p>

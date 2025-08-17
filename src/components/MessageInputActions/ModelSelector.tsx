@@ -105,14 +105,22 @@ const ModelSelector = ({
 
   // Derive display text from providerModels + selectedModel without clearing on null
   useEffect(() => {
-    if (!selectedModel || !selectedModel.provider || !selectedModel.model || !providerModels || Object.keys(providerModels).length === 0) {
+    if (
+      !selectedModel ||
+      !selectedModel.provider ||
+      !selectedModel.model ||
+      !providerModels ||
+      Object.keys(providerModels).length === 0
+    ) {
       // Do not clear existing display to prevent flicker
       return;
     }
 
     const provider = providerModels[selectedModel.provider];
     if (!provider) {
-      console.warn(`Provider not found: ${selectedModel.provider} available providers: ${JSON.stringify(providerModels)}`);
+      console.warn(
+        `Provider not found: ${selectedModel.provider} available providers: ${JSON.stringify(providerModels)}`,
+      );
       return;
     }
 

@@ -150,7 +150,11 @@ const MessageInput = ({
             onChange={(e) => setMessage(e.target.value)}
             minRows={1}
             className="px-3 py-2 overflow-hidden flex rounded-lg bg-transparent text-sm resize-none w-full max-h-24 lg:max-h-36 xl:max-h-48"
-            placeholder={firstMessage ? 'Ask anything...' : 'Ask a follow-up'}
+            placeholder={
+              firstMessage
+                ? 'What would you like to learn today?'
+                : 'Ask a follow-up'
+            }
             autoFocus={true}
           />
           <Optimization
