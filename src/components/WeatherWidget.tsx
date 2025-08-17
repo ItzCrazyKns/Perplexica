@@ -9,7 +9,10 @@ const WeatherWidget = () => {
     humidity: 0,
     windSpeed: 0,
     icon: '',
+    temperatureUnit: 'C',
+    windSpeedUnit: 'm/s',
   });
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -31,30 +34,40 @@ const WeatherWidget = () => {
         city: string;
       }) => void,
     ) => {
-      /* 
-          // Geolocation doesn't give city so we'll country using ipapi for now
-            if (navigator.geolocation) {
-            const result = await navigator.permissions.query({
-              name: 'geolocation',
-            })
-    
-            if (result.state === 'granted') {
-              navigator.geolocation.getCurrentPosition(position => {
-                callback({
-                  latitude: position.coords.latitude,
-                  longitude: position.coords.longitude,
-                })
-              })
-            } else if (result.state === 'prompt') {
-              callback(await getApproxLocation())
-              navigator.geolocation.getCurrentPosition(position => {})
-            } else if (result.state === 'denied') {
-              callback(await getApproxLocation())
-            }
-          } else {
-            callback(await getApproxLocation())
-          } */
-      callback(await getApproxLocation());
+      if (navigator.geolocation) {
+        const result = await navigator.permissions.query({
+          name: 'geolocation',
+        });
+
+        if (result.state === 'granted') {
+          navigator.geolocation.getCurrentPosition(async (position) => {
+            const res = await fetch(
+              `https://api-bdc.io/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`,
+              {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              },
+            );
+
+            const data = await res.json();
+
+            callback({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              city: data.locality,
+            });
+          });
+        } else if (result.state === 'prompt') {
+          callback(await getApproxLocation());
+          navigator.geolocation.getCurrentPosition((position) => {});
+        } else if (result.state === 'denied') {
+          callback(await getApproxLocation());
+        }
+      } else {
+        callback(await getApproxLocation());
+      }
     };
 
     getLocation(async (location) => {
@@ -63,6 +76,7 @@ const WeatherWidget = () => {
         body: JSON.stringify({
           lat: location.latitude,
           lng: location.longitude,
+          measureUnit: localStorage.getItem('measureUnit') ?? 'Metric',
         }),
       });
 
@@ -81,6 +95,8 @@ const WeatherWidget = () => {
         humidity: data.humidity,
         windSpeed: data.windSpeed,
         icon: data.icon,
+        temperatureUnit: data.temperatureUnit,
+        windSpeedUnit: data.windSpeedUnit,
       });
       setLoading(false);
     });
@@ -115,7 +131,7 @@ const WeatherWidget = () => {
               className="h-10 w-auto"
             />
             <span className="text-base font-semibold text-black dark:text-white">
-              {data.temperature}°C
+              {data.temperature}°{data.temperatureUnit}
             </span>
           </div>
           <div className="flex flex-col justify-between flex-1 h-full py-1">
@@ -125,7 +141,7 @@ const WeatherWidget = () => {
               </span>
               <span className="flex items-center text-xs text-black/60 dark:text-white/60">
                 <Wind className="w-3 h-3 mr-1" />
-                {data.windSpeed} km/h
+                {data.windSpeed} {data.windSpeedUnit}
               </span>
             </div>
             <span className="text-xs text-black/60 dark:text-white/60 mt-1">

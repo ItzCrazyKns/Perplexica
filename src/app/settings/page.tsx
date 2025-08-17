@@ -23,6 +23,7 @@ interface SettingsType {
   ollamaApiUrl: string;
   lmStudioApiUrl: string;
   deepseekApiKey: string;
+  aimlApiKey: string;
   customOpenaiApiKey: string;
   customOpenaiApiUrl: string;
   customOpenaiModelName: string;
@@ -147,6 +148,9 @@ const Page = () => {
   const [automaticImageSearch, setAutomaticImageSearch] = useState(false);
   const [automaticVideoSearch, setAutomaticVideoSearch] = useState(false);
   const [systemInstructions, setSystemInstructions] = useState<string>('');
+  const [measureUnit, setMeasureUnit] = useState<'Imperial' | 'Metric'>(
+    'Metric',
+  );
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -208,6 +212,10 @@ const Page = () => {
       );
 
       setSystemInstructions(localStorage.getItem('systemInstructions')!);
+
+      setMeasureUnit(
+        localStorage.getItem('measureUnit')! as 'Imperial' | 'Metric',
+      );
 
       setIsLoading(false);
     };
@@ -367,6 +375,8 @@ const Page = () => {
         localStorage.setItem('embeddingModel', value);
       } else if (key === 'systemInstructions') {
         localStorage.setItem('systemInstructions', value);
+      } else if (key === 'measureUnit') {
+        localStorage.setItem('measureUnit', value.toString());
       }
     } catch (err) {
       console.error('Failed to save:', err);
@@ -415,12 +425,34 @@ const Page = () => {
       ) : (
         config && (
           <div className="flex flex-col space-y-6 pb-28 lg:pb-8">
-            <SettingsSection title="Appearance">
+            <SettingsSection title="Preferences">
               <div className="flex flex-col space-y-1">
                 <p className="text-black/70 dark:text-white/70 text-sm">
                   Theme
                 </p>
                 <ThemeSwitcher />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <p className="text-black/70 dark:text-white/70 text-sm">
+                  Measurement Units
+                </p>
+                <Select
+                  value={measureUnit ?? undefined}
+                  onChange={(e) => {
+                    setMeasureUnit(e.target.value as 'Imperial' | 'Metric');
+                    saveConfig('measureUnit', e.target.value);
+                  }}
+                  options={[
+                    {
+                      label: 'Metric',
+                      value: 'Metric',
+                    },
+                    {
+                      label: 'Imperial',
+                      value: 'Imperial',
+                    },
+                  ]}
+                />
               </div>
             </SettingsSection>
 
@@ -515,7 +547,7 @@ const Page = () => {
             <SettingsSection title="System Instructions">
               <div className="flex flex-col space-y-4">
                 <Textarea
-                  value={systemInstructions}
+                  value={systemInstructions ?? undefined}
                   isSaving={savingStates['systemInstructions']}
                   onChange={(e) => {
                     setSystemInstructions(e.target.value);
@@ -859,6 +891,25 @@ const Page = () => {
                       }));
                     }}
                     onSave={(value) => saveConfig('deepseekApiKey', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    AI/ML API Key
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="AI/ML API Key"
+                    value={config.aimlApiKey}
+                    isSaving={savingStates['aimlApiKey']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        aimlApiKey: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('aimlApiKey', value)}
                   />
                 </div>
 

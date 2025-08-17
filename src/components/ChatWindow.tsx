@@ -82,14 +82,29 @@ const checkConfig = async (
     ) {
       if (!chatModel || !chatModelProvider) {
         const chatModelProviders = providers.chatModelProviders;
+        const chatModelProvidersKeys = Object.keys(chatModelProviders);
 
-        chatModelProvider =
-          chatModelProvider || Object.keys(chatModelProviders)[0];
+        if (!chatModelProviders || chatModelProvidersKeys.length === 0) {
+          return toast.error('No chat models available');
+        } else {
+          chatModelProvider =
+            chatModelProvidersKeys.find(
+              (provider) =>
+                Object.keys(chatModelProviders[provider]).length > 0,
+            ) || chatModelProvidersKeys[0];
+        }
+
+        if (
+          chatModelProvider === 'custom_openai' &&
+          Object.keys(chatModelProviders[chatModelProvider]).length === 0
+        ) {
+          toast.error(
+            "Looks like you haven't configured any chat model providers. Please configure them from the settings page or the config file.",
+          );
+          return setHasError(true);
+        }
 
         chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
-
-        if (!chatModelProviders || Object.keys(chatModelProviders).length === 0)
-          return toast.error('No chat models available');
       }
 
       if (!embeddingModel || !embeddingModelProvider) {
@@ -117,7 +132,8 @@ const checkConfig = async (
 
       if (
         Object.keys(chatModelProviders).length > 0 &&
-        !chatModelProviders[chatModelProvider]
+        (!chatModelProviders[chatModelProvider] ||
+          Object.keys(chatModelProviders[chatModelProvider]).length === 0)
       ) {
         const chatModelProvidersKeys = Object.keys(chatModelProviders);
         chatModelProvider =
@@ -132,6 +148,16 @@ const checkConfig = async (
         chatModelProvider &&
         !chatModelProviders[chatModelProvider][chatModel]
       ) {
+        if (
+          chatModelProvider === 'custom_openai' &&
+          Object.keys(chatModelProviders[chatModelProvider]).length === 0
+        ) {
+          toast.error(
+            "Looks like you haven't configured any chat model providers. Please configure them from the settings page or the config file.",
+          );
+          return setHasError(true);
+        }
+
         chatModel = Object.keys(
           chatModelProviders[
             Object.keys(chatModelProviders[chatModelProvider]).length > 0
@@ -139,6 +165,7 @@ const checkConfig = async (
               : Object.keys(chatModelProviders)[0]
           ],
         )[0];
+
         localStorage.setItem('chatModel', chatModel);
       }
 
@@ -327,7 +354,11 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
   }, [isMessagesLoaded, isConfigReady]);
 
-  const sendMessage = async (message: string, messageId?: string) => {
+  const sendMessage = async (
+    message: string,
+    messageId?: string,
+    rewrite = false,
+  ) => {
     if (loading) return;
     if (!isConfigReady) {
       toast.error('Cannot send message before the configuration is ready');
@@ -455,6 +486,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
       }
     };
 
+    const messageIndex = messages.findIndex((m) => m.messageId === messageId);
+
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {
@@ -471,7 +504,9 @@ const ChatWindow = ({ id }: { id?: string }) => {
         files: fileIds,
         focusMode: focusMode,
         optimizationMode: optimizationMode,
-        history: chatHistory,
+        history: rewrite
+          ? chatHistory.slice(0, messageIndex === -1 ? undefined : messageIndex)
+          : chatHistory,
         chatModel: {
           name: chatModelProvider.name,
           provider: chatModelProvider.provider,
@@ -525,7 +560,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
       return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
     });
 
-    sendMessage(message.content, message.messageId);
+    sendMessage(message.content, message.messageId, true);
   };
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { ChatOpenAI } from '@langchain/openai';
+import { ChatGroq } from '@langchain/groq';
 import { getGroqApiKey } from '../config';
 import { ChatModel } from '.';
 
@@ -28,13 +28,10 @@ export const loadGroqChatModels = async () => {
     groqChatModels.forEach((model: any) => {
       chatModels[model.id] = {
         displayName: model.id,
-        model: new ChatOpenAI({
-          openAIApiKey: groqApiKey,
-          modelName: model.id,
+        model: new ChatGroq({
+          apiKey: groqApiKey,
+          model: model.id,
           temperature: 0.7,
-          configuration: {
-            baseURL: 'https://api.groq.com/openai/v1',
-          },
         }) as unknown as BaseChatModel,
       };
     });
