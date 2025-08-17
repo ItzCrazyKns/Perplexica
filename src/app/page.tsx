@@ -1,5 +1,5 @@
 import ChatWindow from '@/components/ChatWindow';
-import type { Metadata } from 'next';
+import { Metadata } from 'next';
 import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
 

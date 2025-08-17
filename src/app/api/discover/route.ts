@@ -1,5 +1,5 @@
 import { searchSearxng } from '@/lib/searxng';
-import { getLocale } from 'next-intl/server';
+import { DEFAULT_LOCALE } from '@/i18n/locales';
 
 const websitesForTopic = {
   tech: {
@@ -38,10 +38,6 @@ export const GET = async (req: Request) => {
 
     let data = [];
 
-    // derive base language from current locale (e.g., zh-TW -> zh)
-    const locale = await getLocale();
-    const searxLanguage = 'en';
-
     if (mode === 'normal') {
       const seenUrls = new Set();
 
@@ -53,7 +49,7 @@ export const GET = async (req: Request) => {
                 await searchSearxng(`site:${link} ${query}`, {
                   engines: ['google news', 'bing news'],
                   pageno: 1,
-                  language: searxLanguage,
+                  language: DEFAULT_LOCALE,
                 })
               ).results;
             }),
@@ -75,7 +71,7 @@ export const GET = async (req: Request) => {
           {
             engines: ['google news', 'bing news'],
             pageno: 1,
-            language: searxLanguage,
+            language: DEFAULT_LOCALE,
           },
         )
       ).results;

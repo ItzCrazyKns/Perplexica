@@ -9,10 +9,8 @@ export default function LocaleBootstrap({
   initialLocale: AppLocale;
 }) {
   useEffect(() => {
-    // 若已有 cookie，跳過
     const hasCookie = /(?:^|; )locale=/.test(document.cookie);
     if (hasCookie) return;
-    // 僅接受支援清單內的語系
     const supported = new Set<string>(LOCALES as readonly string[]);
     const loc = (initialLocale || DEFAULT_LOCALE) as string;
     const chosen = Array.from(supported).find(

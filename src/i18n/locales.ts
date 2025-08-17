@@ -31,7 +31,7 @@ export const LOCALE_LABELS: Record<AppLocale, string> = {
   de: 'Deutsch',
 };
 
-// Human-readable language name for prompt prefix
+// Human-readable language name for prompt
 export function getPromptLanguageName(loc: string): string {
   const l = (loc || '').toLowerCase();
   const match = (

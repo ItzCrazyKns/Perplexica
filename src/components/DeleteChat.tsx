@@ -39,7 +39,7 @@ const DeleteChat = ({
       });
 
       if (res.status != 200) {
-        throw new Error(t('common.errors.failedToDeleteChat'));
+        throw new Error('Failed to delete chat');
       }
 
       const newChats = chats.filter((chat) => chat.id !== chatId);
@@ -50,7 +50,8 @@ const DeleteChat = ({
         window.location.href = '/';
       }
     } catch (err: any) {
-      toast.error(err.message || t('common.errors.failedToDeleteChat'));
+      console.error(err);
+      toast.error(t('common.errors.failedToDeleteChat'));
     } finally {
       setConfirmationDialogOpen(false);
       setLoading(false);

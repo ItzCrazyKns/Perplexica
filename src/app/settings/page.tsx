@@ -9,7 +9,7 @@ import LocaleSwitcher from '@/components/LocaleSwitcher';
 import { ImagesIcon, VideoIcon } from 'lucide-react';
 import Link from 'next/link';
 import { PROVIDER_METADATA } from '@/lib/providers';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 
 interface SettingsType {
   chatModelProviders: {
@@ -131,7 +131,6 @@ const SettingsSection = ({
 
 const Page = () => {
   const t = useTranslations('pages.settings');
-  const locale = useLocale();
   const [config, setConfig] = useState<SettingsType | null>(null);
   const [chatModels, setChatModels] = useState<Record<string, any>>({});
   const [embeddingModels, setEmbeddingModels] = useState<Record<string, any>>(
