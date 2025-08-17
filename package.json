@@ -1,8 +1,8 @@
 {
   "name": "perplexica-frontend",
-  "version": "1.11.0-rc2",
+  "version": "2.0.0",
   "license": "MIT",
-  "author": "ItzCrazyKns",
+  "author": "Boarder2",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "npm run db:push && next build",
