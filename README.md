@@ -34,7 +34,7 @@ Perplexica is an open-source AI-powered searching tool or an AI-powered search e
 
 Using SearxNG to stay current and fully open source, Perplexica ensures you always get the most up-to-date information without compromising your privacy.
 
-Want to know more about its architecture and how it works? You can read it [here](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/architecture/README.md).
+Want to know more about its architecture and how it works? You can read it [here](docs/architecture/README.md).
 
 ## Preview
 
@@ -65,7 +65,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 2. Clone the Perplexica repository:
 
    ```bash
-   git clone https://github.com/ItzCrazyKns/Perplexica.git
+   git clone https://github.com/boarder2/Perplexica.git
    ```
 
 3. After cloning, navigate to the directory containing the project files.
@@ -104,7 +104,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 
 **Note**: Using Docker is recommended as it simplifies the setup process, especially for managing environment variables and dependencies.
 
-See the [installation documentation](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/installation) for more information like updating, etc.
+See the [installation documentation](docs/installation) for more information like updating, etc.
 
 ### Ollama Connection Errors
 
@@ -136,7 +136,7 @@ If you wish to use Perplexica as an alternative to traditional search engines li
 
 Perplexica also provides an API for developers looking to integrate its powerful search engine into their own applications. You can run searches, use multiple models and get answers to your queries.
 
-For more details, check out the full documentation [here](https://github.com/ItzCrazyKns/Perplexica/tree/master/docs/API/SEARCH.md).
+For more details, check out the full documentation [here](docs/API/SEARCH.md).
 
 ## Expose Perplexica to network
 
