@@ -35,8 +35,9 @@ COPY entrypoint.sh ./entrypoint.sh
 
 RUN mkdir /home/perplexica/uploads && \
     chmod +x /home/perplexica/entrypoint.sh && \
-    npm install playwright && \
+    npm install playwright --no-fund --no-audit && \
     npx -y playwright install chromium --only-shell --with-deps && \
+    rm -rf /root/.npm && \
     apt-get update && \
     apt-get install -y procps && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
