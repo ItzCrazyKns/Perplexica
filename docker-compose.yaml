@@ -10,12 +10,9 @@ services:
     restart: unless-stopped
 
   app:
-    image: itzcrazykns1337/perplexica:main
     build:
       context: .
       dockerfile: app.dockerfile
-      platforms:
-        - linux/amd64
     environment:
       - SEARXNG_API_URL=http://searxng:8080
       - DATA_DIR=/home/perplexica

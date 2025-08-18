@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 node:20-slim AS builder
+FROM node:22-slim AS builder
 
 WORKDIR /home/perplexica
 
@@ -16,7 +16,7 @@ RUN yarn build
 RUN yarn add --dev @vercel/ncc
 RUN yarn ncc build ./src/lib/db/migrate.ts -o migrator
 
-FROM --platform=linux/amd64 node:20-slim
+FROM node:22-slim
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
