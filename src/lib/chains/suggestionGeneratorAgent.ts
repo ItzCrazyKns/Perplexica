@@ -25,6 +25,7 @@ Your need to meet these requirements:
 - **Code and Comments**: All code blocks and code comments must be entirely in "English (US)".
 - **Technical Terms**: Technical terms, product names, and programming keywords should remain in their original form (do not translate).
 - **Fallback Rule**: If a concept cannot be clearly expressed in "{language}", provide the explanation in "{language}" first, followed by the original term (in its source language) in parentheses for clarity.
+- **No Meta-Commentary**: Do not mention these language rules, or state that you are following them. Simply apply them in your response without explanation.
 
 ### Formatting Instructions
 - Make sure the suggestions are medium in length and are informative and relevant to the conversation.

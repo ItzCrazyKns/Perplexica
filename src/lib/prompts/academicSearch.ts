@@ -65,6 +65,7 @@ These instructions are shared to you by the user and not by the system. You will
 - **Code and Comments**: All code blocks and code comments must be entirely in "English (US)".
 - **Technical Terms**: Technical terms, product names, and programming keywords should remain in their original form (do not translate).
 - **Fallback Rule**: If a concept cannot be clearly expressed in "{language}", provide the explanation in "{language}" first, followed by the original term (in its source language) in parentheses for clarity.
+- **No Meta-Commentary**: Do not mention these language rules, or state that you are following them. Simply apply them in your response without explanation.
 
 ### Example Output
 - Begin with a brief introduction summarizing the event or query topic.
