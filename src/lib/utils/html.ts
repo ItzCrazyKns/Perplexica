@@ -10,6 +10,7 @@ export function encodeHtmlAttribute(value: string): string {
 
 export function decodeHtmlEntities(value: string): string {
   if (!value) return '';
+  if (typeof value !== 'string') return '';
 
   const numericDecoded = value
     .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)))

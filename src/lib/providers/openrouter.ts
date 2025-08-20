@@ -47,9 +47,8 @@ export const loadOpenrouterChatModels = async () => {
       chatModels[model.key] = {
         displayName: model.displayName,
         model: new ChatOpenAI({
-          openAIApiKey: openrouterApikey,
+          apiKey: openrouterApikey,
           modelName: model.key,
-          temperature: 0.7,
           configuration: {
             baseURL: 'https://openrouter.ai/api/v1',
           },

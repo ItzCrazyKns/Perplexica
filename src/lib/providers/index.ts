@@ -135,7 +135,7 @@ export const getAvailableChatModelProviders = async (
       [customOpenAiModelName]: {
         displayName: customOpenAiModelName,
         model: new ChatOpenAI({
-          openAIApiKey: customOpenAiApiKey,
+          apiKey: customOpenAiApiKey,
           modelName: customOpenAiModelName,
           // temperature: 0.7,
           configuration: {

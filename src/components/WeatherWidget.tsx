@@ -24,7 +24,11 @@ const WeatherWidget = () => {
         const raw = sessionStorage.getItem(IPWHOIS_CACHE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed?.ts && Date.now() - parsed.ts < IPWHOIS_TTL_MS && parsed?.data) {
+          if (
+            parsed?.ts &&
+            Date.now() - parsed.ts < IPWHOIS_TTL_MS &&
+            parsed?.data
+          ) {
             return parsed.data;
           }
         }

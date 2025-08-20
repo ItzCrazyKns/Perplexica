@@ -90,7 +90,7 @@ async function getLLMInstance(
     if (provider === 'custom_openai') {
       return new ChatOpenAI({
         modelName: model || getCustomOpenaiModelName(),
-        openAIApiKey: getCustomOpenaiApiKey(),
+        apiKey: getCustomOpenaiApiKey(),
         configuration: {
           baseURL: getCustomOpenaiApiUrl(),
         },

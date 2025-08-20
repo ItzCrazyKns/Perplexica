@@ -142,7 +142,7 @@ export async function POST(req: Request) {
     // Handle chat model creation like in chat route
     if (chat_model_provider === 'custom_openai') {
       llm = new ChatOpenAI({
-        openAIApiKey: getCustomOpenaiApiKey(),
+        apiKey: getCustomOpenaiApiKey(),
         modelName: getCustomOpenaiModelName(),
         temperature: 0.1,
         configuration: {
