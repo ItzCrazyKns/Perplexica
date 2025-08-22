@@ -8,6 +8,7 @@ import {
 } from '@headlessui/react';
 import { Fragment } from 'react';
 import { useTranslations } from 'next-intl';
+import { useChat } from '@/lib/hooks/useChat';
 
 const OptimizationModes = [
   {
@@ -29,13 +30,8 @@ const OptimizationModes = [
   },
 ];
 
-const Optimization = ({
-  optimizationMode,
-  setOptimizationMode,
-}: {
-  optimizationMode: string;
-  setOptimizationMode: (mode: string) => void;
-}) => {
+const Optimization = () => {
+  const { optimizationMode, setOptimizationMode } = useChat();
   const t = useTranslations('components.optimization');
   return (
     <Popover className="relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg">

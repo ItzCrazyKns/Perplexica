@@ -21,6 +21,7 @@ import SearchVideos from './SearchVideos';
 import { useSpeech } from 'react-text-to-speech';
 import ThinkBox from './ThinkBox';
 import { useTranslations } from 'next-intl';
+import { useChat } from '@/lib/hooks/useChat';
 
 const ThinkTagProcessor = ({
   children,
@@ -37,23 +38,17 @@ const ThinkTagProcessor = ({
 const MessageBox = ({
   message,
   messageIndex,
-  history,
-  loading,
   dividerRef,
   isLast,
-  rewrite,
-  sendMessage,
 }: {
   message: Message;
   messageIndex: number;
-  history: Message[];
-  loading: boolean;
   dividerRef?: MutableRefObject<HTMLDivElement | null>;
   isLast: boolean;
-  rewrite: (messageId: string) => void;
-  sendMessage: (message: string) => void;
 }) => {
+  const { loading, messages: history, sendMessage, rewrite } = useChat();
   const t = useTranslations('components');
+
   const [parsedMessage, setParsedMessage] = useState(message.content);
   const [speechMessage, setSpeechMessage] = useState(message.content);
   const [thinkingEnded, setThinkingEnded] = useState(false);

@@ -16,6 +16,7 @@ import {
 import { SiReddit, SiYoutube } from '@icons-pack/react-simple-icons';
 import { Fragment } from 'react';
 import { useTranslations } from 'next-intl';
+import { useChat } from '@/lib/hooks/useChat';
 
 const focusModeIcons: Record<string, JSX.Element> = {
   webSearch: <Globe size={20} />,
@@ -26,13 +27,8 @@ const focusModeIcons: Record<string, JSX.Element> = {
   redditSearch: <SiReddit className="h-5 w-auto mr-0.5" />,
 };
 
-const Focus = ({
-  focusMode,
-  setFocusMode,
-}: {
-  focusMode: string;
-  setFocusMode: (mode: string) => void;
-}) => {
+const Focus = () => {
+  const { focusMode, setFocusMode } = useChat();
   const t = useTranslations('components.focus');
   const modes = [
     'webSearch',

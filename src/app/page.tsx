@@ -1,4 +1,5 @@
 import ChatWindow from '@/components/ChatWindow';
+import { ChatProvider } from '@/lib/hooks/useChat';
 import { Metadata } from 'next';
 import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
@@ -15,7 +16,9 @@ const Home = () => {
   return (
     <div>
       <Suspense>
-        <ChatWindow />
+        <ChatProvider>
+          <ChatWindow />
+        </ChatProvider>
       </Suspense>
     </div>
   );

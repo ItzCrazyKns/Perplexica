@@ -132,6 +132,7 @@
       "api": {
         "openaiApiKey": "OpenAI API キー",
         "ollamaApiUrl": "Ollama API URL",
+        "ollamaApiKey": "Ollama API キー（空白のままにすることもできます）",
         "groqApiKey": "GROQ API キー",
         "anthropicApiKey": "Anthropic API キー",
         "geminiApiKey": "Gemini API キー",

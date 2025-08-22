@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils';
 import {
   Popover,
   PopoverButton,
@@ -7,20 +6,11 @@ import {
 } from '@headlessui/react';
 import { CopyPlus, File, LoaderCircle, Plus, Trash } from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
-import { File as FileType } from '../ChatWindow';
 import { useTranslations } from 'next-intl';
+import { useChat } from '@/lib/hooks/useChat';
 
-const AttachSmall = ({
-  fileIds,
-  setFileIds,
-  files,
-  setFiles,
-}: {
-  fileIds: string[];
-  setFileIds: (fileIds: string[]) => void;
-  files: FileType[];
-  setFiles: (files: FileType[]) => void;
-}) => {
+const AttachSmall = () => {
+  const { files, setFiles, setFileIds, fileIds } = useChat();
   const t = useTranslations('components.attach');
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<any>();

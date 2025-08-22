@@ -132,6 +132,7 @@
       "api": {
         "openaiApiKey": "Clé API OpenAI",
         "ollamaApiUrl": "URL de l'API Ollama",
+        "ollamaApiKey": "Clé API Ollama (peut être laissée vide)",
         "groqApiKey": "Clé API GROQ",
         "anthropicApiKey": "Clé API Anthropic",
         "geminiApiKey": "Clé API Gemini",

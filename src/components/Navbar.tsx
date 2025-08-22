@@ -1,4 +1,4 @@
-import { Clock, Edit, Share, Trash, FileText, FileDown } from 'lucide-react';
+import { Clock, Edit, Share, FileText, FileDown } from 'lucide-react';
 import { Message } from './ChatWindow';
 import { useEffect, useState, Fragment } from 'react';
 import { formatRelativeTime, formatDate } from '@/lib/utils';
@@ -10,6 +10,7 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
+import { useChat } from '@/lib/hooks/useChat';
 import jsPDF from 'jspdf';
 import { ensureNotoSansTC } from '@/lib/pdfFont';
 
@@ -144,18 +145,14 @@ const exportAsPDF = async (
   doc.save(`${title || 'chat'}.pdf`);
 };
 
-const Navbar = ({
-  chatId,
-  messages,
-}: {
-  messages: Message[];
-  chatId: string;
-}) => {
+const Navbar = () => {
   const [title, setTitle] = useState<string>('');
   const tCommon = useTranslations('common');
   const tNavbar = useTranslations('navbar');
   const tExport = useTranslations('export');
   const locale = useLocale();
+
+  const { messages, chatId } = useChat();
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -247,7 +244,7 @@ const Navbar = ({
             </PopoverPanel>
           </Transition>
         </Popover>
-        <DeleteChat redirect chatId={chatId} chats={[]} setChats={() => {}} />
+        <DeleteChat redirect chatId={chatId!} chats={[]} setChats={() => {}} />
       </div>
     </div>
   );

@@ -132,6 +132,7 @@
       "api": {
         "openaiApiKey": "OpenAI API-Schlüssel",
         "ollamaApiUrl": "Ollama API-URL",
+        "ollamaApiKey": "Ollama API-Schlüssel (Kann leer gelassen werden)",
         "groqApiKey": "GROQ API-Schlüssel",
         "anthropicApiKey": "Anthropic API-Schlüssel",
         "geminiApiKey": "Gemini API-Schlüssel",

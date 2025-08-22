@@ -7,22 +7,11 @@ import {
 } from '@headlessui/react';
 import { CopyPlus, File, LoaderCircle, Plus, Trash } from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
-import { File as FileType } from '../ChatWindow';
 import { useTranslations } from 'next-intl';
+import { useChat } from '@/lib/hooks/useChat';
 
-const Attach = ({
-  fileIds,
-  setFileIds,
-  showText,
-  files,
-  setFiles,
-}: {
-  fileIds: string[];
-  setFileIds: (fileIds: string[]) => void;
-  showText?: boolean;
-  files: FileType[];
-  setFiles: (files: FileType[]) => void;
-}) => {
+const Attach = ({ showText }: { showText?: boolean }) => {
+  const { files, setFiles, setFileIds, fileIds } = useChat();
   const t = useTranslations('components.attach');
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<any>();

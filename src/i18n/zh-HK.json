@@ -132,6 +132,7 @@
       "api": {
         "openaiApiKey": "OpenAI API 金鑰",
         "ollamaApiUrl": "Ollama API 位址",
+        "ollamaApiKey": "Ollama API 金鑰（可留空）",
         "groqApiKey": "GROQ API 金鑰",
         "anthropicApiKey": "Anthropic API 金鑰",
         "geminiApiKey": "Gemini API 金鑰",
