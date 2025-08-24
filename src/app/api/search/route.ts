@@ -30,7 +30,7 @@ interface embeddingModel {
 }
 
 interface ChatRequestBody {
-  optimizationMode: 'speed' | 'agent';
+  optimizationMode: 'speed' | 'agent' | 'deepResearch';
   focusMode: string;
   chatModel?: chatModel;
   embeddingModel?: embeddingModel;
@@ -134,6 +134,7 @@ export const POST = async (req: Request) => {
     const emitter = await searchHandler.searchAndAnswer(
       body.query,
       history,
+      '' /* chatId unavailable in search route; use empty for ephemeral runs */,
       llm,
       embeddings,
       body.optimizationMode,

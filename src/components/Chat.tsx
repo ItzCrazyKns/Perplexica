@@ -22,6 +22,7 @@ const Chat = ({
   setFocusMode,
   handleEditMessage,
   analysisProgress,
+  modelStats,
   systemPromptIds,
   setSystemPromptIds,
   onThinkBoxToggle,
@@ -51,6 +52,13 @@ const Chat = ({
     message: string;
     current: number;
     total: number;
+  } | null;
+  modelStats?: {
+    usage?: {
+      input_tokens: number;
+      output_tokens: number;
+      total_tokens: number;
+    };
   } | null;
   systemPromptIds: string[];
   setSystemPromptIds: (ids: string[]) => void;
@@ -237,7 +245,12 @@ const Chat = ({
           </Fragment>
         );
       })}
-      {loading && <MessageBoxLoading progress={analysisProgress} />}
+      {loading && (
+        <MessageBoxLoading
+          progress={analysisProgress}
+          modelStats={modelStats}
+        />
+      )}
       <div className="fixed bottom-24 lg:bottom-10 z-40" style={inputStyle}>
         {/* Scroll to bottom button - appears above the MessageInput when user has scrolled up */}
         {manuallyScrolledUp && !isAtBottom && (

@@ -323,6 +323,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
     total: number;
     subMessage?: string;
   } | null>(null);
+  const [liveModelStats, setLiveModelStats] = useState<ModelStats | null>(null);
 
   const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -466,6 +467,11 @@ const ChatWindow = ({ id }: { id?: string }) => {
         setAnalysisProgress(data.data);
         return;
       }
+      if (data.type === 'stats') {
+        // live model stats snapshot during run
+        setLiveModelStats(data.data);
+        return;
+      }
 
       // Handle ping messages to keep connection alive (no action needed)
       if (data.type === 'ping') {
@@ -586,6 +592,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
       if (data.type === 'messageEnd') {
         // Clear analysis progress
         setAnalysisProgress(null);
+        setLiveModelStats(null);
 
         // Ensure final message content is displayed (flush any remaining buffer)
         setMessages((prev) =>
@@ -776,7 +783,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
       if (
         searchOptimizationMode &&
         (searchOptimizationMode === 'speed' ||
-          searchOptimizationMode === 'agent')
+          searchOptimizationMode === 'agent' ||
+          searchOptimizationMode === 'deepResearch')
       ) {
         setOptimizationMode(searchOptimizationMode);
         localStorage.setItem('optimizationMode', searchOptimizationMode);
@@ -844,6 +852,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
               setFocusMode={setFocusMode}
               handleEditMessage={handleEditMessage}
               analysisProgress={analysisProgress}
+              modelStats={liveModelStats}
               systemPromptIds={systemPromptIds}
               setSystemPromptIds={setSystemPromptIds}
               onThinkBoxToggle={handleThinkBoxToggle}

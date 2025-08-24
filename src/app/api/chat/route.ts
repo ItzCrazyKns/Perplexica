@@ -43,7 +43,7 @@ type EmbeddingModel = {
 
 type Body = {
   message: Message;
-  optimizationMode: 'speed' | 'agent';
+  optimizationMode: 'speed' | 'agent' | 'deepResearch';
   focusMode: string;
   history: Array<[string, string]>;
   files: Array<string>;
@@ -183,6 +183,20 @@ const handleEmitterEvents = async (
     const parsedData = JSON.parse(data);
     if (parsedData.type === 'modelStats') {
       modelStats = parsedData.data;
+      // Forward stats to client for live updates
+      try {
+        writer.write(
+          encoder.encode(
+            JSON.stringify({
+              type: 'stats',
+              data: parsedData.data,
+              messageId: aiMessageId,
+            }) + '\n',
+          ),
+        );
+      } catch (e) {
+        // Ignore write errors if stream closed
+      }
     }
   });
 
@@ -441,6 +455,7 @@ export const POST = async (req: Request) => {
     const stream = await handler.searchAndAnswer(
       message.content,
       history,
+      message.chatId,
       llm,
       embedding,
       body.optimizationMode,

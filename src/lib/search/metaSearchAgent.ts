@@ -9,9 +9,10 @@ export interface MetaSearchAgentType {
   searchAndAnswer: (
     message: string,
     history: BaseMessage[],
+    chatId: string,
     llm: BaseChatModel,
     embeddings: Embeddings,
-    optimizationMode: 'speed' | 'agent',
+    optimizationMode: 'speed' | 'agent' | 'deepResearch',
     fileIds: string[],
     systemInstructions: string,
     signal: AbortSignal,
@@ -47,6 +48,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     emitter: eventEmitter,
     message: string,
     history: BaseMessage[],
+    chatId: string,
     fileIds: string[],
     systemInstructions: string,
     personaInstructions: string,
@@ -62,6 +64,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
         personaInstructions,
         signal,
         focusMode,
+        chatId,
       );
 
       // Execute the agent workflow
@@ -84,9 +87,10 @@ class MetaSearchAgent implements MetaSearchAgentType {
   async searchAndAnswer(
     message: string,
     history: BaseMessage[],
+    chatId: string,
     llm: BaseChatModel,
     embeddings: Embeddings,
-    optimizationMode: 'speed' | 'agent',
+    optimizationMode: 'speed' | 'agent' | 'deepResearch',
     fileIds: string[],
     systemInstructions: string,
     signal: AbortSignal,
@@ -110,13 +114,33 @@ class MetaSearchAgent implements MetaSearchAgentType {
       );
     }
 
-    // Execute agent workflow for 'agent' mode
+    // Execute deep research workflow when selected
+    if (optimizationMode === 'deepResearch') {
+      this.executeAgentWorkflow(
+        llm,
+        embeddings,
+        emitter,
+        message,
+        history,
+        chatId,
+        fileIds,
+        systemInstructions,
+        personaInstructions || '',
+        signal,
+        'deepResearch',
+      );
+
+      return emitter;
+    }
+
+    // Execute agent workflow for 'agent' mode (default)
     this.executeAgentWorkflow(
       llm,
       embeddings,
       emitter,
       message,
       history,
+      chatId,
       fileIds,
       systemInstructions,
       personaInstructions || '',

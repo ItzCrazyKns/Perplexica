@@ -41,3 +41,4 @@ db.sqlite
 # AI stuff for planning and implementation
 .ai/
 certificates
+storage/

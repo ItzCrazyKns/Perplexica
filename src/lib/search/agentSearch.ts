@@ -3,16 +3,18 @@ import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { BaseMessage } from '@langchain/core/messages';
 import { EventEmitter } from 'events';
 import { SimplifiedAgent } from './simplifiedAgent';
+import DeepResearchAgent from './deepResearchAgent';
 
 /**
  * Agent Search class implementing LangGraph Supervisor pattern
  */
 export class AgentSearch {
   private emitter: EventEmitter;
-  private focusMode: string;
+  private agentMode: string;
 
   // Simplified agent experimental implementation
   private simplifiedAgent: SimplifiedAgent;
+  private deepResearchAgent?: DeepResearchAgent;
 
   constructor(
     llm: BaseChatModel,
@@ -21,10 +23,11 @@ export class AgentSearch {
     systemInstructions: string = '',
     personaInstructions: string = '',
     signal: AbortSignal,
-    focusMode: string = 'webSearch',
+    agentMode: string = 'webSearch',
+    private chatId?: string,
   ) {
     this.emitter = emitter;
-    this.focusMode = focusMode;
+    this.agentMode = agentMode;
 
     // Initialize simplified agent (experimental)
     this.simplifiedAgent = new SimplifiedAgent(
@@ -35,6 +38,19 @@ export class AgentSearch {
       personaInstructions,
       signal,
     );
+
+    // Initialize deep research agent lazily only if needed
+    if (agentMode === 'deepResearch') {
+      this.deepResearchAgent = new DeepResearchAgent(
+        llm,
+        embeddings,
+        emitter,
+        systemInstructions,
+        personaInstructions,
+        signal,
+        this.chatId || '',
+      );
+    }
   }
 
   /**
@@ -47,12 +63,12 @@ export class AgentSearch {
   ): Promise<void> {
     console.log('AgentSearch: Using simplified agent implementation');
 
-    // Delegate to simplified agent with focus mode
+    // Delegate to simplified agent with agentMode
     await this.simplifiedAgent.searchAndAnswer(
       query,
       history,
       fileIds,
-      this.focusMode,
+      this.agentMode,
     );
   }
 
@@ -64,6 +80,15 @@ export class AgentSearch {
     history: BaseMessage[] = [],
     fileIds: string[] = [],
   ) {
+    if (this.agentMode === 'deepResearch' && this.deepResearchAgent) {
+      console.log('AgentSearch: Routing to DeepResearchAgent');
+      return await this.deepResearchAgent.searchAndAnswer(
+        query,
+        history,
+        fileIds,
+      );
+    }
+
     console.log('AgentSearch: Routing to simplified agent implementation');
     return await this.searchAndAnswerSimplified(query, history, fileIds);
   }

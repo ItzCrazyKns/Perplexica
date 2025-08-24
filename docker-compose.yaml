@@ -24,6 +24,8 @@ services:
       - backend-dbstore:/home/perplexica/data
       - uploads:/home/perplexica/uploads
       - ./config.toml:/home/perplexica/config.toml
+      # Persist deep research artifacts between runs (optional)
+      - deep_research:/home/perplexica/storage/deep_research
     restart: unless-stopped
 
 networks:
@@ -32,3 +34,4 @@ networks:
 volumes:
   backend-dbstore:
   uploads:
+  deep_research:

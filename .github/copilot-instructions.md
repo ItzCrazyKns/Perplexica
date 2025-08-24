@@ -34,7 +34,11 @@ The system works through these main steps:
 
 - **LLM Providers**: OpenAI, Anthropic, Groq, Ollama, Gemini, DeepSeek, LM Studio
 - **Embeddings**: Xenova Transformers, similarity search (cosine/dot product)
-- **Agents**: `webSearchAgent`, `analyzerAgent`, `synthesizerAgent`, `taskManagerAgent`
+- **Orchestration & Agents**:
+  - `SimplifiedAgent` (LangGraph React Agent) — single, unified agent that uses tools to perform web search, local file search, URL summarization, and more. See `src/lib/search/simplifiedAgent.ts` with state in `src/lib/state/chatAgentState.ts` and prompts in `src/lib/prompts/simplifiedAgent/*`.
+  - `MetaSearchAgent` router — selects between optimization modes (`speed` vs `agent`) and routes per focus mode. See `src/lib/search/metaSearchAgent.ts` and handlers in `src/lib/search/index.ts`.
+  - `SpeedSearch` — fast, non-agent pipeline used when optimization mode is `speed`. See `src/lib/search/speedSearch.ts`.
+  - Tools used by the agent live in `src/lib/tools/agents` (e.g., `web_search`, `file_search`, `url_summarization`, `image_search`).
 
 ### External Services
 
@@ -43,11 +47,15 @@ The system works through these main steps:
 
 ### Data Flow
 
-1. User query → Task Manager Agent
-2. Web Search Agent → SearXNG → Content extraction
-3. Analyzer Agent → Content processing + embedding
-4. Synthesizer Agent → LLM response generation
-5. Response with cited sources
+1. User query → API route (`src/app/api/search/route.ts`) with focus mode and optimization mode
+2. `MetaSearchAgent` decides optimization path:
+
+- `speed`: use `SpeedSearch` pipeline to retrieve, optionally rerank, and summarize
+- `agent`: run `SimplifiedAgent` (LangGraph React Agent) with appropriate tools based on focus mode
+
+3. Tools perform actions (e.g., SearXNG web search, local file search, URL/content extraction) and accumulate `relevantDocuments` in agent state
+4. Agent streams the response tokens and tool-call hints; citations come from collected `relevantDocuments`
+5. Special case: Firefox AI prompt detection disables tools for that turn and answers conversationally
 
 ## Project Structure
 
@@ -55,25 +63,26 @@ The system works through these main steps:
   - `/src/app/api`: API endpoints for search and LLM interactions
 - `/src/components`: Reusable UI components
 - `/src/lib`: Backend functionality
-  - `lib/search`: Search functionality and meta search agent
+  - `lib/search`: `SimplifiedAgent`, `MetaSearchAgent` router, `SpeedSearch`, focus-mode handlers
   - `lib/db`: Database schema and operations
   - `lib/providers`: LLM and embedding model integrations
-  - `lib/prompts`: Prompt templates for LLMs
-  - `lib/chains`: LangChain chains for various operations
-  - `lib/agents`: LangGraph agents for advanced processing
+  - `lib/prompts`: Prompt templates for LLMs (including `prompts/simplifiedAgent/*`)
+  - `lib/chains`: Additional specialized chains (e.g., image/video search helpers)
+  - `lib/state`: LangGraph agent state annotations (e.g., `chatAgentState.ts`)
   - `lib/utils`: Utility functions and types including web content retrieval and processing
 
 ## Focus Modes
 
 Perplexica supports multiple specialized search modes:
 
-- All Mode: General web search
+- Web Search Mode: General web search
 - Local Research Mode: Research and interact with local files with citations
 - Chat Mode: Have a creative conversation
 - Academic Search Mode: For academic research
 - YouTube Search Mode: For video content
 - Wolfram Alpha Search Mode: For calculations and data analysis
 - Reddit Search Mode: For community discussions
+- Firefox AI Mode: Auto-detected; tools are disabled and a conversational response is generated for that turn
 
 ## Core Commands
 
@@ -116,6 +125,8 @@ When working on this codebase, you might need to:
 - **Do not create test files or run the application unless requested**
 - Prioritize existing patterns and architectural decisions
 - Use the established component structure and styling patterns
+- Always update documentation and comments to reflect code changes
+- Always update `.github/copilot-instructions.md` to reflect relevant changes
 
 ## Code Style & Standards
 
@@ -153,3 +164,35 @@ When working on this codebase, you might need to:
   - `/context7/headlessui_com` for Headless UI components
   - `/tailwindlabs/tailwindcss.com` for Tailwind CSS documentation
   - `/vercel/next.js` for Next.js documentation
+
+## Deep Research Agent (per-subquery pipeline)
+
+The deep research workflow treats each planned subquestion as its own gather/extract/rank pipeline rather than pooling all subqueries into a single candidate list.
+
+- For each subquestion:
+  - Gather: diversified SearXNG queries via `expandedSearchTool` with semantic reranking to the subquestion intent.
+  - Extract: use `readerExtractorTool` with the subquestion as the guidance query; reuse cached extractions when available.
+  - Rank: convert extracted facts/quotes into `EvidenceItem[]` via `evidenceStoreTool`, then semantic-rerank to the subquestion.
+  - Assess: apply a sufficiency heuristic; if weak, run a focused depth pass (gov/edu, pdfs, methodology/data queries) and re-evaluate.
+- Results are aggregated across subquestions for clustering and synthesis. Early synthesis may trigger once coverage is adequate.
+- Implementation: `src/lib/search/deepResearchAgent.ts`.
+
+## Web Content Caching
+### Web Content Extraction & Caching
+ Implementation lives in `src/lib/utils/webCache.ts` and is used by `src/lib/utils/documents.ts#getWebContent`. This cache is transparent to callers of `getWebContent` and returns the same `Document` shape whether served from cache or freshly fetched.
+
+ For fact/quote extraction used by the deep research pipeline, prefer `extractFactsAndQuotes` over `summarizeWebContent`:
+ 
+ - Location: `src/lib/utils/extractWebFacts.ts`
+ - Purpose: structured extraction of short, atomic facts (≤25 words) and concise direct quotes (≤200 chars) scoped to a user query
+ - Used by: `readerExtractorTool` (`src/lib/tools/agents/readerExtractorTool.ts`)
+- Behavior: single-pass extraction with a lightweight relevance check; always processes available content and returns compact arrays suitable for evidence ranking
+
+- Location: OS temp directory under `perplexica-webcache/`
+- Capacity: up to 200 entries; purge oldest (LRU) when exceeded
+- TTL: 4 hours; expired entries are purged from disk and memory
+- Keys: URLs hashed (sha256) for safe filenames
+- On-disk format: JSON with `{ url, createdAt, lastAccess, title?, pageContent, html? }`
+- In-memory metadata: `{ path, url, createdAt, lastAccess }` only
+
+Implementation lives in `src/lib/utils/webCache.ts` and is used by `src/lib/utils/documents.ts#getWebContent`. This cache is transparent to callers of `getWebContent` and returns the same `Document` shape whether served from cache or freshly fetched.
