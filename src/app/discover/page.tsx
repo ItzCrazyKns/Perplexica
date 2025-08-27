@@ -83,8 +83,8 @@ const Page = () => {
               className={cn(
                 'border-[0.1px] rounded-full text-sm px-3 py-1 text-nowrap transition duration-200 cursor-pointer',
                 activeTopic === topic.key
-                  ? 'text-cyan-600 bg-cyan-100 border-cyan-300 dark:text-cyan-300 dark:bg-cyan-300/30 dark:border-cyan-300/60'
-                  : 'text-gray-700 border-gray-300 hover:text-gray-900 hover:bg-gray-100 hover:border-gray-400 dark:text-white/70 dark:border-white/30 dark:hover:text-white dark:hover:bg-white/5 dark:hover:border-white/40',
+                  ? 'text-cyan-300 bg-cyan-300/30 border-cyan-300/60'
+                  : 'border-black/30 dark:border-white/30 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white hover:border-black/40 dark:hover:border-white/40 hover:bg-black/5 dark:hover:bg-white/5',
               )}
               onClick={() => setActiveTopic(topic.key)}
             >
