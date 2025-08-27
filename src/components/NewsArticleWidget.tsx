@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 interface Article {
   title: string;
@@ -8,6 +10,7 @@ interface Article {
 }
 
 const NewsArticleWidget = () => {
+  const t = useTranslations('components');
   const [article, setArticle] = useState<Article | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -39,13 +42,15 @@ const NewsArticleWidget = () => {
           </div>
         </>
       ) : error ? (
-        <div className="w-full text-xs text-red-400">Could not load news.</div>
+        <div className="w-full text-xs text-red-400">
+          {t('newsArticleWidget.error')}
+        </div>
       ) : article ? (
         <a
           href={`/?q=Summary: ${article.url}`}
           className="flex flex-row items-center w-full h-full group"
         >
-          <img
+          <Image
             className="object-cover rounded-lg w-16 min-w-16 max-w-16 h-16 min-h-16 max-h-16 border border-light-200 dark:border-dark-200 bg-light-200 dark:bg-dark-200 group-hover:opacity-90 transition"
             src={
               new URL(article.thumbnail).origin +
@@ -53,6 +58,9 @@ const NewsArticleWidget = () => {
               `?id=${new URL(article.thumbnail).searchParams.get('id')}`
             }
             alt={article.title}
+            width={64}
+            height={64}
+            unoptimized
           />
           <div className="flex flex-col justify-center flex-1 h-full pl-3 w-0">
             <div className="font-bold text-xs text-black dark:text-white leading-tight truncate overflow-hidden whitespace-nowrap">

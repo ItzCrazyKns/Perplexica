@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Document } from '@langchain/core/documents';
+import { useLocale, useTranslations } from 'next-intl';
 import { getSuggestions } from '../actions';
 
 type ChatContext = {
@@ -55,6 +56,7 @@ const checkConfig = async (
   setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void,
   setIsConfigReady: (ready: boolean) => void,
   setHasError: (hasError: boolean) => void,
+  t: (key: string) => string,
 ) => {
   try {
     let chatModel = localStorage.getItem('chatModel');
@@ -96,7 +98,7 @@ const checkConfig = async (
         const chatModelProvidersKeys = Object.keys(chatModelProviders);
 
         if (!chatModelProviders || chatModelProvidersKeys.length === 0) {
-          return toast.error('No chat models available');
+          return toast.error(t('common.errors.noChatModelsAvailable'));
         } else {
           chatModelProvider =
             chatModelProvidersKeys.find(
@@ -109,9 +111,7 @@ const checkConfig = async (
           chatModelProvider === 'custom_openai' &&
           Object.keys(chatModelProviders[chatModelProvider]).length === 0
         ) {
-          toast.error(
-            "Looks like you haven't configured any chat model providers. Please configure them from the settings page or the config file.",
-          );
+          toast.error(t('common.errors.chatProviderNotConfigured'));
           return setHasError(true);
         }
 
@@ -125,7 +125,7 @@ const checkConfig = async (
           !embeddingModelProviders ||
           Object.keys(embeddingModelProviders).length === 0
         )
-          return toast.error('No embedding models available');
+          return toast.error(t('common.errors.noEmbeddingModelsAvailable'));
 
         embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
         embeddingModel = Object.keys(
@@ -163,9 +163,7 @@ const checkConfig = async (
           chatModelProvider === 'custom_openai' &&
           Object.keys(chatModelProviders[chatModelProvider]).length === 0
         ) {
-          toast.error(
-            "Looks like you haven't configured any chat model providers. Please configure them from the settings page or the config file.",
-          );
+          toast.error(t('common.errors.chatProviderNotConfigured'));
           return setHasError(true);
         }
 
@@ -345,12 +343,16 @@ export const ChatProvider = ({
 
   const messagesRef = useRef<Message[]>([]);
 
+  const t = useTranslations();
+  const locale = useLocale();
+
   useEffect(() => {
     checkConfig(
       setChatModelProvider,
       setEmbeddingModelProvider,
       setIsConfigReady,
       setHasError,
+      t,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -413,7 +415,7 @@ export const ChatProvider = ({
   useEffect(() => {
     if (isReady && initialMessage && isConfigReady) {
       if (!isConfigReady) {
-        toast.error('Cannot send message before the configuration is ready');
+        toast.error(t('common.errors.cannotSendBeforeConfigReady'));
         return;
       }
       sendMessage(initialMessage);
@@ -535,7 +537,7 @@ export const ChatProvider = ({
           lastMsg.sources.length > 0 &&
           !lastMsg.suggestions
         ) {
-          const suggestions = await getSuggestions(messagesRef.current);
+          const suggestions = await getSuggestions(messagesRef.current, locale);
           setMessages((prev) =>
             prev.map((msg) => {
               if (msg.messageId === lastMsg.messageId) {
@@ -578,6 +580,7 @@ export const ChatProvider = ({
           provider: embeddingModelProvider.provider,
         },
         systemInstructions: localStorage.getItem('systemInstructions'),
+        locale,
       }),
     });
 

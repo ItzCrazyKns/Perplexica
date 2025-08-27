@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { Switch } from '@headlessui/react';
+import { useTranslations } from 'next-intl';
 
 const CopilotToggle = ({
   copilotEnabled,
@@ -8,6 +9,7 @@ const CopilotToggle = ({
   copilotEnabled: boolean;
   setCopilotEnabled: (enabled: boolean) => void;
 }) => {
+  const t = useTranslations('components.copilot');
   return (
     <div className="group flex flex-row items-center space-x-1 active:scale-95 duration-200 transition cursor-pointer">
       <Switch
@@ -15,7 +17,7 @@ const CopilotToggle = ({
         onChange={setCopilotEnabled}
         className="bg-light-secondary dark:bg-dark-secondary border border-light-200/70 dark:border-dark-200 relative inline-flex h-5 w-10 sm:h-6 sm:w-11 items-center rounded-full"
       >
-        <span className="sr-only">Copilot</span>
+        <span className="sr-only">{t('label')}</span>
         <span
           className={cn(
             copilotEnabled
@@ -34,7 +36,7 @@ const CopilotToggle = ({
             : 'text-black/50 dark:text-white/50 group-hover:text-black dark:group-hover:text-white',
         )}
       >
-        Copilot
+        {t('label')}
       </p>
     </div>
   );
