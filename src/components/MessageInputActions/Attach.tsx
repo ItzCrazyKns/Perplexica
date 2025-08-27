@@ -7,8 +7,8 @@ import {
 } from '@headlessui/react';
 import { CopyPlus, File, LoaderCircle, Plus, Trash } from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
-import { useTranslations } from 'next-intl';
 import { useChat } from '@/lib/hooks/useChat';
+import { useTranslations } from 'next-intl';
 
 const Attach = ({ showText }: { showText?: boolean }) => {
   const { files, setFiles, setFileIds, fileIds } = useChat();
