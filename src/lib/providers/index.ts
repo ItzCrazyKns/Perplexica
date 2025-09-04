@@ -50,6 +50,7 @@ import {
   loadLemonadeEmbeddingModels,
   PROVIDER_INFO as LemonadeInfo,
 } from './lemonade';
+import { loadBedrockChatModels, PROVIDER_INFO as BedrockInfo } from './bedrock';
 
 export const PROVIDER_METADATA = {
   openai: OpenAIInfo,
@@ -62,6 +63,7 @@ export const PROVIDER_METADATA = {
   aimlapi: AimlApiInfo,
   lmstudio: LMStudioInfo,
   lemonade: LemonadeInfo,
+  bedrock: BedrockInfo,
   custom_openai: {
     key: 'custom_openai',
     displayName: 'Custom OpenAI',
@@ -91,6 +93,7 @@ export const chatModelProviders: Record<
   aimlapi: loadAimlApiChatModels,
   lmstudio: loadLMStudioChatModels,
   lemonade: loadLemonadeChatModels,
+  bedrock: loadBedrockChatModels,
 };
 
 export const embeddingModelProviders: Record<
