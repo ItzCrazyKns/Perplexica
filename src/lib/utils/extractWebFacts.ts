@@ -6,9 +6,14 @@ import { formatDateForLLM } from '../utils';
 import { setTemperature } from './modelUtils';
 import { withStructuredOutput } from './structuredOutput';
 import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
+import CallbackHandler from 'langfuse-langchain';
+import {
+  CallbackManager,
+  CallbackManagerForLLMRun,
+} from '@langchain/core/callbacks/manager';
+import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
 
 export type ExtractFactsOutput = {
-  title?: string;
   facts: string[];
   quotes: string[];
   notRelevantReason?: string;
@@ -63,14 +68,12 @@ export async function extractFactsAndQuotes(
 ): Promise<ExtractFactsOutput | null> {
   setTemperature(llm, 0);
   try {
-    const content = await getWebContent(url, true);
+    const content = await getWebContent(url, false);
     if (!content) {
       return { facts: [], quotes: [], notRelevantReason: 'No content at URL' };
     }
 
-    const baseSystem = systemInstructions
-      ? `${systemInstructions}\n\n`
-      : '';
+    const baseSystem = systemInstructions ? `${systemInstructions}\n\n` : '';
 
     const structured = withStructuredOutput(llm, ExtractionSchema, {
       name: 'extract_facts_and_quotes',
@@ -78,7 +81,6 @@ export async function extractFactsAndQuotes(
     const body = content.pageContent || content.metadata.html || '';
     if (!body || body.trim().length === 0) {
       return {
-        title: (content.metadata?.title as string) || undefined,
         facts: [],
         quotes: [],
         notRelevantReason: 'No extractable content',
@@ -91,7 +93,7 @@ export async function extractFactsAndQuotes(
 Given the user's query and webpage content, decide if the content is relevant. If relevant, return facts and quotes that best help answer the query. If not relevant, return empty arrays.
 
 # Rules
-- Facts: ≤25 words, no markdown bullets, no quotes, one idea per item
+- Facts: ≤50 words, no markdown bullets, no quotes, one idea per item
 - Quotes: short direct quotes (≤200 chars) copied verbatim from the content
 - Only include items that directly support the query
 
@@ -105,44 +107,34 @@ ${body}`;
 
     const res = await structured.invoke(prompt, {
       signal,
-      ...getLangfuseCallbacks(),
+      callbacks: [
+        {
+          handleLLMEnd: async (output, _runId, _parentRunId) => {
+            if (onUsage && output.llmOutput?.estimatedTokenUsage) {
+              onUsage(output.llmOutput.estimatedTokenUsage);
+            }
+          },
+        },
+      ],
     });
-
-    if (onUsage) {
-      try {
-        onUsage({ kind: 'extract_facts_and_quotes', url });
-      } catch {}
-    }
 
     if (!res || res.relevant === false) {
       return {
-        title: (content.metadata?.title as string) || undefined,
         facts: [],
         quotes: [],
         notRelevantReason: res?.reason || 'Content not relevant to query',
       };
     }
 
-    // Sanitize/trim facts to ~25 words and quotes to max 200 chars
-    const trimWords = (s: string, maxWords = 25) =>
-      (s || '')
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, maxWords)
-        .join(' ')
-        .trim();
-
     const facts = (res.facts || [])
-      .map((f: string) => trimWords(f, 25))
       .filter(Boolean)
       .slice(0, 12);
+
     const quotes = (res.quotes || [])
-      .map((q: string) => (q || '').slice(0, 200))
       .filter(Boolean)
       .slice(0, 6);
 
     return {
-      title: (content.metadata?.title as string) || undefined,
       facts,
       quotes,
     };

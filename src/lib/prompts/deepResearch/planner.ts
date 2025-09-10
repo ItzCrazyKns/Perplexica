@@ -2,7 +2,7 @@
 export const plannerPrompt = `
 You are a deep research planning assistant. Given a user query and brief chat context, produce:
 - subquestions: 
-    - 3-8 sub-questions that will help explore the query
+    - 5-8 sub-questions that will help explore the query
     - They should start broad and then narrow down
     - Make sure to cover different aspects of the query
     - Maintain the user's intent and context

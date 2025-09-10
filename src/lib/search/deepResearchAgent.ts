@@ -30,14 +30,30 @@ import fs from 'fs';
 import path from 'path';
 import type { SessionManifest } from '@/lib/state/deepResearchAgentState';
 import computeSimilarity from '@/lib/utils/computeSimilarity';
+import { SimplifiedAgent } from './simplifiedAgent';
+import { BaseMessage, HumanMessage } from '@langchain/core/messages';
+import { createReactAgent } from '@langchain/langgraph/prebuilt';
+import { webSearchTools } from '../tools/agents';
+import { buildWebSearchPrompt } from '../prompts/simplifiedAgent/webSearch';
+import { formatDateForLLM } from '../utils';
+import { SimplifiedAgentState } from '../state/chatAgentState';
+import { getLangfuseCallbacks } from '../tracing/langfuse';
+// import { RunnableConfig } from '@langchain/core/runnables';
+import z from 'zod';
+import { webSearchPrompt } from '../prompts/deepResearch/webSearch';
+import { extractFactsAndQuotes } from '../utils/extractWebFacts';
+import { searchSearxng } from '../searxng';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { RunnableSequence } from '@langchain/core/runnables';
+import { synthesizerPrompt } from '@/lib/prompts/synthesizer';
 
 /**
  * DeepResearchAgent — phased orchestrator with budgets, cancellation, and progress streaming.
  * Tools and persistence are stubbed for now; real tool calls and FS writes land in later tasks.
  */
 export class DeepResearchAgent {
-  // Budgets: 15 minutes wall clock, 50 LLM turns (soft stop at ~85%)
-  private static readonly WALL_CLOCK_LIMIT_MS = 15 * 60 * 1000; // 15 minutes
+  // Budgets: 25 minutes wall clock, 50 LLM turns (soft stop at ~85%)
+  private static readonly WALL_CLOCK_LIMIT_MS = 25 * 60 * 1000; // 25 minutes
   private static readonly LLM_TURNS_HARD_LIMIT = 50;
   private static readonly LLM_TURNS_SOFT_LIMIT = Math.floor(
     DeepResearchAgent.LLM_TURNS_HARD_LIMIT * 0.85,
@@ -113,7 +129,6 @@ export class DeepResearchAgent {
   ): Promise<void> {
     try {
       this.query = query;
-      this.emitResponse(`[Deep Research] initializing...\n`);
       this.emitResponse(`Query: ${query}\n`);
       if (this.chatId) {
         ensureSessionDirs(this.chatId);
@@ -135,25 +150,28 @@ export class DeepResearchAgent {
         writeManifest(this.chatId, manifest);
       }
 
-      // Phase: Plan
-      await this.runPhase('Plan', async () => {
-        await this.planPhase(query, history);
-      });
-
-      // Phase: Search
-      if (!this.shouldJumpToSynthesis()) {
-        await this.runPhase('Search', async () => {
-          await this.searchPhase();
+      do {
+        // Phase: Plan
+        await this.runPhase('Plan', async () => {
+          await this.planPhase(query, history);
         });
-      }
 
-      // Phase: Read/Extract
-      if (!this.shouldJumpToSynthesis()) {
-        await this.runPhase('ReadExtract', async () => {
-          await this.readExtractPhase();
-        });
-      }
+        // TODO: Get search results then pass to another tool to get summaries and more details.
 
+        // Phase: Search
+        if (!this.shouldJumpToSynthesis()) {
+          await this.runPhase('Search', async () => {
+            await this.searchPhase(history);
+          });
+        }
+
+        // Phase: Read/Extract
+        if (!this.shouldJumpToSynthesis()) {
+          await this.runPhase('ReadExtract', async () => {
+            await this.readExtractPhase();
+          });
+        }
+      } while (!this.needsMoreInfo());
       // Phase: Cluster/Map
       // if (!this.shouldJumpToSynthesis()) {
       //   await this.runPhase('ClusterMap', async () => {
@@ -172,24 +190,12 @@ export class DeepResearchAgent {
       });
 
       // Finalize
-      // Emit basic model stats prior to finish
-      const evCount = this.state.evidence?.length || 0;
-      const avgNovelty =
-        this.state.clusters && this.state.clusters.length
-          ? this.state.clusters.reduce((a, c) => a + (c.noveltyScore || 0), 0) /
-            this.state.clusters.length
-          : 0.5;
-      const confidence = Math.min(
-        1,
-        0.3 + 0.7 * Math.min(1, evCount / 50) * avgNovelty,
-      );
       this.emitter.emit(
         'stats',
         JSON.stringify({
           type: 'modelStats',
           data: {
             modelName: getModelName(this.llm),
-            confidence,
             usage: this.totalUsage,
             phaseUsage: Object.fromEntries(
               (Object.keys(this.phaseUsage) as Phase[]).map((p) => [
@@ -200,25 +206,12 @@ export class DeepResearchAgent {
           },
         }),
       );
-      // Emit sources list for UI
-      const sources = Array.from(
-        new Map(
-          (this.state.extracted || []).map((d: any) => [
-            d.url,
-            { title: d.title || d.url, url: d.url },
-          ]),
-        ).values(),
-      );
-      this.emitter.emit(
-        'sources',
-        JSON.stringify({ type: 'sources', data: sources }),
-      );
+
       if (this.chatId)
         updateManifest(this.chatId, {
           status: 'completed',
           llmTurnsUsed: this.llmTurns,
         });
-      this.emitResponse(`\n[Deep Research] complete.\n`);
       this.emitter.emit('end');
     } catch (err: any) {
       if (this.aborted || this.signal.aborted) {
@@ -383,6 +376,23 @@ export class DeepResearchAgent {
       output_tokens: prev.output_tokens + norm.output_tokens,
       total_tokens: prev.total_tokens + norm.total_tokens,
     };
+
+    this.emitter.emit(
+      'stats',
+      JSON.stringify({
+        type: 'modelStats',
+        data: {
+          modelName: getModelName(this.llm),
+          usage: this.totalUsage,
+          phaseUsage: Object.fromEntries(
+            (Object.keys(this.phaseUsage) as Phase[]).map((p) => [
+              p,
+              this.phaseUsage[p]?.total_tokens ?? 0,
+            ]),
+          ),
+        },
+      }),
+    );
   }
 
   private emitProgress(
@@ -464,7 +474,7 @@ export class DeepResearchAgent {
     }
   }
 
-  private async searchPhase() {
+  private async searchPhase(history: BaseMessage[]) {
     this.ensureNotAborted();
     const subqs = this.state.plan?.subquestions || [];
     if (!subqs.length) return;
@@ -475,30 +485,59 @@ export class DeepResearchAgent {
     for (let i = 0; i < subqs.length; i++) {
       if (this.abortedOrTimedOut()) break;
       const sq = subqs[i];
-      // Gather candidates specific to this subquestion (broad pass)
-      const reranked = await this.gatherCandidatesForSubq(sq, 'broad');
-      perSub.push({
-        subquestion: sq,
-        candidates: reranked,
-        extracted: [],
-        evidence: [],
-        sufficiency: 'pending',
-      });
-      totalCandidates += reranked.length;
 
       this.emitProgress(
         'Search',
-        `Subquery ${i + 1}/${subqs.length}: gathered ${reranked.length} candidates`,
+        `Searching ${sq} (${i + 1}/${subqs.length})`,
         this.phasePercent(),
       );
-      if (this.chatId) {
-        writeArtifact(
-          this.chatId,
-          'raw',
-          `candidates_${sanitizeFilename(sq)}`,
-          reranked,
-        );
-      }
+
+      const subqueryResult = await searchSearxng(sq);
+
+      this.emitProgress(
+        'Search',
+        `Extracting candidates for "${sq}" (${i + 1}/${subqs.length})`,
+        this.phasePercent(),
+      );
+
+      const facts = await Promise.all(
+        subqueryResult.results.slice(0, 5).map(async (result) => {
+          const extracted = await extractFactsAndQuotes(
+            result.url,
+            sq,
+            this.llm,
+            this.systemInstructions,
+            this.signal,
+            (usage) => this.addPhaseUsage('Search', usage),
+          );
+          return {
+            url: result.url,
+            title: result.title,
+            facts: extracted,
+          };
+        }),
+      );
+
+      const cleanedFacts = facts.filter((f) => (f?.facts?.facts?.length || 0) > 0 || (f?.facts?.quotes?.length || 0) > 0);
+
+      console.log(cleanedFacts);
+
+      perSub[i] = {
+        subquestion: sq,
+        candidates: cleanedFacts,
+        evidence: [],
+        sufficiency: 'sufficient',
+        extracted: [],
+      };
+
+      // if (this.chatId) {
+      //   writeArtifact(
+      //     this.chatId,
+      //     'raw',
+      //     `candidates_${sanitizeFilename(sq)}`,
+      //     reranked,
+      //   );
+      // }
     }
 
     this.state.perSubquery = perSub;
@@ -518,274 +557,147 @@ export class DeepResearchAgent {
     }
   }
 
-  private async readExtractPhase() {
+  private async needsMoreInfo(): Promise<boolean> {
     this.ensureNotAborted();
-    // Simulate multiple small turns for extraction across documents
-    this.countLLMTurns(3);
-    const perSub = this.state.perSubquery || [];
-    let globalExtracted: ExtractedDoc[] = [];
-    let globalEvidence: EvidenceItem[] = [];
-    let totalFacts = 0;
-
-    for (let i = 0; i < perSub.length; i++) {
-      if (this.abortedOrTimedOut()) break;
-      const sub = perSub[i];
-
-      // Reuse cached extracted docs for this subquery's candidates
-      const cachedExtracted: ExtractedDoc[] = [];
-      if (this.chatId && (sub.candidates?.length || 0) > 0) {
-        const base = sessionDir(this.chatId);
-        const dir = path.join(base, 'extracted');
-        if (fs.existsSync(dir)) {
-          for (const c of sub.candidates) {
-            try {
-              const file = path.join(dir, `${sanitizeFilename(c.url)}.json`);
-              if (fs.existsSync(file)) {
-                const data = JSON.parse(fs.readFileSync(file, 'utf8'));
-                if (data?.url) cachedExtracted.push(data);
-              }
-            } catch {}
-          }
-        }
+    // Assess whether we need to re-enter search/extract based on evidence sufficiency
+    if (!this.state.perSubquery) return false;
+    let anyInsufficient = false;
+    for (let i = 0; i < this.state.perSubquery.length; i++) {
+      const subq = this.state.perSubquery[i];
+      if (this.earlySynthesisTriggered && subq.candidates.length === 0) {
+        // If early synthesis triggered and this subquery has no candidates, ignore it
+        subq.sufficiency = 'sufficient';
+        continue;
       }
-
-      const extracted = await readerExtractorTool(
-        sub.candidates || [],
-        // Use the subquestion as the extraction query for tighter relevance
-        sub.subquestion,
-        this.getExtractorLLM(),
-        this.signal,
-        (usage) => this.addPhaseUsage('ReadExtract', usage),
+      if (subq.sufficiency !== 'pending') continue; // already assessed
+      const assessment = this.assessSubquerySufficiency(
+        subq.subquestion,
+        subq.evidence,
       );
-      const evidence = evidenceStoreTool(extracted);
-      const rankedEvidence = await this.rankEvidenceForSubq(
-        sub.subquestion,
-        evidence,
-      );
-
-      // Assess sufficiency; possibly run a depth pass (single retry) if needed
-      let sufficiency = this.assessSubquerySufficiency(
-        sub.subquestion,
-        rankedEvidence,
-      );
-      if (sufficiency.status === 'needsDepth') {
-        // Depth pass with more authoritative sources
-        const depthCandidates = await this.gatherCandidatesForSubq(
-          sub.subquestion,
-          'depth',
-        );
-        // Add only new URLs
-        const existingUrls = new Set(extracted.map((d) => d.url));
-        const newDepthCandidates = depthCandidates.filter(
-          (c) => !existingUrls.has(c.url),
-        );
-        if (newDepthCandidates.length) {
-          const extractedDepth = await readerExtractorTool(
-            newDepthCandidates,
-            sub.subquestion,
-            this.getExtractorLLM(),
-            this.signal,
-            (usage) => this.addPhaseUsage('ReadExtract', usage),
-          );
-          extracted.push(...extractedDepth);
-          const evidenceDepth = evidenceStoreTool(extracted);
-          const rankedDepth = await this.rankEvidenceForSubq(
-            sub.subquestion,
-            evidenceDepth,
-          );
-          sufficiency = this.assessSubquerySufficiency(
-            sub.subquestion,
-            rankedDepth,
-          );
-          // Persist artifacts for depth pass
-          if (this.chatId) {
-            for (const doc of extractedDepth) {
-              writeArtifact(this.chatId, 'extracted', doc.url, doc);
-            }
-            writeArtifact(
-              this.chatId,
-              'raw',
-              `candidates_depth_${sanitizeFilename(sub.subquestion)}`,
-              depthCandidates,
-            );
-          }
-          // Update ranked evidence reference
-          rankedEvidence.splice(0, rankedEvidence.length, ...rankedDepth);
-        }
-      }
-
-      perSub[i] = {
-        ...sub,
-        extracted,
-        evidence: rankedEvidence,
-        sufficiency: sufficiency.status,
-      };
-      globalExtracted = globalExtracted.concat(extracted);
-      globalEvidence = globalEvidence.concat(rankedEvidence);
-      totalFacts += extracted.reduce((acc, d) => acc + d.facts.length, 0);
-
-      this.emitProgress(
-        'ReadExtract',
-        `Subquery ${i + 1}/${perSub.length}: extracted from ${extracted.length} docs`,
-        this.phasePercent(),
-      );
-      if (this.chatId) {
-        // Persist individual docs and per-subquery snapshot
-        for (const doc of extracted) {
-          writeArtifact(this.chatId, 'extracted', doc.url, doc);
-        }
-        writeArtifact(
-          this.chatId,
-          'extracted',
-          `per_subq_${sanitizeFilename(sub.subquestion)}`,
-          { extracted, evidence: rankedEvidence },
-        );
+      subq.sufficiency = assessment.status;
+      if (assessment.status !== 'sufficient') {
+        anyInsufficient = true;
       }
     }
-
-    // Save back combined state for downstream phases and UI
-    this.state.perSubquery = perSub;
-    this.state.extracted = globalExtracted;
-    this.state.evidence = globalEvidence;
-
-    this.emitProgress(
-      'ReadExtract',
-      'Extracted concise facts and quotes (per-subquery)',
-      this.phasePercent(true),
-      `${totalFacts} facts from ${globalExtracted.length} docs`,
-    );
-
-    // Global re-evaluation: if most subqueries satisfied, trigger early synthesis
-    const satisfied = (this.state.perSubquery || []).filter(
-      (p) => p.sufficiency === 'sufficient',
-    ).length;
-    const totalSubq = this.state.perSubquery?.length || 0;
-    if (totalSubq > 0) {
-      const coverage = satisfied / totalSubq;
-      if (coverage >= 0.6 && (this.state.evidence?.length || 0) >= 20) {
-        this.emitProgress(
-          'Synthesize',
-          'Enough coverage across subquestions — moving to synthesis',
-          this.phasePercent(),
-        );
-        this.earlySynthesisTriggered = true;
-      }
-    }
-    if (this.chatId) {
-      updateManifest(this.chatId, {
-        counts: {
-          extractedDocs: globalExtracted.length,
-          facts: totalFacts,
-          evidenceItems: globalEvidence.length,
-        },
-      });
-    }
-  }
-
-  private async clusterMapPhase() {
-    this.ensureNotAborted();
-    // TODO: clusterCompressTool (embeddings + clustering) (M3)
-    this.countLLMTurns();
-    // Try cached clusters first
-    let cachedClusters: any[] = [];
-    if (this.chatId) {
-      try {
-        const file = path.join(
-          sessionDir(this.chatId),
-          'clusters',
-          `${sanitizeFilename('clusters')}.json`,
-        );
-        if (fs.existsSync(file)) {
-          cachedClusters = JSON.parse(fs.readFileSync(file, 'utf8'));
-        }
-      } catch {}
-    }
-    this.state.clusters = cachedClusters.length
-      ? cachedClusters
-      : await clusterCompressTool(
-          this.state.extracted || [],
-          this.embeddings,
-          { targetClusters: 3 },
-          this.state.plan?.subquestions || [],
-        );
-    this.emitProgress(
-      'ClusterMap',
-      'Grouped evidence into topics',
-      this.phasePercent(true),
-      `${this.state.clusters.length} clusters`,
-    );
-    if (this.chatId) {
-      writeArtifact(this.chatId, 'clusters', 'clusters', this.state.clusters);
-      updateManifest(this.chatId, {
-        counts: { clusters: this.state.clusters.length },
-      });
-    }
+    console.warn('TODO: needsMoreInfo: subquery sufficiency');
+    return anyInsufficient;
   }
 
   private async synthesizePhase(query: string) {
     this.ensureNotAborted();
     // TODO: deepSynthesizerTool (outline + drafting) (M3)
     this.countLLMTurns(2);
-    this.state.outline = await deepSynthesizerTool(
-      query,
-      this.state.plan?.subquestions || [],
-      this.state.clusters || [],
-      this.state.evidence || [],
-    );
-    this.emitProgress(
-      'Synthesize',
-      'Drafted outline and sections',
-      this.phasePercent(true),
-      `${this.state.outline.sections.length} sections`,
+
+    // Build a lightweight "relevant documents" context from discovered candidates
+    const perSub = this.state.perSubquery || [];
+    const allCandidates: Array<any> = perSub.flatMap((p) => p.candidates || []);
+
+    // Format into numbered XML-like blocks, similar to speedSearch.processDocs
+    const docsString = allCandidates
+      .slice(0, 20)
+      .map((c, idx) => {
+        const title = c.title || c.name || c.url || `Source ${idx + 1}`;
+        const url = c.url || '';
+        return `<${idx + 1}>
+<title>${title}</title>
+${url ? `<url>${url}</url>` : ''}
+<content>\n<facts>\n${c.facts?.facts.join('\n')}\n</facts><quotes>\n${c.facts?.quotes.join('\n')}\n</quotes>\n</content>
+</${idx + 1}>`;
+      })
+      .join('\n\n');
+
+    // Prepare the synthesizer prompt using the same style as simplifiedAgent
+    const prompt = await ChatPromptTemplate.fromMessages([
+      ['system', synthesizerPrompt],
+      // The template itself contains the "Answer the user query" instruction
+    ]).partial({
+      recursionLimitReached: '',
+      personaInstructions: this.personaInstructions || '',
+      conversationHistory: '',
+      relevantDocuments: docsString || 'No context documents available.',
+    });
+
+    const chain = RunnableSequence.from([prompt, this.llm]).withConfig({
+      runName: 'DeepSynthesis',
+      ...getLangfuseCallbacks(),
+    });
+
+    const config = {
+      signal: this.signal,
+      configurable: {
+        thread_id: `deep_synthesis_${Date.now()}`,
+        llm: this.llm,
+        embeddings: this.embeddings,
+        emitter: this.emitter,
+      },
+      ...getLangfuseCallbacks(),
+    } as const;
+
+    const eventStream = chain.streamEvents(
+      { query },
+      { ...config, version: 'v2' },
     );
 
-    // Stream a cohesive answer with inline citations and headings
-    this.emitResponse(`\n# ${query}\n`);
-    for (const section of this.state.outline.sections) {
-      this.emitResponse(`\n## ${section.title}\n`);
-      for (const b of section.bullets) {
-        this.emitResponse(`- ${b}\n`);
+    let usage = { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
+
+    for await (const event of eventStream) {
+      if (this.signal.aborted || this.aborted) break;
+
+      // Stream token-by-token like simplifiedAgent
+      if (event.event === 'on_chat_model_stream' && event.data?.chunk) {
+        const chunk = event.data.chunk;
+        if (chunk.content && typeof chunk.content === 'string') {
+          this.emitter.emit(
+            'data',
+            JSON.stringify({ type: 'response', data: chunk.content }),
+          );
+        }
       }
-      const conf = (this.state as any).outline?.confidenceBySection?.[
-        section.title
-      ];
-      if (typeof conf === 'number') {
-        this.emitResponse(`\nConfidence: ${(conf * 100).toFixed(0)}%\n`);
+
+      // Collect usage from various event shapes
+      if (event.event === 'on_chat_model_end' && event.data?.output) {
+        const output = event.data.output;
+        const meta = output.usage_metadata || output.response_metadata?.usage;
+        if (meta) {
+          this.addPhaseUsage('Synthesize', meta);
+        }
+      }
+
+      if (
+        event.event === 'on_llm_end' &&
+        (event.data?.output?.llmOutput?.tokenUsage || event.data?.output?.estimatedTokenUsage)
+      ) {
+        const t = event.data.output.llmOutput.tokenUsage || event.data.output.estimatedTokenUsage;
+        this.addPhaseUsage('Synthesize', t);
       }
     }
 
-    // Consolidated sources section
-    const sources = Array.from(
-      new Map(
-        (this.state.extracted || []).map((d: any) => [
-          d.url,
-          { title: d.title || d.url, url: d.url },
-        ]),
-      ).values(),
-    );
-    if (sources.length) {
-      this.emitResponse(`\n## Sources\n`);
-      for (const s of sources) {
-        this.emitResponse(`- ${s.title} — ${s.url}\n`);
-      }
-    }
-    if (this.chatId) {
-      writeArtifact(this.chatId, 'outline', 'outline', this.state.outline);
-      // Persist draft sections and section-level confidence
-      const confidenceBySection = (this.state.outline as any)
-        .confidenceBySection;
-      updateManifest(this.chatId, {
-        draftSections: this.state.outline.sections,
-        confidenceBySection,
-      } as any);
+    // Emit sources at the end of synthesis
+    const sources = allCandidates.map((c) => ({
+      metadata: {
+        title: c.title || c.name || c.url,
+        url: c.url,
+        processingType: 'url-content-extraction',
+        snippet: c.facts?.facts?.join(' ').slice(0, 200) || c.facts?.quotes?.join(' ').slice(0, 200) || '',
+      },
+    }));
+    if (sources.length > 0) {
+      this.emitter.emit(
+        'data',
+        JSON.stringify({ type: 'sources', data: sources, searchQuery: '', searchUrl: '' }),
+      );
     }
   }
 
+  // --- Minimal stubs to satisfy phase flow until implemented ---
+  private async readExtractPhase() {
+    // In this v1 flow we already extract facts during search; skip.
+    return;
+  }
+
   private async reviewPhase() {
-    this.ensureNotAborted();
-    // TODO: reviewer prompt pass for coverage/consistency (M3)
-    this.countLLMTurns();
-    // Keep review summary minimal to avoid mixing with progress; detailed output will be part of final synthesis in future steps
+    // Placeholder for future critique/verification pass.
+    return;
   }
 
   // Tool methods removed in favor of imports above
@@ -801,82 +713,6 @@ export class DeepResearchAgent {
   }
 
   // --------------- Helpers for per-subquery flows ---------------
-
-  private async rerankCandidatesForSubq(
-    subquestion: string,
-    candidates: Candidate[],
-    maxOut: number = 12,
-  ): Promise<Candidate[]> {
-    if (!candidates.length) return [];
-    try {
-      const qv = await this.embeddings.embedQuery(subquestion);
-      const texts = candidates.map((c) =>
-        `${c.title || ''}\n${c.snippet || ''}`.slice(0, 1000),
-      );
-      const dvs = await this.embeddings.embedDocuments(texts);
-      const scored = candidates.map((c, i) => ({
-        c,
-        score: computeSimilarity(dvs[i], qv),
-      }));
-      scored.sort((a, b) => b.score - a.score);
-      return scored.slice(0, maxOut).map((s) => s.c);
-    } catch {
-      return candidates.slice(0, maxOut);
-    }
-  }
-
-  private async rankEvidenceForSubq(
-    subquestion: string,
-    items: EvidenceItem[],
-  ): Promise<EvidenceItem[]> {
-    if (!items.length) return [];
-    try {
-      const qv = await this.embeddings.embedQuery(subquestion);
-      const texts = items.map((e) => e.claim.slice(0, 1000));
-      const dvs = await this.embeddings.embedDocuments(texts);
-      const rescored = items.map((e, i) => ({
-        e,
-        // Blend semantic similarity with support count (normalized)
-        sim: computeSimilarity(dvs[i], qv),
-      }));
-      const maxSupport = Math.max(...items.map((e) => e.supportCount || 1), 1);
-      rescored.sort((a, b) => {
-        const as = 0.6 * (a.e.supportCount / maxSupport) + 0.4 * a.sim;
-        const bs = 0.6 * (b.e.supportCount / maxSupport) + 0.4 * b.sim;
-        return bs - as;
-      });
-      return rescored.map((r) => r.e);
-    } catch {
-      return items; // fallback to supportCount ordering from evidenceStoreTool
-    }
-  }
-
-  private async gatherCandidatesForSubq(
-    subquestion: string,
-    mode: 'broad' | 'depth',
-  ): Promise<Candidate[]> {
-    try {
-      const queries =
-        mode === 'broad'
-          ? [subquestion]
-          : [
-              `${subquestion} site:gov OR site:edu`,
-              `${subquestion} filetype:pdf`,
-              `${subquestion} methodology OR "how it works"`,
-              `${subquestion} statistics OR data`,
-            ];
-      // Query expansion: feed as multiple subqueries to diversify sources
-      const candidates = await expandedSearchTool(queries, {
-        maxPerSubq: mode === 'broad' ? 8 : 6,
-        maxTotal: mode === 'broad' ? 8 : 18,
-        maxPerDomain: 3,
-      });
-      // Semantic reranking to the original subquestion intent
-      return await this.rerankCandidatesForSubq(subquestion, candidates);
-    } catch {
-      return [];
-    }
-  }
 
   private assessSubquerySufficiency(
     subquestion: string,
@@ -897,13 +733,19 @@ export class DeepResearchAgent {
         })
         .filter(Boolean),
     );
-    const quotes = evidence.reduce((acc, e) => acc + (e.examples?.length || 0), 0);
+    const quotes = evidence.reduce(
+      (acc, e) => acc + (e.examples?.length || 0),
+      0,
+    );
 
     if (E >= 8 && domains.size >= 3 && supportMax >= 2) {
       return { status: 'sufficient', reason: 'ample evidence and diversity' };
     }
     if (E >= 4 && (domains.size < 2 || quotes < 2)) {
-      return { status: 'needsDepth', reason: 'needs authoritative or primary sources' };
+      return {
+        status: 'needsDepth',
+        reason: 'needs authoritative or primary sources',
+      };
     }
     return { status: 'needsMore', reason: 'insufficient evidence volume' };
   }

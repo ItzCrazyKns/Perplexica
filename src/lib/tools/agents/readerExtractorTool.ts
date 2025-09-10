@@ -39,7 +39,7 @@ export async function readerExtractorTool(
       if (!res || (res.facts.length === 0 && res.quotes.length === 0)) continue;
       results.push({
         url: c.url,
-        title: res.title || c.title,
+        title: c.title,
         facts: res.facts.slice(0, MAX_FACTS_PER_DOC),
         quotes: res.quotes.slice(0, MAX_QUOTES_PER_DOC),
       });
