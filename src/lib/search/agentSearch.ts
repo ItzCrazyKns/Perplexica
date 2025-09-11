@@ -20,7 +20,6 @@ export class AgentSearch {
     llm: BaseChatModel,
     embeddings: Embeddings,
     emitter: EventEmitter,
-    systemInstructions: string = '',
     personaInstructions: string = '',
     signal: AbortSignal,
     agentMode: string = 'webSearch',
@@ -34,7 +33,6 @@ export class AgentSearch {
       llm,
       embeddings,
       emitter,
-      systemInstructions,
       personaInstructions,
       signal,
     );
@@ -45,7 +43,6 @@ export class AgentSearch {
         llm,
         embeddings,
         emitter,
-        systemInstructions,
         personaInstructions,
         signal,
         this.chatId || '',
@@ -71,7 +68,6 @@ export class AgentSearch {
       this.agentMode,
     );
   }
-
   /**
    * Execute the agent search workflow
    */

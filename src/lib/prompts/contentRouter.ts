@@ -1,8 +1,5 @@
 export const contentRouterPrompt = `You are a content routing agent responsible for deciding the next step in information gathering.
 
-# System Instructions
-{systemInstructions}
-
 # Your Role
 Analyze the current task and available context to determine whether to:
 1. Search attached files (\`file_search\`)

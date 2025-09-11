@@ -12,7 +12,7 @@ import {
 } from '@/lib/providers';
 import { searchHandlers } from '@/lib/search';
 import { getFileDetails } from '@/lib/utils/files';
-import { getSystemPrompts } from '@/lib/utils/prompts';
+import { getPersonaInstructionsOnly } from '@/lib/utils/prompts';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 import { ChatOllama } from '@langchain/ollama';
@@ -49,8 +49,7 @@ type Body = {
   files: Array<string>;
   chatModel: ChatModel;
   embeddingModel: EmbeddingModel;
-  systemInstructions: string;
-  selectedSystemPromptIds: string[];
+  selectedSystemPromptIds: string[]; // legacy name; treated as persona prompt IDs
 };
 
 type ModelStats = {
@@ -421,13 +420,10 @@ export const POST = async (req: Request) => {
       );
     }
 
-    let systemInstructionsContent = '';
-    let personaInstructionsContent = '';
-
-    // Retrieve system prompts from database using shared utility
-    const promptData = await getSystemPrompts(selectedSystemPromptIds);
-    systemInstructionsContent = promptData.systemInstructions;
-    personaInstructionsContent = promptData.personaInstructions;
+    // System instructions deprecated; only use persona prompts
+    const personaInstructionsContent = await getPersonaInstructionsOnly(
+      selectedSystemPromptIds || [],
+    );
 
     const responseStream = new TransformStream();
     const writer = responseStream.writable.getWriter();
@@ -460,7 +456,6 @@ export const POST = async (req: Request) => {
       embedding,
       body.optimizationMode,
       body.files,
-      systemInstructionsContent,
       abortController.signal,
       personaInstructionsContent,
       body.focusMode,

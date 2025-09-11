@@ -61,13 +61,10 @@ export const taskManagerTool = tool(
       });
 
       // Create the prompt template
-      const template = PromptTemplate.fromTemplate(taskBreakdownPrompt);
+  const template = PromptTemplate.fromTemplate(taskBreakdownPrompt);
 
       // Format the prompt with the query and context
       const prompt = await template.format({
-        systemInstructions:
-          config.configurable?.systemInstructions ||
-          'You are a helpful AI assistant.',
         fileContext: context || 'No additional context provided.',
         query: query,
         currentTasks: 0,

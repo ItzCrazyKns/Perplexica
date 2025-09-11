@@ -116,11 +116,7 @@ export const urlSummarizationTool = tool(
               `URLSummarizationTool: Content is long (${contentLength} chars), generating summary`,
             );
 
-            const systemPrompt = config.configurable?.systemInstructions
-              ? `${config.configurable.systemInstructions}\n\n`
-              : '';
-
-            const summarizationPrompt = `${systemPrompt}You are a web content processor. Extract and summarize ONLY the information from the provided web page content that is relevant to the user's query.
+            const summarizationPrompt = `You are a web content processor. Extract and summarize ONLY the information from the provided web page content that is relevant to the user's query.
 
 # Critical Instructions
 - Output ONLY a summary of the web page content provided below

@@ -39,7 +39,6 @@ export const analyzePreviewContent = async (
   taskQuery: string,
   chatHistory: BaseMessage[],
   llm: BaseChatModel,
-  systemInstructions: string,
   signal: AbortSignal,
 ): Promise<PreviewAnalysisResult> => {
   try {
@@ -73,7 +72,6 @@ Snippet: ${content.snippet}
       )
       .join('\n');
 
-    const systemPrompt = systemInstructions ? `${systemInstructions}\n\n` : '';
 
     console.log(`Invoking LLM for preview content analysis`);
 
@@ -91,9 +89,6 @@ Snippet: ${content.snippet}
 - If the preview content lacks important details, requires deeper analysis, or cannot fully answer the Task Query, consider it insufficient
 - Be specific in your reasoning when the content is not sufficient but keep the answer under 35 words
 - The original query is provided for additional context, only use it for clarification of overall expectations and intent. You do **not** need to answer the original query directly or completely
-
-# System Instructions
-${systemPrompt}
 
 # Response Format
 Respond with a JSON object that matches this structure:

@@ -65,7 +65,6 @@ export class SimplifiedAgent {
   private llm: BaseChatModel;
   private embeddings: Embeddings;
   private emitter: EventEmitter;
-  private systemInstructions: string;
   private personaInstructions: string;
   private signal: AbortSignal;
 
@@ -73,14 +72,12 @@ export class SimplifiedAgent {
     llm: BaseChatModel,
     embeddings: Embeddings,
     emitter: EventEmitter,
-    systemInstructions: string = '',
     personaInstructions: string = '',
     signal: AbortSignal,
   ) {
     this.llm = llm;
     this.embeddings = embeddings;
     this.emitter = emitter;
-    this.systemInstructions = systemInstructions;
     this.personaInstructions = personaInstructions;
     this.signal = signal;
   }
@@ -179,12 +176,10 @@ export class SimplifiedAgent {
     query?: string,
     firefoxAIDetected?: boolean,
   ): string {
-    const baseInstructions = this.systemInstructions || '';
     const personaInstructions = this.personaInstructions || '';
 
     if (firefoxAIDetected) {
       return buildFirefoxAIPrompt(
-        baseInstructions,
         personaInstructions,
         new Date(),
       );
@@ -194,13 +189,11 @@ export class SimplifiedAgent {
     switch (focusMode) {
       case 'chat':
         return buildChatPrompt(
-          baseInstructions,
           personaInstructions,
           new Date(),
         );
       case 'webSearch':
         return buildWebSearchPrompt(
-          baseInstructions,
           personaInstructions,
           fileIds,
           messagesCount ?? 0,
@@ -209,7 +202,6 @@ export class SimplifiedAgent {
         );
       case 'localResearch':
         return buildLocalResearchPrompt(
-          baseInstructions,
           personaInstructions,
           new Date(),
         );
@@ -218,7 +210,6 @@ export class SimplifiedAgent {
           `SimplifiedAgent: Unknown focus mode "${focusMode}", using webSearch prompt`,
         );
         return buildWebSearchPrompt(
-          baseInstructions,
           personaInstructions,
           fileIds,
           messagesCount ?? 0,
@@ -281,7 +272,6 @@ export class SimplifiedAgent {
           llm: this.llm,
           embeddings: this.embeddings,
           fileIds,
-          systemInstructions: this.systemInstructions,
           personaInstructions: this.personaInstructions,
           focusMode,
           emitter: this.emitter,
@@ -580,7 +570,6 @@ export class SimplifiedAgent {
    */
   getInfo(): object {
     return {
-      systemInstructions: !!this.systemInstructions,
       personaInstructions: !!this.personaInstructions,
     };
   }

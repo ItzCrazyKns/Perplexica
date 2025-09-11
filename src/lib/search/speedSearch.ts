@@ -24,6 +24,10 @@ import { getDocumentsFromLinks } from '../utils/documents';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { getModelName } from '../utils/modelUtils';
 import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
+import {
+  formattingAndCitationsLocal,
+  formattingAndCitationsWeb,
+} from '@/lib/prompts/templates';
 
 export interface SpeedSearchAgentType {
   searchAndAnswer: (
@@ -31,7 +35,6 @@ export interface SpeedSearchAgentType {
     history: BaseMessage[],
     llm: BaseChatModel,
     embeddings: Embeddings,
-    systemInstructions: string,
     signal: AbortSignal,
     personaInstructions?: string,
     focusMode?: string,
@@ -95,7 +98,6 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
 
   private async createSearchRetrieverChain(
     llm: BaseChatModel,
-    systemInstructions: string,
     emitter: eventEmitter,
     signal: AbortSignal,
   ) {
@@ -173,12 +175,8 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
 
             await Promise.all(
               docGroups.map(async (doc) => {
-                const systemPrompt = systemInstructions
-                  ? `${systemInstructions}\n\n`
-                  : '';
-
                 const res = await llm.invoke(
-                  `${systemPrompt}You are a web search summarizer, tasked with summarizing a piece of text retrieved from a web search. Your job is to summarize the 
+                  `You are a web search summarizer, tasked with summarizing a piece of text retrieved from a web search. Your job is to summarize the 
             text into a detailed, 2-4 paragraph explanation that captures the main ideas and provides a comprehensive answer to the query.
             If the query is \"summarize\", you should provide a detailed summary of the text. If the query is a specific question, you should answer it in the summary.
             
@@ -302,18 +300,17 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
   private async createAnsweringChain(
     llm: BaseChatModel,
     embeddings: Embeddings,
-    systemInstructions: string,
     signal: AbortSignal,
     emitter: eventEmitter,
     personaInstructions?: string,
+    focusMode?: string,
   ) {
     return RunnableSequence.from([
       RunnableMap.from({
-        systemInstructions: () => systemInstructions,
         query: (input: BasicChainInput) => input.query,
         chat_history: (input: BasicChainInput) => input.chat_history,
         date: () => formatDateForLLM(),
-        personaInstructions: () => personaInstructions || '',
+        formattingAndCitations: () => (personaInstructions ? personaInstructions : formattingAndCitationsWeb),
         context: RunnableLambda.from(
           async (
             input: BasicChainInput,
@@ -336,7 +333,6 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
               const searchRetrieverChain =
                 await this.createSearchRetrieverChain(
                   llm,
-                  systemInstructions,
                   emitter,
                   signal,
                 );
@@ -347,7 +343,6 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
                   chat_history: processedHistory,
                   query,
                   date,
-                  systemInstructions,
                 },
                 { signal: options?.signal, ...getLangfuseCallbacks() },
               );
@@ -526,7 +521,6 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
     history: BaseMessage[],
     llm: BaseChatModel,
     embeddings: Embeddings,
-    systemInstructions: string,
     signal: AbortSignal,
     personaInstructions?: string,
     focusMode?: string,
@@ -536,10 +530,10 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
     const answeringChain = await this.createAnsweringChain(
       llm,
       embeddings,
-      systemInstructions,
       signal,
       emitter,
       personaInstructions,
+      focusMode,
     );
 
     const stream = answeringChain.streamEvents(

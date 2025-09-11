@@ -5,7 +5,6 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { getAvailableChatModelProviders } from '@/lib/providers';
-import { getSystemInstructionsOnly } from '@/lib/utils/prompts';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 import { ChatOllama } from '@langchain/ollama';
@@ -72,29 +71,12 @@ export const POST = async (req: Request) => {
       return Response.json({ error: 'Invalid chat model' }, { status: 400 });
     }
 
-    let systemInstructions = '';
-    if (
-      body.selectedSystemPromptIds &&
-      body.selectedSystemPromptIds.length > 0
-    ) {
-      try {
-        const promptInstructions = await getSystemInstructionsOnly(
-          body.selectedSystemPromptIds,
-        );
-        systemInstructions = promptInstructions || systemInstructions;
-      } catch (error) {
-        console.error('Error fetching system prompts:', error);
-        // Continue with fallback systemInstructions
-      }
-    }
-
     const images = await handleImageSearch(
       {
         chat_history: chatHistory,
         query: body.query,
       },
       llm,
-      systemInstructions,
     );
 
     return Response.json({ images }, { status: 200 });

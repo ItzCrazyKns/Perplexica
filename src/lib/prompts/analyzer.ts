@@ -82,9 +82,6 @@ Ask yourself: "Could this missing information reasonably be found through a web 
 - If the query is personal/subjective or requires user feedback → \`need_user_info\`
 - If the query is factual and searchable → \`need_more_info\`
 
-# System Instructions
-{systemInstructions}
-
 # Date
 Today's date is {date}
 
@@ -118,9 +115,6 @@ Your task is to analyze the provided context and user query to determine what ad
 # Refinement History
 - The following automated questions have already been asked to refine the search
 {searchInstructionHistory}
-
-# System Instructions
-{systemInstructions}
 
 # Date
 Today's date is {date}
@@ -163,9 +157,6 @@ When formulating search questions, consider:
 # Refinement History
 - The following automated questions have already been asked to refine the search
 {searchInstructionHistory}
-
-# System Instructions
-{systemInstructions}
 
 # Date
 Today's date is {date}

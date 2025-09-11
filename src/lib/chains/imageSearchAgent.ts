@@ -92,13 +92,8 @@ const outputParser = new LineOutputParser({
   key: 'answer',
 });
 
-const createImageSearchChain = (
-  llm: BaseChatModel,
-  systemInstructions?: string,
-) => {
-  const systemPrompt = systemInstructions ? `${systemInstructions}\n\n` : '';
-
-  const fullPrompt = `${systemPrompt}${imageSearchChainPrompt}`;
+const createImageSearchChain = (llm: BaseChatModel) => {
+  const fullPrompt = imageSearchChainPrompt;
 
   return RunnableSequence.from([
     RunnableMap.from({
@@ -135,12 +130,8 @@ const createImageSearchChain = (
   ]);
 };
 
-const handleImageSearch = (
-  input: ImageSearchChainInput,
-  llm: BaseChatModel,
-  systemInstructions?: string,
-) => {
-  const imageSearchChain = createImageSearchChain(llm, systemInstructions);
+const handleImageSearch = (input: ImageSearchChainInput, llm: BaseChatModel) => {
+  const imageSearchChain = createImageSearchChain(llm);
   return imageSearchChain.invoke(input, { ...getLangfuseCallbacks() });
 };
 

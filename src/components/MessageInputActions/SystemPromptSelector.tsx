@@ -19,7 +19,7 @@ import { Fragment, useEffect, useState } from 'react';
 interface SystemPrompt {
   id: string;
   name: string;
-  type: 'system' | 'persona';
+  type: 'persona';
 }
 
 interface SystemPromptSelectorProps {
@@ -134,44 +134,7 @@ const SystemPromptSelector = ({
                         </p>
                       )}
 
-                      {availablePrompts.filter((p) => p.type === 'system')
-                        .length > 0 && (
-                        <div>
-                          <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-fg/70">
-                            <Settings size={14} />
-                            <span>System Prompts</span>
-                          </div>
-                          <div className="space-y-0.5">
-                            {availablePrompts
-                              .filter((p) => p.type === 'system')
-                              .map((prompt) => (
-                                <div
-                                  key={prompt.id}
-                                  onClick={() => handleTogglePrompt(prompt.id)}
-                                  className="flex items-center gap-2.5 p-2.5 rounded-md hover:bg-surface-2 cursor-pointer"
-                                >
-                                  {selectedPromptIds.includes(prompt.id) ? (
-                                    <CheckSquare
-                                      size={18}
-                                      className="text-accent flex-shrink-0"
-                                    />
-                                  ) : (
-                                    <Square
-                                      size={18}
-                                      className="text-fg/40 flex-shrink-0"
-                                    />
-                                  )}
-                                  <span
-                                    className="text-sm text-fg/80 truncate"
-                                    title={prompt.name}
-                                  >
-                                    {prompt.name}
-                                  </span>
-                                </div>
-                              ))}
-                          </div>
-                        </div>
-                      )}
+                      {/* System prompts removed */}
 
                       {availablePrompts.filter((p) => p.type === 'persona')
                         .length > 0 && (

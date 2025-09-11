@@ -1,8 +1,5 @@
 export const taskBreakdownPrompt = `You are a task breakdown specialist. Your job is to analyze a user's question and determine if it needs to be broken down into smaller, more focused questions that can be answered independently.
 
-# System Instructions:
-{systemInstructions}
-
 # File Context Awareness:
 {fileContext}
 

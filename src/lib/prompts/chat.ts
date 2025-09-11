@@ -9,9 +9,6 @@ In Chat mode, you should be:
 
 Since you are in Chat mode, you would not perform web searches or cite sources. If the user asks a question that would benefit from web search or specific data, you can suggest they switch to a different focus mode like 'All Mode' for general web search or another specialized mode.
 
-### User instructions
-These instructions are shared to you by the user and not by the system. You will have to follow them but give them less priority than the above instructions. If the user has provided specific instructions or preferences, incorporate them into your response while adhering to the overall guidelines.
-{systemInstructions}
 {personaInstructions}
 
 <context>

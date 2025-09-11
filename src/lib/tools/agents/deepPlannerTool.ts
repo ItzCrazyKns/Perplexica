@@ -37,13 +37,11 @@ export async function deepPlannerTool(
   llm: BaseChatModel,
   query: string,
   history: BaseMessage[] = [],
-  systemInstructions?: string,
   onUsage?: (usageData: any) => void,
 ): Promise<PlannerOutput> {
-  const system = systemInstructions ? `${systemInstructions}\n` : '';
   const messages = [
     ...removeThinkingBlocksFromMessages(history),
-    new SystemMessage(`${system}${plannerPrompt}`),
+    new SystemMessage(plannerPrompt),
     new HumanMessage(`${query}`),
   ];
   try {

@@ -9,24 +9,15 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const { name, content, type } = await req.json();
+    const { name, content } = await req.json();
     if (!name || !content) {
       return NextResponse.json(
         { error: 'Name and content are required' },
         { status: 400 },
       );
     }
-    if (type && type !== 'system' && type !== 'persona') {
-      return NextResponse.json(
-        { error: 'Type must be either "system" or "persona"' },
-        { status: 400 },
-      );
-    }
 
-    const updateData: any = { name, content, updatedAt: new Date() };
-    if (type) {
-      updateData.type = type;
-    }
+    const updateData: any = { name, content, updatedAt: new Date(), type: 'persona' };
 
     const updatedPrompt = await db
       .update(systemPrompts)
@@ -35,7 +26,7 @@ export async function PUT(
       .returning();
     if (updatedPrompt.length === 0) {
       return NextResponse.json(
-        { error: 'System prompt not found' },
+        { error: 'Prompt not found' },
         { status: 404 },
       );
     }
@@ -43,7 +34,7 @@ export async function PUT(
   } catch (error) {
     console.error('Failed to update system prompt:', error);
     return NextResponse.json(
-      { error: 'Failed to update system prompt' },
+      { error: 'Failed to update prompt' },
       { status: 500 },
     );
   }
@@ -61,15 +52,15 @@ export async function DELETE(
       .returning();
     if (deletedPrompt.length === 0) {
       return NextResponse.json(
-        { error: 'System prompt not found' },
+        { error: 'Prompt not found' },
         { status: 404 },
       );
     }
-    return NextResponse.json({ message: 'System prompt deleted successfully' });
+    return NextResponse.json({ message: 'Prompt deleted successfully' });
   } catch (error) {
     console.error('Failed to delete system prompt:', error);
     return NextResponse.json(
-      { error: 'Failed to delete system prompt' },
+      { error: 'Failed to delete prompt' },
       { status: 500 },
     );
   }

@@ -8,20 +8,12 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type');
 
-    let prompts;
-
-    if (type && (type === 'system' || type === 'persona')) {
-      prompts = await db
-        .select()
-        .from(systemPrompts)
-        .where(eq(systemPrompts.type, type))
-        .orderBy(asc(systemPrompts.name));
-    } else {
-      prompts = await db
-        .select()
-        .from(systemPrompts)
-        .orderBy(asc(systemPrompts.name));
-    }
+    // System prompts are deprecated; only return persona prompts
+    const prompts = await db
+      .select()
+      .from(systemPrompts)
+      .where(eq(systemPrompts.type, 'persona'))
+      .orderBy(asc(systemPrompts.name));
 
     return NextResponse.json(prompts);
   } catch (error) {
@@ -35,16 +27,10 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { name, content, type = 'system' } = await req.json();
+    const { name, content } = await req.json();
     if (!name || !content) {
       return NextResponse.json(
         { error: 'Name and content are required' },
-        { status: 400 },
-      );
-    }
-    if (type && type !== 'system' && type !== 'persona') {
-      return NextResponse.json(
-        { error: 'Type must be either "system" or "persona"' },
         { status: 400 },
       );
     }
@@ -53,7 +39,7 @@ export async function POST(req: Request) {
       .values({
         name,
         content,
-        type,
+        type: 'persona',
         createdAt: new Date(),
         updatedAt: new Date(),
       })

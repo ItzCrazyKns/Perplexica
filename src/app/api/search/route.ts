@@ -13,7 +13,7 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
-import { getSystemPrompts } from '@/lib/utils/prompts';
+import { getPersonaInstructionsOnly } from '@/lib/utils/prompts';
 import { ChatOllama } from '@langchain/ollama';
 
 interface chatModel {
@@ -37,7 +37,7 @@ interface ChatRequestBody {
   query: string;
   history: Array<[string, string]>;
   stream?: boolean;
-  selectedSystemPromptIds?: string[];
+  selectedSystemPromptIds?: string[]; // legacy name; treated as persona prompt IDs
 }
 
 export const POST = async (req: Request) => {
@@ -127,7 +127,8 @@ export const POST = async (req: Request) => {
     const abortController = new AbortController();
     const { signal } = abortController;
 
-    const promptData = await getSystemPrompts(
+    // System instructions are deprecated; only persona prompts are used.
+    const personaInstructions = await getPersonaInstructionsOnly(
       body.selectedSystemPromptIds || [],
     );
 
@@ -139,9 +140,8 @@ export const POST = async (req: Request) => {
       embeddings,
       body.optimizationMode,
       [],
-      promptData.systemInstructions,
       signal,
-      promptData.personaInstructions,
+      personaInstructions,
       body.focusMode,
     );
 

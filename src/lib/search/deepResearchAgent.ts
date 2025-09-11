@@ -46,6 +46,7 @@ import { searchSearxng } from '../searxng';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
 import { synthesizerPrompt } from '@/lib/prompts/synthesizer';
+import { formattingAndCitationsScholarly } from '@/lib/prompts/templates';
 
 /**
  * DeepResearchAgent — phased orchestrator with budgets, cancellation, and progress streaming.
@@ -111,7 +112,6 @@ export class DeepResearchAgent {
     private llm: BaseChatModel,
     private embeddings: Embeddings,
     private emitter: EventEmitter,
-    private systemInstructions: string,
     private personaInstructions: string,
     private signal: AbortSignal,
     private chatId: string,
@@ -456,7 +456,6 @@ export class DeepResearchAgent {
       this.llm,
       query,
       history as any,
-      this.systemInstructions,
       (usage) => this.addPhaseUsage('Plan', usage),
     );
     this.emitProgress(
@@ -506,7 +505,6 @@ export class DeepResearchAgent {
             result.url,
             sq,
             this.llm,
-            this.systemInstructions,
             this.signal,
             (usage) => this.addPhaseUsage('Search', usage),
           );
@@ -612,7 +610,9 @@ ${url ? `<url>${url}</url>` : ''}
       // The template itself contains the "Answer the user query" instruction
     ]).partial({
       recursionLimitReached: '',
-      personaInstructions: this.personaInstructions || '',
+      formattingAndCitations: this.personaInstructions
+        ? this.personaInstructions
+        : formattingAndCitationsScholarly,
       conversationHistory: '',
       relevantDocuments: docsString || 'No context documents available.',
     });

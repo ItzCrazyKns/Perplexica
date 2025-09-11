@@ -29,7 +29,6 @@ export const summarizeWebContent = async (
   url: string,
   query: string,
   llm: BaseChatModel,
-  systemInstructions: string,
   signal: AbortSignal,
 ): Promise<SummarizeResult> => {
   try {
@@ -38,9 +37,6 @@ export const summarizeWebContent = async (
     const summarizeContent = async (
       content: Document,
     ): Promise<SummarizeResult> => {
-      const systemPrompt = systemInstructions
-        ? `${systemInstructions}\n\n`
-        : '';
 
       // Determine content length for short-circuit logic
       const contentToAnalyze =
@@ -64,7 +60,7 @@ export const summarizeWebContent = async (
           );
 
           const relevanceResult = await structuredLLM.invoke(
-            `${systemPrompt}You are a content relevance checker. Your task is to determine if the given content is relevant to the user's query.
+            `You are a content relevance checker. Your task is to determine if the given content is relevant to the user's query.
 
 # Instructions
 - Analyze the content to determine if it contains information relevant to the user's query
@@ -144,7 +140,7 @@ ${contentToAnalyze}`,
             `Summarizing content from URL: ${url} using ${i === 0 ? 'html' : 'text'}`,
           );
 
-          const prompt = `${systemPrompt}You are a web content summarizer, tasked with creating a detailed, accurate summary of content from a webpage.
+          const prompt = `You are a web content summarizer, tasked with creating a detailed, accurate summary of content from a webpage.
 
 # Instructions
 - First determine if the content is relevant to the user's query

@@ -24,6 +24,12 @@ import { Switch } from '@headlessui/react';
 import ThemeSwitcher from '@/components/theme/Switcher';
 import { ImagesIcon, VideoIcon, Layers3 } from 'lucide-react';
 import Link from 'next/link';
+import {
+  formattingAndCitationsLocal,
+  formattingAndCitationsScholarly,
+  formattingAndCitationsWeb,
+  formattingChat,
+} from '@/lib/prompts/templates';
 import { PROVIDER_METADATA } from '@/lib/providers';
 import Optimization from '@/components/MessageInputActions/Optimization';
 import ModelSelector from '@/components/MessageInputActions/ModelSelector';
@@ -206,7 +212,7 @@ interface SystemPrompt {
   id: string;
   name: string;
   content: string;
-  type: 'system' | 'persona';
+  type: 'persona';
 }
 
 export default function SettingsPage() {
@@ -246,8 +252,8 @@ export default function SettingsPage() {
   const [editingPrompt, setEditingPrompt] = useState<SystemPrompt | null>(null);
   const [newPromptName, setNewPromptName] = useState('');
   const [newPromptContent, setNewPromptContent] = useState('');
-  const [newPromptType, setNewPromptType] = useState<'system' | 'persona'>(
-    'system',
+  const [newPromptType, setNewPromptType] = useState<'persona'>(
+    'persona',
   );
   const [isAddingNewPrompt, setIsAddingNewPrompt] = useState(false);
 
@@ -692,7 +698,7 @@ export default function SettingsPage() {
           setUserSystemPrompts([...userSystemPrompts, savedPrompt]);
           setNewPromptName('');
           setNewPromptContent('');
-          setNewPromptType('system');
+          setNewPromptType('persona');
           setIsAddingNewPrompt(false);
         }
         console.log(`System prompt ${editingPrompt ? 'updated' : 'added'}.`);
@@ -906,175 +912,17 @@ export default function SettingsPage() {
               </div>
             </SettingsSection>
 
-            {/* TODO: Refactor into reusable components */}
-            <SettingsSection
-              title="System Prompts"
-              tooltip="System prompts will be added to EVERY request in the AI model.\nUSE EXTREME CAUTION, as they can significantly alter the AI's behavior and responses.\nA typical safe prompt might be: '/no_think', to disable thinking in models that support it.\n\nProviding formatting instructions or specific behaviors could lead to unexpected results."
-            >
-              <div className="flex flex-col space-y-4">
-                {userSystemPrompts
-                  .filter((prompt) => prompt.type === 'system')
-                  .map((prompt) => (
-                    <div
-                      key={prompt.id}
-                      className="p-3 border border-surface-2 rounded-md bg-surface-2"
-                    >
-                      {editingPrompt && editingPrompt.id === prompt.id ? (
-                        <div className="space-y-3">
-                          <InputComponent
-                            type="text"
-                            value={editingPrompt.name}
-                            onChange={(
-                              e: React.ChangeEvent<HTMLInputElement>,
-                            ) =>
-                              setEditingPrompt({
-                                ...editingPrompt,
-                                name: e.target.value,
-                              })
-                            }
-                            placeholder="Prompt Name"
-                          />
-                          <Select
-                            value={editingPrompt.type}
-                            onChange={(e) =>
-                              setEditingPrompt({
-                                ...editingPrompt,
-                                type: e.target.value as 'system' | 'persona',
-                              })
-                            }
-                            options={[
-                              { value: 'system', label: 'System Prompt' },
-                              { value: 'persona', label: 'Persona Prompt' },
-                            ]}
-                          />
-                          <TextareaComponent
-                            value={editingPrompt.content}
-                            onChange={(
-                              e: React.ChangeEvent<HTMLTextAreaElement>,
-                            ) =>
-                              setEditingPrompt({
-                                ...editingPrompt,
-                                content: e.target.value,
-                              })
-                            }
-                            placeholder="Prompt Content"
-                            className="min-h-[100px]"
-                          />
-                          <div className="flex space-x-2 justify-end">
-                            <button
-                              onClick={() => setEditingPrompt(null)}
-                              className="px-3 py-2 text-sm rounded-md bg-surface hover:bg-surface-2 flex items-center gap-1.5"
-                            >
-                              <X size={16} />
-                              Cancel
-                            </button>
-                            <button
-                              onClick={handleAddOrUpdateSystemPrompt}
-                              className="px-3 py-2 text-sm rounded-md flex items-center gap-1.5 bg-accent"
-                            >
-                              <Save size={16} />
-                              Save
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex justify-between items-start">
-                          <div className="flex-grow">
-                            <h4 className="font-semibold">{prompt.name}</h4>
-                            <p
-                              className="text-sm mt-1 whitespace-pre-wrap overflow-hidden text-ellipsis"
-                              style={{
-                                maxHeight: '3.6em',
-                                display: '-webkit-box',
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical',
-                              }}
-                            >
-                              {prompt.content}
-                            </p>
-                          </div>
-                          <div className="flex space-x-1 flex-shrink-0 ml-2">
-                            <button
-                              onClick={() => setEditingPrompt({ ...prompt })}
-                              title="Edit"
-                              className="p-1.5 rounded-md hover:bg-surface-2"
-                            >
-                              <Edit3 size={18} />
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleDeleteSystemPrompt(prompt.id)
-                              }
-                              title="Delete"
-                              className="p-1.5 rounded-md hover:bg-surface-2 text-red-500 hover:text-red-600"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                {isAddingNewPrompt && newPromptType === 'system' && (
-                  <div className="p-3 border border-dashed border-surface-2 rounded-md space-y-3 bg-surface-2">
-                    <InputComponent
-                      type="text"
-                      value={newPromptName}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setNewPromptName(e.target.value)
-                      }
-                      placeholder="System Prompt Name"
-                    />
-                    <TextareaComponent
-                      value={newPromptContent}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                        setNewPromptContent(e.target.value)
-                      }
-                      placeholder="System prompt content (e.g., '/nothink')"
-                      className="min-h-[100px]"
-                    />
-                    <div className="flex space-x-2 justify-end">
-                      <button
-                        onClick={() => {
-                          setIsAddingNewPrompt(false);
-                          setNewPromptName('');
-                          setNewPromptContent('');
-                          setNewPromptType('system');
-                        }}
-                        className="px-3 py-2 text-sm rounded-md bg-surface hover:bg-surface-2 flex items-center gap-1.5"
-                      >
-                        <X size={16} />
-                        Cancel
-                      </button>
-                      <button
-                        onClick={handleAddOrUpdateSystemPrompt}
-                        className="px-3 py-2 text-sm rounded-md flex items-center gap-1.5 bg-accent"
-                      >
-                        <Save size={16} />
-                        Add System Prompt
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {!isAddingNewPrompt && (
-                  <button
-                    onClick={() => {
-                      setIsAddingNewPrompt(true);
-                      setNewPromptType('system');
-                    }}
-                    className="self-start px-3 py-2 text-sm rounded-md border border-surface-2 hover:bg-surface-2 flex items-center gap-1.5"
-                  >
-                    <PlusCircle size={18} /> Add System Prompt
-                  </button>
-                )}
-              </div>
-            </SettingsSection>
+            {/* System Prompts removed */}
 
             <SettingsSection
               title="Persona Prompts"
-              tooltip="Persona prompts will only be applied to the final response.\nThey can define the personality and character traits for the AI assistant.\nSuch as: 'You are a pirate that speaks in riddles.'\n\nThey could be used to provide structured output instructions\nSuch as: 'Provide answers formatted with bullet points and tables.'"
+              tooltip="Persona prompts apply only to the final response and define tone, style, or structure.\nWhen one or more persona prompts are active, the system will NOT send formatting or citation instructions to the LLM for that turn.\nPersona behavior overrides any system formatting/citation rules.\n\nUse cases:\n- 'You are a pirate that speaks in riddles.'\n- 'Provide answers formatted with bullet points and tables.'"
             >
               <div className="flex flex-col space-y-4">
+                <div className="flex items-center justify-between p-3 bg-surface rounded-lg border border-surface-2 gap-3">
+                  <div className="text-sm">Copy a starter Formatting & Citations template</div>
+                  <CopyTemplatePicker />
+                </div>
                 {userSystemPrompts
                   .filter((prompt) => prompt.type === 'persona')
                   .map((prompt) => (
@@ -1096,20 +944,6 @@ export default function SettingsPage() {
                               })
                             }
                             placeholder="Prompt Name"
-                            className=""
-                          />
-                          <Select
-                            value={editingPrompt.type}
-                            onChange={(e) =>
-                              setEditingPrompt({
-                                ...editingPrompt,
-                                type: e.target.value as 'system' | 'persona',
-                              })
-                            }
-                            options={[
-                              { value: 'system', label: 'System Prompt' },
-                              { value: 'persona', label: 'Persona Prompt' },
-                            ]}
                             className=""
                           />
                           <TextareaComponent
@@ -1205,7 +1039,7 @@ export default function SettingsPage() {
                           setIsAddingNewPrompt(false);
                           setNewPromptName('');
                           setNewPromptContent('');
-                          setNewPromptType('system');
+                          setNewPromptType('persona');
                         }}
                         className="px-3 py-2 text-sm rounded-md bg-surface hover:bg-surface-2 flex items-center gap-1.5"
                       >
@@ -1900,6 +1734,66 @@ export default function SettingsPage() {
           </div>
         )
       )}
+    </div>
+  );
+}
+
+function CopyTemplatePicker() {
+  const [copied, setCopied] = useState(false);
+  const [selected, setSelected] = useState<string>('web');
+
+  const getTemplateText = () => {
+    switch (selected) {
+      case 'local':
+        return formattingAndCitationsLocal;
+      case 'chat':
+        return formattingChat;
+      case 'scholarly':
+        return formattingAndCitationsScholarly;
+      case 'web':
+      default:
+        return formattingAndCitationsWeb;
+    }
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(getTemplateText());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (e) {
+      console.error('Failed to copy template:', e);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <Select
+        value={selected}
+        onChange={(e) => setSelected(e.target.value)}
+        options={[
+          { value: 'web', label: 'Web (default web rules)' },
+          { value: 'local', label: 'Local (files research)' },
+          { value: 'chat', label: 'Chat (light formatting)' },
+          { value: 'scholarly', label: 'Scholarly (academic)' }
+        ]}
+      />
+      <button
+        onClick={handleCopy}
+        className={cn(
+          'px-3 py-2 text-sm rounded-md border border-surface-2 hover:bg-surface-2 flex items-center gap-1.5',
+          copied && 'bg-green-100 text-green-800 border-green-200',
+        )}
+        title="Copy selected template"
+      >
+        {copied ? (
+          <span>Copied</span>
+        ) : (
+          <>
+            <PlusCircle size={16} /> Copy
+          </>
+        )}
+      </button>
     </div>
   );
 }

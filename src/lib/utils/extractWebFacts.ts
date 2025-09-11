@@ -62,7 +62,6 @@ export async function extractFactsAndQuotes(
   url: string,
   query: string,
   llm: BaseChatModel,
-  systemInstructions: string,
   signal: AbortSignal,
   onUsage?: (usage: any) => void,
 ): Promise<ExtractFactsOutput | null> {
@@ -73,7 +72,6 @@ export async function extractFactsAndQuotes(
       return { facts: [], quotes: [], notRelevantReason: 'No content at URL' };
     }
 
-    const baseSystem = systemInstructions ? `${systemInstructions}\n\n` : '';
 
     const structured = withStructuredOutput(llm, ExtractionSchema, {
       name: 'extract_facts_and_quotes',
@@ -87,7 +85,7 @@ export async function extractFactsAndQuotes(
       };
     }
 
-    const prompt = `${baseSystem}You extract short, atomic facts and direct quotes with provenance.
+    const prompt = `You extract short, atomic facts and direct quotes with provenance.
 
 # Task
 Given the user's query and webpage content, decide if the content is relevant. If relevant, return facts and quotes that best help answer the query. If not relevant, return empty arrays.

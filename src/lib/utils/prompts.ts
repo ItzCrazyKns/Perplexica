@@ -8,19 +8,18 @@ export interface PromptData {
 }
 
 export interface RetrievedPrompts {
-  systemInstructions: string;
   personaInstructions: string;
 }
 
 /**
- * Retrieves and processes system prompts from the database
- * @param selectedSystemPromptIds Array of prompt IDs to retrieve
- * @returns Object containing combined system and persona instructions
+ * Deprecated: previously retrieved both system and persona prompts.
+ * Now returns personaInstructions only; system instructions are removed from the app.
+ * @param selectedSystemPromptIds Array of prompt IDs to retrieve (treated as persona IDs)
+ * @returns Object containing personaInstructions only (systemInstructions is removed)
  */
 export async function getSystemPrompts(
   selectedSystemPromptIds: string[],
 ): Promise<RetrievedPrompts> {
-  let systemInstructionsContent = '';
   let personaInstructionsContent = '';
 
   if (
@@ -29,7 +28,6 @@ export async function getSystemPrompts(
     selectedSystemPromptIds.length === 0
   ) {
     return {
-      systemInstructions: systemInstructionsContent,
       personaInstructions: personaInstructionsContent,
     };
   }
@@ -44,10 +42,7 @@ export async function getSystemPrompts(
       .where(inArray(systemPromptsTable.id, selectedSystemPromptIds));
 
     // Separate system and persona prompts
-    const systemPrompts = promptsFromDb.filter((p) => p.type === 'system');
     const personaPrompts = promptsFromDb.filter((p) => p.type === 'persona');
-
-    systemInstructionsContent = systemPrompts.map((p) => p.content).join('\n');
     personaInstructionsContent = personaPrompts
       .map((p) => p.content)
       .join('\n');
@@ -57,21 +52,39 @@ export async function getSystemPrompts(
   }
 
   return {
-    systemInstructions: systemInstructionsContent,
     personaInstructions: personaInstructionsContent,
   };
 }
 
 /**
- * Retrieves only system instructions (excluding persona prompts) from the database
- * @param selectedSystemPromptIds Array of prompt IDs to retrieve
- * @returns Combined system instructions as a string
+ * Retrieves only persona instructions from the database
+ * @param selectedPersonaPromptIds Array of persona prompt IDs to retrieve
+ * @returns Combined persona instructions as a string
  */
-export async function getSystemInstructionsOnly(
-  selectedSystemPromptIds: string[],
+export async function getPersonaInstructionsOnly(
+  selectedPersonaPromptIds: string[],
 ): Promise<string> {
-  const { systemInstructions } = await getSystemPrompts(
-    selectedSystemPromptIds,
-  );
-  return systemInstructions;
+  if (
+    !selectedPersonaPromptIds ||
+    !Array.isArray(selectedPersonaPromptIds) ||
+    selectedPersonaPromptIds.length === 0
+  ) {
+    return '';
+  }
+
+  try {
+    const promptsFromDb = await db
+      .select({
+        content: systemPromptsTable.content,
+        type: systemPromptsTable.type,
+      })
+      .from(systemPromptsTable)
+      .where(inArray(systemPromptsTable.id, selectedPersonaPromptIds));
+
+    const personaPrompts = promptsFromDb.filter((p) => p.type === 'persona');
+    return personaPrompts.map((p) => p.content).join('\n');
+  } catch (dbError) {
+    console.error('Error fetching persona prompts from DB:', dbError);
+    return '';
+  }
 }

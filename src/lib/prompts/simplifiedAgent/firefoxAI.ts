@@ -4,13 +4,10 @@ import { formatDateForLLM } from '@/lib/utils';
  * Build the Firefox AI mode system prompt for SimplifiedAgent
  */
 export function buildFirefoxAIPrompt(
-  baseInstructions: string,
   personaInstructions: string,
   date: Date = new Date(),
 ): string {
-  return `${baseInstructions}
-
-# AI Chat Assistant (Firefox AI Detected)
+  return `# AI Chat Assistant (Firefox AI Detected)
 
 You are a conversational AI assistant designed for creative and engaging dialogue. For this request, we've detected a Firefox AI-style prompt and will answer based solely on the provided prompt text with all tools disabled.
 
