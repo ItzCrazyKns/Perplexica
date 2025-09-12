@@ -1,3 +1,4 @@
+import TokenPill from '@/components/common/TokenPill';
 interface TokenUsage {
   input_tokens: number;
   output_tokens: number;
@@ -11,7 +12,11 @@ interface MessageBoxLoadingProps {
     total: number;
     subMessage?: string;
   } | null;
-  modelStats?: { usage?: TokenUsage } | null;
+  modelStats?: {
+    usage?: TokenUsage; // legacy single total
+    usageChat?: TokenUsage;
+    usageSystem?: TokenUsage;
+  } | null;
 }
 
 const MessageBoxLoading = ({
@@ -42,21 +47,31 @@ const MessageBoxLoading = ({
               />
             </div>
             {/* Token counters */}
-            {modelStats?.usage && (
-              <div className="flex flex-row gap-2 pt-1 text-xs text-fg/80">
-                <TokenPill
-                  label="Input"
-                  value={modelStats.usage.input_tokens}
-                />
-                <TokenPill
-                  label="Output"
-                  value={modelStats.usage.output_tokens}
-                />
-                <TokenPill
-                  label="Total"
-                  value={modelStats.usage.total_tokens}
-                  highlight
-                />
+            {(modelStats?.usageChat || modelStats?.usageSystem || modelStats?.usage) && (
+              <div className="flex flex-col gap-1 pt-1 text-xs text-fg/80">
+                {modelStats?.usageChat && (
+                  <div className="flex flex-row gap-2 items-center">
+                    <span className="opacity-70 w-14">Chat</span>
+                    <TokenPill label="In" value={modelStats.usageChat.input_tokens} />
+                    <TokenPill label="Out" value={modelStats.usageChat.output_tokens} />
+                    <TokenPill label="Total" value={modelStats.usageChat.total_tokens} highlight />
+                  </div>
+                )}
+                {modelStats?.usageSystem && (
+                  <div className="flex flex-row gap-2 items-center">
+                    <span className="opacity-70 w-14">System</span>
+                    <TokenPill label="In" value={modelStats.usageSystem.input_tokens} />
+                    <TokenPill label="Out" value={modelStats.usageSystem.output_tokens} />
+                    <TokenPill label="Total" value={modelStats.usageSystem.total_tokens} highlight />
+                  </div>
+                )}
+                {!modelStats?.usageChat && !modelStats?.usageSystem && modelStats?.usage && (
+                  <div className="flex flex-row gap-2 items-center">
+                    <TokenPill label="Input" value={modelStats.usage.input_tokens} />
+                    <TokenPill label="Output" value={modelStats.usage.output_tokens} />
+                    <TokenPill label="Total" value={modelStats.usage.total_tokens} highlight />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -74,27 +89,7 @@ const MessageBoxLoading = ({
   );
 };
 
-function TokenPill({
-  label,
-  value,
-  highlight = false,
-}: {
-  label: string;
-  value: number;
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      className={`px-2 py-1 rounded-full border ${highlight ? 'border-accent text-accent' : 'border-surface-2'}`}
-      title={`${label} tokens`}
-    >
-      <span className="mr-1 opacity-75">{label}:</span>
-      <span className="tabular-nums">
-        {Number(value || 0).toLocaleString()}
-      </span>
-    </div>
-  );
-}
+// TokenPill moved to shared component
 
 function PhaseTimeline({ percent }: { percent: number }) {
   const phases = ['Plan', 'Search', 'Read', 'Cluster', 'Synthesize', 'Review'];

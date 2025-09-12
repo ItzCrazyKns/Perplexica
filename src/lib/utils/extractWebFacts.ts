@@ -23,7 +23,7 @@ const ExtractionSchema = z.object({
   relevant: z
     .boolean()
     .describe(
-      'Whether the content contains information that helps answer the user query (partial is acceptable).',
+      'Whether the content contains information that helps answer the user query (partial answers are acceptable).',
     ),
   reason: z
     .string()
@@ -72,7 +72,6 @@ export async function extractFactsAndQuotes(
       return { facts: [], quotes: [], notRelevantReason: 'No content at URL' };
     }
 
-
     const structured = withStructuredOutput(llm, ExtractionSchema, {
       name: 'extract_facts_and_quotes',
     });
@@ -95,6 +94,15 @@ Given the user's query and webpage content, decide if the content is relevant. I
 - Quotes: short direct quotes (≤200 chars) copied verbatim from the content
 - Only include items that directly support the query
 
+# Response format
+Respond in JSON format with these fields:
+- relevant: boolean, true if content helps answer the query (partial answers are ok)
+- reason: string, brief explanation of relevance (≤20 words)
+- facts: array of short factual statements in your own words (max 12 items, 25 words max per item)
+- quotes: array of direct quotes from the content (max 6 items, 200 chars max per item, include quotation marks)
+
+# Context
+
 Today's date is ${formatDateForLLM(new Date())}
 
 User query:
@@ -108,8 +116,15 @@ ${body}`;
       callbacks: [
         {
           handleLLMEnd: async (output, _runId, _parentRunId) => {
-            if (onUsage && output.llmOutput?.estimatedTokenUsage) {
-              onUsage(output.llmOutput.estimatedTokenUsage);
+            if (
+              onUsage &&
+              (output.llmOutput?.estimatedTokenUsage ||
+                output.llmOutput?.tokenUsage)
+            ) {
+              onUsage(
+                output.llmOutput.estimatedTokenUsage ||
+                  output.llmOutput.tokenUsage,
+              );
             }
           },
         },
@@ -124,13 +139,9 @@ ${body}`;
       };
     }
 
-    const facts = (res.facts || [])
-      .filter(Boolean)
-      .slice(0, 12);
+    const facts = (res.facts || []).filter(Boolean).slice(0, 12);
 
-    const quotes = (res.quotes || [])
-      .filter(Boolean)
-      .slice(0, 6);
+    const quotes = (res.quotes || []).filter(Boolean).slice(0, 6);
 
     return {
       facts,

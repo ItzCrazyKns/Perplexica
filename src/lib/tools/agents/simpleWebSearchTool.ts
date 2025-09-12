@@ -58,14 +58,14 @@ export const simpleWebSearchTool = tool(
       let currentDocCount = currentState.relevantDocuments.length;
 
       // Get LLM and embeddings from config
-      if (!config?.configurable?.llm) {
-        throw new Error('LLM not available in config');
+      if (!config?.configurable?.systemLlm) {
+        throw new Error('System LLM not available in config');
       }
       if (!config?.configurable?.embeddings) {
         throw new Error('Embeddings not available in config');
       }
 
-      const llm = config.configurable.llm;
+      const llm = config.configurable.systemLlm;
       const embeddings: Embeddings = config.configurable.embeddings;
 
       const searchQuery = query;

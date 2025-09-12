@@ -17,7 +17,8 @@ export class AgentSearch {
   private deepResearchAgent?: DeepResearchAgent;
 
   constructor(
-    llm: BaseChatModel,
+    chatLlm: BaseChatModel,
+    systemLlm: BaseChatModel,
     embeddings: Embeddings,
     emitter: EventEmitter,
     personaInstructions: string = '',
@@ -30,7 +31,8 @@ export class AgentSearch {
 
     // Initialize simplified agent (experimental)
     this.simplifiedAgent = new SimplifiedAgent(
-      llm,
+      chatLlm,
+      systemLlm,
       embeddings,
       emitter,
       personaInstructions,
@@ -40,7 +42,8 @@ export class AgentSearch {
     // Initialize deep research agent lazily only if needed
     if (agentMode === 'deepResearch') {
       this.deepResearchAgent = new DeepResearchAgent(
-        llm,
+        chatLlm,
+        systemLlm,
         embeddings,
         emitter,
         personaInstructions,

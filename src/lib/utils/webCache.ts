@@ -100,7 +100,9 @@ export async function purgeWebCache() {
   );
 
   // Re-scan count after TTL purge
-  const remaining = (await scanDiskCache()).filter((m) => now - m.lastAccess <= CACHE_TTL_MS);
+  const remaining = (await scanDiskCache()).filter(
+    (m) => now - m.lastAccess <= CACHE_TTL_MS,
+  );
 
   // Purge LRU if exceeds max entries
   if (remaining.length > CACHE_MAX_ENTRIES) {
@@ -116,11 +118,15 @@ export async function purgeWebCache() {
         console.log(`[webCache] Purged LRU cache entry for URL: ${m.url}`);
       }),
     );
-    console.log(`[webCache] Purged ${toRemove.length} LRU entries to maintain max cache size.`);
+    console.log(
+      `[webCache] Purged ${toRemove.length} LRU entries to maintain max cache size.`,
+    );
   }
 }
 
-export async function loadCachedRecord(url: string): Promise<CachedRecord | null> {
+export async function loadCachedRecord(
+  url: string,
+): Promise<CachedRecord | null> {
   await ensureCacheDir();
   const filePath = getCacheFilePath(url);
   if (!fs.existsSync(filePath)) return null;
@@ -141,14 +147,22 @@ export async function loadCachedRecord(url: string): Promise<CachedRecord | null
   // Update lastAccess and in-memory metadata
   rec.lastAccess = now;
   await writeJsonFile(filePath, rec);
-  memoryCache.set(url, { path: filePath, url, createdAt: rec.createdAt, lastAccess: rec.lastAccess });
+  memoryCache.set(url, {
+    path: filePath,
+    url,
+    createdAt: rec.createdAt,
+    lastAccess: rec.lastAccess,
+  });
 
   console.log(`[webCache] Cache hit for URL: ${url}`);
 
   return rec;
 }
 
-export async function writeCachedRecord(url: string, record: Omit<CachedRecord, 'createdAt' | 'lastAccess' | 'url'>) {
+export async function writeCachedRecord(
+  url: string,
+  record: Omit<CachedRecord, 'createdAt' | 'lastAccess' | 'url'>,
+) {
   await ensureCacheDir();
   const now = Date.now();
   const filePath = getCacheFilePath(url);
@@ -159,6 +173,11 @@ export async function writeCachedRecord(url: string, record: Omit<CachedRecord, 
     ...record,
   };
   await writeJsonFile(filePath, toWrite);
-  memoryCache.set(url, { path: filePath, url, createdAt: now, lastAccess: now });
+  memoryCache.set(url, {
+    path: filePath,
+    url,
+    createdAt: now,
+    lastAccess: now,
+  });
   console.log(`[webCache] Cached new content for URL: ${url}`);
 }

@@ -71,11 +71,10 @@ export const urlSummarizationTool = tool(
       }
 
       // Get LLM from config
-      if (!config?.configurable?.llm) {
-        throw new Error('LLM not available in config');
+      if (!config?.configurable?.systemLlm) {
+        throw new Error('System LLM not available in config');
       }
-
-      const llm = config.configurable.llm;
+      const llm = config.configurable.systemLlm;
       const documents: Document[] = [];
 
       // Process each URL

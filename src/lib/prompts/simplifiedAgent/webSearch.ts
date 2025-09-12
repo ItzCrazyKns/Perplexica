@@ -43,11 +43,7 @@ Your task is to provide answers that are:
 - Engaging and detailed: Write responses that read like a high-quality blog post, including extra details and relevant insights
 - Explanatory and Comprehensive: Strive to explain the topic in depth, offering detailed analysis, insights, and clarifications wherever applicable
 
-${
-  personaInstructions
-    ? personaInstructions
-    : `\n${formattingAndCitationsWeb}`
-}
+${personaInstructions ? personaInstructions : `\n${formattingAndCitationsWeb}`}
 
 # Research Strategy
 1. **Plan**: Determine the best research approach based on the user's query

@@ -62,20 +62,24 @@ function normalizeUsageMetadata(usageData: any): {
  * with customizable focus modes and tools.
  */
 export class SimplifiedAgent {
-  private llm: BaseChatModel;
+  private chatLlm: BaseChatModel;
+  private systemLlm: BaseChatModel;
   private embeddings: Embeddings;
   private emitter: EventEmitter;
   private personaInstructions: string;
   private signal: AbortSignal;
+  private currentToolNames: string[] = [];
 
   constructor(
-    llm: BaseChatModel,
+    chatLlm: BaseChatModel,
+    systemLlm: BaseChatModel,
     embeddings: Embeddings,
     emitter: EventEmitter,
     personaInstructions: string = '',
     signal: AbortSignal,
   ) {
-    this.llm = llm;
+    this.chatLlm = chatLlm;
+    this.systemLlm = systemLlm;
     this.embeddings = embeddings;
     this.emitter = emitter;
     this.personaInstructions = personaInstructions;
@@ -98,6 +102,9 @@ export class SimplifiedAgent {
       ? []
       : this.getToolsForFocusMode(focusMode, fileIds);
 
+    // Cache tool names for usage attribution heuristics
+    this.currentToolNames = tools.map((t) => t.name.toLowerCase());
+
     const enhancedSystemPrompt = this.createEnhancedSystemPrompt(
       focusMode,
       fileIds,
@@ -109,7 +116,7 @@ export class SimplifiedAgent {
     try {
       // Create the React agent with custom state
       const agent = createReactAgent({
-        llm: this.llm,
+        llm: this.chatLlm,
         tools,
         stateSchema: SimplifiedAgentState,
         prompt: enhancedSystemPrompt,
@@ -179,19 +186,13 @@ export class SimplifiedAgent {
     const personaInstructions = this.personaInstructions || '';
 
     if (firefoxAIDetected) {
-      return buildFirefoxAIPrompt(
-        personaInstructions,
-        new Date(),
-      );
+      return buildFirefoxAIPrompt(personaInstructions, new Date());
     }
 
     // Create focus-mode-specific prompts
     switch (focusMode) {
       case 'chat':
-        return buildChatPrompt(
-          personaInstructions,
-          new Date(),
-        );
+        return buildChatPrompt(personaInstructions, new Date());
       case 'webSearch':
         return buildWebSearchPrompt(
           personaInstructions,
@@ -201,10 +202,7 @@ export class SimplifiedAgent {
           new Date(),
         );
       case 'localResearch':
-        return buildLocalResearchPrompt(
-          personaInstructions,
-          new Date(),
-        );
+        return buildLocalResearchPrompt(personaInstructions, new Date());
       default:
         console.warn(
           `SimplifiedAgent: Unknown focus mode "${focusMode}", using webSearch prompt`,
@@ -269,7 +267,8 @@ export class SimplifiedAgent {
       const config: RunnableConfig = {
         configurable: {
           thread_id: `simplified_agent_${Date.now()}`,
-          llm: this.llm,
+          llm: this.chatLlm,
+          systemLlm: this.systemLlm,
           embeddings: this.embeddings,
           fileIds,
           personaInstructions: this.personaInstructions,
@@ -292,11 +291,9 @@ export class SimplifiedAgent {
       let finalResult: any = null;
       let collectedDocuments: any[] = [];
       let currentResponseBuffer = '';
-      let totalUsage = {
-        input_tokens: 0,
-        output_tokens: 0,
-        total_tokens: 0,
-      };
+      // Separate usage trackers for chat (final answer) and system (tools/internal chains)
+      let usageChat = { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
+      let usageSystem = { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
 
       let initialMessageSent = false;
 
@@ -355,28 +352,80 @@ export class SimplifiedAgent {
         // Handle streaming tool calls (for thought messages)
         if (event.event === 'on_chat_model_end' && event.data.output) {
           const output = event.data.output;
+          const nameLower = (event.name || '').toLowerCase();
+          console.log(`SimplifiedAgent: on_chat_model_end`, event);
+          const isToolContext = output.tool_calls && output.tool_calls.length > 0;
 
           // Collect token usage from chat model end events
           if (output.usage_metadata) {
             const normalized = normalizeUsageMetadata(output.usage_metadata);
-            totalUsage.input_tokens += normalized.input_tokens;
-            totalUsage.output_tokens += normalized.output_tokens;
-            totalUsage.total_tokens += normalized.total_tokens;
+            if (isToolContext) {
+              usageSystem.input_tokens += normalized.input_tokens;
+              usageSystem.output_tokens += normalized.output_tokens;
+              usageSystem.total_tokens += normalized.total_tokens;
+            } else {
+              usageChat.input_tokens += normalized.input_tokens;
+              usageChat.output_tokens += normalized.output_tokens;
+              usageChat.total_tokens += normalized.total_tokens;
+            }
             console.log(
               'SimplifiedAgent: Collected usage from usage_metadata:',
               normalized,
+            );
+            // Emit live snapshot
+            this.emitter.emit(
+              'stats',
+              JSON.stringify({
+                type: 'modelStats',
+                data: {
+                  modelName: getModelName(this.chatLlm),
+                  modelNameChat: getModelName(this.chatLlm),
+                  modelNameSystem: getModelName(this.systemLlm),
+                  usage: {
+                    input_tokens: usageChat.input_tokens + usageSystem.input_tokens,
+                    output_tokens: usageChat.output_tokens + usageSystem.output_tokens,
+                    total_tokens: usageChat.total_tokens + usageSystem.total_tokens,
+                  },
+                  usageChat,
+                  usageSystem,
+                },
+              }),
             );
           } else if (output.response_metadata?.usage) {
             // Fallback to response_metadata for different model providers
             const normalized = normalizeUsageMetadata(
               output.response_metadata.usage,
             );
-            totalUsage.input_tokens += normalized.input_tokens;
-            totalUsage.output_tokens += normalized.output_tokens;
-            totalUsage.total_tokens += normalized.total_tokens;
+            if (isToolContext) {
+              usageSystem.input_tokens += normalized.input_tokens;
+              usageSystem.output_tokens += normalized.output_tokens;
+              usageSystem.total_tokens += normalized.total_tokens;
+            } else {
+              usageChat.input_tokens += normalized.input_tokens;
+              usageChat.output_tokens += normalized.output_tokens;
+              usageChat.total_tokens += normalized.total_tokens;
+            }
             console.log(
               'SimplifiedAgent: Collected usage from response_metadata:',
               normalized,
+            );
+            this.emitter.emit(
+              'stats',
+              JSON.stringify({
+                type: 'modelStats',
+                data: {
+                  modelName: getModelName(this.chatLlm),
+                  modelNameChat: getModelName(this.chatLlm),
+                  modelNameSystem: getModelName(this.systemLlm),
+                  usage: {
+                    input_tokens: usageChat.input_tokens + usageSystem.input_tokens,
+                    output_tokens: usageChat.output_tokens + usageSystem.output_tokens,
+                    total_tokens: usageChat.total_tokens + usageSystem.total_tokens,
+                  },
+                  usageChat,
+                  usageSystem,
+                },
+              }),
             );
           }
 
@@ -440,12 +489,31 @@ export class SimplifiedAgent {
             const normalized = normalizeUsageMetadata(
               output.llmOutput.tokenUsage,
             );
-            totalUsage.input_tokens += normalized.input_tokens;
-            totalUsage.output_tokens += normalized.output_tokens;
-            totalUsage.total_tokens += normalized.total_tokens;
+            // on_llm_end often corresponds to tool/internal chains; attribute to system usage
+            usageSystem.input_tokens += normalized.input_tokens;
+            usageSystem.output_tokens += normalized.output_tokens;
+            usageSystem.total_tokens += normalized.total_tokens;
             console.log(
               'SimplifiedAgent: Collected usage from llmOutput:',
               normalized,
+            );
+            this.emitter.emit(
+              'stats',
+              JSON.stringify({
+                type: 'modelStats',
+                data: {
+                  modelName: getModelName(this.chatLlm),
+                  modelNameChat: getModelName(this.chatLlm),
+                  modelNameSystem: getModelName(this.systemLlm),
+                  usage: {
+                    input_tokens: usageChat.input_tokens + usageSystem.input_tokens,
+                    output_tokens: usageChat.output_tokens + usageSystem.output_tokens,
+                    total_tokens: usageChat.total_tokens + usageSystem.total_tokens,
+                  },
+                  usageChat,
+                  usageSystem,
+                },
+              }),
             );
           }
         }
@@ -523,15 +591,24 @@ export class SimplifiedAgent {
       }
 
       // Emit model stats and end signal after streaming is complete
-      const modelName = getModelName(this.llm);
-      console.log('SimplifiedAgent: Total usage collected:', totalUsage);
+      const modelNameChat = getModelName(this.chatLlm);
+      const modelNameSystem = getModelName(this.systemLlm);
+      console.log('SimplifiedAgent: Usage collected — chat:', usageChat, 'system:', usageSystem);
       this.emitter.emit(
         'stats',
         JSON.stringify({
           type: 'modelStats',
           data: {
-            modelName,
-            usage: totalUsage,
+            modelName: modelNameChat, // legacy
+            modelNameChat,
+            modelNameSystem,
+            usage: {
+              input_tokens: usageChat.input_tokens + usageSystem.input_tokens,
+              output_tokens: usageChat.output_tokens + usageSystem.output_tokens,
+              total_tokens: usageChat.total_tokens + usageSystem.total_tokens,
+            },
+            usageChat,
+            usageSystem,
           },
         }),
       );

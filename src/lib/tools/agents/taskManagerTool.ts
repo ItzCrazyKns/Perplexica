@@ -48,11 +48,10 @@ export const taskManagerTool = tool(
       const { query, context = '' } = input;
 
       // Get LLM from config
-      if (!config?.configurable?.llm) {
-        throw new Error('LLM not available in config');
+      if (!config?.configurable?.systemLlm) {
+        throw new Error('System LLM not available in config');
       }
-
-      const llm = config.configurable.llm;
+      const llm = config.configurable.systemLlm;
 
       // Create structured LLM for task breakdown
       const structuredLLM = withStructuredOutput(llm, TaskBreakdownSchema, {
@@ -61,7 +60,7 @@ export const taskManagerTool = tool(
       });
 
       // Create the prompt template
-  const template = PromptTemplate.fromTemplate(taskBreakdownPrompt);
+      const template = PromptTemplate.fromTemplate(taskBreakdownPrompt);
 
       // Format the prompt with the query and context
       const prompt = await template.format({

@@ -10,7 +10,11 @@ import fetch from 'node-fetch';
 import pdfParse from 'pdf-parse';
 import type { Browser, Page } from 'playwright';
 import computeSimilarity from './computeSimilarity';
-import { loadCachedRecord, writeCachedRecord, purgeWebCache } from '@/lib/utils/webCache';
+import {
+  loadCachedRecord,
+  writeCachedRecord,
+  purgeWebCache,
+} from '@/lib/utils/webCache';
 
 export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
   const splitter = new RecursiveCharacterTextSplitter();
@@ -138,7 +142,7 @@ export const getWebContent = async (
     const loader = new PlaywrightWebBaseLoader(url, {
       launchOptions: {
         headless: true,
-        timeout: 30000,        
+        timeout: 30000,
       },
       gotoOptions: {
         waitUntil: 'domcontentloaded',

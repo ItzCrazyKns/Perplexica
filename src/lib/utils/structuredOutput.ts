@@ -22,7 +22,6 @@ export function withStructuredOutput<T extends z.ZodType>(
     return llm.withStructuredOutput(schema, {
       name: options.name,
       method: 'jsonMode' as const,
-      
     });
   } else {
     return llm.withStructuredOutput(schema, {

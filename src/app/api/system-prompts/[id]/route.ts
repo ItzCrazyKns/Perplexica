@@ -17,7 +17,12 @@ export async function PUT(
       );
     }
 
-    const updateData: any = { name, content, updatedAt: new Date(), type: 'persona' };
+    const updateData: any = {
+      name,
+      content,
+      updatedAt: new Date(),
+      type: 'persona',
+    };
 
     const updatedPrompt = await db
       .update(systemPrompts)
@@ -25,10 +30,7 @@ export async function PUT(
       .where(eq(systemPrompts.id, id))
       .returning();
     if (updatedPrompt.length === 0) {
-      return NextResponse.json(
-        { error: 'Prompt not found' },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Prompt not found' }, { status: 404 });
     }
     return NextResponse.json(updatedPrompt[0]);
   } catch (error) {
@@ -51,10 +53,7 @@ export async function DELETE(
       .where(eq(systemPrompts.id, id))
       .returning();
     if (deletedPrompt.length === 0) {
-      return NextResponse.json(
-        { error: 'Prompt not found' },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Prompt not found' }, { status: 404 });
     }
     return NextResponse.json({ message: 'Prompt deleted successfully' });
   } catch (error) {

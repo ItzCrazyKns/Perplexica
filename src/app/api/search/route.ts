@@ -23,6 +23,13 @@ interface chatModel {
   customOpenAIBaseURL?: string;
   ollamaContextWindow?: number;
 }
+interface systemModel {
+  provider: string;
+  name: string;
+  customOpenAIKey?: string;
+  customOpenAIBaseURL?: string;
+  ollamaContextWindow?: number;
+}
 
 interface embeddingModel {
   provider: string;
@@ -33,6 +40,7 @@ interface ChatRequestBody {
   optimizationMode: 'speed' | 'agent' | 'deepResearch';
   focusMode: string;
   chatModel?: chatModel;
+  systemModel?: systemModel; // optional; defaults to chat model when absent
   embeddingModel?: embeddingModel;
   query: string;
   history: Array<[string, string]>;
@@ -78,11 +86,12 @@ export const POST = async (req: Request) => {
       body.embeddingModel?.name ||
       Object.keys(embeddingModelProviders[embeddingModelProvider])[0];
 
-    let llm: BaseChatModel | undefined;
+    let chatLlm: BaseChatModel | undefined;
+    let systemLlm: BaseChatModel | undefined;
     let embeddings: Embeddings | undefined;
 
     if (body.chatModel?.provider === 'custom_openai') {
-      llm = new ChatOpenAI({
+      chatLlm = new ChatOpenAI({
         modelName: body.chatModel?.name || getCustomOpenaiModelName(),
         apiKey: body.chatModel?.customOpenAIKey || getCustomOpenaiApiKey(),
         // temperature: 0.7,
@@ -95,13 +104,45 @@ export const POST = async (req: Request) => {
       chatModelProviders[chatModelProvider] &&
       chatModelProviders[chatModelProvider][chatModel]
     ) {
-      llm = chatModelProviders[chatModelProvider][chatModel]
+      chatLlm = chatModelProviders[chatModelProvider][chatModel]
         .model as unknown as BaseChatModel | undefined;
     }
 
-    if (llm instanceof ChatOllama && body.chatModel?.provider === 'ollama') {
-      llm.numCtx = body.chatModel.ollamaContextWindow || 2048;
+    if (
+      chatLlm instanceof ChatOllama &&
+      body.chatModel?.provider === 'ollama'
+    ) {
+      chatLlm.numCtx = body.chatModel.ollamaContextWindow || 2048;
     }
+
+    // Build System LLM (defaults to Chat LLM if not provided)
+    if (body.systemModel) {
+      const sysProvider = body.systemModel.provider;
+      const sysName = body.systemModel.name;
+      if (sysProvider === 'custom_openai') {
+        systemLlm = new ChatOpenAI({
+          modelName: body.systemModel?.name || getCustomOpenaiModelName(),
+          apiKey: body.systemModel?.customOpenAIKey || getCustomOpenaiApiKey(),
+          configuration: {
+            baseURL:
+              body.systemModel?.customOpenAIBaseURL || getCustomOpenaiApiUrl(),
+          },
+        }) as unknown as BaseChatModel;
+      } else if (
+        chatModelProviders[sysProvider] &&
+        chatModelProviders[sysProvider][sysName]
+      ) {
+        systemLlm = chatModelProviders[sysProvider][sysName]
+          .model as unknown as BaseChatModel | undefined;
+      }
+      if (
+        systemLlm instanceof ChatOllama &&
+        body.systemModel?.provider === 'ollama'
+      ) {
+        systemLlm.numCtx = body.systemModel.ollamaContextWindow || 2048;
+      }
+    }
+    if (!systemLlm) systemLlm = chatLlm;
 
     if (
       embeddingModelProviders[embeddingModelProvider] &&
@@ -112,7 +153,7 @@ export const POST = async (req: Request) => {
       ].model as Embeddings | undefined;
     }
 
-    if (!llm || !embeddings) {
+    if (!chatLlm || !embeddings || !systemLlm) {
       return Response.json(
         { message: 'Invalid model selected' },
         { status: 400 },
@@ -136,7 +177,8 @@ export const POST = async (req: Request) => {
       body.query,
       history,
       '' /* chatId unavailable in search route; use empty for ephemeral runs */,
-      llm,
+      chatLlm,
+      systemLlm,
       embeddings,
       body.optimizationMode,
       [],

@@ -130,7 +130,10 @@ const createImageSearchChain = (llm: BaseChatModel) => {
   ]);
 };
 
-const handleImageSearch = (input: ImageSearchChainInput, llm: BaseChatModel) => {
+const handleImageSearch = (
+  input: ImageSearchChainInput,
+  llm: BaseChatModel,
+) => {
   const imageSearchChain = createImageSearchChain(llm);
   return imageSearchChain.invoke(input, { ...getLangfuseCallbacks() });
 };

@@ -54,11 +54,9 @@ const Chat = ({
     total: number;
   } | null;
   modelStats?: {
-    usage?: {
-      input_tokens: number;
-      output_tokens: number;
-      total_tokens: number;
-    };
+    usage?: { input_tokens: number; output_tokens: number; total_tokens: number };
+    usageChat?: { input_tokens: number; output_tokens: number; total_tokens: number };
+    usageSystem?: { input_tokens: number; output_tokens: number; total_tokens: number };
   } | null;
   systemPromptIds: string[];
   setSystemPromptIds: (ids: string[]) => void;

@@ -37,7 +37,6 @@ export const summarizeWebContent = async (
     const summarizeContent = async (
       content: Document,
     ): Promise<SummarizeResult> => {
-
       // Determine content length for short-circuit logic
       const contentToAnalyze =
         content.pageContent || content.metadata.html || '';

@@ -64,7 +64,9 @@ export class DeepResearchAgent {
   private llmTurns = 0;
   private aborted = false;
   // Token usage tracking across phases (normalized across providers)
-  private totalUsage = { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
+  // Separate usage tracking for chat vs system models
+  private totalUsageChat = { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
+  private totalUsageSystem = { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
   private phaseUsage: Partial<
     Record<
       Phase,
@@ -110,6 +112,7 @@ export class DeepResearchAgent {
 
   constructor(
     private llm: BaseChatModel,
+    private systemLlm: BaseChatModel,
     private embeddings: Embeddings,
     private emitter: EventEmitter,
     private personaInstructions: string,
@@ -195,8 +198,19 @@ export class DeepResearchAgent {
         JSON.stringify({
           type: 'modelStats',
           data: {
-            modelName: getModelName(this.llm),
-            usage: this.totalUsage,
+            modelName: getModelName(this.llm), // legacy
+            modelNameChat: getModelName(this.llm),
+            modelNameSystem: getModelName(this.systemLlm),
+            usage: {
+              input_tokens:
+                this.totalUsageChat.input_tokens + this.totalUsageSystem.input_tokens,
+              output_tokens:
+                this.totalUsageChat.output_tokens + this.totalUsageSystem.output_tokens,
+              total_tokens:
+                this.totalUsageChat.total_tokens + this.totalUsageSystem.total_tokens,
+            },
+            usageChat: this.totalUsageChat,
+            usageSystem: this.totalUsageSystem,
             phaseUsage: Object.fromEntries(
               (Object.keys(this.phaseUsage) as Phase[]).map((p) => [
                 p,
@@ -255,7 +269,8 @@ export class DeepResearchAgent {
     const afterPct = this.phasePercent(true);
     // 7.4 accuracy: only use real observed tokens per phase (no estimates)
     const phaseTok = this.phaseUsage[phase]?.total_tokens ?? 0;
-    const totalTok = this.totalUsage.total_tokens;
+    const totalTok =
+      this.totalUsageChat.total_tokens + this.totalUsageSystem.total_tokens;
     const subMsg = `Tokens this phase: ${Math.round(phaseTok)} • Total: ${Math.round(totalTok)}`;
     this.emitProgress(phase, `${phase} complete`, afterPct, subMsg);
     // Persist tokens for this phase (prefer real if available)
@@ -266,8 +281,19 @@ export class DeepResearchAgent {
       JSON.stringify({
         type: 'modelStats',
         data: {
-          modelName: getModelName(this.llm),
-          usage: this.totalUsage,
+          modelName: getModelName(this.llm), // legacy
+          modelNameChat: getModelName(this.llm),
+          modelNameSystem: getModelName(this.systemLlm),
+          usage: {
+            input_tokens:
+              this.totalUsageChat.input_tokens + this.totalUsageSystem.input_tokens,
+            output_tokens:
+              this.totalUsageChat.output_tokens + this.totalUsageSystem.output_tokens,
+            total_tokens:
+              this.totalUsageChat.total_tokens + this.totalUsageSystem.total_tokens,
+          },
+          usageChat: this.totalUsageChat,
+          usageSystem: this.totalUsageSystem,
           phaseUsage: Object.fromEntries(
             (Object.keys(this.phaseUsage) as Phase[]).map((p) => [
               p,
@@ -359,12 +385,18 @@ export class DeepResearchAgent {
     };
   }
 
-  private addPhaseUsage(phase: Phase, usageData: any) {
+  private addPhaseUsage(phase: Phase, usageData: any, which: 'chat' | 'system' = 'system') {
     const norm = this.normalizeUsageMetadata(usageData);
-    // Update totals
-    this.totalUsage.input_tokens += norm.input_tokens;
-    this.totalUsage.output_tokens += norm.output_tokens;
-    this.totalUsage.total_tokens += norm.total_tokens;
+    // Update totals separately for chat vs system
+    if (which === 'chat') {
+      this.totalUsageChat.input_tokens += norm.input_tokens;
+      this.totalUsageChat.output_tokens += norm.output_tokens;
+      this.totalUsageChat.total_tokens += norm.total_tokens;
+    } else {
+      this.totalUsageSystem.input_tokens += norm.input_tokens;
+      this.totalUsageSystem.output_tokens += norm.output_tokens;
+      this.totalUsageSystem.total_tokens += norm.total_tokens;
+    }
     // Update per-phase
     const prev = this.phaseUsage[phase] || {
       input_tokens: 0,
@@ -382,8 +414,19 @@ export class DeepResearchAgent {
       JSON.stringify({
         type: 'modelStats',
         data: {
-          modelName: getModelName(this.llm),
-          usage: this.totalUsage,
+          modelName: getModelName(this.llm), // legacy
+          modelNameChat: getModelName(this.llm),
+          modelNameSystem: getModelName(this.systemLlm),
+          usage: {
+            input_tokens:
+              this.totalUsageChat.input_tokens + this.totalUsageSystem.input_tokens,
+            output_tokens:
+              this.totalUsageChat.output_tokens + this.totalUsageSystem.output_tokens,
+            total_tokens:
+              this.totalUsageChat.total_tokens + this.totalUsageSystem.total_tokens,
+          },
+          usageChat: this.totalUsageChat,
+          usageSystem: this.totalUsageSystem,
           phaseUsage: Object.fromEntries(
             (Object.keys(this.phaseUsage) as Phase[]).map((p) => [
               p,
@@ -453,10 +496,10 @@ export class DeepResearchAgent {
     // TODO: Replace with deepPlannerTool invoking planner prompt (M3)
     this.countLLMTurns();
     this.state.plan = await deepPlannerTool(
-      this.llm,
+      this.systemLlm,
       query,
       history as any,
-      (usage) => this.addPhaseUsage('Plan', usage),
+      (usage) => this.addPhaseUsage('Plan', usage, 'system'),
     );
     this.emitProgress(
       'Plan',
@@ -504,9 +547,9 @@ export class DeepResearchAgent {
           const extracted = await extractFactsAndQuotes(
             result.url,
             sq,
-            this.llm,
+            this.systemLlm,
             this.signal,
-            (usage) => this.addPhaseUsage('Search', usage),
+            (usage) => this.addPhaseUsage('Search', usage, 'system'),
           );
           return {
             url: result.url,
@@ -516,7 +559,11 @@ export class DeepResearchAgent {
         }),
       );
 
-      const cleanedFacts = facts.filter((f) => (f?.facts?.facts?.length || 0) > 0 || (f?.facts?.quotes?.length || 0) > 0);
+      const cleanedFacts = facts.filter(
+        (f) =>
+          (f?.facts?.facts?.length || 0) > 0 ||
+          (f?.facts?.quotes?.length || 0) > 0,
+      );
 
       console.log(cleanedFacts);
 
@@ -659,16 +706,19 @@ ${url ? `<url>${url}</url>` : ''}
         const output = event.data.output;
         const meta = output.usage_metadata || output.response_metadata?.usage;
         if (meta) {
-          this.addPhaseUsage('Synthesize', meta);
+          this.addPhaseUsage('Synthesize', meta, 'chat');
         }
       }
 
       if (
         event.event === 'on_llm_end' &&
-        (event.data?.output?.llmOutput?.tokenUsage || event.data?.output?.estimatedTokenUsage)
+        (event.data?.output?.llmOutput?.tokenUsage ||
+          event.data?.output?.estimatedTokenUsage)
       ) {
-        const t = event.data.output.llmOutput.tokenUsage || event.data.output.estimatedTokenUsage;
-        this.addPhaseUsage('Synthesize', t);
+        const t =
+          event.data.output.llmOutput.tokenUsage ||
+          event.data.output.estimatedTokenUsage;
+        this.addPhaseUsage('Synthesize', t, 'chat');
       }
     }
 
@@ -678,13 +728,21 @@ ${url ? `<url>${url}</url>` : ''}
         title: c.title || c.name || c.url,
         url: c.url,
         processingType: 'url-content-extraction',
-        snippet: c.facts?.facts?.join(' ').slice(0, 200) || c.facts?.quotes?.join(' ').slice(0, 200) || '',
+        snippet:
+          c.facts?.facts?.join(' ').slice(0, 200) ||
+          c.facts?.quotes?.join(' ').slice(0, 200) ||
+          '',
       },
     }));
     if (sources.length > 0) {
       this.emitter.emit(
         'data',
-        JSON.stringify({ type: 'sources', data: sources, searchQuery: '', searchUrl: '' }),
+        JSON.stringify({
+          type: 'sources',
+          data: sources,
+          searchQuery: '',
+          searchUrl: '',
+        }),
       );
     }
   }

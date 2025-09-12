@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Info } from 'lucide-react';
 import { ModelStats } from '../ChatWindow';
 import { cn } from '@/lib/utils';
+import TokenPill from '@/components/common/TokenPill';
 
 interface ModelInfoButtonProps {
   modelStats: ModelStats | null;
@@ -15,7 +16,7 @@ const ModelInfoButton: React.FC<ModelInfoButtonProps> = ({ modelStats }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Always render, using "Unknown" as fallback if model info isn't available
-  const modelName = modelStats?.modelName || 'Unknown';
+  const modelName = modelStats?.modelName || modelStats?.modelNameChat || 'Unknown';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -48,43 +49,73 @@ const ModelInfoButton: React.FC<ModelInfoButtonProps> = ({ modelStats }) => {
       {showPopover && (
         <div
           ref={popoverRef}
-          className="absolute z-10 left-6 top-0 w-72 rounded-md shadow-lg border border-surface-2 bg-surface"
+          className="absolute z-10 left-8 bottom-0 w-96 rounded-md shadow-lg border border-surface-2 bg-surface"
         >
           <div className="py-2 px-3">
             <h4 className="text-sm font-medium mb-2">Model Information</h4>
-            <div className="space-y-1 text-xs">
-              <div className="flex space-x-2">
-                <span className="">Model:</span>
-                <span className="font-medium">{modelName}</span>
-              </div>
-              {modelStats?.responseTime && (
-                <div className="flex space-x-2">
-                  <span>Response time:</span>
-                  <span className="font-medium">
-                    {(modelStats.responseTime / 1000).toFixed(2)}s
-                  </span>
-                </div>
-              )}
-              {modelStats?.usage && (
+            {/* Table-like grid */}
+            <div className="text-xs grid grid-cols-[auto,1fr] gap-x-3 gap-y-2 items-center">
+              {/* Legacy single-name fallback */}
+              {!modelStats?.modelNameChat && modelName && (
                 <>
-                  <div className="flex space-x-2">
-                    <span>Input tokens:</span>
-                    <span className="font-medium">
-                      {modelStats.usage.input_tokens.toLocaleString()}
-                    </span>
+                  <div className="opacity-70">Model</div>
+                  <div className="font-medium truncate" title={modelName}>{modelName}</div>
+                </>
+              )}
+
+              {/* Chat row */}
+              {modelStats?.modelNameChat && (
+                <>
+                  <div className="opacity-70">Chat model</div>
+                  <div className="font-medium truncate" title={modelStats.modelNameChat}>{modelStats.modelNameChat}</div>
+                </>
+              )}
+              {modelStats?.usageChat && (
+                <>
+                  <div className="opacity-70">Chat tokens (est)</div>
+                  <div className="flex flex-wrap gap-2">
+                    <TokenPill label="In" value={modelStats.usageChat.input_tokens} />
+                    <TokenPill label="Out" value={modelStats.usageChat.output_tokens} />
+                    <TokenPill label="Total" value={modelStats.usageChat.total_tokens} highlight />
                   </div>
-                  <div className="flex space-x-2">
-                    <span>Output tokens:</span>
-                    <span className="font-medium">
-                      {modelStats.usage.output_tokens.toLocaleString()}
-                    </span>
+                </>
+              )}
+
+              {/* System row */}
+              {modelStats?.modelNameSystem && (
+                <>
+                  <div className="opacity-70">System model</div>
+                  <div className="font-medium truncate" title={modelStats.modelNameSystem}>{modelStats.modelNameSystem}</div>
+                </>
+              )}
+              {modelStats?.usageSystem && (
+                <>
+                  <div className="opacity-70">System tokens (est)</div>
+                  <div className="flex flex-wrap gap-2">
+                    <TokenPill label="In" value={modelStats.usageSystem.input_tokens} />
+                    <TokenPill label="Out" value={modelStats.usageSystem.output_tokens} />
+                    <TokenPill label="Total" value={modelStats.usageSystem.total_tokens} highlight />
                   </div>
-                  <div className="flex space-x-2">
-                    <span>Total tokens:</span>
-                    <span className="font-medium">
-                      {modelStats.usage.total_tokens.toLocaleString()}
-                    </span>
+                </>
+              )}
+
+              {/* Legacy single-usage fallback */}
+              {!modelStats?.usageChat && !modelStats?.usageSystem && modelStats?.usage && (
+                <>
+                  <div className="opacity-70">Tokens (est)</div>
+                  <div className="flex flex-wrap gap-2">
+                    <TokenPill label="In" value={modelStats.usage.input_tokens} />
+                    <TokenPill label="Out" value={modelStats.usage.output_tokens} />
+                    <TokenPill label="Total" value={modelStats.usage.total_tokens} highlight />
                   </div>
+                </>
+              )}
+
+              {/* Response time */}
+              {modelStats?.responseTime && (
+                <>
+                  <div className="opacity-70">Response time</div>
+                  <div className="font-medium">{(modelStats.responseTime / 1000).toFixed(2)}s</div>
                 </>
               )}
             </div>

@@ -9,13 +9,10 @@ export type ExtractedDoc = {
   quotes: string[];
 };
 
-// Very compact system instructions for extraction to minimize tokens
-const extractorSystem = `You extract short, atomic facts and direct quotes with provenance. Keep facts terse (≤25 words).`;
-
 export async function readerExtractorTool(
   candidates: Candidate[],
   query: string,
-  llm: BaseChatModel,
+  systemLlm: BaseChatModel,
   signal: AbortSignal,
   onUsage?: (usageData: any) => void,
 ): Promise<ExtractedDoc[]> {
@@ -31,8 +28,7 @@ export async function readerExtractorTool(
       const res = await extractFactsAndQuotes(
         c.url,
         query,
-        llm,
-        extractorSystem,
+        systemLlm,
         signal,
         onUsage,
       );

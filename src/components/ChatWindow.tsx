@@ -13,14 +13,22 @@ import { Settings } from 'lucide-react';
 import Link from 'next/link';
 import NextError from 'next/error';
 
+export type TokenUsage = {
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+};
+
 export type ModelStats = {
-  modelName: string;
+  // Back-compat fields
+  modelName: string; // chat model name (legacy)
   responseTime?: number;
-  usage?: {
-    input_tokens: number;
-    output_tokens: number;
-    total_tokens: number;
-  };
+  usage?: TokenUsage; // total usage (legacy)
+  // New fields for separate tracking
+  modelNameChat?: string;
+  modelNameSystem?: string;
+  usageChat?: TokenUsage;
+  usageSystem?: TokenUsage;
 };
 
 export type AgentActionEvent = {
@@ -62,6 +70,10 @@ interface ChatModelProvider {
 }
 
 interface EmbeddingModelProvider {
+  name: string;
+  provider: string;
+}
+interface SystemModelProvider {
   name: string;
   provider: string;
 }
@@ -300,6 +312,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
       name: '',
       provider: '',
     });
+  // Note: System model is only selectable in Settings; we read from localStorage at send time
 
   const [isConfigReady, setIsConfigReady] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -660,6 +673,11 @@ const ChatWindow = ({ id }: { id?: string }) => {
     const currentOptimizationMode =
       localStorage.getItem('optimizationMode') || optimizationMode;
 
+    // Read System Model selection from localStorage; fallback to chat model
+    const systemModelProvider =
+      localStorage.getItem('systemModelProvider') || modelProvider;
+    const systemModelName = localStorage.getItem('systemModel') || modelName;
+
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {
@@ -681,6 +699,13 @@ const ChatWindow = ({ id }: { id?: string }) => {
           name: modelName,
           provider: modelProvider,
           ...(chatModelProvider.provider === 'ollama' && {
+            ollamaContextWindow: parseInt(ollamaContextWindow),
+          }),
+        },
+        systemModel: {
+          name: systemModelName,
+          provider: systemModelProvider,
+          ...(systemModelProvider === 'ollama' && {
             ollamaContextWindow: parseInt(ollamaContextWindow),
           }),
         },

@@ -72,7 +72,6 @@ Snippet: ${content.snippet}
       )
       .join('\n');
 
-
     console.log(`Invoking LLM for preview content analysis`);
 
     // Create structured LLM with Zod schema

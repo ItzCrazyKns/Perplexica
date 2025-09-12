@@ -95,4 +95,5 @@ export const formattingAndCitationsScholarly = `## Formatting & Citations (Schol
  * Generic default that users can copy from the UI to build their own persona prompts.
  * This mirrors the web/local research expectations closely enough for most use.
  */
-export const DEFAULT_FORMATTING_AND_CITATIONS_TEMPLATE = formattingAndCitationsWeb;
+export const DEFAULT_FORMATTING_AND_CITATIONS_TEMPLATE =
+  formattingAndCitationsWeb;

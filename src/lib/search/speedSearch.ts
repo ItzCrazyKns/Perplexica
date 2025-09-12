@@ -33,7 +33,8 @@ export interface SpeedSearchAgentType {
   searchAndAnswer: (
     message: string,
     history: BaseMessage[],
-    llm: BaseChatModel,
+    chatLlm: BaseChatModel,
+    systemLlm: BaseChatModel,
     embeddings: Embeddings,
     signal: AbortSignal,
     personaInstructions?: string,
@@ -97,18 +98,18 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
   }
 
   private async createSearchRetrieverChain(
-    llm: BaseChatModel,
+    systemLlm: BaseChatModel,
     emitter: eventEmitter,
     signal: AbortSignal,
   ) {
     // TODO: Don't we want to set this back to default once search is done?
-    (llm as unknown as ChatOpenAI).temperature = 0;
+    (systemLlm as unknown as ChatOpenAI).temperature = 0;
 
     this.emitProgress(emitter, 10, `Building search query`);
 
     return RunnableSequence.from([
       PromptTemplate.fromTemplate(this.config.queryGeneratorPrompt),
-      llm,
+      systemLlm,
       this.strParser,
       RunnableLambda.from(async (input: string) => {
         try {
@@ -175,7 +176,7 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
 
             await Promise.all(
               docGroups.map(async (doc) => {
-                const res = await llm.invoke(
+                const res = await systemLlm.invoke(
                   `You are a web search summarizer, tasked with summarizing a piece of text retrieved from a web search. Your job is to summarize the 
             text into a detailed, 2-4 paragraph explanation that captures the main ideas and provides a comprehensive answer to the query.
             If the query is \"summarize\", you should provide a detailed summary of the text. If the query is a specific question, you should answer it in the summary.
@@ -298,7 +299,8 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
   }
 
   private async createAnsweringChain(
-    llm: BaseChatModel,
+    chatLlm: BaseChatModel,
+    systemLlm: BaseChatModel,
     embeddings: Embeddings,
     signal: AbortSignal,
     emitter: eventEmitter,
@@ -310,7 +312,8 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
         query: (input: BasicChainInput) => input.query,
         chat_history: (input: BasicChainInput) => input.chat_history,
         date: () => formatDateForLLM(),
-        formattingAndCitations: () => (personaInstructions ? personaInstructions : formattingAndCitationsWeb),
+        formattingAndCitations: () =>
+          personaInstructions ? personaInstructions : formattingAndCitationsWeb,
         context: RunnableLambda.from(
           async (
             input: BasicChainInput,
@@ -332,7 +335,7 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
             if (this.config.searchWeb) {
               const searchRetrieverChain =
                 await this.createSearchRetrieverChain(
-                  llm,
+                  systemLlm,
                   emitter,
                   signal,
                 );
@@ -384,7 +387,7 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
         new MessagesPlaceholder('chat_history'),
         ['user', '{query}'],
       ]),
-      llm,
+      chatLlm,
       this.strParser,
     ]).withConfig({
       runName: 'FinalResponseGenerator',
@@ -451,7 +454,8 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
   private async handleStream(
     stream: AsyncGenerator<StreamEvent, any, any>,
     emitter: eventEmitter,
-    llm: BaseChatModel,
+    chatLlm: BaseChatModel,
+    systemLlm: BaseChatModel,
     signal: AbortSignal,
   ) {
     if (signal.aborted) {
@@ -498,7 +502,8 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
         event.event === 'on_chain_end' &&
         event.name === 'FinalResponseGenerator'
       ) {
-        const modelName = getModelName(llm);
+  const modelName = getModelName(chatLlm);
+  const systemModelName = getModelName(systemLlm);
 
         // Send model info before ending
         emitter.emit(
@@ -506,7 +511,9 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
           JSON.stringify({
             type: 'modelStats',
             data: {
-              modelName,
+              modelName, // legacy
+              modelNameChat: modelName,
+              modelNameSystem: systemModelName,
             },
           }),
         );
@@ -519,7 +526,8 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
   async searchAndAnswer(
     message: string,
     history: BaseMessage[],
-    llm: BaseChatModel,
+    chatLlm: BaseChatModel,
+    systemLlm: BaseChatModel,
     embeddings: Embeddings,
     signal: AbortSignal,
     personaInstructions?: string,
@@ -528,7 +536,8 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
     const emitter = new eventEmitter();
 
     const answeringChain = await this.createAnsweringChain(
-      llm,
+      chatLlm,
+      systemLlm,
       embeddings,
       signal,
       emitter,
@@ -549,7 +558,7 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
       },
     );
 
-    this.handleStream(stream, emitter, llm, signal);
+  this.handleStream(stream, emitter, chatLlm, systemLlm, signal);
 
     return emitter;
   }

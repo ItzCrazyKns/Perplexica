@@ -33,6 +33,9 @@ The system works through these main steps:
 ### AI/ML Stack
 
 - **LLM Providers**: OpenAI, Anthropic, Groq, Ollama, Gemini, DeepSeek, LM Studio
+- **Model Roles**:
+  - Chat Model: used for final response generation and agent decision-making (createReactAgent, deep synthesis)
+  - System Model: used for internal, non-user-facing tasks (query generation, URL summarization, planning, lightweight extraction)
 - **Embeddings**: Xenova Transformers, similarity search (cosine/dot product)
 - **Orchestration & Agents**:
   - `SimplifiedAgent` (LangGraph React Agent) — single, unified agent that uses tools to perform web search, local file search, URL summarization, and more. See `src/lib/search/simplifiedAgent.ts` with state in `src/lib/state/chatAgentState.ts` and prompts in `src/lib/prompts/simplifiedAgent/*`.
@@ -50,10 +53,10 @@ The system works through these main steps:
 1. User query → API route (`src/app/api/search/route.ts`) with focus mode and optimization mode
 2. `MetaSearchAgent` decides optimization path:
 
-- `speed`: use `SpeedSearch` pipeline to retrieve, optionally rerank, and summarize
-- `agent`: run `SimplifiedAgent` (LangGraph React Agent) with appropriate tools based on focus mode
+- `speed`: use `SpeedSearch` pipeline to retrieve, optionally rerank, and summarize (System Model for search/summarization; Chat Model for final answer)
+- `agent`: run `SimplifiedAgent` (LangGraph React Agent) with appropriate tools based on focus mode (System Model inside tools; Chat Model for the agent and streamed answer)
 
-3. Tools perform actions (e.g., SearXNG web search, local file search, URL/content extraction) and accumulate `relevantDocuments` in agent state
+3. Tools perform actions (e.g., SearXNG web search, local file search, URL/content extraction) using the System Model and accumulate `relevantDocuments` in agent state
 4. Agent streams the response tokens and tool-call hints; citations come from collected `relevantDocuments`
 5. Special case: Firefox AI prompt detection disables tools for that turn and answers conversationally
 
@@ -102,6 +105,12 @@ The application uses a `config.toml` file (created from `sample.config.toml`) fo
 - Search engine configuration
 - Similarity measure settings
 
+Additionally, the Settings page exposes:
+
+- Chat Model selector (existing)
+- System Model selector (new): persists to localStorage as `systemModelProvider` and `systemModel`. It is not sent to `/api/config`; it’s purely a client preference.
+- Link System to Chat toggle: persisted as `linkSystemToChat` (default ON). When enabled, the System model mirrors the Chat model and the System selectors are disabled. Behavior matches the in-chat `ModelConfigurator`.
+
 ## Common Tasks
 
 When working on this codebase, you might need to:
@@ -114,6 +123,21 @@ When working on this codebase, you might need to:
 - Create new prompt templates in `/src/lib/prompts`
 - Build new chains in `/src/lib/chains`
 - Implement new LangGraph agents in `/src/lib/agents`
+
+Model usage routing principles:
+
+- Use Chat Model for: final answer generation, agent-level reasoning/decisions, and any streamed user-facing output.
+- Use System Model for: tools and internal chains (URL summarization, simple web search query/summarization steps, task breakdown, file extraction helpers).
+
+Implementation notes (key files):
+
+- `/src/app/settings/page.tsx`: adds System Model selection UI; values stored in localStorage
+- `/src/components/ChatWindow.tsx`: sends `systemModel` alongside `chatModel` to `/api/chat`
+- `/src/app/api/chat/route.ts` and `/src/app/api/search/route.ts`: accept `systemModel`, construct both LLMs
+- `/src/lib/search/metaSearchAgent.ts`: passes both Chat and System LLMs downstream
+- `/src/lib/search/simplifiedAgent.ts`: agent uses Chat LLM; exposes `systemLlm` to tools via config
+- Tools in `/src/lib/tools/agents/*`: now expect `config.configurable.systemLlm` for any internal LLM calls
+- `/src/lib/search/speedSearch.ts`: uses System LLM for search/summarization prep and Chat LLM for final answer
 
 ## AI Behavior Guidelines
 
@@ -176,16 +200,29 @@ The deep research workflow treats each planned subquestion as its own gather/ext
   - Assess: apply a sufficiency heuristic; if weak, run a focused depth pass (gov/edu, pdfs, methodology/data queries) and re-evaluate.
 - Results are aggregated across subquestions for clustering and synthesis. Early synthesis may trigger once coverage is adequate.
 - Implementation: `src/lib/search/deepResearchAgent.ts`.
+ 
+## Token Usage Tracking (Chat vs System)
+
+We track token usage separately for the Chat Model and the System Model across all major pipelines:
+
+- Agents stream periodic `modelStats` snapshots that include both legacy fields (`modelName`, `usage`) and split fields: `modelNameChat`, `modelNameSystem`, `usageChat`, `usageSystem`.
+- The `/src/app/api/chat/route.ts` endpoint forwards these snapshots to the client, and on completion persists the full object under `metadata.modelStats` on the message.
+- UI components updated:
+  - `MessageBoxLoading.tsx` shows live token pills for Chat and System (falls back to legacy total if split is absent).
+  - `MessageActions/ModelInfo.tsx` shows per-model names and usage, plus a combined total for backwards compatibility.
+- Speed path emits per-model names; deep research and agent paths attribute usage correctly (system = tools/planning/extraction, chat = agent decisions/final answer).
 
 ## Web Content Caching
-### Web Content Extraction & Caching
- Implementation lives in `src/lib/utils/webCache.ts` and is used by `src/lib/utils/documents.ts#getWebContent`. This cache is transparent to callers of `getWebContent` and returns the same `Document` shape whether served from cache or freshly fetched.
 
- For fact/quote extraction used by the deep research pipeline, prefer `extractFactsAndQuotes` over `summarizeWebContent`:
- 
- - Location: `src/lib/utils/extractWebFacts.ts`
- - Purpose: structured extraction of short, atomic facts (≤25 words) and concise direct quotes (≤200 chars) scoped to a user query
- - Used by: `readerExtractorTool` (`src/lib/tools/agents/readerExtractorTool.ts`)
+### Web Content Extraction & Caching
+
+Implementation lives in `src/lib/utils/webCache.ts` and is used by `src/lib/utils/documents.ts#getWebContent`. This cache is transparent to callers of `getWebContent` and returns the same `Document` shape whether served from cache or freshly fetched.
+
+For fact/quote extraction used by the deep research pipeline, prefer `extractFactsAndQuotes` over `summarizeWebContent`:
+
+- Location: `src/lib/utils/extractWebFacts.ts`
+- Purpose: structured extraction of short, atomic facts (≤25 words) and concise direct quotes (≤200 chars) scoped to a user query
+- Used by: `readerExtractorTool` (`src/lib/tools/agents/readerExtractorTool.ts`)
 - Behavior: single-pass extraction with a lightweight relevance check; always processes available content and returns compact arrays suitable for evidence ranking
 
 - Location: OS temp directory under `perplexica-webcache/`

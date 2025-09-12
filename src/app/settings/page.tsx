@@ -227,11 +227,19 @@ export default function SettingsPage() {
   const [selectedChatModel, setSelectedChatModel] = useState<string | null>(
     null,
   );
+  // System Model selection (used for internal non-user facing tasks)
+  const [selectedSystemModelProvider, setSelectedSystemModelProvider] =
+    useState<string | null>(null);
+  const [selectedSystemModel, setSelectedSystemModel] = useState<string | null>(
+    null,
+  );
   const [selectedEmbeddingModelProvider, setSelectedEmbeddingModelProvider] =
     useState<string | null>(null);
   const [selectedEmbeddingModel, setSelectedEmbeddingModel] = useState<
     string | null
   >(null);
+  // Link System to Chat (client-only preference)
+  const [linkSystemToChat, setLinkSystemToChat] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState(true);
   const [automaticSuggestions, setAutomaticSuggestions] = useState(true);
   const [showWeatherWidget, setShowWeatherWidget] = useState(true);
@@ -252,9 +260,7 @@ export default function SettingsPage() {
   const [editingPrompt, setEditingPrompt] = useState<SystemPrompt | null>(null);
   const [newPromptName, setNewPromptName] = useState('');
   const [newPromptContent, setNewPromptContent] = useState('');
-  const [newPromptType, setNewPromptType] = useState<'persona'>(
-    'persona',
-  );
+  const [newPromptType, setNewPromptType] = useState<'persona'>('persona');
   const [isAddingNewPrompt, setIsAddingNewPrompt] = useState(false);
 
   // Model visibility state variables
@@ -312,6 +318,17 @@ export default function SettingsPage() {
           ? data.chatModelProviders[chatModelProvider][0].name
           : undefined) ||
         '';
+      const systemModelProvider =
+        localStorage.getItem('systemModelProvider') ||
+        defaultChatModelProvider ||
+        '';
+      const systemModel =
+        localStorage.getItem('systemModel') ||
+        (data.chatModelProviders &&
+        data.chatModelProviders[systemModelProvider]?.length > 0
+          ? data.chatModelProviders[systemModelProvider][0].name
+          : undefined) ||
+        '';
       const embeddingModelProvider =
         localStorage.getItem('embeddingModelProvider') ||
         defaultEmbeddingModelProvider ||
@@ -326,6 +343,21 @@ export default function SettingsPage() {
       setSelectedChatModel(chatModel);
       setSelectedEmbeddingModelProvider(embeddingModelProvider);
       setSelectedEmbeddingModel(embeddingModel);
+      // Initialize link flag (default ON)
+      const linkStored = localStorage.getItem('linkSystemToChat');
+      const linkFlag = linkStored === null ? true : linkStored === 'true';
+      setLinkSystemToChat(linkFlag);
+
+      // Initialize System Model selection, respecting link behavior
+      if (linkFlag && chatModelProvider && chatModel) {
+        setSelectedSystemModelProvider(chatModelProvider);
+        setSelectedSystemModel(chatModel);
+        localStorage.setItem('systemModelProvider', chatModelProvider);
+        localStorage.setItem('systemModel', chatModel);
+      } else {
+        setSelectedSystemModelProvider(systemModelProvider);
+        setSelectedSystemModel(systemModel);
+      }
       setChatModels(data.chatModelProviders || {});
       setEmbeddingModels(data.embeddingModelProviders || {});
 
@@ -422,6 +454,19 @@ export default function SettingsPage() {
     setSavingStates((prev) => ({ ...prev, [key]: true }));
 
     try {
+      // Client-only settings for System Model: do not POST to backend
+      if (key === 'systemModelProvider' || key === 'systemModel') {
+        if (key === 'systemModelProvider') {
+          localStorage.setItem('systemModelProvider', value);
+        } else if (key === 'systemModel') {
+          localStorage.setItem('systemModel', value);
+        }
+        setTimeout(() => {
+          setSavingStates((prev) => ({ ...prev, [key]: false }));
+        }, 300);
+        return;
+      }
+
       const updatedConfig = {
         ...config,
         [key]: value,
@@ -504,6 +549,50 @@ export default function SettingsPage() {
           }
         }
 
+        // Ensure System Model stays valid when providers update
+        const currentSystemProvider = selectedSystemModelProvider;
+        const newSystemProviders = Object.keys(data.chatModelProviders || {});
+
+        if (!currentSystemProvider && newSystemProviders.length > 0) {
+          const firstProvider = newSystemProviders[0];
+          const firstModel = data.chatModelProviders[firstProvider]?.[0]?.name;
+          if (firstModel) {
+            setSelectedSystemModelProvider(firstProvider);
+            setSelectedSystemModel(firstModel);
+            localStorage.setItem('systemModelProvider', firstProvider);
+            localStorage.setItem('systemModel', firstModel);
+          }
+        } else if (
+          currentSystemProvider &&
+          (!data.chatModelProviders ||
+            !data.chatModelProviders[currentSystemProvider] ||
+            !Array.isArray(data.chatModelProviders[currentSystemProvider]) ||
+            data.chatModelProviders[currentSystemProvider].length === 0)
+        ) {
+          const firstValidProvider = Object.entries(
+            data.chatModelProviders || {},
+          ).find(
+            ([_, models]) => Array.isArray(models) && models.length > 0,
+          )?.[0];
+
+          if (firstValidProvider) {
+            setSelectedSystemModelProvider(firstValidProvider);
+            setSelectedSystemModel(
+              data.chatModelProviders[firstValidProvider][0].name,
+            );
+            localStorage.setItem('systemModelProvider', firstValidProvider);
+            localStorage.setItem(
+              'systemModel',
+              data.chatModelProviders[firstValidProvider][0].name,
+            );
+          } else {
+            setSelectedSystemModelProvider(null);
+            setSelectedSystemModel(null);
+            localStorage.removeItem('systemModelProvider');
+            localStorage.removeItem('systemModel');
+          }
+        }
+
         const currentEmbeddingProvider = selectedEmbeddingModelProvider;
         const newEmbeddingProviders = Object.keys(
           data.embeddingModelProviders || {},
@@ -562,6 +651,12 @@ export default function SettingsPage() {
         localStorage.setItem('chatModelProvider', value);
       } else if (key === 'chatModel') {
         localStorage.setItem('chatModel', value);
+      } else if (key === 'systemModelProvider') {
+        // handled above (local-only)
+        localStorage.setItem('systemModelProvider', value);
+      } else if (key === 'systemModel') {
+        // handled above (local-only)
+        localStorage.setItem('systemModel', value);
       } else if (key === 'embeddingModelProvider') {
         localStorage.setItem('embeddingModelProvider', value);
       } else if (key === 'embeddingModel') {
@@ -920,7 +1015,9 @@ export default function SettingsPage() {
             >
               <div className="flex flex-col space-y-4">
                 <div className="flex items-center justify-between p-3 bg-surface rounded-lg border border-surface-2 gap-3">
-                  <div className="text-sm">Copy a starter Formatting & Citations template</div>
+                  <div className="text-sm">
+                    Copy a starter Formatting & Citations template
+                  </div>
                   <CopyTemplatePicker />
                 </div>
                 {userSystemPrompts
@@ -1155,6 +1252,19 @@ export default function SettingsPage() {
                         if (firstModel) {
                           setSelectedChatModel(firstModel);
                           saveConfig('chatModel', firstModel);
+                          // Mirror to System when linked
+                          if (linkSystemToChat) {
+                            setSelectedSystemModelProvider(value);
+                            setSelectedSystemModel(firstModel);
+                            localStorage.setItem(
+                              'systemModelProvider',
+                              value,
+                            );
+                            localStorage.setItem(
+                              'systemModel',
+                              firstModel,
+                            );
+                          }
                         }
                       }}
                       options={Object.keys(config.chatModelProviders).map(
@@ -1179,6 +1289,18 @@ export default function SettingsPage() {
                             const value = e.target.value;
                             setSelectedChatModel(value);
                             saveConfig('chatModel', value);
+                            // Mirror to System when linked
+                            if (linkSystemToChat && selectedChatModelProvider) {
+                              setSelectedSystemModelProvider(
+                                selectedChatModelProvider,
+                              );
+                              setSelectedSystemModel(value);
+                              localStorage.setItem(
+                                'systemModelProvider',
+                                selectedChatModelProvider,
+                              );
+                              localStorage.setItem('systemModel', value);
+                            }
                           }}
                           options={(() => {
                             const chatModelProvider =
@@ -1278,6 +1400,136 @@ export default function SettingsPage() {
                             </p>
                           </div>
                         )}
+                        <p className="text-xs mt-0.5">
+                          Used for chat responses and agentic tasks.
+                        </p>
+                      </div>
+                    )}
+                </div>
+              )}
+
+              {/* System Model selection (internal tasks) */}
+              {config.chatModelProviders && (
+                <div className="flex flex-col space-y-4 mt-6">
+                  <div className="flex items-center justify-between p-3 bg-surface rounded-lg border border-surface-2">
+                    <div>
+                      <p className="text-sm font-medium">Link System to Chat</p>
+                      <p className="text-xs mt-0.5 text-fg/60">
+                        When enabled, the System model mirrors the Chat model and is disabled below.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={linkSystemToChat}
+                      onChange={(checked) => {
+                        setLinkSystemToChat(checked);
+                        localStorage.setItem(
+                          'linkSystemToChat',
+                          checked.toString(),
+                        );
+                        if (checked && selectedChatModelProvider && selectedChatModel) {
+                          // Immediately mirror current chat selection
+                          setSelectedSystemModelProvider(
+                            selectedChatModelProvider,
+                          );
+                          setSelectedSystemModel(selectedChatModel);
+                          localStorage.setItem(
+                            'systemModelProvider',
+                            selectedChatModelProvider,
+                          );
+                          localStorage.setItem(
+                            'systemModel',
+                            selectedChatModel,
+                          );
+                        }
+                      }}
+                      className={cn(
+                        linkSystemToChat ? 'bg-accent' : 'bg-surface-2',
+                        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          linkSystemToChat ? 'translate-x-6' : 'translate-x-1',
+                          'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                        )}
+                      />
+                    </Switch>
+                  </div>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm">System Model Provider</p>
+                    <Select
+                      value={selectedSystemModelProvider ?? undefined}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setSelectedSystemModelProvider(value);
+                        // Persist only in localStorage via saveConfig shim
+                        saveConfig('systemModelProvider', value);
+                        const firstModel =
+                          config.chatModelProviders[value]?.[0]?.name;
+                        if (firstModel) {
+                          setSelectedSystemModel(firstModel);
+                          saveConfig('systemModel', firstModel);
+                        }
+                      }}
+                      disabled={linkSystemToChat}
+                      options={Object.keys(config.chatModelProviders).map(
+                        (provider) => ({
+                          value: provider,
+                          label:
+                            (PROVIDER_METADATA as any)[provider]?.displayName ||
+                            provider.charAt(0).toUpperCase() +
+                              provider.slice(1),
+                        }),
+                      )}
+                    />
+                  </div>
+
+                  {selectedSystemModelProvider &&
+                    selectedSystemModelProvider != 'custom_openai' && (
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm">System Model</p>
+                        <Select
+                          value={selectedSystemModel ?? undefined}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setSelectedSystemModel(value);
+                            saveConfig('systemModel', value);
+                          }}
+                          disabled={linkSystemToChat}
+                          options={(() => {
+                            const providerModels =
+                              config.chatModelProviders[
+                                selectedSystemModelProvider
+                              ];
+                            return providerModels
+                              ? providerModels.length > 0
+                                ? providerModels.map((model) => ({
+                                    value: model.name,
+                                    label: model.displayName,
+                                  }))
+                                : [
+                                    {
+                                      value: '',
+                                      label: 'No models available',
+                                      disabled: true,
+                                    },
+                                  ]
+                              : [
+                                  {
+                                    value: '',
+                                    label:
+                                      'Invalid provider, please check backend logs',
+                                    disabled: true,
+                                  },
+                                ];
+                          })()}
+                        />
+                        <p className="text-xs mt-0.5">
+                          Used for internal tasks like web summarization and
+                          query generation. You may want to select a
+                          faster/cheaper/instruct model rather than your main
+                          chat model.
+                        </p>
                       </div>
                     )}
                 </div>
@@ -1775,7 +2027,7 @@ function CopyTemplatePicker() {
           { value: 'web', label: 'Web (default web rules)' },
           { value: 'local', label: 'Local (files research)' },
           { value: 'chat', label: 'Chat (light formatting)' },
-          { value: 'scholarly', label: 'Scholarly (academic)' }
+          { value: 'scholarly', label: 'Scholarly (academic)' },
         ]}
       />
       <button

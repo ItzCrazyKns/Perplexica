@@ -4,7 +4,7 @@ import TextareaAutosize from 'react-textarea-autosize';
 import { File } from './ChatWindow';
 import Attach from './MessageInputActions/Attach';
 import Focus from './MessageInputActions/Focus';
-import ModelSelector from './MessageInputActions/ModelSelector';
+import ModelConfigurator from './MessageInputActions/ModelConfigurator';
 import Optimization from './MessageInputActions/Optimization';
 import SystemPromptSelector from './MessageInputActions/SystemPromptSelector'; // Import new component
 
@@ -46,22 +46,7 @@ const MessageInput = ({
   setSystemPromptIds: (ids: string[]) => void;
 }) => {
   const [message, setMessage] = useState('');
-  const [selectedModel, setSelectedModel] = useState<{
-    provider: string;
-    model: string;
-  } | null>(null);
 
-  useEffect(() => {
-    const chatModelProvider = localStorage.getItem('chatModelProvider');
-    const chatModel = localStorage.getItem('chatModel');
-
-    if (chatModelProvider && chatModel) {
-      setSelectedModel({
-        provider: chatModelProvider,
-        model: chatModel,
-      });
-    }
-  }, []);
 
   useEffect(() => {
     const storedPromptIds = localStorage.getItem('selectedSystemPromptIds');
@@ -118,11 +103,6 @@ const MessageInput = ({
     // Only submit if we have a non-empty message and not currently loading
     if (loading || message.trim().length === 0) return;
 
-    // Make sure the selected model is used when sending a message
-    if (selectedModel) {
-      localStorage.setItem('chatModelProvider', selectedModel.provider);
-      localStorage.setItem('chatModel', selectedModel.model);
-    }
 
     sendMessage(message);
     setMessage('');
@@ -177,22 +157,7 @@ const MessageInput = ({
             />
           </div>
           <div className="flex flex-row items-center space-x-2">
-            <ModelSelector
-              showModelName={
-                typeof window !== 'undefined'
-                  ? window.matchMedia('(min-width: 640px)').matches
-                  : false
-              }
-              selectedModel={selectedModel}
-              setSelectedModel={(selectedModel) => {
-                setSelectedModel(selectedModel);
-                localStorage.setItem(
-                  'chatModelProvider',
-                  selectedModel.provider,
-                );
-                localStorage.setItem('chatModel', selectedModel.model);
-              }}
-            />
+            <ModelConfigurator />
             <SystemPromptSelector
               selectedPromptIds={systemPromptIds}
               onSelectedPromptIdsChange={setSystemPromptIds}

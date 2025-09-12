@@ -75,6 +75,10 @@ export const fileSearchTool = tool(
       if (!config?.configurable?.embeddings) {
         throw new Error('Embeddings not available in config');
       }
+      // Ensure system LLM is present for any LLM-based extraction steps (future)
+      if (!config?.configurable?.systemLlm) {
+        throw new Error('System LLM not available in config');
+      }
 
       const embeddings: Embeddings = config.configurable.embeddings;
 

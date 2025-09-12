@@ -10,7 +10,8 @@ export interface MetaSearchAgentType {
     message: string,
     history: BaseMessage[],
     chatId: string,
-    llm: BaseChatModel,
+    chatLlm: BaseChatModel,
+    systemLlm: BaseChatModel,
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'agent' | 'deepResearch',
     fileIds: string[],
@@ -42,7 +43,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
    * Execute agent workflow asynchronously with proper streaming support
    */
   private async executeAgentWorkflow(
-    llm: BaseChatModel,
+    chatLlm: BaseChatModel,
+    systemLlm: BaseChatModel,
     embeddings: Embeddings,
     emitter: eventEmitter,
     message: string,
@@ -55,7 +57,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
   ) {
     try {
       const agentSearch = new AgentSearch(
-        llm,
+        chatLlm,
+        systemLlm,
         embeddings,
         emitter,
         personaInstructions,
@@ -85,7 +88,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
     message: string,
     history: BaseMessage[],
     chatId: string,
-    llm: BaseChatModel,
+    chatLlm: BaseChatModel,
+    systemLlm: BaseChatModel,
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'agent' | 'deepResearch',
     fileIds: string[],
@@ -101,7 +105,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
       return speedSearchAgent.searchAndAnswer(
         message,
         history,
-        llm,
+        chatLlm,
+        systemLlm,
         embeddings,
         signal,
         personaInstructions,
@@ -112,7 +117,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
     // Execute deep research workflow when selected
     if (optimizationMode === 'deepResearch') {
       this.executeAgentWorkflow(
-        llm,
+        chatLlm,
+        systemLlm,
         embeddings,
         emitter,
         message,
@@ -129,7 +135,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
     // Execute agent workflow for 'agent' mode (default)
     this.executeAgentWorkflow(
-      llm,
+      chatLlm,
+      systemLlm,
       embeddings,
       emitter,
       message,

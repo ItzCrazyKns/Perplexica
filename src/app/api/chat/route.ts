@@ -35,6 +35,11 @@ type ChatModel = {
   name: string;
   ollamaContextWindow?: number;
 };
+type SystemModel = {
+  provider: string;
+  name: string;
+  ollamaContextWindow?: number;
+};
 
 type EmbeddingModel = {
   provider: string;
@@ -48,18 +53,24 @@ type Body = {
   history: Array<[string, string]>;
   files: Array<string>;
   chatModel: ChatModel;
+  systemModel?: SystemModel; // optional; defaults to chatModel
   embeddingModel: EmbeddingModel;
   selectedSystemPromptIds: string[]; // legacy name; treated as persona prompt IDs
 };
 
+type TokenUsage = {
+  input_tokens: number;
+  output_tokens: number;
+  total_tokens: number;
+};
 type ModelStats = {
-  modelName: string;
+  modelName: string; // legacy
   responseTime?: number;
-  usage?: {
-    input_tokens: number;
-    output_tokens: number;
-    total_tokens: number;
-  };
+  usage?: TokenUsage; // legacy total
+  modelNameChat?: string;
+  modelNameSystem?: string;
+  usageChat?: TokenUsage;
+  usageSystem?: TokenUsage;
 };
 
 const handleEmitterEvents = async (
@@ -361,11 +372,12 @@ export const POST = async (req: Request) => {
         body.embeddingModel?.name || Object.keys(embeddingProvider)[0]
       ];
 
-    let llm: BaseChatModel | undefined;
+    let chatLlm: BaseChatModel | undefined;
+    let systemLlm: BaseChatModel | undefined;
     let embedding = embeddingModel.model;
 
     if (body.chatModel?.provider === 'custom_openai') {
-      llm = new ChatOpenAI({
+      chatLlm = new ChatOpenAI({
         apiKey: getCustomOpenaiApiKey(),
         modelName: getCustomOpenaiModelName(),
         // temperature: 0.7,
@@ -374,15 +386,46 @@ export const POST = async (req: Request) => {
         },
       }) as unknown as BaseChatModel;
     } else if (chatModelProvider && chatModel) {
-      llm = chatModel.model;
+      chatLlm = chatModel.model;
 
       // Set context window size for Ollama models
-      if (llm instanceof ChatOllama && body.chatModel?.provider === 'ollama') {
-        llm.numCtx = body.chatModel.ollamaContextWindow || 2048;
+      if (
+        chatLlm instanceof ChatOllama &&
+        body.chatModel?.provider === 'ollama'
+      ) {
+        chatLlm.numCtx = body.chatModel.ollamaContextWindow || 2048;
       }
     }
 
-    if (!llm) {
+    // Build System LLM (defaults to Chat LLM if not provided by client)
+    if (body.systemModel) {
+      const sysProvider = body.systemModel.provider;
+      const sysName = body.systemModel.name;
+      if (sysProvider === 'custom_openai') {
+        systemLlm = new ChatOpenAI({
+          apiKey: getCustomOpenaiApiKey(),
+          modelName: getCustomOpenaiModelName(),
+          configuration: {
+            baseURL: getCustomOpenaiApiUrl(),
+          },
+        }) as unknown as BaseChatModel;
+      } else if (
+        chatModelProviders[sysProvider] &&
+        chatModelProviders[sysProvider][sysName]
+      ) {
+        systemLlm = chatModelProviders[sysProvider][sysName]
+          .model as unknown as BaseChatModel | undefined;
+      }
+      if (
+        systemLlm instanceof ChatOllama &&
+        body.systemModel?.provider === 'ollama'
+      ) {
+        systemLlm.numCtx = body.systemModel.ollamaContextWindow || 2048;
+      }
+    }
+    if (!systemLlm) systemLlm = chatLlm;
+
+    if (!chatLlm) {
       return Response.json({ error: 'Invalid chat model' }, { status: 400 });
     }
 
@@ -452,7 +495,8 @@ export const POST = async (req: Request) => {
       message.content,
       history,
       message.chatId,
-      llm,
+      chatLlm!,
+      systemLlm!,
       embedding,
       body.optimizationMode,
       body.files,
