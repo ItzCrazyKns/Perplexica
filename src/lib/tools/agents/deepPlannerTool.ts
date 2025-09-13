@@ -36,6 +36,7 @@ const PlannerSchema = z.object({
 export async function deepPlannerTool(
   llm: BaseChatModel,
   query: string,
+  signal: AbortSignal,
   history: BaseMessage[] = [],
   onUsage?: (usageData: any) => void,
   options?: { webContext?: string; date?: string },
@@ -55,7 +56,7 @@ export async function deepPlannerTool(
   ];
   try {
     const structuredllm = withStructuredOutput(llm, PlannerSchema, {});
-    const response = await structuredllm.invoke(messages);
+    const response = await structuredllm.invoke(messages, { signal });
 
     if (onUsage && response.usage) {
       onUsage(response.usage);

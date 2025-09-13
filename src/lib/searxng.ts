@@ -31,6 +31,7 @@ export const searchSearxng = async (
 ) => {
   const searxngURL = getSearxngApiEndpoint();
 
+  console.log('[searchSearxng] Searching:', query, opts);
   const url = new URL(`${searxngURL}/search?format=json`);
   url.searchParams.append('q', query);
 
@@ -60,6 +61,8 @@ export const searchSearxng = async (
   if (opts?.language) {
     searchUrl.searchParams.append('language', opts.language);
   }
+
+  console.log(`[searchSearxng] Search for "${query}" returned ${results.length} results`);
 
   return { results, suggestions, searchUrl: searchUrl.toString() };
 };

@@ -85,8 +85,9 @@ export const formattingAndCitationsScholarly = `## Formatting & Citations (Schol
 - Place citations at the end of sentences or clauses (e.g., "...is widely adopted[3].").
 - Prefer multiple sources for important claims (e.g., "...[2][5].").
 - Avoid unsupported assumptions; if no source supports a statement, state the limitation.
+- Do not include a separate "## References" section; all citations should be inline.
 
-### Examples
+### Citation Examples
 - "According to the project proposal[1], the deadline is set for March 2024."
 - "The research findings indicate significant improvements[2][3]."
 - "The quarterly report shows a 15% increase in sales[1], while recent market analysis confirms this trend[2]."`;

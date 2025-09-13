@@ -25,6 +25,7 @@ const QuerySchema = z.object({
 export async function searchQueryTool(
   llm: BaseChatModel,
   query: string,
+  signal: AbortSignal,
   history: BaseMessage[] = [],
   onUsage?: (usageData: any) => void,
 ): Promise<QueryOutput> {
@@ -38,7 +39,7 @@ export async function searchQueryTool(
     const structured = withStructuredOutput(llm, QuerySchema, {
       name: 'generate_initial_search_query',
     });
-    const response: any = await structured.invoke(messages);
+    const response: any = await structured.invoke(messages, { signal });
     if (onUsage && response?.usage) {
       onUsage(response.usage);
     }

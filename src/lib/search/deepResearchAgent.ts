@@ -1,21 +1,12 @@
 import type { SessionManifest } from '@/lib/state/deepResearchAgentState';
 import { deepPlannerTool } from '@/lib/tools/agents/deepPlannerTool';
-import {
-  type EvidenceItem
-} from '@/lib/tools/agents/evidenceStoreTool';
-import {
-  type Candidate
-} from '@/lib/tools/agents/expandedSearchTool';
-import {
-  type ExtractedDoc
-} from '@/lib/tools/agents/readerExtractorTool';
 import { searchQueryTool } from '@/lib/tools/agents/searchQueryTool';
 import {
   ensureSessionDirs,
   readManifest,
   updateManifest,
   writeArtifact,
-  writeManifest
+  writeManifest,
 } from '@/lib/utils/deepResearchFS';
 import { getModelName } from '@/lib/utils/modelUtils';
 import { Embeddings } from '@langchain/core/embeddings';
@@ -30,7 +21,10 @@ import { formattingAndCitationsScholarly } from '@/lib/prompts/templates';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
 import { searchSearxng } from '../searxng';
-import { extractFactsAndQuotes } from '../utils/extractWebFacts';
+import {
+  extractFactsAndQuotes,
+  ExtractFactsOutput,
+} from '../utils/extractWebFacts';
 
 /**
  * DeepResearchAgent — phased orchestrator with budgets, cancellation, and progress streaming.
@@ -67,14 +61,7 @@ export class DeepResearchAgent {
   > = {};
 
   // Phase tracking
-  private phases: Phase[] = [
-    'Plan',
-    'Search',
-    'ReadExtract',
-    'ClusterMap',
-    'Synthesize',
-    'Review',
-  ];
+  private phases: Phase[] = ['Plan', 'Search', 'Analyze', 'Synthesize'];
   private currentPhaseIndex = 0;
   private earlySynthesisTriggered = false;
 
@@ -89,15 +76,6 @@ export class DeepResearchAgent {
       quotes: string[];
       title?: string;
     }>;
-    evidence?: EvidenceItem[];
-    clusters?: Array<{
-      label: string;
-      docUrls: string[];
-      summary?: string;
-      noveltyScore?: number;
-      subquestionScores?: Record<string, number>;
-    }>;
-    outline?: { sections: Array<{ title: string; bullets: string[] }> };
     perSubquery?: Array<SubqueryResult>;
   } = {};
   private query: string = '';
@@ -151,37 +129,17 @@ export class DeepResearchAgent {
           await this.planPhase(query, history);
         });
 
-        // TODO: Get search results then pass to another tool to get summaries and more details.
-
         // Phase: Search
         if (!this.shouldJumpToSynthesis()) {
           await this.runPhase('Search', async () => {
             await this.searchPhase(history);
           });
         }
-
-        // Phase: Read/Extract
-        if (!this.shouldJumpToSynthesis()) {
-          await this.runPhase('ReadExtract', async () => {
-            await this.readExtractPhase();
-          });
-        }
       } while (!this.needsMoreInfo());
-      // Phase: Cluster/Map
-      // if (!this.shouldJumpToSynthesis()) {
-      //   await this.runPhase('ClusterMap', async () => {
-      //     await this.clusterMapPhase();
-      //   });
-      // }
 
       // Phase: Synthesize (always reached; may be early)
       await this.runPhase('Synthesize', async () => {
         await this.synthesizePhase(query);
-      });
-
-      // Phase: Review
-      await this.runPhase('Review', async () => {
-        await this.reviewPhase();
       });
 
       // Finalize
@@ -487,11 +445,6 @@ export class DeepResearchAgent {
     }
   }
 
-  // Placeholder for selecting a cheaper model for extraction/summarization in the future
-  private getExtractorLLM(): BaseChatModel {
-    return this.llm;
-  }
-
   private persistTokensByPhase(phase: Phase) {
     if (!this.chatId) return;
     const manifest = readManifest(this.chatId);
@@ -506,8 +459,6 @@ export class DeepResearchAgent {
     } as SessionManifest);
   }
 
-  // --------------- Phase stubs (tools/persistence land later) ---------------
-
   private async planPhase(query: string, history: any[]) {
     this.ensureNotAborted();
     // First, use System LLM to craft an optimized search query using structured output tool
@@ -517,6 +468,7 @@ export class DeepResearchAgent {
       const res = await searchQueryTool(
         this.systemLlm,
         query,
+        this.signal,
         history as any,
         (usage) => this.addPhaseUsage('Plan', usage, 'system'),
       );
@@ -526,7 +478,10 @@ export class DeepResearchAgent {
       }
       this.countLLMTurns();
     } catch (e) {
-      console.warn('Plan-phase query generation failed, falling back to raw query:', e);
+      console.warn(
+        'Plan-phase query generation failed, falling back to raw query:',
+        e,
+      );
     }
 
     // One quick initial web scan to ground planning in current context
@@ -534,13 +489,13 @@ export class DeepResearchAgent {
     let webContext = '';
     try {
       const searx = await searchSearxng(optimizedQuery, { language: 'en' });
-      const top = searx.results.slice(0, 6);
+      const top = searx.results.filter((r) => r.title && r.url && r.content && r.content.length > 0).slice(0, 10);
       webContext = top
         .map((r, i) => {
           const title = r.title || `Result ${i + 1}`;
-          const url = r.url || '';
+          // const url = r.url || '';
           const snippet = (r.content || '').replace(/\s+/g, ' ').slice(0, 220);
-          return `- ${title} — ${url}${snippet ? ` — ${snippet}` : ''}`;
+          return `Title: ${title}\nSnippet: ${snippet}\n`;
         })
         .join('\n');
     } catch (e) {
@@ -553,6 +508,7 @@ export class DeepResearchAgent {
     this.state.plan = await deepPlannerTool(
       this.systemLlm,
       query,
+      this.signal,
       history as any,
       (usage) => this.addPhaseUsage('Plan', usage, 'system'),
       { webContext, date: formatDateForLLM(new Date()) },
@@ -617,33 +573,23 @@ export class DeepResearchAgent {
 
       const cleanedFacts = facts.filter(
         (f) =>
-          (f?.facts?.facts?.length || 0) > 0 ||
-          (f?.facts?.quotes?.length || 0) > 0,
+          f.facts &&
+          ((f?.facts?.facts?.length || 0) > 0 ||
+            (f?.facts?.quotes?.length || 0) > 0),
       );
 
       console.log(cleanedFacts);
 
       perSub[i] = {
         subquestion: sq,
-        candidates: cleanedFacts,
-        evidence: [],
+        extracted: cleanedFacts,
         sufficiency: 'sufficient',
-        extracted: [],
       };
-
-      // if (this.chatId) {
-      //   writeArtifact(
-      //     this.chatId,
-      //     'raw',
-      //     `candidates_${sanitizeFilename(sq)}`,
-      //     reranked,
-      //   );
-      // }
     }
 
     this.state.perSubquery = perSub;
     // Maintain legacy flattened candidates for downstream compatibility/UX
-    this.state.candidates = perSub.flatMap((p) => p.candidates);
+    this.state.candidates = perSub.flatMap((p) => p.extracted);
 
     this.emitProgress(
       'Search',
@@ -665,20 +611,20 @@ export class DeepResearchAgent {
     let anyInsufficient = false;
     for (let i = 0; i < this.state.perSubquery.length; i++) {
       const subq = this.state.perSubquery[i];
-      if (this.earlySynthesisTriggered && subq.candidates.length === 0) {
+      if (this.earlySynthesisTriggered && subq.extracted.length === 0) {
         // If early synthesis triggered and this subquery has no candidates, ignore it
         subq.sufficiency = 'sufficient';
         continue;
       }
       if (subq.sufficiency !== 'pending') continue; // already assessed
-      const assessment = this.assessSubquerySufficiency(
-        subq.subquestion,
-        subq.evidence,
-      );
-      subq.sufficiency = assessment.status;
-      if (assessment.status !== 'sufficient') {
-        anyInsufficient = true;
-      }
+      // const assessment = this.assessSubquerySufficiency(
+      //   subq.subquestion,
+      //   subq.evidence,
+      // );
+      // subq.sufficiency = assessment.status;
+      // if (assessment.status !== 'sufficient') {
+      //   anyInsufficient = true;
+      // }
     }
     console.warn('TODO: needsMoreInfo: subquery sufficiency');
     return anyInsufficient;
@@ -686,12 +632,10 @@ export class DeepResearchAgent {
 
   private async synthesizePhase(query: string) {
     this.ensureNotAborted();
-    // TODO: deepSynthesizerTool (outline + drafting) (M3)
-    this.countLLMTurns(2);
 
     // Build a lightweight "relevant documents" context from discovered candidates
     const perSub = this.state.perSubquery || [];
-    const allCandidates: Array<any> = perSub.flatMap((p) => p.candidates || []);
+    const allCandidates: Array<any> = perSub.flatMap((p) => p.extracted || []);
 
     // Format into numbered XML-like blocks, similar to speedSearch.processDocs
     const docsString = allCandidates
@@ -723,6 +667,7 @@ ${url ? `<url>${url}</url>` : ''}
     const chain = RunnableSequence.from([prompt, this.llm]).withConfig({
       runName: 'DeepSynthesis',
       ...getLangfuseCallbacks(),
+      signal: this.signal,
     });
 
     const config = {
@@ -803,17 +748,6 @@ ${url ? `<url>${url}</url>` : ''}
     }
   }
 
-  // --- Minimal stubs to satisfy phase flow until implemented ---
-  private async readExtractPhase() {
-    // In this v1 flow we already extract facts during search; skip.
-    return;
-  }
-
-  private async reviewPhase() {
-    // Placeholder for future critique/verification pass.
-    return;
-  }
-
   // Tool methods removed in favor of imports above
 
   private ensureNotAborted() {
@@ -825,61 +759,19 @@ ${url ? `<url>${url}</url>` : ''}
       this.earlySynthesisTriggered = true;
     }
   }
-
-  // --------------- Helpers for per-subquery flows ---------------
-
-  private assessSubquerySufficiency(
-    subquestion: string,
-    evidence: EvidenceItem[],
-  ): { status: 'sufficient' | 'needsMore' | 'needsDepth'; reason: string } {
-    // Heuristics
-    const E = evidence.length;
-    const supportMax = Math.max(...evidence.map((e) => e.supportCount || 1), 1);
-    const allSources = evidence.flatMap((e) => e.sources || []);
-    const domains = new Set(
-      allSources
-        .map((s) => {
-          try {
-            return new URL(s.url).hostname.replace(/^www\./, '');
-          } catch {
-            return '';
-          }
-        })
-        .filter(Boolean),
-    );
-    const quotes = evidence.reduce(
-      (acc, e) => acc + (e.examples?.length || 0),
-      0,
-    );
-
-    if (E >= 8 && domains.size >= 3 && supportMax >= 2) {
-      return { status: 'sufficient', reason: 'ample evidence and diversity' };
-    }
-    if (E >= 4 && (domains.size < 2 || quotes < 2)) {
-      return {
-        status: 'needsDepth',
-        reason: 'needs authoritative or primary sources',
-      };
-    }
-    return { status: 'needsMore', reason: 'insufficient evidence volume' };
-  }
 }
 
-type Phase =
-  | 'Plan'
-  | 'Search'
-  | 'ReadExtract'
-  | 'ClusterMap'
-  | 'Synthesize'
-  | 'Review';
+type Phase = 'Plan' | 'Search' | 'Analyze' | 'Synthesize';
 
 export default DeepResearchAgent;
 
 // Local types
 type SubqueryResult = {
   subquestion: string;
-  candidates: Candidate[];
-  extracted: ExtractedDoc[];
-  evidence: EvidenceItem[];
+  extracted: {
+    url: string;
+    title: string;
+    facts: ExtractFactsOutput | null;
+  }[];
   sufficiency: 'pending' | 'sufficient' | 'needsMore' | 'needsDepth';
 };

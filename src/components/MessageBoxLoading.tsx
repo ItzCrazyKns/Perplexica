@@ -126,7 +126,7 @@ const MessageBoxLoading = ({
 // TokenPill moved to shared component
 
 function PhaseTimeline({ percent }: { percent: number }) {
-  const phases = ['Plan', 'Search', 'Read', 'Cluster', 'Synthesize', 'Review'];
+  const phases = ['Plan', 'Search', 'Analyze', 'Synthesize'];
   const stepPct = 100 / phases.length;
   const completed = Math.floor(percent / stepPct + 0.0001);
   return (
