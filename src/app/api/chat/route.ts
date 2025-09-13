@@ -25,6 +25,7 @@ type Message = {
   messageId: string;
   chatId: string;
   content: string;
+  userSessionId: string;
 };
 
 type ChatModel = {
@@ -135,7 +136,7 @@ const handleHistorySave = async (
   });
 
   const fileData = files.map(getFileDetails);
-
+  let currentDate = new Date();
   if (!chat) {
     await db
       .insert(chats)
@@ -145,6 +146,8 @@ const handleHistorySave = async (
         createdAt: new Date().toString(),
         focusMode: focusMode,
         files: fileData,
+        userSessionId: message.userSessionId,
+        timestamp: currentDate.toISOString(),
       })
       .execute();
   } else if (JSON.stringify(chat.files ?? []) != JSON.stringify(fileData)) {
