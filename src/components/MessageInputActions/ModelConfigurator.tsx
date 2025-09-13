@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Cpu, ChevronDown, Link } from 'lucide-react';
-import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react';
+import {
+  Dialog,
+  DialogPanel,
+  Transition,
+  TransitionChild,
+} from '@headlessui/react';
 import { Fragment } from 'react';
 import ModelSelector from './ModelSelector';
 import { cn } from '@/lib/utils';
@@ -64,7 +69,11 @@ export default function ModelConfigurator({
       const system = localStorage.getItem(STORAGE_KEYS.systemModel);
       if (systemProvider && system) {
         setSystemModel({ provider: systemProvider, model: system });
-      } else if ((linkStored === null || linkStored === 'true') && chatProvider && chat) {
+      } else if (
+        (linkStored === null || linkStored === 'true') &&
+        chatProvider &&
+        chat
+      ) {
         // Mirror chat if linking and no explicit system set
         setSystemModel({ provider: chatProvider, model: chat });
         localStorage.setItem(STORAGE_KEYS.systemProvider, chatProvider);
@@ -91,7 +100,7 @@ export default function ModelConfigurator({
       localStorage.setItem(STORAGE_KEYS.systemModel, chatModel.model);
     }
   }, [hydrated, linkSystemToChat, chatModel]);
-  
+
   const handleSelectChat = (m: { provider: string; model: string }) => {
     setChatModel(m);
     localStorage.setItem(STORAGE_KEYS.chatProvider, m.provider);
@@ -168,14 +177,19 @@ export default function ModelConfigurator({
             >
               <DialogPanel className="w-full max-w-lg rounded-lg bg-surface border border-surface-2 shadow-lg">
                 <div className="px-5 py-4 border-b border-surface-2">
-                  <h2 className="text-sm font-semibold text-fg/90">Model Configuration</h2>
+                  <h2 className="text-sm font-semibold text-fg/90">
+                    Model Configuration
+                  </h2>
                   <p className="text-xs text-fg/60 mt-1">
-                    Choose the Chat and System models. Link them to keep System in sync with Chat.
+                    Choose the Chat and System models. Link them to keep System
+                    in sync with Chat.
                   </p>
                 </div>
                 <div className="p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-fg/80">Link System to Chat</span>
+                    <span className="text-xs text-fg/80">
+                      Link System to Chat
+                    </span>
                     <label className="inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
@@ -184,7 +198,14 @@ export default function ModelConfigurator({
                         onChange={(e) => setLinkSystemToChat(e.target.checked)}
                       />
                       <div className="w-10 h-5 bg-surface-2 rounded-full peer peer-checked:bg-accent transition-colors relative">
-                        <div className={cn('absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform', linkSystemToChat ? 'translate-x-5' : 'translate-x-0')} />
+                        <div
+                          className={cn(
+                            'absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform',
+                            linkSystemToChat
+                              ? 'translate-x-5'
+                              : 'translate-x-0',
+                          )}
+                        />
                       </div>
                     </label>
                   </div>
@@ -203,12 +224,21 @@ export default function ModelConfigurator({
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                      <span className="text-xs text-fg/70">System Model</span>
-                      {linkSystemToChat && (
-                          <span className="text-[10px] bg-surface px-2 py-0.5 rounded border border-surface-2 text-fg/60"><Link size={14} /></span>
+                        <span className="text-xs text-fg/70">System Model</span>
+                        {linkSystemToChat && (
+                          <span className="text-[10px] bg-surface px-2 py-0.5 rounded border border-surface-2 text-fg/60">
+                            <Link size={14} />
+                          </span>
                         )}
                       </div>
-                      <div className={cn('relative', linkSystemToChat ? 'opacity-60 pointer-events-none' : '')}>
+                      <div
+                        className={cn(
+                          'relative',
+                          linkSystemToChat
+                            ? 'opacity-60 pointer-events-none'
+                            : '',
+                        )}
+                      >
                         <ModelSelector
                           role="system"
                           selectedModel={systemModel}

@@ -354,7 +354,8 @@ export class SimplifiedAgent {
           const output = event.data.output;
           const nameLower = (event.name || '').toLowerCase();
           console.log(`SimplifiedAgent: on_chat_model_end`, event);
-          const isToolContext = output.tool_calls && output.tool_calls.length > 0;
+          const isToolContext =
+            output.tool_calls && output.tool_calls.length > 0;
 
           // Collect token usage from chat model end events
           if (output.usage_metadata) {
@@ -382,9 +383,12 @@ export class SimplifiedAgent {
                   modelNameChat: getModelName(this.chatLlm),
                   modelNameSystem: getModelName(this.systemLlm),
                   usage: {
-                    input_tokens: usageChat.input_tokens + usageSystem.input_tokens,
-                    output_tokens: usageChat.output_tokens + usageSystem.output_tokens,
-                    total_tokens: usageChat.total_tokens + usageSystem.total_tokens,
+                    input_tokens:
+                      usageChat.input_tokens + usageSystem.input_tokens,
+                    output_tokens:
+                      usageChat.output_tokens + usageSystem.output_tokens,
+                    total_tokens:
+                      usageChat.total_tokens + usageSystem.total_tokens,
                   },
                   usageChat,
                   usageSystem,
@@ -418,9 +422,12 @@ export class SimplifiedAgent {
                   modelNameChat: getModelName(this.chatLlm),
                   modelNameSystem: getModelName(this.systemLlm),
                   usage: {
-                    input_tokens: usageChat.input_tokens + usageSystem.input_tokens,
-                    output_tokens: usageChat.output_tokens + usageSystem.output_tokens,
-                    total_tokens: usageChat.total_tokens + usageSystem.total_tokens,
+                    input_tokens:
+                      usageChat.input_tokens + usageSystem.input_tokens,
+                    output_tokens:
+                      usageChat.output_tokens + usageSystem.output_tokens,
+                    total_tokens:
+                      usageChat.total_tokens + usageSystem.total_tokens,
                   },
                   usageChat,
                   usageSystem,
@@ -506,9 +513,12 @@ export class SimplifiedAgent {
                   modelNameChat: getModelName(this.chatLlm),
                   modelNameSystem: getModelName(this.systemLlm),
                   usage: {
-                    input_tokens: usageChat.input_tokens + usageSystem.input_tokens,
-                    output_tokens: usageChat.output_tokens + usageSystem.output_tokens,
-                    total_tokens: usageChat.total_tokens + usageSystem.total_tokens,
+                    input_tokens:
+                      usageChat.input_tokens + usageSystem.input_tokens,
+                    output_tokens:
+                      usageChat.output_tokens + usageSystem.output_tokens,
+                    total_tokens:
+                      usageChat.total_tokens + usageSystem.total_tokens,
                   },
                   usageChat,
                   usageSystem,
@@ -593,7 +603,12 @@ export class SimplifiedAgent {
       // Emit model stats and end signal after streaming is complete
       const modelNameChat = getModelName(this.chatLlm);
       const modelNameSystem = getModelName(this.systemLlm);
-      console.log('SimplifiedAgent: Usage collected — chat:', usageChat, 'system:', usageSystem);
+      console.log(
+        'SimplifiedAgent: Usage collected — chat:',
+        usageChat,
+        'system:',
+        usageSystem,
+      );
       this.emitter.emit(
         'stats',
         JSON.stringify({
@@ -604,7 +619,8 @@ export class SimplifiedAgent {
             modelNameSystem,
             usage: {
               input_tokens: usageChat.input_tokens + usageSystem.input_tokens,
-              output_tokens: usageChat.output_tokens + usageSystem.output_tokens,
+              output_tokens:
+                usageChat.output_tokens + usageSystem.output_tokens,
               total_tokens: usageChat.total_tokens + usageSystem.total_tokens,
             },
             usageChat,

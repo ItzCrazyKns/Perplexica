@@ -47,7 +47,6 @@ const MessageInput = ({
 }) => {
   const [message, setMessage] = useState('');
 
-
   useEffect(() => {
     const storedPromptIds = localStorage.getItem('selectedSystemPromptIds');
     if (storedPromptIds) {
@@ -102,7 +101,6 @@ const MessageInput = ({
   const handleSubmitMessage = () => {
     // Only submit if we have a non-empty message and not currently loading
     if (loading || message.trim().length === 0) return;
-
 
     sendMessage(message);
     setMessage('');

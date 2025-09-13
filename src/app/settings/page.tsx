@@ -1256,14 +1256,8 @@ export default function SettingsPage() {
                           if (linkSystemToChat) {
                             setSelectedSystemModelProvider(value);
                             setSelectedSystemModel(firstModel);
-                            localStorage.setItem(
-                              'systemModelProvider',
-                              value,
-                            );
-                            localStorage.setItem(
-                              'systemModel',
-                              firstModel,
-                            );
+                            localStorage.setItem('systemModelProvider', value);
+                            localStorage.setItem('systemModel', firstModel);
                           }
                         }
                       }}
@@ -1415,7 +1409,8 @@ export default function SettingsPage() {
                     <div>
                       <p className="text-sm font-medium">Link System to Chat</p>
                       <p className="text-xs mt-0.5 text-fg/60">
-                        When enabled, the System model mirrors the Chat model and is disabled below.
+                        When enabled, the System model mirrors the Chat model
+                        and is disabled below.
                       </p>
                     </div>
                     <Switch
@@ -1426,7 +1421,11 @@ export default function SettingsPage() {
                           'linkSystemToChat',
                           checked.toString(),
                         );
-                        if (checked && selectedChatModelProvider && selectedChatModel) {
+                        if (
+                          checked &&
+                          selectedChatModelProvider &&
+                          selectedChatModel
+                        ) {
                           // Immediately mirror current chat selection
                           setSelectedSystemModelProvider(
                             selectedChatModelProvider,

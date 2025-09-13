@@ -16,7 +16,8 @@ const ModelInfoButton: React.FC<ModelInfoButtonProps> = ({ modelStats }) => {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   // Always render, using "Unknown" as fallback if model info isn't available
-  const modelName = modelStats?.modelName || modelStats?.modelNameChat || 'Unknown';
+  const modelName =
+    modelStats?.modelName || modelStats?.modelNameChat || 'Unknown';
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -59,7 +60,9 @@ const ModelInfoButton: React.FC<ModelInfoButtonProps> = ({ modelStats }) => {
               {!modelStats?.modelNameChat && modelName && (
                 <>
                   <div className="opacity-70">Model</div>
-                  <div className="font-medium truncate" title={modelName}>{modelName}</div>
+                  <div className="font-medium truncate" title={modelName}>
+                    {modelName}
+                  </div>
                 </>
               )}
 
@@ -67,16 +70,31 @@ const ModelInfoButton: React.FC<ModelInfoButtonProps> = ({ modelStats }) => {
               {modelStats?.modelNameChat && (
                 <>
                   <div className="opacity-70">Chat model</div>
-                  <div className="font-medium truncate" title={modelStats.modelNameChat}>{modelStats.modelNameChat}</div>
+                  <div
+                    className="font-medium truncate"
+                    title={modelStats.modelNameChat}
+                  >
+                    {modelStats.modelNameChat}
+                  </div>
                 </>
               )}
               {modelStats?.usageChat && (
                 <>
                   <div className="opacity-70">Chat tokens (est)</div>
                   <div className="flex flex-wrap gap-2">
-                    <TokenPill label="In" value={modelStats.usageChat.input_tokens} />
-                    <TokenPill label="Out" value={modelStats.usageChat.output_tokens} />
-                    <TokenPill label="Total" value={modelStats.usageChat.total_tokens} highlight />
+                    <TokenPill
+                      label="In"
+                      value={modelStats.usageChat.input_tokens}
+                    />
+                    <TokenPill
+                      label="Out"
+                      value={modelStats.usageChat.output_tokens}
+                    />
+                    <TokenPill
+                      label="Total"
+                      value={modelStats.usageChat.total_tokens}
+                      highlight
+                    />
                   </div>
                 </>
               )}
@@ -85,37 +103,66 @@ const ModelInfoButton: React.FC<ModelInfoButtonProps> = ({ modelStats }) => {
               {modelStats?.modelNameSystem && (
                 <>
                   <div className="opacity-70">System model</div>
-                  <div className="font-medium truncate" title={modelStats.modelNameSystem}>{modelStats.modelNameSystem}</div>
+                  <div
+                    className="font-medium truncate"
+                    title={modelStats.modelNameSystem}
+                  >
+                    {modelStats.modelNameSystem}
+                  </div>
                 </>
               )}
               {modelStats?.usageSystem && (
                 <>
                   <div className="opacity-70">System tokens (est)</div>
                   <div className="flex flex-wrap gap-2">
-                    <TokenPill label="In" value={modelStats.usageSystem.input_tokens} />
-                    <TokenPill label="Out" value={modelStats.usageSystem.output_tokens} />
-                    <TokenPill label="Total" value={modelStats.usageSystem.total_tokens} highlight />
+                    <TokenPill
+                      label="In"
+                      value={modelStats.usageSystem.input_tokens}
+                    />
+                    <TokenPill
+                      label="Out"
+                      value={modelStats.usageSystem.output_tokens}
+                    />
+                    <TokenPill
+                      label="Total"
+                      value={modelStats.usageSystem.total_tokens}
+                      highlight
+                    />
                   </div>
                 </>
               )}
 
               {/* Legacy single-usage fallback */}
-              {!modelStats?.usageChat && !modelStats?.usageSystem && modelStats?.usage && (
-                <>
-                  <div className="opacity-70">Tokens (est)</div>
-                  <div className="flex flex-wrap gap-2">
-                    <TokenPill label="In" value={modelStats.usage.input_tokens} />
-                    <TokenPill label="Out" value={modelStats.usage.output_tokens} />
-                    <TokenPill label="Total" value={modelStats.usage.total_tokens} highlight />
-                  </div>
-                </>
-              )}
+              {!modelStats?.usageChat &&
+                !modelStats?.usageSystem &&
+                modelStats?.usage && (
+                  <>
+                    <div className="opacity-70">Tokens (est)</div>
+                    <div className="flex flex-wrap gap-2">
+                      <TokenPill
+                        label="In"
+                        value={modelStats.usage.input_tokens}
+                      />
+                      <TokenPill
+                        label="Out"
+                        value={modelStats.usage.output_tokens}
+                      />
+                      <TokenPill
+                        label="Total"
+                        value={modelStats.usage.total_tokens}
+                        highlight
+                      />
+                    </div>
+                  </>
+                )}
 
               {/* Response time */}
               {modelStats?.responseTime && (
                 <>
                   <div className="opacity-70">Response time</div>
-                  <div className="font-medium">{(modelStats.responseTime / 1000).toFixed(2)}s</div>
+                  <div className="font-medium">
+                    {(modelStats.responseTime / 1000).toFixed(2)}s
+                  </div>
                 </>
               )}
             </div>

@@ -47,31 +47,65 @@ const MessageBoxLoading = ({
               />
             </div>
             {/* Token counters */}
-            {(modelStats?.usageChat || modelStats?.usageSystem || modelStats?.usage) && (
+            {(modelStats?.usageChat ||
+              modelStats?.usageSystem ||
+              modelStats?.usage) && (
               <div className="flex flex-col gap-1 pt-1 text-xs text-fg/80">
                 {modelStats?.usageChat && (
                   <div className="flex flex-row gap-2 items-center">
                     <span className="opacity-70 w-14">Chat</span>
-                    <TokenPill label="In" value={modelStats.usageChat.input_tokens} />
-                    <TokenPill label="Out" value={modelStats.usageChat.output_tokens} />
-                    <TokenPill label="Total" value={modelStats.usageChat.total_tokens} highlight />
+                    <TokenPill
+                      label="In"
+                      value={modelStats.usageChat.input_tokens}
+                    />
+                    <TokenPill
+                      label="Out"
+                      value={modelStats.usageChat.output_tokens}
+                    />
+                    <TokenPill
+                      label="Total"
+                      value={modelStats.usageChat.total_tokens}
+                      highlight
+                    />
                   </div>
                 )}
                 {modelStats?.usageSystem && (
                   <div className="flex flex-row gap-2 items-center">
                     <span className="opacity-70 w-14">System</span>
-                    <TokenPill label="In" value={modelStats.usageSystem.input_tokens} />
-                    <TokenPill label="Out" value={modelStats.usageSystem.output_tokens} />
-                    <TokenPill label="Total" value={modelStats.usageSystem.total_tokens} highlight />
+                    <TokenPill
+                      label="In"
+                      value={modelStats.usageSystem.input_tokens}
+                    />
+                    <TokenPill
+                      label="Out"
+                      value={modelStats.usageSystem.output_tokens}
+                    />
+                    <TokenPill
+                      label="Total"
+                      value={modelStats.usageSystem.total_tokens}
+                      highlight
+                    />
                   </div>
                 )}
-                {!modelStats?.usageChat && !modelStats?.usageSystem && modelStats?.usage && (
-                  <div className="flex flex-row gap-2 items-center">
-                    <TokenPill label="Input" value={modelStats.usage.input_tokens} />
-                    <TokenPill label="Output" value={modelStats.usage.output_tokens} />
-                    <TokenPill label="Total" value={modelStats.usage.total_tokens} highlight />
-                  </div>
-                )}
+                {!modelStats?.usageChat &&
+                  !modelStats?.usageSystem &&
+                  modelStats?.usage && (
+                    <div className="flex flex-row gap-2 items-center">
+                      <TokenPill
+                        label="Input"
+                        value={modelStats.usage.input_tokens}
+                      />
+                      <TokenPill
+                        label="Output"
+                        value={modelStats.usage.output_tokens}
+                      />
+                      <TokenPill
+                        label="Total"
+                        value={modelStats.usage.total_tokens}
+                        highlight
+                      />
+                    </div>
+                  )}
               </div>
             )}
           </div>

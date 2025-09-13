@@ -502,8 +502,8 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
         event.event === 'on_chain_end' &&
         event.name === 'FinalResponseGenerator'
       ) {
-  const modelName = getModelName(chatLlm);
-  const systemModelName = getModelName(systemLlm);
+        const modelName = getModelName(chatLlm);
+        const systemModelName = getModelName(systemLlm);
 
         // Send model info before ending
         emitter.emit(
@@ -558,7 +558,7 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
       },
     );
 
-  this.handleStream(stream, emitter, chatLlm, systemLlm, signal);
+    this.handleStream(stream, emitter, chatLlm, systemLlm, signal);
 
     return emitter;
   }

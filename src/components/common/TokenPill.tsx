@@ -12,7 +12,9 @@ export default function TokenPill({
   title?: string;
 }) {
   const numeric = typeof value === 'number' ? value : Number(value ?? 0);
-  const display = Number.isNaN(numeric) ? String(value ?? '') : numeric.toLocaleString();
+  const display = Number.isNaN(numeric)
+    ? String(value ?? '')
+    : numeric.toLocaleString();
   return (
     <div
       className={cn(

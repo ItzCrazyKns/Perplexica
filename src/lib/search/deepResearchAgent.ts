@@ -65,8 +65,16 @@ export class DeepResearchAgent {
   private aborted = false;
   // Token usage tracking across phases (normalized across providers)
   // Separate usage tracking for chat vs system models
-  private totalUsageChat = { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
-  private totalUsageSystem = { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
+  private totalUsageChat = {
+    input_tokens: 0,
+    output_tokens: 0,
+    total_tokens: 0,
+  };
+  private totalUsageSystem = {
+    input_tokens: 0,
+    output_tokens: 0,
+    total_tokens: 0,
+  };
   private phaseUsage: Partial<
     Record<
       Phase,
@@ -203,11 +211,14 @@ export class DeepResearchAgent {
             modelNameSystem: getModelName(this.systemLlm),
             usage: {
               input_tokens:
-                this.totalUsageChat.input_tokens + this.totalUsageSystem.input_tokens,
+                this.totalUsageChat.input_tokens +
+                this.totalUsageSystem.input_tokens,
               output_tokens:
-                this.totalUsageChat.output_tokens + this.totalUsageSystem.output_tokens,
+                this.totalUsageChat.output_tokens +
+                this.totalUsageSystem.output_tokens,
               total_tokens:
-                this.totalUsageChat.total_tokens + this.totalUsageSystem.total_tokens,
+                this.totalUsageChat.total_tokens +
+                this.totalUsageSystem.total_tokens,
             },
             usageChat: this.totalUsageChat,
             usageSystem: this.totalUsageSystem,
@@ -286,11 +297,14 @@ export class DeepResearchAgent {
           modelNameSystem: getModelName(this.systemLlm),
           usage: {
             input_tokens:
-              this.totalUsageChat.input_tokens + this.totalUsageSystem.input_tokens,
+              this.totalUsageChat.input_tokens +
+              this.totalUsageSystem.input_tokens,
             output_tokens:
-              this.totalUsageChat.output_tokens + this.totalUsageSystem.output_tokens,
+              this.totalUsageChat.output_tokens +
+              this.totalUsageSystem.output_tokens,
             total_tokens:
-              this.totalUsageChat.total_tokens + this.totalUsageSystem.total_tokens,
+              this.totalUsageChat.total_tokens +
+              this.totalUsageSystem.total_tokens,
           },
           usageChat: this.totalUsageChat,
           usageSystem: this.totalUsageSystem,
@@ -385,7 +399,11 @@ export class DeepResearchAgent {
     };
   }
 
-  private addPhaseUsage(phase: Phase, usageData: any, which: 'chat' | 'system' = 'system') {
+  private addPhaseUsage(
+    phase: Phase,
+    usageData: any,
+    which: 'chat' | 'system' = 'system',
+  ) {
     const norm = this.normalizeUsageMetadata(usageData);
     // Update totals separately for chat vs system
     if (which === 'chat') {
@@ -419,11 +437,14 @@ export class DeepResearchAgent {
           modelNameSystem: getModelName(this.systemLlm),
           usage: {
             input_tokens:
-              this.totalUsageChat.input_tokens + this.totalUsageSystem.input_tokens,
+              this.totalUsageChat.input_tokens +
+              this.totalUsageSystem.input_tokens,
             output_tokens:
-              this.totalUsageChat.output_tokens + this.totalUsageSystem.output_tokens,
+              this.totalUsageChat.output_tokens +
+              this.totalUsageSystem.output_tokens,
             total_tokens:
-              this.totalUsageChat.total_tokens + this.totalUsageSystem.total_tokens,
+              this.totalUsageChat.total_tokens +
+              this.totalUsageSystem.total_tokens,
           },
           usageChat: this.totalUsageChat,
           usageSystem: this.totalUsageSystem,

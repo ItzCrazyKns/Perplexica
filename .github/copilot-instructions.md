@@ -200,7 +200,7 @@ The deep research workflow treats each planned subquestion as its own gather/ext
   - Assess: apply a sufficiency heuristic; if weak, run a focused depth pass (gov/edu, pdfs, methodology/data queries) and re-evaluate.
 - Results are aggregated across subquestions for clustering and synthesis. Early synthesis may trigger once coverage is adequate.
 - Implementation: `src/lib/search/deepResearchAgent.ts`.
- 
+
 ## Token Usage Tracking (Chat vs System)
 
 We track token usage separately for the Chat Model and the System Model across all major pipelines:

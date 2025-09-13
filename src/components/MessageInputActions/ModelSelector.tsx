@@ -225,7 +225,9 @@ const ModelSelector = ({
               <div className="overflow-hidden rounded-lg shadow-lg bg-surface border border-surface-2 divide-y divide-surface-2">
                 <div className="px-4 py-3">
                   <h3 className="text-sm font-medium text-fg/90">
-                    {role === 'system' ? 'Select System Model' : 'Select Chat Model'}
+                    {role === 'system'
+                      ? 'Select System Model'
+                      : 'Select Chat Model'}
                   </h3>
                   <p className="text-xs text-fg/60 mt-1">
                     {role === 'system'
