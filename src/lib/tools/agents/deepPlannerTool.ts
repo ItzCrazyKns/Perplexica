@@ -38,10 +38,19 @@ export async function deepPlannerTool(
   query: string,
   history: BaseMessage[] = [],
   onUsage?: (usageData: any) => void,
+  options?: { webContext?: string; date?: string },
 ): Promise<PlannerOutput> {
   const messages = [
     ...removeThinkingBlocksFromMessages(history),
     new SystemMessage(plannerPrompt),
+    // Provide fresh web context (if available) to bias planning toward current events
+    ...(options?.webContext
+      ? [
+          new HumanMessage(
+            `Recent web scan (${options?.date || 'today'}) — titles/snippets:\n${options.webContext}\n\nUse this transient context to ensure subquestions reflect current events and terminology.`,
+          ),
+        ]
+      : []),
     new HumanMessage(`${query}`),
   ];
   try {

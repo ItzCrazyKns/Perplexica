@@ -193,6 +193,8 @@ Implementation notes (key files):
 
 The deep research workflow treats each planned subquestion as its own gather/extract/rank pipeline rather than pooling all subqueries into a single candidate list.
 
+- Plan warm-up: before generating subquestions, the agent performs a single lightweight SearXNG search on the user's query and feeds titles/snippets from the top results into the planner. This grounds subquestions in current events/terminology while keeping planning fast.
+
 - For each subquestion:
   - Gather: diversified SearXNG queries via `expandedSearchTool` with semantic reranking to the subquestion intent.
   - Extract: use `readerExtractorTool` with the subquestion as the guidance query; reuse cached extractions when available.

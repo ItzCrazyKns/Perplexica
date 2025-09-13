@@ -1,52 +1,36 @@
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { Embeddings } from '@langchain/core/embeddings';
-import { EventEmitter } from 'events';
+import type { SessionManifest } from '@/lib/state/deepResearchAgentState';
 import { deepPlannerTool } from '@/lib/tools/agents/deepPlannerTool';
 import {
-  expandedSearchTool,
-  type Candidate,
-} from '@/lib/tools/agents/expandedSearchTool';
-import {
-  readerExtractorTool,
-  type ExtractedDoc,
-} from '@/lib/tools/agents/readerExtractorTool';
-import { clusterCompressTool } from '@/lib/tools/agents/clusterCompressTool';
-import { deepSynthesizerTool } from '@/lib/tools/agents/deepSynthesizerTool';
-import {
-  evidenceStoreTool,
-  type EvidenceItem,
+  type EvidenceItem
 } from '@/lib/tools/agents/evidenceStoreTool';
 import {
+  type Candidate
+} from '@/lib/tools/agents/expandedSearchTool';
+import {
+  type ExtractedDoc
+} from '@/lib/tools/agents/readerExtractorTool';
+import { searchQueryTool } from '@/lib/tools/agents/searchQueryTool';
+import {
   ensureSessionDirs,
+  readManifest,
   updateManifest,
   writeArtifact,
-  writeManifest,
-  readManifest,
-  sessionDir,
-  sanitizeFilename,
+  writeManifest
 } from '@/lib/utils/deepResearchFS';
 import { getModelName } from '@/lib/utils/modelUtils';
-import fs from 'fs';
-import path from 'path';
-import type { SessionManifest } from '@/lib/state/deepResearchAgentState';
-import computeSimilarity from '@/lib/utils/computeSimilarity';
-import { SimplifiedAgent } from './simplifiedAgent';
-import { BaseMessage, HumanMessage } from '@langchain/core/messages';
-import { createReactAgent } from '@langchain/langgraph/prebuilt';
-import { webSearchTools } from '../tools/agents';
-import { buildWebSearchPrompt } from '../prompts/simplifiedAgent/webSearch';
-import { formatDateForLLM } from '../utils';
-import { SimplifiedAgentState } from '../state/chatAgentState';
+import { Embeddings } from '@langchain/core/embeddings';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { BaseMessage } from '@langchain/core/messages';
+import { EventEmitter } from 'events';
 import { getLangfuseCallbacks } from '../tracing/langfuse';
+import { formatDateForLLM } from '../utils';
 // import { RunnableConfig } from '@langchain/core/runnables';
-import z from 'zod';
-import { webSearchPrompt } from '../prompts/deepResearch/webSearch';
-import { extractFactsAndQuotes } from '../utils/extractWebFacts';
-import { searchSearxng } from '../searxng';
-import { ChatPromptTemplate } from '@langchain/core/prompts';
-import { RunnableSequence } from '@langchain/core/runnables';
 import { synthesizerPrompt } from '@/lib/prompts/synthesizer';
 import { formattingAndCitationsScholarly } from '@/lib/prompts/templates';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { RunnableSequence } from '@langchain/core/runnables';
+import { searchSearxng } from '../searxng';
+import { extractFactsAndQuotes } from '../utils/extractWebFacts';
 
 /**
  * DeepResearchAgent — phased orchestrator with budgets, cancellation, and progress streaming.
@@ -364,6 +348,18 @@ export class DeepResearchAgent {
     return Math.round((idx / total) * 100);
   }
 
+  private phaseSubPercent(
+    subIndex: number,
+    totalSubs: number,
+    after = false,
+  ): number {
+    const basePercent = this.phasePercent(false);
+    const nextPhasePercent = this.phasePercent(true);
+    const phaseRange = nextPhasePercent - basePercent;
+    const subProgress = (subIndex + (after ? 1 : 0)) / totalSubs;
+    return Math.round(basePercent + subProgress * phaseRange);
+  }
+
   private emitResponse(text: string) {
     this.emitter.emit('data', JSON.stringify({ type: 'response', data: text }));
   }
@@ -514,13 +510,52 @@ export class DeepResearchAgent {
 
   private async planPhase(query: string, history: any[]) {
     this.ensureNotAborted();
-    // TODO: Replace with deepPlannerTool invoking planner prompt (M3)
+    // First, use System LLM to craft an optimized search query using structured output tool
+    this.emitProgress('Plan', 'Generating search query', this.phasePercent());
+    let optimizedQuery = query;
+    try {
+      const res = await searchQueryTool(
+        this.systemLlm,
+        query,
+        history as any,
+        (usage) => this.addPhaseUsage('Plan', usage, 'system'),
+      );
+      const candidate = (res?.searchQuery || '').trim();
+      if (candidate && candidate.toLowerCase() !== 'not_needed') {
+        optimizedQuery = candidate;
+      }
+      this.countLLMTurns();
+    } catch (e) {
+      console.warn('Plan-phase query generation failed, falling back to raw query:', e);
+    }
+
+    // One quick initial web scan to ground planning in current context
+    this.emitProgress('Plan', 'Scanning web for context', this.phasePercent());
+    let webContext = '';
+    try {
+      const searx = await searchSearxng(optimizedQuery, { language: 'en' });
+      const top = searx.results.slice(0, 6);
+      webContext = top
+        .map((r, i) => {
+          const title = r.title || `Result ${i + 1}`;
+          const url = r.url || '';
+          const snippet = (r.content || '').replace(/\s+/g, ' ').slice(0, 220);
+          return `- ${title} — ${url}${snippet ? ` — ${snippet}` : ''}`;
+        })
+        .join('\n');
+    } catch (e) {
+      // Non-fatal: proceed without web context
+      console.warn('Plan-phase web scan failed:', e);
+    }
+
+    // Invoke planner with optional current web context
     this.countLLMTurns();
     this.state.plan = await deepPlannerTool(
       this.systemLlm,
       query,
       history as any,
       (usage) => this.addPhaseUsage('Plan', usage, 'system'),
+      { webContext, date: formatDateForLLM(new Date()) },
     );
     this.emitProgress(
       'Plan',
@@ -552,7 +587,7 @@ export class DeepResearchAgent {
       this.emitProgress(
         'Search',
         `Searching ${sq} (${i + 1}/${subqs.length})`,
-        this.phasePercent(),
+        this.phaseSubPercent(i, subqs.length),
       );
 
       const subqueryResult = await searchSearxng(sq);
@@ -560,7 +595,7 @@ export class DeepResearchAgent {
       this.emitProgress(
         'Search',
         `Extracting candidates for "${sq}" (${i + 1}/${subqs.length})`,
-        this.phasePercent(),
+        this.phaseSubPercent(i, subqs.length),
       );
 
       const facts = await Promise.all(
@@ -613,7 +648,7 @@ export class DeepResearchAgent {
     this.emitProgress(
       'Search',
       'Collected candidate sources (per-subquery)',
-      this.phasePercent(true),
+      this.phaseSubPercent(subqs.length - 1, subqs.length, true),
       `${totalCandidates} total across ${perSub.length} subqueries`,
     );
     if (this.chatId) {
