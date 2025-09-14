@@ -1,5 +1,9 @@
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import {
+  BaseMessage,
+  HumanMessage,
+  SystemMessage,
+} from '@langchain/core/messages';
 import { withStructuredOutput } from '@/lib/utils/structuredOutput';
 import { removeThinkingBlocksFromMessages } from '@/lib/utils/contentUtils';
 import { formatDateForLLM } from '@/lib/utils';
@@ -31,7 +35,9 @@ export async function searchQueryTool(
 ): Promise<QueryOutput> {
   const messages = [
     ...removeThinkingBlocksFromMessages(history),
-    new SystemMessage(`You generate a single concise web search query for the user's question based on the conversation context.\n\nRules:\n- Return a brief, specific query suitable for web search\n- Include entities, dates, or site:example.com if appropriate\n- If a web search is not needed, set searchQuery to "not_needed"\n- Current date is ${formatDateForLLM(new Date())}`),
+    new SystemMessage(
+      `You generate a single concise web search query for the user's question based on the conversation context.\n\nRules:\n- Return a brief, specific query suitable for web search\n- Include entities, dates, or site:example.com if appropriate\n- If a web search is not needed, set searchQuery to "not_needed"\n- Current date is ${formatDateForLLM(new Date())}`,
+    ),
     new HumanMessage(`${query}`),
   ];
 

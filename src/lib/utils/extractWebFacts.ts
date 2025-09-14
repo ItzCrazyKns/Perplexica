@@ -12,10 +12,12 @@ import {
   CallbackManagerForLLMRun,
 } from '@langchain/core/callbacks/manager';
 import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
+import { getModelContextSize } from '@langchain/core/language_models/base';
 
 export type ExtractFactsOutput = {
   facts: string[];
   quotes: string[];
+  longContent: string[];
   notRelevantReason?: string;
 };
 
@@ -35,7 +37,7 @@ const ExtractionSchema = z.object({
       z
         .string()
         .describe(
-          'One short, atomic fact (≤25 words) stated in your own words. No quotes, no markdown bullets.',
+          'One short, atomic fact (≤50 words) stated in your own words. No quotes, no markdown bullets.',
         ),
     )
     .max(12)
@@ -50,6 +52,13 @@ const ExtractionSchema = z.object({
     )
     .max(6)
     .describe('Up to 6 short, high-signal quotes.'),
+  longContent: z
+    .array(z.string())
+    .optional()
+    .nullable()
+    .describe(
+      'Optional list of long content sections that contain relevant info that must be kept intact. For example, technical specs, legal text, code snippets, table data, etc. These should be preserved in full. Use only when necessary if the quotes and facts are insufficient.',
+    ),
 });
 
 /**
@@ -69,7 +78,12 @@ export async function extractFactsAndQuotes(
   try {
     const content = await getWebContent(url, false);
     if (!content) {
-      return { facts: [], quotes: [], notRelevantReason: 'No content at URL' };
+      return {
+        facts: [],
+        quotes: [],
+        longContent: [],
+        notRelevantReason: 'No content at URL',
+      };
     }
 
     const structured = withStructuredOutput(llm, ExtractionSchema, {
@@ -80,6 +94,7 @@ export async function extractFactsAndQuotes(
       return {
         facts: [],
         quotes: [],
+        longContent: [],
         notRelevantReason: 'No extractable content',
       };
     }
@@ -92,6 +107,7 @@ Given the user's query and webpage content, decide if the content is relevant. I
 # Rules
 - Facts: ≤50 words, no markdown bullets, no quotes, one idea per item
 - Quotes: short direct quotes (≤200 chars) copied verbatim from the content
+- Long content: if the content contains complex, detailed, or technical information that cannot be easily summarized in short facts or quotes, include these sections in full to preserve their meaning and context
 - Only include items that directly support the query
 
 # Response format
@@ -100,6 +116,7 @@ Respond in JSON format with these fields:
 - reason: string, brief explanation of relevance (≤20 words)
 - facts: array of short factual statements in your own words (max 12 items, 25 words max per item)
 - quotes: array of direct quotes from the content (max 6 items, 200 chars max per item, include quotation marks)
+- longContent: Optional list of long content sections that contain relevant info that must be kept intact. For example, technical specs, legal text, code snippets, table data, etc. These should be preserved in full. Use only when necessary if the quotes and facts are insufficient.
 
 # Context
 
@@ -135,6 +152,7 @@ ${body}`;
       return {
         facts: [],
         quotes: [],
+        longContent: [],
         notRelevantReason: res?.reason || 'Content not relevant to query',
       };
     }
@@ -146,12 +164,14 @@ ${body}`;
     return {
       facts,
       quotes,
+      longContent: res.longContent || [],
     };
   } catch (error) {
     console.error('extractFactsAndQuotes error:', error);
     return {
       facts: [],
       quotes: [],
+      longContent: [],
       notRelevantReason: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
     };
   } finally {

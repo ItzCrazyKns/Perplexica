@@ -489,7 +489,9 @@ export class DeepResearchAgent {
     let webContext = '';
     try {
       const searx = await searchSearxng(optimizedQuery, { language: 'en' });
-      const top = searx.results.filter((r) => r.title && r.url && r.content && r.content.length > 0).slice(0, 10);
+      const top = searx.results
+        .filter((r) => r.title && r.url && r.content && r.content.length > 0)
+        .slice(0, 10);
       webContext = top
         .map((r, i) => {
           const title = r.title || `Result ${i + 1}`;
@@ -575,7 +577,8 @@ export class DeepResearchAgent {
         (f) =>
           f.facts &&
           ((f?.facts?.facts?.length || 0) > 0 ||
-            (f?.facts?.quotes?.length || 0) > 0),
+            (f?.facts?.quotes?.length || 0) > 0 ||
+            (f?.facts?.longContent?.length || 0) > 0),
       );
 
       console.log(cleanedFacts);
@@ -583,7 +586,7 @@ export class DeepResearchAgent {
       perSub[i] = {
         subquestion: sq,
         extracted: cleanedFacts,
-        sufficiency: 'sufficient',
+        sufficiency: 'pending',
       };
     }
 
@@ -639,14 +642,13 @@ export class DeepResearchAgent {
 
     // Format into numbered XML-like blocks, similar to speedSearch.processDocs
     const docsString = allCandidates
-      .slice(0, 20)
       .map((c, idx) => {
         const title = c.title || c.name || c.url || `Source ${idx + 1}`;
         const url = c.url || '';
         return `<${idx + 1}>
 <title>${title}</title>
 ${url ? `<url>${url}</url>` : ''}
-<content>\n<facts>\n${c.facts?.facts.join('\n')}\n</facts><quotes>\n${c.facts?.quotes.join('\n')}\n</quotes>\n</content>
+<content>\n<facts>\n${c.facts?.facts.join('\n')}\n</facts><quotes>\n${c.facts?.quotes.join('\n')}\n</quotes><longContent>\n${c.facts?.longContent.join('\n')}\n</longContent>\n</content>
 </${idx + 1}>`;
       })
       .join('\n\n');
@@ -747,8 +749,6 @@ ${url ? `<url>${url}</url>` : ''}
       );
     }
   }
-
-  // Tool methods removed in favor of imports above
 
   private ensureNotAborted() {
     if (this.aborted || this.signal.aborted) {

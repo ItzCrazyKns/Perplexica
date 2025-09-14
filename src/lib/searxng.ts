@@ -62,7 +62,9 @@ export const searchSearxng = async (
     searchUrl.searchParams.append('language', opts.language);
   }
 
-  console.log(`[searchSearxng] Search for "${query}" returned ${results.length} results`);
+  console.log(
+    `[searchSearxng] Search for "${query}" returned ${results.length} results`,
+  );
 
   return { results, suggestions, searchUrl: searchUrl.toString() };
 };

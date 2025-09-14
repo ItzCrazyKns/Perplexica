@@ -1,8 +1,4 @@
-export type PhaseName =
-  | 'Plan'
-  | 'Search'
-  | 'Analyze'
-  | 'Synthesize';
+export type PhaseName = 'Plan' | 'Search' | 'Analyze' | 'Synthesize';
 
 export type SessionManifest = {
   chatId: string;
