@@ -27,7 +27,7 @@ async function fetchSourceContent(
 
     if (source.type === 'Web Page') {
       // Use headless browser for complex web pages
-      document = await getWebContent(source.url);
+      document = await getWebContent(source.url, 50000);
     } else {
       // Use faster fetch for HTTP data/APIs
       const response = await axios.get(source.url, { transformResponse: [] });

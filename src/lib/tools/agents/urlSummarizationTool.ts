@@ -88,7 +88,7 @@ export const urlSummarizationTool = tool(
           console.log(`URLSummarizationTool: Processing ${url}`);
 
           // Fetch full content using the enhanced web content retrieval
-          const webContent = await getWebContent(url, retrieveHtml);
+          const webContent = await getWebContent(url, 50000, retrieveHtml);
 
           if (!webContent || !webContent.pageContent) {
             console.warn(

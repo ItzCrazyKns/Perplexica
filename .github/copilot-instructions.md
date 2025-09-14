@@ -203,6 +203,23 @@ The deep research workflow treats each planned subquestion as its own gather/ext
 - Results are aggregated across subquestions for clustering and synthesis. Early synthesis may trigger once coverage is adequate.
 - Implementation: `src/lib/search/deepResearchAgent.ts`.
 
+### Intelligent Looping and Sufficiency Checks
+
+- After each Search pass, subqueries with zero extracted sources are removed before assessment.
+- Sufficiency check: the System LLM performs a conservative yes/no judgment on whether gathered evidence is enough to answer the user’s question with citations. Inputs include:
+  - User question
+  - Current plan’s `criteria` and `notes`
+  - A compact summary of the chat history
+  - A short coverage summary of subqueries and their top sources
+- If sufficient: the agent proceeds to Synthesis immediately.
+- If not sufficient: the agent loops back to Plan. A re-planning guidance string is injected into the planner input to:
+  - Replace or rephrase unproductive subqueries (those removed for zero sources)
+  - Target authoritative, up-to-date sources (official docs, methodology/data pages, gov/edu, etc.)
+  - Avoid duplicating already covered angles while staying laser-focused on answering the original question
+  - Encourage diverse phrasing and domain/site constraints when useful
+
+This loop repeats until the evidence is deemed sufficient or soft/hard budgets force early synthesis. Token usage for the sufficiency judge is attributed to the Analyze phase (system model).
+
 ## Token Usage Tracking (Chat vs System)
 
 We track token usage separately for the Chat Model and the System Model across all major pipelines:

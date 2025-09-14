@@ -11,7 +11,11 @@ import {
 import { getModelName } from '@/lib/utils/modelUtils';
 import { Embeddings } from '@langchain/core/embeddings';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { BaseMessage } from '@langchain/core/messages';
+import {
+  BaseMessage,
+  HumanMessage,
+  SystemMessage,
+} from '@langchain/core/messages';
 import { EventEmitter } from 'events';
 import { getLangfuseCallbacks } from '../tracing/langfuse';
 import { formatDateForLLM } from '../utils';
@@ -25,14 +29,17 @@ import {
   extractFactsAndQuotes,
   ExtractFactsOutput,
 } from '../utils/extractWebFacts';
+import { withStructuredOutput } from '@/lib/utils/structuredOutput';
+import z from 'zod';
+import { Subquery } from 'drizzle-orm';
 
 /**
  * DeepResearchAgent — phased orchestrator with budgets, cancellation, and progress streaming.
  * Tools and persistence are stubbed for now; real tool calls and FS writes land in later tasks.
  */
 export class DeepResearchAgent {
-  // Budgets: 25 minutes wall clock, 50 LLM turns (soft stop at ~85%)
-  private static readonly WALL_CLOCK_LIMIT_MS = 25 * 60 * 1000; // 25 minutes
+  // Budgets: 15 minutes wall clock, 50 LLM turns (soft stop at ~85%)
+  private static readonly WALL_CLOCK_LIMIT_MS = 15 * 60 * 1000; // 15 minutes
   private static readonly LLM_TURNS_HARD_LIMIT = 50;
   private static readonly LLM_TURNS_SOFT_LIMIT = Math.floor(
     DeepResearchAgent.LLM_TURNS_HARD_LIMIT * 0.85,
@@ -67,7 +74,7 @@ export class DeepResearchAgent {
 
   // Minimal internal state to support phase-to-phase handoff (will be replaced by dedicated state model later)
   private state: {
-    plan?: { subquestions: string[]; notes?: string[] };
+    plan?: { subquestions: string[]; notes?: string[]; criteria?: string[] };
     // Legacy combined fields are now derived from perSubquery results
     candidates?: Array<{ title: string; url: string }>;
     extracted?: Array<{
@@ -79,6 +86,10 @@ export class DeepResearchAgent {
     perSubquery?: Array<SubqueryResult>;
   } = {};
   private query: string = '';
+  // Track chat history and re-planning guidance between passes
+  private chatHistory: BaseMessage[] | any[] = [];
+  private replanGuidance: string | null = null;
+  private planPass: number = 0;
 
   constructor(
     private llm: BaseChatModel,
@@ -102,6 +113,7 @@ export class DeepResearchAgent {
   ): Promise<void> {
     try {
       this.query = query;
+      this.chatHistory = history as any;
       this.emitResponse(`Query: ${query}\n`);
       if (this.chatId) {
         ensureSessionDirs(this.chatId);
@@ -135,7 +147,7 @@ export class DeepResearchAgent {
             await this.searchPhase(history);
           });
         }
-      } while (!this.needsMoreInfo());
+      } while (!(await this.needsMoreInfo()));
 
       // Phase: Synthesize (always reached; may be early)
       await this.runPhase('Synthesize', async () => {
@@ -505,11 +517,17 @@ export class DeepResearchAgent {
       console.warn('Plan-phase web scan failed:', e);
     }
 
+    // Build planner guidance from previous pass if available
+    const guidanceAppendix = this.replanGuidance
+      ? `\n\nPlanner guidance (pass ${this.planPass + 1}):\n${this.replanGuidance}`
+      : '';
+
     // Invoke planner with optional current web context
     this.countLLMTurns();
     this.state.plan = await deepPlannerTool(
       this.systemLlm,
       query,
+      guidanceAppendix,
       this.signal,
       history as any,
       (usage) => this.addPhaseUsage('Plan', usage, 'system'),
@@ -528,6 +546,7 @@ export class DeepResearchAgent {
         counts: { candidates: 0 },
       });
     }
+    this.planPass += 1;
   }
 
   private async searchPhase(history: BaseMessage[]) {
@@ -568,7 +587,7 @@ export class DeepResearchAgent {
           return {
             url: result.url,
             title: result.title,
-            facts: extracted,
+            facts: extracted || { facts: [], quotes: [], longContent: [] },
           };
         }),
       );
@@ -608,29 +627,195 @@ export class DeepResearchAgent {
   }
 
   private async needsMoreInfo(): Promise<boolean> {
+    if (this.shouldJumpToSynthesis()) return false;
     this.ensureNotAborted();
-    // Assess whether we need to re-enter search/extract based on evidence sufficiency
-    if (!this.state.perSubquery) return false;
-    let anyInsufficient = false;
-    for (let i = 0; i < this.state.perSubquery.length; i++) {
-      const subq = this.state.perSubquery[i];
-      if (this.earlySynthesisTriggered && subq.extracted.length === 0) {
-        // If early synthesis triggered and this subquery has no candidates, ignore it
-        subq.sufficiency = 'sufficient';
-        continue;
-      }
-      if (subq.sufficiency !== 'pending') continue; // already assessed
-      // const assessment = this.assessSubquerySufficiency(
-      //   subq.subquestion,
-      //   subq.evidence,
-      // );
-      // subq.sufficiency = assessment.status;
-      // if (assessment.status !== 'sufficient') {
-      //   anyInsufficient = true;
-      // }
+    // Analyze coverage and decide if we have enough to move to synthesis.
+    const perSub = this.state.perSubquery || [];
+
+    // 1) Drop any subqueries with zero extracted sources (cleanup before assessment)
+    const before = perSub.length;
+    const filtered = perSub.filter(
+      (p) =>
+        (p.extracted?.length || 0) > 0 &&
+        p.extracted.some(
+          (e) =>
+            (e.facts?.facts?.length || 0) +
+              (e.facts?.quotes?.length || 0) +
+              (e.facts?.longContent?.length || 0) >
+            0,
+        ),
+    );
+    if (filtered.length !== before) {
+      this.emitProgress(
+        'Analyze',
+        `Removing ${before - filtered.length} subqueries with zero sources`,
+        this.phasePercent(),
+      );
     }
-    console.warn('TODO: needsMoreInfo: subquery sufficiency');
-    return anyInsufficient;
+    this.state.perSubquery = filtered;
+    this.state.candidates = filtered.flatMap((p) => p.extracted || []);
+
+    // If nothing remains and we haven't hit early synthesis, request another pass
+    if (this.state.perSubquery.length === 0 && !this.earlySynthesisTriggered) {
+      this.replanGuidance = [
+        'No usable sources were extracted in the last pass.',
+        `Stay tightly focused on answering: "${this.query}".`,
+        'Revise subquestions to target high-signal domains, official docs, data/methodology pages, and up-to-date coverage.',
+        'Avoid tangents; prefer diverse phrasing and site/domain constraints if helpful.',
+      ].join('\n- ');
+      return false; // loop back to Plan
+    }
+
+    // 2) Ask the System LLM for a conservative yes/no sufficiency judgment
+    this.emitProgress(
+      'Analyze',
+      'Evaluating whether evidence is sufficient',
+      this.phasePercent(),
+    );
+
+    const plan = this.state.plan || {
+      subquestions: [],
+      notes: [],
+      criteria: [],
+    };
+
+    // Summarize current coverage for the judge
+    const coverageSummary = this.formattedCandidates(
+      (this.state.perSubquery || []).flatMap((p) => p.extracted || []),
+    );
+
+    // Prepare a minimal structured output schema for yes/no
+    const SufficiencySchema = z.object({
+      sufficient: z
+        .enum(['yes', 'no'])
+        .describe(
+          'Is the gathered evidence sufficient to write a high-quality, accurate answer with citations?',
+        ),
+      insufficient_reason: z
+        .string()
+        .optional()
+        .nullable()
+        .describe(
+          'If "no", briefly explain why coverage is insufficient (optional)',
+        ),
+    });
+
+    try {
+      const judge = withStructuredOutput(this.systemLlm, SufficiencySchema, {});
+      const messages = [
+        new SystemMessage(
+          [
+            'You are a cautious research supervisor. Decide if there is enough high-quality, relevant evidence to answer the user question now.',
+            'Consider the planning criteria and notes. Prefer recall and precision over verbosity. Be conservative: if major gaps remain, answer no.',
+            "Respond with JSON containing only { 'sufficient': 'yes' | 'no' }.",
+          ].join(' '),
+        ),
+        new HumanMessage(
+          [
+            `User question: ${this.query}`,
+            plan.criteria && plan.criteria.length
+              ? `Criteria: ${plan.criteria.join('; ')}`
+              : 'Criteria: (none)',
+            plan.notes && plan.notes.length
+              ? `Notes: ${plan.notes.join('; ')}`
+              : 'Notes: (none)',
+            // this.chatHistory && Array.isArray(this.chatHistory) && this.chatHistory.length
+            //   ? 'Chat history is available (not shown verbatim). Consider prior clarifications.'
+            //   : 'No prior chat history provided.',
+            'Current coverage summary:\n' +
+              (coverageSummary || '(no coverage)'),
+          ].join('\n\n'),
+        ),
+      ];
+
+      const result = await judge.invoke(messages, {
+        signal: this.signal,
+        callbacks: [
+          {
+            handleLLMEnd: async (output, _runId, _parentRunId) => {
+              if (
+                output.llmOutput?.estimatedTokenUsage ||
+                output.llmOutput?.tokenUsage
+              ) {
+                this.addPhaseUsage(
+                  'Analyze',
+                  output.llmOutput.estimatedTokenUsage ||
+                    output.llmOutput.tokenUsage,
+                  'system',
+                );
+              }
+            },
+          },
+        ],
+      });
+      this.countLLMTurns();
+
+      const isSufficient = result?.sufficient === 'yes';
+      if (isSufficient) {
+        this.emitProgress(
+          'Analyze',
+          'Sufficient coverage achieved — moving to Synthesis',
+          this.phasePercent(true),
+        );
+        // Mark each subquery as sufficient
+        (this.state.perSubquery || []).forEach(
+          (p) => (p.sufficiency = 'sufficient'),
+        );
+        this.replanGuidance = null; // clear any prior guidance
+        return true; // proceed to synthesis
+      }
+
+      // Not sufficient — craft guidance for the next planning pass
+      const removedCount = before - filtered.length;
+      const coveredTopics = filtered.map((p) => p.subquestion);
+      const guidance: string[] = [];
+      guidance.push(
+        `Primary goal: answer "${this.query}" accurately with citations.`,
+      );
+      if (plan.criteria?.length) {
+        guidance.push(`Honor these criteria: ${plan.criteria.join('; ')}`);
+      }
+      if (plan.notes?.length) {
+        guidance.push(`Planner notes to respect: ${plan.notes.join('; ')}`);
+      }
+      if (removedCount > 0) {
+        guidance.push(
+          `${removedCount} prior subqueries produced zero usable sources. Replace or rephrase them; favor official docs, up-to-date analyses, and methodology/data pages.`,
+        );
+      }
+      if (coveredTopics.length) {
+        guidance.push(
+          `Do not duplicate already-covered angles: ${coveredTopics.join('; ')}`,
+        );
+      }
+      if (result?.insufficient_reason) {
+        guidance.push(
+          `Reason coverage is insufficient: ${result.insufficient_reason}`,
+        );
+      }
+      guidance.push(
+        'Propose refined, diverse subquestions that broaden high-signal coverage without drifting off-topic. Include different phrasings and, if useful, domain/site filters (e.g., gov/edu, vendor docs).',
+      );
+
+      this.replanGuidance = guidance.join('\n- ');
+      console.log(
+        'Sufficiency judge determined coverage is insufficient, replan guidance:',
+        this.replanGuidance,
+      );
+      return false; // loop back to Plan
+    } catch (err) {
+      console.warn(
+        'Sufficiency judge failed, defaulting to another pass:',
+        err,
+      );
+      // On judge failure, err on the side of gathering more info unless budgets force synthesis
+      if (this.shouldJumpToSynthesis()) return true;
+      this.replanGuidance = [
+        'The sufficiency check failed; generate a more robust plan focusing on authoritative and diverse sources.',
+        `Stay focused on the user question: "${this.query}".`,
+      ].join('\n- ');
+      return false;
+    }
   }
 
   private async synthesizePhase(query: string) {
@@ -638,20 +823,10 @@ export class DeepResearchAgent {
 
     // Build a lightweight "relevant documents" context from discovered candidates
     const perSub = this.state.perSubquery || [];
-    const allCandidates: Array<any> = perSub.flatMap((p) => p.extracted || []);
-
-    // Format into numbered XML-like blocks, similar to speedSearch.processDocs
-    const docsString = allCandidates
-      .map((c, idx) => {
-        const title = c.title || c.name || c.url || `Source ${idx + 1}`;
-        const url = c.url || '';
-        return `<${idx + 1}>
-<title>${title}</title>
-${url ? `<url>${url}</url>` : ''}
-<content>\n<facts>\n${c.facts?.facts.join('\n')}\n</facts><quotes>\n${c.facts?.quotes.join('\n')}\n</quotes><longContent>\n${c.facts?.longContent.join('\n')}\n</longContent>\n</content>
-</${idx + 1}>`;
-      })
-      .join('\n\n');
+    const allCandidates: Array<Candidate> = perSub.flatMap(
+      (p) => p.extracted || [],
+    );
+    const docsString = this.formattedCandidates(allCandidates);
 
     // Prepare the synthesizer prompt using the same style as simplifiedAgent
     const prompt = await ChatPromptTemplate.fromMessages([
@@ -726,9 +901,9 @@ ${url ? `<url>${url}</url>` : ''}
     }
 
     // Emit sources at the end of synthesis
-    const sources = allCandidates.map((c) => ({
+    const sources = allCandidates.map((c, idx) => ({
       metadata: {
-        title: c.title || c.name || c.url,
+        title: c.title || c.url || `Source ${idx + 1}`,
         url: c.url,
         processingType: 'url-content-extraction',
         snippet:
@@ -750,6 +925,22 @@ ${url ? `<url>${url}</url>` : ''}
     }
   }
 
+  private formattedCandidates(allCandidates: Candidate[]): string {
+    // Format into numbered XML-like blocks, similar to speedSearch.processDocs
+    const docsString = allCandidates
+      .map((c, idx) => {
+        const title = c.title || c.url || `Source ${idx + 1}`;
+        const url = c.url || '';
+        return `<${idx + 1}>
+<title>${title}</title>
+${url ? `<url>${url}</url>` : ''}
+<content>\n<facts>\n${c.facts?.facts.join('\n')}\n</facts><quotes>\n${c.facts?.quotes.join('\n')}\n</quotes><longContent>\n${c.facts?.longContent.join('\n')}\n</longContent>\n</content>
+</${idx + 1}>`;
+      })
+      .join('\n\n');
+    return docsString;
+  }
+
   private ensureNotAborted() {
     if (this.aborted || this.signal.aborted) {
       throw new Error('aborted');
@@ -768,10 +959,12 @@ export default DeepResearchAgent;
 // Local types
 type SubqueryResult = {
   subquestion: string;
-  extracted: {
-    url: string;
-    title: string;
-    facts: ExtractFactsOutput | null;
-  }[];
+  extracted: Candidate[];
   sufficiency: 'pending' | 'sufficient' | 'needsMore' | 'needsDepth';
+};
+
+type Candidate = {
+  url: string;
+  title: string;
+  facts: ExtractFactsOutput;
 };

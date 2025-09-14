@@ -76,7 +76,7 @@ export async function extractFactsAndQuotes(
 ): Promise<ExtractFactsOutput | null> {
   setTemperature(llm, 0);
   try {
-    const content = await getWebContent(url, false);
+    const content = await getWebContent(url, 50000, false);
     if (!content) {
       return {
         facts: [],

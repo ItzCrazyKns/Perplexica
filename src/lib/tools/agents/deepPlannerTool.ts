@@ -36,6 +36,7 @@ const PlannerSchema = z.object({
 export async function deepPlannerTool(
   llm: BaseChatModel,
   query: string,
+  plannerGuidance: string,
   signal: AbortSignal,
   history: BaseMessage[] = [],
   onUsage?: (usageData: any) => void,
@@ -51,6 +52,9 @@ export async function deepPlannerTool(
             `Recent web scan (${options?.date || 'today'}) — titles/snippets:\n${options.webContext}\n\nUse this transient context to ensure subquestions reflect current events and terminology.`,
           ),
         ]
+      : []),
+    ...(plannerGuidance && plannerGuidance.length > 0
+      ? [new HumanMessage(plannerGuidance)]
       : []),
     new HumanMessage(`${query}`),
   ];

@@ -117,6 +117,7 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
  */
 export const getWebContent = async (
   url: string,
+  truncateToLength: number = 30000,
   getHtml: boolean = false,
 ): Promise<Document | null> => {
   try {
@@ -188,7 +189,9 @@ export const getWebContent = async (
     });
 
     const returnDoc = new Document({
-      pageContent: normalizedText,
+      pageContent: normalizedText.length > truncateToLength
+        ? normalizedText.slice(0, truncateToLength)
+        : normalizedText,
       metadata: {
         title: article?.title || doc.metadata.title || '',
         url: url,
@@ -197,7 +200,7 @@ export const getWebContent = async (
     });
 
     console.log(
-      `Got content with LangChain Playwright, URL: ${url}, Text Length: ${returnDoc.pageContent.length}`,
+      `Got content with LangChain Playwright, URL: ${url}, Text Length: ${returnDoc.pageContent.length}, Truncated: ${normalizedText.length > truncateToLength}`,
     );
 
     return returnDoc;
@@ -236,7 +239,9 @@ export const getWebContent = async (
         });
 
         const returnDoc = new Document({
-          pageContent: normalizedText,
+          pageContent: normalizedText.length > truncateToLength
+            ? normalizedText.slice(0, truncateToLength)
+            : normalizedText,
           metadata: {
             title: article?.title || doc.metadata.title || '',
             url: url,
@@ -245,7 +250,7 @@ export const getWebContent = async (
         });
 
         console.log(
-          `Got content with Cheerio fallback + Readability, URL: ${url}, Text Length: ${returnDoc.pageContent.length}`,
+          `Got content with Cheerio fallback + Readability, URL: ${url}, Text Length: ${returnDoc.pageContent.length} Truncated: ${normalizedText.length > truncateToLength}`,
         );
 
         return returnDoc;
