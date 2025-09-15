@@ -46,6 +46,7 @@
     "markdown-to-jsx": "^7.7.13",
     "next": "^15.2.2",
     "next-themes": "^0.4.6",
+    "p-limit": "^7.1.1",
     "pdf-parse": "^1.1.1",
     "playwright": "^1.54.2",
     "react": "^19",

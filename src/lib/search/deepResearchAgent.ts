@@ -32,6 +32,7 @@ import {
 import { withStructuredOutput } from '@/lib/utils/structuredOutput';
 import z from 'zod';
 import { Subquery } from 'drizzle-orm';
+import pLimit from 'p-limit';
 
 /**
  * DeepResearchAgent — phased orchestrator with budgets, cancellation, and progress streaming.
@@ -575,22 +576,26 @@ export class DeepResearchAgent {
         this.phaseSubPercent(i, subqs.length),
       );
 
-      const facts = await Promise.all(
-        subqueryResult.results.slice(0, 5).map(async (result) => {
-          const extracted = await extractFactsAndQuotes(
-            result.url,
-            sq,
-            this.systemLlm,
-            this.signal,
-            (usage) => this.addPhaseUsage('Search', usage, 'system'),
-          );
-          return {
-            url: result.url,
-            title: result.title,
-            facts: extracted || { facts: [], quotes: [], longContent: [] },
-          };
-        }),
-      );
+      const limit = pLimit(2);
+      const facts = await limit.map(subqueryResult.results.slice(0, 5), async (result) => {
+        if (this.abortedOrTimedOut()) return {
+          url: result.url,
+          title: result.title,
+          facts: { facts: [], quotes: [], longContent: [] },
+        };
+        const extracted = await extractFactsAndQuotes(
+          result.url,
+          sq,
+          this.systemLlm,
+          this.signal,
+          (usage) => this.addPhaseUsage('Search', usage, 'system'),
+        );
+        return {
+          url: result.url,
+          title: result.title,
+          facts: extracted || { facts: [], quotes: [], longContent: [] },
+        };
+      });
 
       const cleanedFacts = facts.filter(
         (f) =>
