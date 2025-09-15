@@ -38,6 +38,7 @@
   - [Donations](#donations)
 - [Contribution](#contribution)
 - [Help and Support](#help-and-support)
+- [Firecrawl Integration (optional)](#firecrawl-integration-optional)
 
 ## Overview
 
@@ -85,7 +86,6 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 3. After cloning, navigate to the directory containing the project files.
 
 4. Rename the `sample.config.toml` file to `config.toml`. For Docker setups, you need only fill in the following fields:
-
    - `OPENAI`: Your OpenAI API key. **You only need to fill this if you wish to use OpenAI's models**.
    - `CUSTOM_OPENAI`: Your OpenAI-API-compliant local server URL, model name, and API key. You should run your local server with host set to `0.0.0.0`, take note of which port number it is running on, and then use that port number to set `API_URL = http://host.docker.internal:PORT_NUMBER`. You must specify the model name, such as `MODEL_NAME = "unsloth/DeepSeek-R1-0528-Qwen3-8B-GGUF:Q4_K_XL"`. Finally, set `API_KEY` to the appropriate value. If you have not defined an API key, just put anything you want in-between the quotation marks: `API_KEY = "whatever-you-want-but-not-blank"` **You only need to configure these settings if you want to use a local OpenAI-compliant server, such as Llama.cpp's [`llama-server`](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md)**.
    - `OLLAMA`: Your Ollama API URL. You should enter it as `http://host.docker.internal:PORT_NUMBER`. If you installed Ollama on port 11434, use `http://host.docker.internal:11434`. For other ports, adjust accordingly. **You need to fill this if you wish to use Ollama's models instead of OpenAI's**.
@@ -129,7 +129,7 @@ If Perplexica tells you that you haven't configured any chat model providers, en
 
 1. Your server is running on `0.0.0.0` (not `127.0.0.1`) and on the same port you put in the API URL.
 2. You have specified the correct model name loaded by your local LLM server.
-3. You have specified the correct API key, or if one is not defined, you have put *something* in the API key field and not left it empty.
+3. You have specified the correct API key, or if one is not defined, you have put _something_ in the API key field and not left it empty.
 
 #### Ollama Connection Errors
 
@@ -137,7 +137,6 @@ If you're encountering an Ollama connection error, it is likely due to the backe
 
 1. **Check your Ollama API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
-
    - **Windows:** Use `http://host.docker.internal:11434`
    - **Mac:** Use `http://host.docker.internal:11434`
    - **Linux:** Use `http://<private_ip_of_host>:11434`
@@ -145,7 +144,6 @@ If you're encountering an Ollama connection error, it is likely due to the backe
    Adjust the port number if you're using a different one.
 
 3. **Linux Users - Expose Ollama to Network:**
-
    - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0:11434"`. (Change the port number if you are using a different one.) Then reload the systemd manager configuration with `systemctl daemon-reload`, and restart Ollama by `systemctl restart ollama`. For more information see [Ollama docs](https://github.com/ollama/ollama/blob/main/docs/faq.md#setting-environment-variables-on-linux)
 
    - Ensure that the port (default is 11434) is not blocked by your firewall.
@@ -206,3 +204,20 @@ Perplexica is built on the idea that AI and large language models should be easy
 If you have any questions or feedback, please feel free to reach out to us. You can create an issue on GitHub or join our Discord server. There, you can connect with other users, share your experiences and reviews, and receive more personalized help. [Click here](https://discord.gg/EFwsmQDgAu) to join the Discord server. To discuss matters outside of regular support, feel free to contact me on Discord at `itzcrazykns`.
 
 Thank you for exploring Perplexica, the AI-powered search engine designed to enhance your search experience. We are constantly working to improve Perplexica and expand its capabilities. We value your feedback and contributions which help us make Perplexica even better. Don't forget to check back for updates and new features!
+
+## Firecrawl Integration (optional)
+
+Firecrawl can enrich fetched pages with high-quality text, better coverage, and enhanced metadata. Integration is optional and gracefully falls back to the legacy scraper when not configured.
+
+- Install SDK: `pnpm add @mendable/firecrawl-js`
+- Set env: copy `.env.example` to `.env.local` and add `FIRECRAWL_API_KEY=your_api_key_here`
+- Run the app: `pnpm dev`
+
+What changes:
+
+- `src/lib/utils/documents.ts` now tries Firecrawl first to fetch `markdown` and metadata; if unavailable, it falls back to the existing HTML/PDF extraction.
+- Demo script: `node scripts/crawlTest.mjs https://example.com` prints enriched JSON to the console.
+
+Benefits:
+
+- Cleaner snippets (markdown-based), broader page coverage, and richer metadata for better summarization quality.

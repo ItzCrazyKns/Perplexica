@@ -35,6 +35,7 @@ interface ChatRequestBody {
   history: Array<[string, string]>;
   stream?: boolean;
   systemInstructions?: string;
+  useFirecrawl?: boolean;
 }
 
 export const POST = async (req: Request) => {
@@ -126,6 +127,7 @@ export const POST = async (req: Request) => {
       body.optimizationMode,
       [],
       body.systemInstructions || '',
+      { useFirecrawl: body.useFirecrawl === true },
     );
 
     if (!body.stream) {
