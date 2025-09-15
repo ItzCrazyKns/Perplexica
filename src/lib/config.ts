@@ -47,6 +47,9 @@ interface Config {
       API_KEY: string;
       MODEL_NAME: string;
     };
+    FIRECRAWL: {
+      API_KEY: string;
+    };
   };
   API_ENDPOINTS: {
     SEARXNG: string;
@@ -92,6 +95,8 @@ export const getOllamaApiKey = () => loadConfig().MODELS.OLLAMA.API_KEY;
 export const getDeepseekApiKey = () => loadConfig().MODELS.DEEPSEEK.API_KEY;
 
 export const getAimlApiKey = () => loadConfig().MODELS.AIMLAPI.API_KEY;
+
+export const getFirecrawlApiKey = () => loadConfig().MODELS.FIRECRAWL.API_KEY;
 
 export const getCustomOpenaiApiKey = () =>
   loadConfig().MODELS.CUSTOM_OPENAI.API_KEY;

@@ -17,6 +17,7 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
+import { processMessageWithDomains } from '@/lib/utils/firecrawl';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -276,8 +277,12 @@ export const POST = async (req: Request) => {
       );
     }
 
-    const stream = await handler.searchAndAnswer(
+    const processedMessageContent = await processMessageWithDomains(
       message.content,
+    );
+
+    const stream = await handler.searchAndAnswer(
+      processedMessageContent,
       history,
       llm,
       embedding,
