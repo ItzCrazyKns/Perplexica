@@ -277,6 +277,8 @@ export const POST = async (req: Request) => {
       );
     }
 
+    console.log('[Firecrawl] useFirecrawl flag:', body.useFirecrawl === true, 'env:', Boolean(process.env.FIRECRAWL_API_KEY));
+
     const stream = await handler.searchAndAnswer(
       message.content,
       history,

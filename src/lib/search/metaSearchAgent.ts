@@ -211,6 +211,22 @@ class MetaSearchAgent implements MetaSearchAgentType {
             engines: this.config.activeEngines,
           });
 
+          // If Firecrawl is enabled in options, try enriching the top URLs
+          if (useFirecrawl) {
+            console.log('[Firecrawl] enriching SearXNG URLs with Firecrawl');
+            try {
+              const links = res.results.map((r) => r.url).slice(0, 8);
+              const documents = await getDocumentsFromLinks({
+                links,
+                useFirecrawl: true,
+              });
+              return { query: question, docs: documents };
+            } catch (e) {
+              // Fall back to basic mapping
+              console.log('[Firecrawl] enrichment failed, falling back');
+            }
+          }
+
           const documents = res.results.map(
             (result) =>
               new Document({
