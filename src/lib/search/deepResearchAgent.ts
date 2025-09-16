@@ -577,25 +577,29 @@ export class DeepResearchAgent {
       );
 
       const limit = pLimit(2);
-      const facts = await limit.map(subqueryResult.results.slice(0, 5), async (result) => {
-        if (this.abortedOrTimedOut()) return {
-          url: result.url,
-          title: result.title,
-          facts: { facts: [], quotes: [], longContent: [] },
-        };
-        const extracted = await extractFactsAndQuotes(
-          result.url,
-          sq,
-          this.systemLlm,
-          this.signal,
-          (usage) => this.addPhaseUsage('Search', usage, 'system'),
-        );
-        return {
-          url: result.url,
-          title: result.title,
-          facts: extracted || { facts: [], quotes: [], longContent: [] },
-        };
-      });
+      const facts = await limit.map(
+        subqueryResult.results.slice(0, 5),
+        async (result) => {
+          if (this.abortedOrTimedOut())
+            return {
+              url: result.url,
+              title: result.title,
+              facts: { facts: [], quotes: [], longContent: [] },
+            };
+          const extracted = await extractFactsAndQuotes(
+            result.url,
+            sq,
+            this.systemLlm,
+            this.signal,
+            (usage) => this.addPhaseUsage('Search', usage, 'system'),
+          );
+          return {
+            url: result.url,
+            title: result.title,
+            facts: extracted || { facts: [], quotes: [], longContent: [] },
+          };
+        },
+      );
 
       const cleanedFacts = facts.filter(
         (f) =>
@@ -841,7 +845,7 @@ export class DeepResearchAgent {
       recursionLimitReached: '',
       formattingAndCitations: this.personaInstructions
         ? this.personaInstructions
-        : formattingAndCitationsScholarly,
+        : formattingAndCitationsScholarly.content,
       conversationHistory: '',
       relevantDocuments: docsString || 'No context documents available.',
     });

@@ -6,6 +6,7 @@ import {
   Settings,
   User,
   Loader2,
+  Info,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -15,12 +16,7 @@ import {
   Transition,
 } from '@headlessui/react';
 import { Fragment, useEffect, useState } from 'react';
-
-interface SystemPrompt {
-  id: string;
-  name: string;
-  type: 'persona';
-}
+import { Prompt } from '@/lib/types/prompt';
 
 interface SystemPromptSelectorProps {
   selectedPromptIds: string[];
@@ -31,7 +27,7 @@ const SystemPromptSelector = ({
   selectedPromptIds,
   onSelectedPromptIdsChange,
 }: SystemPromptSelectorProps) => {
-  const [availablePrompts, setAvailablePrompts] = useState<SystemPrompt[]>([]);
+  const [availablePrompts, setAvailablePrompts] = useState<Prompt[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -46,9 +42,7 @@ const SystemPromptSelector = ({
           setAvailablePrompts(prompts);
 
           // Check if any currently selected prompt IDs are not in the API response
-          const availablePromptIds = prompts.map(
-            (prompt: SystemPrompt) => prompt.id,
-          );
+          const availablePromptIds = prompts.map((prompt: Prompt) => prompt.id);
           const validSelectedIds = selectedPromptIds.filter((id) =>
             availablePromptIds.includes(id),
           );
@@ -108,7 +102,7 @@ const SystemPromptSelector = ({
               leaveFrom="opacity-100 translate-y-0"
               leaveTo="opacity-0 translate-y-1"
             >
-              <PopoverPanel className="absolute z-20 w-72 transform bottom-full mb-2">
+              <PopoverPanel className="absolute right-0 z-20 w-72 transform bottom-full mb-2">
                 <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-surface-2 bg-surface">
                   <div className="px-4 py-3 border-b border-surface-2">
                     <h3 className="text-sm font-medium text-fg/90">
@@ -134,10 +128,79 @@ const SystemPromptSelector = ({
                         </p>
                       )}
 
-                      {/* System prompts removed */}
+                      {availablePrompts.filter(
+                        (p) => p.type === 'persona' && !p.readOnly,
+                      ).length > 0 && (
+                        <div>
+                          <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-fg/70">
+                            <User size={14} />
+                            <div className="flex items-center gap-1.5">
+                              <span>Default Prompts</span>
+                              <Popover>
+                                <PopoverButton className="focus:outline-none">
+                                  <Info
+                                    size={14}
+                                    className="text-fg/50 hover:text-fg/70"
+                                  />
+                                </PopoverButton>
+                                <Transition
+                                  as={Fragment}
+                                  enter="transition ease-out duration-200"
+                                  enterFrom="opacity-0 translate-y-1"
+                                  enterTo="opacity-100 translate-y-0"
+                                  leave="transition ease-in duration-150"
+                                  leaveFrom="opacity-100 translate-y-0"
+                                  leaveTo="opacity-0 translate-y-1"
+                                >
+                                  <PopoverPanel className="absolute z-30 w-64 p-3 bg-surface border border-surface-2 rounded-lg shadow-lg text-xs text-fg/80">
+                                    The prompts in this section are system
+                                    provided prompts. The system will choose one
+                                    of these formatting prompts itself based on
+                                    focus mode, if no persona prompts are
+                                    selected. Choose one if you want to override
+                                    the default behavior or if you want to
+                                    combine default prompts with your own
+                                    persona prompts.
+                                  </PopoverPanel>
+                                </Transition>
+                              </Popover>
+                            </div>
+                          </div>
+                          <div className="space-y-0.5">
+                            {availablePrompts
+                              .filter((p) => p.type === 'persona' && p.readOnly)
+                              .map((prompt) => (
+                                <div
+                                  key={prompt.id}
+                                  onClick={() => handleTogglePrompt(prompt.id)}
+                                  className="flex items-center gap-2.5 p-2.5 rounded-md hover:bg-surface-2 cursor-pointer"
+                                >
+                                  {selectedPromptIds.includes(prompt.id) ? (
+                                    <CheckSquare
+                                      size={18}
+                                      className="text-accent flex-shrink-0"
+                                    />
+                                  ) : (
+                                    <Square
+                                      size={18}
+                                      className="text-fg/40 flex-shrink-0"
+                                    />
+                                  )}
+                                  <span
+                                    className="text-sm text-fg/80 truncate"
+                                    title={prompt.name}
+                                  >
+                                    {prompt.name}
+                                  </span>
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      )}
 
-                      {availablePrompts.filter((p) => p.type === 'persona')
-                        .length > 0 && (
+                      {availablePrompts.filter(
+                        (p) => p.type === 'persona' && !p.readOnly,
+                      ).length > 0 && (
                         <div>
                           <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-fg/70">
                             <User size={14} />
@@ -145,7 +208,9 @@ const SystemPromptSelector = ({
                           </div>
                           <div className="space-y-0.5">
                             {availablePrompts
-                              .filter((p) => p.type === 'persona')
+                              .filter(
+                                (p) => p.type === 'persona' && !p.readOnly,
+                              )
                               .map((prompt) => (
                                 <div
                                   key={prompt.id}

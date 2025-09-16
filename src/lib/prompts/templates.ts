@@ -3,7 +3,12 @@
  * These blocks are conditionally included only when no persona instructions are provided.
  */
 
-export const formattingAndCitationsWeb = `## Formatting & Citations
+import { Prompt } from '../types/prompt';
+
+export const formattingAndCitationsWeb: Prompt = {
+  id: 'base-formatting-and-citations-web',
+  name: 'Web Searches',
+  content: `## Formatting & Citations
 
 ### Citations
 - The citation number refers to the index of the source in the relevantDocuments state array
@@ -32,9 +37,17 @@ export const formattingAndCitationsWeb = `## Formatting & Citations
   - Expand on technical or complex topics to make them easier to understand for a general audience
 - No main heading/title: Start the response directly with the introduction unless asked to provide a specific title
 - No summary or conclusion section: End with final thoughts without a formal summary
-- No separate sources section: All citations should be integrated inline`;
+- No separate sources section: All citations should be integrated inline`,
+  type: 'persona',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  readOnly: true,
+};
 
-export const formattingAndCitationsLocal = `## Formatting & Citations
+export const formattingAndCitationsLocal: Prompt = {
+  id: 'base-formatting-and-citations-local',
+  name: 'Local Documents',
+  content: `## Formatting & Citations
 
 ### Citations
 - The citation number refers to the index of the source in the relevantDocuments state array
@@ -60,15 +73,31 @@ export const formattingAndCitationsLocal = `## Formatting & Citations
 - Length and Depth:
   - Provide comprehensive coverage of document content without unnecessary repetition
   - Expand on complex topics for a general audience
-- No main heading/title: Start directly with the introduction unless a specific title is requested`;
+- No main heading/title: Start directly with the introduction unless a specific title is requested`,
+  type: 'persona',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  readOnly: true,
+};
 
-export const formattingChat = `## Formatting
+export const formattingChat: Prompt = {
+  id: 'base-formatting-chat',
+  name: 'Chat Conversations',
+  content: `## Formatting
 - Structure: Use headings where helpful, and concise paragraphs or bullet points
 - Tone and Style: Maintain a neutral, engaging conversational tone
 - Markdown Usage: Use Markdown for clarity (headings, bold, italics, code when needed)
-- No main heading/title: Start directly with the content unless a title is requested`;
+- No main heading/title: Start directly with the content unless a title is requested`,
+  type: 'persona',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  readOnly: true,
+};
 
-export const formattingAndCitationsScholarly = `## Formatting & Citations (Scholarly)
+export const formattingAndCitationsScholarly: Prompt = {
+  id: 'base-formatting-and-citations-scholarly',
+  name: 'Scholarly Articles',
+  content: `## Formatting & Citations (Scholarly)
 
 ### Formatting
 - Structure: Use standard scholarly sections with Markdown headings like "## Abstract", "## Introduction", "## Background / Related Work", "## Methodology / Approach", "## Findings / Analysis", "## Limitations", "## Implications / Recommendations" (as applicable), and "## Conclusion". For narrow questions, include only relevant sections while maintaining an academic tone.
@@ -90,11 +119,9 @@ export const formattingAndCitationsScholarly = `## Formatting & Citations (Schol
 ### Citation Examples
 - "According to the project proposal[1], the deadline is set for March 2024."
 - "The research findings indicate significant improvements[2][3]."
-- "The quarterly report shows a 15% increase in sales[1], while recent market analysis confirms this trend[2]."`;
-
-/**
- * Generic default that users can copy from the UI to build their own persona prompts.
- * This mirrors the web/local research expectations closely enough for most use.
- */
-export const DEFAULT_FORMATTING_AND_CITATIONS_TEMPLATE =
-  formattingAndCitationsWeb;
+- "The quarterly report shows a 15% increase in sales[1], while recent market analysis confirms this trend[2]."`,
+  type: 'persona',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  readOnly: true,
+};

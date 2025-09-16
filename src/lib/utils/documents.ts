@@ -189,9 +189,10 @@ export const getWebContent = async (
     });
 
     const returnDoc = new Document({
-      pageContent: normalizedText.length > truncateToLength
-        ? normalizedText.slice(0, truncateToLength)
-        : normalizedText,
+      pageContent:
+        normalizedText.length > truncateToLength
+          ? normalizedText.slice(0, truncateToLength)
+          : normalizedText,
       metadata: {
         title: article?.title || doc.metadata.title || '',
         url: url,
@@ -239,9 +240,10 @@ export const getWebContent = async (
         });
 
         const returnDoc = new Document({
-          pageContent: normalizedText.length > truncateToLength
-            ? normalizedText.slice(0, truncateToLength)
-            : normalizedText,
+          pageContent:
+            normalizedText.length > truncateToLength
+              ? normalizedText.slice(0, truncateToLength)
+              : normalizedText,
           metadata: {
             title: article?.title || doc.metadata.title || '',
             url: url,

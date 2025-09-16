@@ -1,6 +1,13 @@
 import db from '@/lib/db';
 import { systemPrompts as systemPromptsTable } from '@/lib/db/schema';
 import { inArray } from 'drizzle-orm';
+import {
+  formattingAndCitationsLocal,
+  formattingAndCitationsScholarly,
+  formattingAndCitationsWeb,
+  formattingChat,
+} from '@/lib/prompts/templates';
+import prompts from '../prompts';
 
 export interface PromptData {
   content: string;
@@ -9,51 +16,6 @@ export interface PromptData {
 
 export interface RetrievedPrompts {
   personaInstructions: string;
-}
-
-/**
- * Deprecated: previously retrieved both system and persona prompts.
- * Now returns personaInstructions only; system instructions are removed from the app.
- * @param selectedSystemPromptIds Array of prompt IDs to retrieve (treated as persona IDs)
- * @returns Object containing personaInstructions only (systemInstructions is removed)
- */
-export async function getSystemPrompts(
-  selectedSystemPromptIds: string[],
-): Promise<RetrievedPrompts> {
-  let personaInstructionsContent = '';
-
-  if (
-    !selectedSystemPromptIds ||
-    !Array.isArray(selectedSystemPromptIds) ||
-    selectedSystemPromptIds.length === 0
-  ) {
-    return {
-      personaInstructions: personaInstructionsContent,
-    };
-  }
-
-  try {
-    const promptsFromDb = await db
-      .select({
-        content: systemPromptsTable.content,
-        type: systemPromptsTable.type,
-      })
-      .from(systemPromptsTable)
-      .where(inArray(systemPromptsTable.id, selectedSystemPromptIds));
-
-    // Separate system and persona prompts
-    const personaPrompts = promptsFromDb.filter((p) => p.type === 'persona');
-    personaInstructionsContent = personaPrompts
-      .map((p) => p.content)
-      .join('\n');
-  } catch (dbError) {
-    console.error('Error fetching system prompts from DB:', dbError);
-    // Return empty strings rather than throwing to allow graceful degradation
-  }
-
-  return {
-    personaInstructions: personaInstructionsContent,
-  };
 }
 
 /**
@@ -73,6 +35,22 @@ export async function getPersonaInstructionsOnly(
   }
 
   try {
+    let promptsString = '';
+
+    const basePrompts = [
+      formattingAndCitationsLocal,
+      formattingAndCitationsScholarly,
+      formattingAndCitationsWeb,
+      formattingChat,
+    ];
+
+    // Include base prompts if their IDs are in the selectedPersonaPromptIds
+    basePrompts.forEach((bp) => {
+      if (selectedPersonaPromptIds.includes(bp.id)) {
+        promptsString += bp.content + '\n';
+      }
+    });
+
     const promptsFromDb = await db
       .select({
         content: systemPromptsTable.content,
@@ -81,8 +59,9 @@ export async function getPersonaInstructionsOnly(
       .from(systemPromptsTable)
       .where(inArray(systemPromptsTable.id, selectedPersonaPromptIds));
 
-    const personaPrompts = promptsFromDb.filter((p) => p.type === 'persona');
-    return personaPrompts.map((p) => p.content).join('\n');
+    let personaPrompts = promptsFromDb.filter((p) => p.type === 'persona');
+
+    return promptsString + personaPrompts.map((p) => p.content).join('\n');
   } catch (dbError) {
     console.error('Error fetching persona prompts from DB:', dbError);
     return '';

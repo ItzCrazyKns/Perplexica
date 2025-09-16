@@ -33,6 +33,7 @@ import {
 import { PROVIDER_METADATA } from '@/lib/providers';
 import Optimization from '@/components/MessageInputActions/Optimization';
 import ModelSelector from '@/components/MessageInputActions/ModelSelector';
+import { Prompt } from '@/lib/types/prompt';
 
 interface SettingsType {
   chatModelProviders: {
@@ -208,13 +209,6 @@ const SettingsSection = ({
   );
 };
 
-interface SystemPrompt {
-  id: string;
-  name: string;
-  content: string;
-  type: 'persona';
-}
-
 export default function SettingsPage() {
   const [config, setConfig] = useState<SettingsType | null>(null);
   const [chatModels, setChatModels] = useState<Record<string, any>>({});
@@ -254,10 +248,8 @@ export default function SettingsPage() {
     1024, 2048, 3072, 4096, 8192, 16384, 32768, 65536, 131072,
   ];
 
-  const [userSystemPrompts, setUserSystemPrompts] = useState<SystemPrompt[]>(
-    [],
-  );
-  const [editingPrompt, setEditingPrompt] = useState<SystemPrompt | null>(null);
+  const [userSystemPrompts, setUserSystemPrompts] = useState<Prompt[]>([]);
+  const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
   const [newPromptName, setNewPromptName] = useState('');
   const [newPromptContent, setNewPromptContent] = useState('');
   const [newPromptType, setNewPromptType] = useState<'persona'>('persona');
@@ -436,7 +428,8 @@ export default function SettingsPage() {
         const response = await fetch('/api/system-prompts');
         if (response.ok) {
           const prompts = await response.json();
-          setUserSystemPrompts(prompts);
+          const availablePrompts = prompts.filter((p: Prompt) => !p.readOnly);
+          setUserSystemPrompts(availablePrompts);
         } else {
           console.error('Failed to load system prompts.');
         }
@@ -1996,14 +1989,14 @@ function CopyTemplatePicker() {
   const getTemplateText = () => {
     switch (selected) {
       case 'local':
-        return formattingAndCitationsLocal;
+        return formattingAndCitationsLocal.content;
       case 'chat':
-        return formattingChat;
+        return formattingChat.content;
       case 'scholarly':
-        return formattingAndCitationsScholarly;
+        return formattingAndCitationsScholarly.content;
       case 'web':
       default:
-        return formattingAndCitationsWeb;
+        return formattingAndCitationsWeb.content;
     }
   };
 

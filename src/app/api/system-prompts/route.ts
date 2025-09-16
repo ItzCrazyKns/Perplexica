@@ -2,18 +2,36 @@ import db from '@/lib/db';
 import { systemPrompts } from '@/lib/db/schema';
 import { NextResponse } from 'next/server';
 import { asc, eq } from 'drizzle-orm';
+import {
+  formattingAndCitationsLocal,
+  formattingAndCitationsScholarly,
+  formattingAndCitationsWeb,
+  formattingChat,
+} from '@/lib/prompts/templates';
+import { Prompt } from '@/lib/types/prompt';
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type');
+    // Include base prompts from /lib/prompts/templates
+    let prompts: Prompt[] = [
+      formattingAndCitationsLocal,
+      formattingAndCitationsScholarly,
+      formattingAndCitationsWeb,
+      formattingChat,
+    ];
 
     // System prompts are deprecated; only return persona prompts
-    const prompts = await db
-      .select()
-      .from(systemPrompts)
-      .where(eq(systemPrompts.type, 'persona'))
-      .orderBy(asc(systemPrompts.name));
+    prompts.push(
+      ...(
+        await db
+          .select()
+          .from(systemPrompts)
+          .where(eq(systemPrompts.type, 'persona'))
+          .orderBy(asc(systemPrompts.name))
+      ).map((prompt) => ({ ...prompt, readOnly: false })),
+    );
 
     return NextResponse.json(prompts);
   } catch (error) {
