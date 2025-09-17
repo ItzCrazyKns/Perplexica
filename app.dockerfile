@@ -32,4 +32,15 @@ RUN mkdir /home/perplexica/uploads
 
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
+
+# Create non-root user for security
+RUN groupadd -g 1001 perplexica && \
+    useradd -r -u 1001 -g perplexica perplexica
+
+# Change ownership of app directory
+RUN chown -R perplexica:perplexica /app
+
+# Switch to non-root user
+USER perplexica
+
 CMD ["./entrypoint.sh"]
