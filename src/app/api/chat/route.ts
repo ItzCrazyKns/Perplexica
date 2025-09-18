@@ -20,6 +20,11 @@ import { ChatOpenAI } from '@langchain/openai';
 import crypto from 'crypto';
 import { and, eq, gt } from 'drizzle-orm';
 import { EventEmitter } from 'stream';
+import {
+  registerRetrieval,
+  cleanupRun,
+  clearSoftStop,
+} from '@/lib/utils/runControl';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -476,6 +481,11 @@ export const POST = async (req: Request) => {
     const abortController = new AbortController();
     registerCancelToken(message.messageId, abortController);
 
+    // Register retrieval-only controller and clear soft-stop at start
+    const retrievalController = new AbortController();
+    registerRetrieval(message.messageId, retrievalController);
+    clearSoftStop(message.messageId);
+
     abortController.signal.addEventListener('abort', () => {
       console.log('Stream aborted, sending cancel event');
       writer.write(
@@ -488,6 +498,7 @@ export const POST = async (req: Request) => {
       );
       writer.close();
       cleanupCancelToken(message.messageId);
+      cleanupRun(message.messageId);
     });
 
     // Pass the abort signal to the search handler
@@ -503,6 +514,8 @@ export const POST = async (req: Request) => {
       abortController.signal,
       personaInstructionsContent,
       body.focusMode,
+      message.messageId,
+      retrievalController.signal,
     );
 
     handleEmitterEvents(

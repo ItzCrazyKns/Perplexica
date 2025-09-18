@@ -12,6 +12,7 @@ import computeSimilarity from '@/lib/utils/computeSimilarity';
 import { Command, getCurrentTaskInput } from '@langchain/langgraph';
 import { ToolMessage } from '@langchain/core/messages';
 import { SimplifiedAgentStateType } from '@/lib/state/chatAgentState';
+import { isSoftStop } from '@/lib/utils/runControl';
 
 // Schema for search query generation
 const SearchQuerySchema = z.object({
@@ -67,6 +68,10 @@ export const simpleWebSearchTool = tool(
 
       const llm = config.configurable.systemLlm;
       const embeddings: Embeddings = config.configurable.embeddings;
+      const retrievalSignal: AbortSignal | undefined =
+        (config as any)?.configurable?.retrievalSignal;
+      const messageId: string | undefined =
+        (config as any)?.configurable?.messageId;
 
       const searchQuery = query;
       console.log(
@@ -74,10 +79,28 @@ export const simpleWebSearchTool = tool(
       );
 
       // Step 2: Execute web search
-      const searchResults = await searchSearxng(searchQuery, {
-        language: 'en',
-        engines: [],
-      });
+      if (messageId && isSoftStop(messageId)) {
+        return new Command({
+          update: {
+            relevantDocuments: [],
+            messages: [
+              new ToolMessage({
+                content: 'Soft-stop set; skipping web search.',
+                tool_call_id: (config as any)?.toolCall.id,
+              }),
+            ],
+          },
+        });
+      }
+
+      const searchResults = await searchSearxng(
+        searchQuery,
+        {
+          language: 'en',
+          engines: [],
+        },
+        retrievalSignal,
+      );
 
       console.log(
         `SimpleWebSearchTool: Found ${searchResults.results.length} search results`,
@@ -173,10 +196,25 @@ export const simpleWebSearchTool = tool(
           ],
         },
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('SimpleWebSearchTool: Error during web search:', error);
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
+
+      // Treat abort as non-fatal/no-op update
+      if (error?.name === 'CanceledError' || error?.name === 'AbortError') {
+        return new Command({
+          update: {
+            relevantDocuments: [],
+            messages: [
+              new ToolMessage({
+                content: 'Web search aborted by soft-stop.',
+                tool_call_id: (config as any)?.toolCall.id,
+              }),
+            ],
+          },
+        });
+      }
 
       //return { documents: [] };
       return new Command({

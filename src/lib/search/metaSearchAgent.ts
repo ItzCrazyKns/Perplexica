@@ -18,6 +18,8 @@ export interface MetaSearchAgentType {
     signal: AbortSignal,
     personaInstructions?: string,
     focusMode?: string,
+    messageId?: string,
+    retrievalSignal?: AbortSignal,
   ) => Promise<eventEmitter>;
 }
 
@@ -54,6 +56,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
     personaInstructions: string,
     signal: AbortSignal,
     focusMode: string,
+    messageId?: string,
+    retrievalSignal?: AbortSignal,
   ) {
     try {
       const agentSearch = new AgentSearch(
@@ -65,6 +69,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
         signal,
         focusMode,
         chatId,
+        messageId,
+        retrievalSignal,
       );
 
       // Execute the agent workflow
@@ -96,6 +102,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
     signal: AbortSignal,
     personaInstructions?: string,
     focusMode?: string,
+    messageId?: string,
+    retrievalSignal?: AbortSignal,
   ) {
     const emitter = new eventEmitter();
 
@@ -128,6 +136,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
         personaInstructions || '',
         signal,
         'deepResearch',
+        messageId || '',
+        retrievalSignal || signal,
       );
 
       return emitter;
@@ -146,6 +156,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
       personaInstructions || '',
       signal,
       focusMode || 'webSearch',
+      messageId || '',
+      retrievalSignal || signal,
     );
 
     return emitter;

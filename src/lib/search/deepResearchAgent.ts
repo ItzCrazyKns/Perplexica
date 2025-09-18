@@ -33,6 +33,7 @@ import { withStructuredOutput } from '@/lib/utils/structuredOutput';
 import z from 'zod';
 import { Subquery } from 'drizzle-orm';
 import pLimit from 'p-limit';
+import { isSoftStop } from '@/lib/utils/runControl';
 
 /**
  * DeepResearchAgent — phased orchestrator with budgets, cancellation, and progress streaming.
@@ -69,7 +70,7 @@ export class DeepResearchAgent {
   > = {};
 
   // Phase tracking
-  private phases: Phase[] = ['Plan', 'Search', 'Analyze', 'Synthesize'];
+  private phases: Phase[] = ['Plan', 'Search', 'Analyze', 'Answer'];
   private currentPhaseIndex = 0;
   private earlySynthesisTriggered = false;
 
@@ -100,6 +101,8 @@ export class DeepResearchAgent {
     private personaInstructions: string,
     private signal: AbortSignal,
     private chatId: string,
+    private messageId?: string,
+    private retrievalSignal?: AbortSignal,
   ) {
     // Observe cancellation
     this.signal.addEventListener('abort', () => {
@@ -136,22 +139,32 @@ export class DeepResearchAgent {
         writeManifest(this.chatId, manifest);
       }
 
-      do {
-        // Phase: Plan
-        await this.runPhase('Plan', async () => {
-          await this.planPhase(query, history);
-        });
-
-        // Phase: Search
-        if (!this.shouldJumpToSynthesis()) {
-          await this.runPhase('Search', async () => {
-            await this.searchPhase(history);
+      try {
+        do {
+          // Phase: Plan
+          await this.runPhase('Plan', async () => {
+            await this.planPhase(query, history);
           });
+
+          // Phase: Search
+          if (!this.shouldJumpToSynthesis()) {
+            await this.runPhase('Search', async () => {
+              await this.searchPhase(history);
+            });
+          }
+        } while (await this.needsMoreInfo());
+      } catch (e: any) {
+        if (this.retrievalSignal?.aborted) {
+          console.log(
+            'DeepResearchAgent: cancelled during Plan/Search. Emitting best-effort summary.',
+          );
+        } else {
+          throw e;
         }
-      } while (!(await this.needsMoreInfo()));
+      }
 
       // Phase: Synthesize (always reached; may be early)
-      await this.runPhase('Synthesize', async () => {
+      await this.runPhase('Answer', async () => {
         await this.synthesizePhase(query);
       });
 
@@ -282,12 +295,22 @@ export class DeepResearchAgent {
 
   private shouldJumpToSynthesis(): boolean {
     if (this.earlySynthesisTriggered) return true;
+    // Respond-now override
+    if (this.messageId && isSoftStop(this.messageId)) {
+      this.emitProgress(
+        'Answer',
+        'Respond-now triggered — moving to answer',
+        this.phasePercent(),
+      );
+      this.earlySynthesisTriggered = true;
+      return true;
+    }
     // Soft limit: when reaching soft LLM turns threshold, move to Synthesis
     if (this.llmTurns >= DeepResearchAgent.LLM_TURNS_SOFT_LIMIT) {
       this.earlySynthesisTriggered = true;
       this.emitProgress(
-        'Synthesize',
-        'Soft budget reached — moving to synthesis early',
+        'Answer',
+        'Soft budget reached — moving to answer early',
         this.phasePercent(),
       );
       return true;
@@ -297,9 +320,13 @@ export class DeepResearchAgent {
 
   private abortedOrTimedOut(): boolean {
     if (this.aborted || this.signal.aborted) return true;
+    if (this.messageId && isSoftStop(this.messageId)) {
+      this.earlySynthesisTriggered = true;
+      return false; // don't abort; allow flow to continue to synthesis
+    }
     if (Date.now() - this.startTime > DeepResearchAgent.WALL_CLOCK_LIMIT_MS) {
       this.emitProgress(
-        'Synthesize',
+        'Answer',
         'Wall-clock limit reached',
         this.phasePercent(),
       );
@@ -450,7 +477,7 @@ export class DeepResearchAgent {
     this.llmTurns += n;
     if (this.llmTurns >= DeepResearchAgent.LLM_TURNS_HARD_LIMIT) {
       this.emitProgress(
-        'Synthesize',
+        'Answer',
         'Hard LLM-turn limit reached',
         this.phasePercent(),
       );
@@ -474,6 +501,7 @@ export class DeepResearchAgent {
 
   private async planPhase(query: string, history: any[]) {
     this.ensureNotAborted();
+    if (this.shouldJumpToSynthesis()) return;
     // First, use System LLM to craft an optimized search query using structured output tool
     this.emitProgress('Plan', 'Generating search query', this.phasePercent());
     let optimizedQuery = query;
@@ -501,7 +529,11 @@ export class DeepResearchAgent {
     this.emitProgress('Plan', 'Scanning web for context', this.phasePercent());
     let webContext = '';
     try {
-      const searx = await searchSearxng(optimizedQuery, { language: 'en' });
+      const searx = await searchSearxng(
+        optimizedQuery,
+        { language: 'en' },
+        this.retrievalSignal,
+      );
       const top = searx.results
         .filter((r) => r.title && r.url && r.content && r.content.length > 0)
         .slice(0, 10);
@@ -568,7 +600,11 @@ export class DeepResearchAgent {
         this.phaseSubPercent(i, subqs.length),
       );
 
-      const subqueryResult = await searchSearxng(sq);
+      const subqueryResult = await searchSearxng(
+        sq,
+        undefined,
+        this.retrievalSignal,
+      );
 
       this.emitProgress(
         'Search',
@@ -590,7 +626,7 @@ export class DeepResearchAgent {
             result.url,
             sq,
             this.systemLlm,
-            this.signal,
+            this.retrievalSignal || this.signal,
             (usage) => this.addPhaseUsage('Search', usage, 'system'),
           );
           return {
@@ -636,8 +672,8 @@ export class DeepResearchAgent {
   }
 
   private async needsMoreInfo(): Promise<boolean> {
-    if (this.shouldJumpToSynthesis()) return false;
     this.ensureNotAborted();
+    if (this.shouldJumpToSynthesis()) return false;
     // Analyze coverage and decide if we have enough to move to synthesis.
     const perSub = this.state.perSubquery || [];
 
@@ -672,7 +708,7 @@ export class DeepResearchAgent {
         'Revise subquestions to target high-signal domains, official docs, data/methodology pages, and up-to-date coverage.',
         'Avoid tangents; prefer diverse phrasing and site/domain constraints if helpful.',
       ].join('\n- ');
-      return false; // loop back to Plan
+      return true; // loop back to Plan
     }
 
     // 2) Ask the System LLM for a conservative yes/no sufficiency judgment
@@ -771,7 +807,7 @@ export class DeepResearchAgent {
           (p) => (p.sufficiency = 'sufficient'),
         );
         this.replanGuidance = null; // clear any prior guidance
-        return true; // proceed to synthesis
+        return false; // proceed to synthesis
       }
 
       // Not sufficient — craft guidance for the next planning pass
@@ -811,7 +847,7 @@ export class DeepResearchAgent {
         'Sufficiency judge determined coverage is insufficient, replan guidance:',
         this.replanGuidance,
       );
-      return false; // loop back to Plan
+      return true; // loop back to Plan
     } catch (err) {
       console.warn(
         'Sufficiency judge failed, defaulting to another pass:',
@@ -823,7 +859,7 @@ export class DeepResearchAgent {
         'The sufficiency check failed; generate a more robust plan focusing on authoritative and diverse sources.',
         `Stay focused on the user question: "${this.query}".`,
       ].join('\n- ');
-      return false;
+      return true;
     }
   }
 
@@ -874,6 +910,16 @@ export class DeepResearchAgent {
 
     let usage = { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
 
+    if (this.shouldJumpToSynthesis()) {
+      this.emitter.emit(
+        'data',
+        JSON.stringify({
+          type: 'response',
+          data: `## ⚠︎ Early response triggered by budget or user request. ⚠︎\nResponse may be incomplete, lack citations, or omit important content.\n\n---\n\n`,
+        }),
+      );
+    }
+
     for await (const event of eventStream) {
       if (this.signal.aborted || this.aborted) break;
 
@@ -893,7 +939,7 @@ export class DeepResearchAgent {
         const output = event.data.output;
         const meta = output.usage_metadata || output.response_metadata?.usage;
         if (meta) {
-          this.addPhaseUsage('Synthesize', meta, 'chat');
+          this.addPhaseUsage('Answer', meta, 'chat');
         }
       }
 
@@ -905,7 +951,7 @@ export class DeepResearchAgent {
         const t =
           event.data.output.llmOutput.tokenUsage ||
           event.data.output.estimatedTokenUsage;
-        this.addPhaseUsage('Synthesize', t, 'chat');
+        this.addPhaseUsage('Answer', t, 'chat');
       }
     }
 
@@ -954,6 +1000,10 @@ ${url ? `<url>${url}</url>` : ''}
     if (this.aborted || this.signal.aborted) {
       throw new Error('aborted');
     }
+    if (this.messageId && isSoftStop(this.messageId)) {
+      // Flip early synthesis and return; callers will respect shouldJumpToSynthesis()
+      this.earlySynthesisTriggered = true;
+    }
     if (Date.now() - this.startTime > DeepResearchAgent.WALL_CLOCK_LIMIT_MS) {
       // Treat timeout as soft trigger to move on; upper layers will finalize
       this.earlySynthesisTriggered = true;
@@ -961,7 +1011,7 @@ ${url ? `<url>${url}</url>` : ''}
   }
 }
 
-type Phase = 'Plan' | 'Search' | 'Analyze' | 'Synthesize';
+type Phase = 'Plan' | 'Search' | 'Analyze' | 'Answer';
 
 export default DeepResearchAgent;
 

@@ -25,6 +25,8 @@ export class AgentSearch {
     signal: AbortSignal,
     agentMode: string = 'webSearch',
     private chatId?: string,
+    private messageId?: string,
+    private retrievalSignal?: AbortSignal,
   ) {
     this.emitter = emitter;
     this.agentMode = agentMode;
@@ -37,6 +39,8 @@ export class AgentSearch {
       emitter,
       personaInstructions,
       signal,
+      this.messageId,
+      this.retrievalSignal,
     );
 
     // Initialize deep research agent lazily only if needed
@@ -49,6 +53,8 @@ export class AgentSearch {
         personaInstructions,
         signal,
         this.chatId || '',
+        this.messageId || '',
+        this.retrievalSignal || signal,
       );
     }
   }

@@ -8,6 +8,7 @@ import { Command, getCurrentTaskInput } from '@langchain/langgraph';
 import { SimplifiedAgentStateType } from '@/lib/state/chatAgentState';
 import { ToolMessage } from '@langchain/core/messages';
 import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
+import { isSoftStop } from '@/lib/utils/runControl';
 
 // Schema for URL summarization tool input
 const URLSummarizationToolSchema = z.object({
@@ -75,6 +76,10 @@ export const urlSummarizationTool = tool(
         throw new Error('System LLM not available in config');
       }
       const llm = config.configurable.systemLlm;
+      const retrievalSignal: AbortSignal | undefined =
+        (config as any)?.configurable?.retrievalSignal;
+      const messageId: string | undefined =
+        (config as any)?.configurable?.messageId;
       const documents: Document[] = [];
 
       // Process each URL
@@ -83,12 +88,21 @@ export const urlSummarizationTool = tool(
           console.warn('URLSummarizationTool: Operation aborted by signal');
           break;
         }
+        if (messageId && isSoftStop(messageId)) {
+          console.warn('URLSummarizationTool: Soft-stop set; skipping URL');
+          break;
+        }
 
         try {
           console.log(`URLSummarizationTool: Processing ${url}`);
 
           // Fetch full content using the enhanced web content retrieval
-          const webContent = await getWebContent(url, 50000, retrieveHtml);
+          const webContent = await getWebContent(
+            url,
+            50000,
+            retrieveHtml,
+            retrievalSignal,
+          );
 
           if (!webContent || !webContent.pageContent) {
             console.warn(
@@ -139,7 +153,7 @@ ${retrieveHtml && webContent.metadata?.html ? webContent.metadata.html : webCont
 Provide a comprehensive summary of the above web page content, focusing on information relevant to the user's query:`;
 
             const result = await llm.invoke(summarizationPrompt, {
-              signal: config?.signal,
+              signal: retrievalSignal || config?.signal,
               ...getLangfuseCallbacks(),
             });
 
@@ -173,11 +187,14 @@ Provide a comprehensive summary of the above web page content, focusing on infor
               `URLSummarizationTool: No valid content generated for URL: ${url}`,
             );
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error(
             `URLSummarizationTool: Error processing URL ${url}:`,
             error,
           );
+          if (error?.name === 'AbortError' || error?.name === 'CanceledError') {
+            break;
+          }
           continue;
         }
       }

@@ -28,6 +28,7 @@ interface SearxngResponse {
 export const searchSearxng = async (
   query: string,
   opts?: SearxngSearchOptions,
+  signal?: AbortSignal,
 ) => {
   const searxngURL = getSearxngApiEndpoint();
 
@@ -46,7 +47,7 @@ export const searchSearxng = async (
     });
   }
 
-  const res = await axios.get(url.toString());
+  const res = await axios.get(url.toString(), { signal });
 
   const results: SearxngSearchResult[] = res.data.results;
   const suggestions: string[] = res.data.suggestions;

@@ -41,11 +41,17 @@ export const imageSearchTool = tool(
       let currentDocCount = currentState.relevantDocuments.length;
 
       console.log(`ImageSearchTool: Searching images for query: "${query}"`);
+      const retrievalSignal: AbortSignal | undefined =
+        (config as any)?.configurable?.retrievalSignal;
 
-      const searchResults = await searchSearxng(query, {
-        language: 'en',
-        engines: ['bing images', 'google images'],
-      });
+      const searchResults = await searchSearxng(
+        query,
+        {
+          language: 'en',
+          engines: ['bing images', 'google images'],
+        },
+        retrievalSignal,
+      );
 
       const images = (searchResults.results || [])
         .filter((r: any) => r && r.img_src && r.url)

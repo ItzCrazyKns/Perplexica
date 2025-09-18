@@ -119,8 +119,13 @@ export const getWebContent = async (
   url: string,
   truncateToLength: number = 30000,
   getHtml: boolean = false,
+  signal?: AbortSignal,
 ): Promise<Document | null> => {
   try {
+    if (signal?.aborted) {
+      console.warn(`getWebContent aborted before start for URL: ${url}`);
+      return null;
+    }
     // Opportunistic purge then try cache
     await purgeWebCache();
 
@@ -160,6 +165,8 @@ export const getWebContent = async (
       },
     });
 
+    // Best-effort: Playwright loader doesn't expose signal; emulate via early return hooks
+    if (signal?.aborted) return null;
     const docs = await loader.load();
 
     if (!docs || docs.length === 0) {
@@ -212,6 +219,7 @@ export const getWebContent = async (
     try {
       console.log(`Fallback to Cheerio for URL: ${url}`);
       const cheerioLoader = new CheerioWebBaseLoader(url, { maxRetries: 2 });
+      if (signal?.aborted) return null;
       const docs = await cheerioLoader.load();
 
       if (docs && docs.length > 0) {

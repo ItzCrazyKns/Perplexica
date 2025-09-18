@@ -3,7 +3,8 @@ import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
 import { Embeddings } from '@langchain/core/embeddings';
 import { EventEmitter } from 'events';
-import { RunnableConfig } from '@langchain/core/runnables';
+import { RunnableConfig, RunnableSequence } from '@langchain/core/runnables';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { SimplifiedAgentState } from '@/lib/state/chatAgentState';
 import {
   allAgentTools,
@@ -19,6 +20,14 @@ import { buildChatPrompt } from '@/lib/prompts/simplifiedAgent/chat';
 import { buildWebSearchPrompt } from '@/lib/prompts/simplifiedAgent/webSearch';
 import { buildLocalResearchPrompt } from '@/lib/prompts/simplifiedAgent/localResearch';
 import { buildFirefoxAIPrompt } from '@/lib/prompts/simplifiedAgent/firefoxAI';
+import { synthesizerPrompt } from '@/lib/prompts/synthesizer';
+import {
+  formattingAndCitationsScholarly,
+  formattingAndCitationsWeb,
+} from '@/lib/prompts/templates';
+import { isSoftStop } from '@/lib/utils/runControl';
+import { webSearchResponsePrompt } from '../prompts/webSearch';
+import { formatDateForLLM } from '../utils';
 
 /**
  * Normalize usage metadata from different LLM providers
@@ -69,6 +78,8 @@ export class SimplifiedAgent {
   private personaInstructions: string;
   private signal: AbortSignal;
   private currentToolNames: string[] = [];
+  private messageId?: string;
+  private retrievalSignal?: AbortSignal;
 
   constructor(
     chatLlm: BaseChatModel,
@@ -77,6 +88,8 @@ export class SimplifiedAgent {
     emitter: EventEmitter,
     personaInstructions: string = '',
     signal: AbortSignal,
+    messageId?: string,
+    retrievalSignal?: AbortSignal,
   ) {
     this.chatLlm = chatLlm;
     this.systemLlm = systemLlm;
@@ -84,6 +97,8 @@ export class SimplifiedAgent {
     this.emitter = emitter;
     this.personaInstructions = personaInstructions;
     this.signal = signal;
+    this.messageId = messageId;
+    this.retrievalSignal = retrievalSignal;
   }
 
   /**
@@ -275,9 +290,12 @@ export class SimplifiedAgent {
           focusMode,
           emitter: this.emitter,
           firefoxAIDetected,
+          // Pass through message and retrieval controls for tools
+          messageId: this.messageId,
+          retrievalSignal: this.retrievalSignal,
         },
-        recursionLimit: 25, // Allow sufficient iterations for tool use
-        signal: this.signal,
+        recursionLimit: 35, // Allow sufficient iterations for tool use
+        signal: this.retrievalSignal,
         ...getLangfuseCallbacks(),
       };
 
@@ -296,254 +314,345 @@ export class SimplifiedAgent {
       let usageSystem = { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
 
       let initialMessageSent = false;
+      let respondNowTriggered = false;
 
-      // Process the event stream
-      for await (const event of eventStream) {
-        if (!initialMessageSent) {
-          initialMessageSent = true;
-          // If Firefox AI was detected, emit a special note
-          if (firefoxAIDetected) {
-            this.emitter.emit(
-              'data',
-              JSON.stringify({
-                type: 'tool_call',
-                data: {
-                  content: '<ToolCall type="firefoxAI"></ToolCall>',
-                },
-              }),
-            );
+      try {
+        // Process the event stream
+        for await (const event of eventStream) {
+          if (!initialMessageSent) {
+            initialMessageSent = true;
+            // If Firefox AI was detected, emit a special note
+            if (firefoxAIDetected) {
+              this.emitter.emit(
+                'data',
+                JSON.stringify({
+                  type: 'tool_call',
+                  data: {
+                    content: '<ToolCall type="firefoxAI"></ToolCall>',
+                  },
+                }),
+              );
+            }
           }
-        }
 
-        // Handle different event types
-        if (
-          event.event === 'on_chain_end' &&
-          event.name === 'RunnableSequence'
-        ) {
-          finalResult = event.data.output;
-          // Collect relevant documents from the final result
-          if (finalResult && finalResult.relevantDocuments) {
-            collectedDocuments.push(...finalResult.relevantDocuments);
+          // Handle different event types
+          if (
+            event.event === 'on_chain_end' &&
+            event.name === 'RunnableSequence'
+          ) {
+            finalResult = event.data.output;
+            // Collect relevant documents from the final result
+            if (finalResult && finalResult.relevantDocuments) {
+              collectedDocuments.push(...finalResult.relevantDocuments);
+            }
           }
-        }
 
-        // Collect sources from tool results
-        if (
-          event.event === 'on_chain_end' &&
-          (event.name.includes('search') ||
-            event.name.includes('Search') ||
-            event.name.includes('tool') ||
-            event.name.includes('Tool'))
-        ) {
-          // Handle LangGraph state updates with relevantDocuments
-          if (event.data?.output && Array.isArray(event.data.output)) {
-            for (const item of event.data.output) {
-              if (
-                item.update &&
-                item.update.relevantDocuments &&
-                Array.isArray(item.update.relevantDocuments)
-              ) {
-                collectedDocuments.push(...item.update.relevantDocuments);
+          // Collect sources from tool results
+          if (
+            event.event === 'on_chain_end' &&
+            (event.name.includes('search') ||
+              event.name.includes('Search') ||
+              event.name.includes('tool') ||
+              event.name.includes('Tool'))
+          ) {
+            // Handle LangGraph state updates with relevantDocuments
+            if (event.data?.output && Array.isArray(event.data.output)) {
+              for (const item of event.data.output) {
+                if (
+                  item.update &&
+                  item.update.relevantDocuments &&
+                  Array.isArray(item.update.relevantDocuments)
+                ) {
+                  collectedDocuments.push(...item.update.relevantDocuments);
+                }
               }
             }
           }
-        }
 
-        // Handle streaming tool calls (for thought messages)
-        if (event.event === 'on_chat_model_end' && event.data.output) {
-          const output = event.data.output;
-          const nameLower = (event.name || '').toLowerCase();
-          console.log(`SimplifiedAgent: on_chat_model_end`, event);
-          const isToolContext =
-            output.tool_calls && output.tool_calls.length > 0;
+          // Handle streaming tool calls (for thought messages)
+          if (event.event === 'on_chat_model_end' && event.data.output) {
+            const output = event.data.output;
+            const nameLower = (event.name || '').toLowerCase();
+            console.log(`SimplifiedAgent: on_chat_model_end`, event);
+            const isToolContext =
+              output.tool_calls && output.tool_calls.length > 0;
 
-          // Collect token usage from chat model end events
-          if (output.usage_metadata) {
-            const normalized = normalizeUsageMetadata(output.usage_metadata);
-            if (isToolContext) {
-              usageSystem.input_tokens += normalized.input_tokens;
-              usageSystem.output_tokens += normalized.output_tokens;
-              usageSystem.total_tokens += normalized.total_tokens;
-            } else {
-              usageChat.input_tokens += normalized.input_tokens;
-              usageChat.output_tokens += normalized.output_tokens;
-              usageChat.total_tokens += normalized.total_tokens;
-            }
-            console.log(
-              'SimplifiedAgent: Collected usage from usage_metadata:',
-              normalized,
-            );
-            // Emit live snapshot
-            this.emitter.emit(
-              'stats',
-              JSON.stringify({
-                type: 'modelStats',
-                data: {
-                  modelName: getModelName(this.chatLlm),
-                  modelNameChat: getModelName(this.chatLlm),
-                  modelNameSystem: getModelName(this.systemLlm),
-                  usage: {
-                    input_tokens:
-                      usageChat.input_tokens + usageSystem.input_tokens,
-                    output_tokens:
-                      usageChat.output_tokens + usageSystem.output_tokens,
-                    total_tokens:
-                      usageChat.total_tokens + usageSystem.total_tokens,
+            // Collect token usage from chat model end events
+            if (output.usage_metadata) {
+              const normalized = normalizeUsageMetadata(output.usage_metadata);
+              if (isToolContext) {
+                usageSystem.input_tokens += normalized.input_tokens;
+                usageSystem.output_tokens += normalized.output_tokens;
+                usageSystem.total_tokens += normalized.total_tokens;
+              } else {
+                usageChat.input_tokens += normalized.input_tokens;
+                usageChat.output_tokens += normalized.output_tokens;
+                usageChat.total_tokens += normalized.total_tokens;
+              }
+              console.log(
+                'SimplifiedAgent: Collected usage from usage_metadata:',
+                normalized,
+              );
+              // Emit live snapshot
+              this.emitter.emit(
+                'stats',
+                JSON.stringify({
+                  type: 'modelStats',
+                  data: {
+                    modelName: getModelName(this.chatLlm),
+                    modelNameChat: getModelName(this.chatLlm),
+                    modelNameSystem: getModelName(this.systemLlm),
+                    usage: {
+                      input_tokens:
+                        usageChat.input_tokens + usageSystem.input_tokens,
+                      output_tokens:
+                        usageChat.output_tokens + usageSystem.output_tokens,
+                      total_tokens:
+                        usageChat.total_tokens + usageSystem.total_tokens,
+                    },
+                    usageChat,
+                    usageSystem,
                   },
-                  usageChat,
-                  usageSystem,
-                },
-              }),
-            );
-          } else if (output.response_metadata?.usage) {
-            // Fallback to response_metadata for different model providers
-            const normalized = normalizeUsageMetadata(
-              output.response_metadata.usage,
-            );
-            if (isToolContext) {
-              usageSystem.input_tokens += normalized.input_tokens;
-              usageSystem.output_tokens += normalized.output_tokens;
-              usageSystem.total_tokens += normalized.total_tokens;
-            } else {
-              usageChat.input_tokens += normalized.input_tokens;
-              usageChat.output_tokens += normalized.output_tokens;
-              usageChat.total_tokens += normalized.total_tokens;
-            }
-            console.log(
-              'SimplifiedAgent: Collected usage from response_metadata:',
-              normalized,
-            );
-            this.emitter.emit(
-              'stats',
-              JSON.stringify({
-                type: 'modelStats',
-                data: {
-                  modelName: getModelName(this.chatLlm),
-                  modelNameChat: getModelName(this.chatLlm),
-                  modelNameSystem: getModelName(this.systemLlm),
-                  usage: {
-                    input_tokens:
-                      usageChat.input_tokens + usageSystem.input_tokens,
-                    output_tokens:
-                      usageChat.output_tokens + usageSystem.output_tokens,
-                    total_tokens:
-                      usageChat.total_tokens + usageSystem.total_tokens,
+                }),
+              );
+            } else if (output.response_metadata?.usage) {
+              // Fallback to response_metadata for different model providers
+              const normalized = normalizeUsageMetadata(
+                output.response_metadata.usage,
+              );
+              if (isToolContext) {
+                usageSystem.input_tokens += normalized.input_tokens;
+                usageSystem.output_tokens += normalized.output_tokens;
+                usageSystem.total_tokens += normalized.total_tokens;
+              } else {
+                usageChat.input_tokens += normalized.input_tokens;
+                usageChat.output_tokens += normalized.output_tokens;
+                usageChat.total_tokens += normalized.total_tokens;
+              }
+              console.log(
+                'SimplifiedAgent: Collected usage from response_metadata:',
+                normalized,
+              );
+              this.emitter.emit(
+                'stats',
+                JSON.stringify({
+                  type: 'modelStats',
+                  data: {
+                    modelName: getModelName(this.chatLlm),
+                    modelNameChat: getModelName(this.chatLlm),
+                    modelNameSystem: getModelName(this.systemLlm),
+                    usage: {
+                      input_tokens:
+                        usageChat.input_tokens + usageSystem.input_tokens,
+                      output_tokens:
+                        usageChat.output_tokens + usageSystem.output_tokens,
+                      total_tokens:
+                        usageChat.total_tokens + usageSystem.total_tokens,
+                    },
+                    usageChat,
+                    usageSystem,
                   },
-                  usageChat,
-                  usageSystem,
-                },
-              }),
-            );
+                }),
+              );
+            }
+
+            if (
+              output._getType() === 'ai' &&
+              output.tool_calls &&
+              output.tool_calls.length > 0
+            ) {
+              const aiMessage = output as AIMessage;
+
+              // Process each tool call and emit thought messages
+              for (const toolCall of aiMessage.tool_calls || []) {
+                if (toolCall && toolCall.name) {
+                  const toolName = toolCall.name;
+                  const toolArgs = toolCall.args || {};
+
+                  // Create user-friendly messages for different tools using markdown components
+                  let toolMarkdown = '';
+                  switch (toolName) {
+                    case 'web_search':
+                      toolMarkdown = `<ToolCall type=\"search\" query=\"${encodeHtmlAttribute(toolArgs.query || 'relevant information')}\"></ToolCall>`;
+                      break;
+                    case 'file_search':
+                      toolMarkdown = `<ToolCall type=\"file\" query=\"${encodeHtmlAttribute(toolArgs.query || 'relevant information')}\"></ToolCall>`;
+                      break;
+                    case 'url_summarization':
+                      if (Array.isArray(toolArgs.urls)) {
+                        toolMarkdown = `<ToolCall type="url" count="${toolArgs.urls.length}"></ToolCall>`;
+                      } else {
+                        toolMarkdown = `<ToolCall type="url" count="1"></ToolCall>`;
+                      }
+                      break;
+                    case 'image_search':
+                      toolMarkdown = `<ToolCall type=\"image\" query=\"${encodeHtmlAttribute(toolArgs.query || 'relevant images')}\"></ToolCall>`;
+                      break;
+                    default:
+                      toolMarkdown = `<ToolCall type="${toolName}"></ToolCall>`;
+                  }
+
+                  // Emit the thought message
+                  this.emitter.emit(
+                    'data',
+                    JSON.stringify({
+                      type: 'tool_call',
+                      data: {
+                        content: toolMarkdown,
+                      },
+                    }),
+                  );
+                }
+              }
+            }
           }
 
-          if (
-            output._getType() === 'ai' &&
-            output.tool_calls &&
-            output.tool_calls.length > 0
-          ) {
-            const aiMessage = output as AIMessage;
+          // Handle LLM end events for token usage tracking
+          if (event.event === 'on_llm_end' && event.data.output) {
+            const output = event.data.output;
 
-            // Process each tool call and emit thought messages
-            for (const toolCall of aiMessage.tool_calls || []) {
-              if (toolCall && toolCall.name) {
-                const toolName = toolCall.name;
-                const toolArgs = toolCall.args || {};
+            // Collect token usage from LLM end events
+            if (output.llmOutput?.tokenUsage) {
+              const normalized = normalizeUsageMetadata(
+                output.llmOutput.tokenUsage,
+              );
+              // on_llm_end often corresponds to tool/internal chains; attribute to system usage
+              usageSystem.input_tokens += normalized.input_tokens;
+              usageSystem.output_tokens += normalized.output_tokens;
+              usageSystem.total_tokens += normalized.total_tokens;
+              console.log(
+                'SimplifiedAgent: Collected usage from llmOutput:',
+                normalized,
+              );
+              this.emitter.emit(
+                'stats',
+                JSON.stringify({
+                  type: 'modelStats',
+                  data: {
+                    modelName: getModelName(this.chatLlm),
+                    modelNameChat: getModelName(this.chatLlm),
+                    modelNameSystem: getModelName(this.systemLlm),
+                    usage: {
+                      input_tokens:
+                        usageChat.input_tokens + usageSystem.input_tokens,
+                      output_tokens:
+                        usageChat.output_tokens + usageSystem.output_tokens,
+                      total_tokens:
+                        usageChat.total_tokens + usageSystem.total_tokens,
+                    },
+                    usageChat,
+                    usageSystem,
+                  },
+                }),
+              );
+            }
+          }
 
-                // Create user-friendly messages for different tools using markdown components
-                let toolMarkdown = '';
-                switch (toolName) {
-                  case 'web_search':
-                    toolMarkdown = `<ToolCall type=\"search\" query=\"${encodeHtmlAttribute(toolArgs.query || 'relevant information')}\"></ToolCall>`;
-                    break;
-                  case 'file_search':
-                    toolMarkdown = `<ToolCall type=\"file\" query=\"${encodeHtmlAttribute(toolArgs.query || 'relevant information')}\"></ToolCall>`;
-                    break;
-                  case 'url_summarization':
-                    if (Array.isArray(toolArgs.urls)) {
-                      toolMarkdown = `<ToolCall type="url" count="${toolArgs.urls.length}"></ToolCall>`;
-                    } else {
-                      toolMarkdown = `<ToolCall type="url" count="1"></ToolCall>`;
-                    }
-                    break;
-                  case 'image_search':
-                    toolMarkdown = `<ToolCall type=\"image\" query=\"${encodeHtmlAttribute(toolArgs.query || 'relevant images')}\"></ToolCall>`;
-                    break;
-                  default:
-                    toolMarkdown = `<ToolCall type="${toolName}"></ToolCall>`;
-                }
+          // Handle token-level streaming for the final response
+          if (event.event === 'on_chat_model_stream' && event.data.chunk) {
+            const chunk = event.data.chunk;
+            if (chunk.content && typeof chunk.content === 'string') {
+              // Add the token to our buffer
+              currentResponseBuffer += chunk.content;
 
-                // Emit the thought message
+              // Emit the individual token
+              this.emitter.emit(
+                'data',
+                JSON.stringify({
+                  type: 'response',
+                  data: chunk.content,
+                }),
+              );
+            }
+          }
+        }
+      } catch (err: any) {
+        if (
+          this.retrievalSignal &&
+          this.retrievalSignal.aborted &&
+          isSoftStop(this.messageId || '')
+        ) {
+          // If respond-now was triggered, run a quick synthesis from collected context before finalization
+
+          const docsString = collectedDocuments
+            .map((doc: any, idx: number) => {
+              const meta = doc?.metadata || {};
+              const title = meta.title || meta.url || `Source ${idx + 1}`;
+              const url = meta.url || '';
+              const snippet = doc?.pageContent || '';
+              return `<${idx + 1}>
+<title>${title}</title>
+${url ? `<url>${url}</url>` : ''}
+<content>\n${snippet}\n</content>
+</${idx + 1}>`;
+            })
+            .join('\n\n');
+
+          const prompt = await ChatPromptTemplate.fromMessages([
+            ['system', webSearchResponsePrompt],
+            ['user', query]
+          ]).partial({
+            //recursionLimitReached: '',
+            formattingAndCitations: this.personaInstructions
+              ? this.personaInstructions
+              : formattingAndCitationsWeb.content,
+            //conversationHistory: '', //TODO: Pass recent history
+            context: docsString || 'No context documents available.',
+            date: formatDateForLLM(new Date()),
+          });
+
+          const chain = RunnableSequence.from([
+            prompt,
+            this.chatLlm,
+          ]).withConfig({
+            runName: 'SimplifiedRespondNowSynthesis',
+            ...getLangfuseCallbacks(),
+            signal: this.signal,
+          });
+
+          const eventStream2 = chain.streamEvents(
+            { query },
+            { version: 'v2', ...getLangfuseCallbacks() },
+          );
+          for await (const event of eventStream2) {
+            if (this.signal.aborted) break;
+            if (event.event === 'on_chat_model_stream' && event.data?.chunk) {
+              const chunk = event.data.chunk;
+              if (chunk.content && typeof chunk.content === 'string') {
+                currentResponseBuffer += chunk.content;
                 this.emitter.emit(
                   'data',
-                  JSON.stringify({
-                    type: 'tool_call',
-                    data: {
-                      content: toolMarkdown,
-                    },
-                  }),
+                  JSON.stringify({ type: 'response', data: chunk.content }),
                 );
               }
             }
+            if (event.event === 'on_chat_model_end' && event.data?.output) {
+              const meta =
+                event.data.output.usage_metadata ||
+                event.data.output.response_metadata?.usage;
+              if (meta) {
+                const normalized = normalizeUsageMetadata(meta);
+                usageChat.input_tokens += normalized.input_tokens;
+                usageChat.output_tokens += normalized.output_tokens;
+                usageChat.total_tokens += normalized.total_tokens;
+              }
+            }
+            if (
+              event.event === 'on_llm_end' &&
+              (event.data?.output?.llmOutput?.tokenUsage ||
+                event.data?.output?.estimatedTokenUsage)
+            ) {
+              const t =
+                event.data.output.llmOutput?.tokenUsage ||
+                event.data.output.estimatedTokenUsage;
+              const normalized = normalizeUsageMetadata(t);
+              usageChat.input_tokens += normalized.input_tokens;
+              usageChat.output_tokens += normalized.output_tokens;
+              usageChat.total_tokens += normalized.total_tokens;
+            }
           }
-        }
-
-        // Handle LLM end events for token usage tracking
-        if (event.event === 'on_llm_end' && event.data.output) {
-          const output = event.data.output;
-
-          // Collect token usage from LLM end events
-          if (output.llmOutput?.tokenUsage) {
-            const normalized = normalizeUsageMetadata(
-              output.llmOutput.tokenUsage,
-            );
-            // on_llm_end often corresponds to tool/internal chains; attribute to system usage
-            usageSystem.input_tokens += normalized.input_tokens;
-            usageSystem.output_tokens += normalized.output_tokens;
-            usageSystem.total_tokens += normalized.total_tokens;
-            console.log(
-              'SimplifiedAgent: Collected usage from llmOutput:',
-              normalized,
-            );
-            this.emitter.emit(
-              'stats',
-              JSON.stringify({
-                type: 'modelStats',
-                data: {
-                  modelName: getModelName(this.chatLlm),
-                  modelNameChat: getModelName(this.chatLlm),
-                  modelNameSystem: getModelName(this.systemLlm),
-                  usage: {
-                    input_tokens:
-                      usageChat.input_tokens + usageSystem.input_tokens,
-                    output_tokens:
-                      usageChat.output_tokens + usageSystem.output_tokens,
-                    total_tokens:
-                      usageChat.total_tokens + usageSystem.total_tokens,
-                  },
-                  usageChat,
-                  usageSystem,
-                },
-              }),
-            );
-          }
-        }
-
-        // Handle token-level streaming for the final response
-        if (event.event === 'on_chat_model_stream' && event.data.chunk) {
-          const chunk = event.data.chunk;
-          if (chunk.content && typeof chunk.content === 'string') {
-            // Add the token to our buffer
-            currentResponseBuffer += chunk.content;
-
-            // Emit the individual token
-            this.emitter.emit(
-              'data',
-              JSON.stringify({
-                type: 'response',
-                data: chunk.content,
-              }),
-            );
-          }
+        } else {
+          throw err;
         }
       }
 
@@ -634,7 +743,7 @@ export class SimplifiedAgent {
       console.error('SimplifiedAgent: Error during search and answer:', error);
 
       // Handle specific error types
-      if (error.name === 'AbortError' || this.signal.aborted) {
+      if (this.signal.aborted) {
         console.warn('SimplifiedAgent: Operation was aborted');
         this.emitter.emit(
           'data',

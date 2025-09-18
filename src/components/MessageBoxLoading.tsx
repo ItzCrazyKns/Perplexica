@@ -17,11 +17,15 @@ interface MessageBoxLoadingProps {
     usageChat?: TokenUsage;
     usageSystem?: TokenUsage;
   } | null;
+  messageId?: string;
+  onAnswerNow?: () => void;
 }
 
 const MessageBoxLoading = ({
   progress,
   modelStats,
+  messageId,
+  onAnswerNow,
 }: MessageBoxLoadingProps) => {
   return (
     <div className="flex flex-col space-y-4 w-full lg:w-9/12">
@@ -119,6 +123,34 @@ const MessageBoxLoading = ({
           </div>
         </div>
       )}
+                  {/* Answer now control */}
+            {messageId && (
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={async (e) => {
+                    try {
+                      // Disable the button immediately to prevent double clicks
+                      (e.currentTarget as HTMLButtonElement).disabled = true;
+                      if (onAnswerNow) {
+                        onAnswerNow();
+                      } else {
+                        await fetch('/api/respond-now', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ messageId }),
+                        });
+                      }
+                    } catch (e) {
+                      // no-op
+                    }
+                  }}
+                  className="text-xs px-3 py-1 rounded-md bg-accent text-fg hover:bg-opacity-90 transition"
+                >
+                  Answer now
+                </button>
+              </div>
+            )}
     </div>
   );
 };
@@ -126,7 +158,7 @@ const MessageBoxLoading = ({
 // TokenPill moved to shared component
 
 function PhaseTimeline({ percent }: { percent: number }) {
-  const phases = ['Plan', 'Search', 'Analyze', 'Synthesize'];
+  const phases = ['Plan', 'Search', 'Analyze', 'Answer'];
   const stepPct = 100 / phases.length;
   const completed = Math.floor(percent / stepPct + 0.0001);
   return (

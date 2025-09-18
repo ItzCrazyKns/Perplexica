@@ -259,6 +259,7 @@ const Chat = ({
         <MessageBoxLoading
           progress={analysisProgress}
           modelStats={modelStats}
+          messageId={currentMessageId}
         />
       )}
       <div className="fixed bottom-24 lg:bottom-10 z-40" style={inputStyle}>

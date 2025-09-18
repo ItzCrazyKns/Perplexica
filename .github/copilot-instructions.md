@@ -235,7 +235,27 @@ We track token usage separately for the Chat Model and the System Model across a
 
 ### Web Content Extraction & Caching
 
-Implementation lives in `src/lib/utils/webCache.ts` and is used by `src/lib/utils/documents.ts#getWebContent`. This cache is transparent to callers of `getWebContent` and returns the same `Document` shape whether served from cache or freshly fetched.
+Implementation lives in `src/lib/utils/webCache.ts` and is used by the `getWebContent` function in `src/lib/utils/documents.ts`. This cache is transparent to callers of `getWebContent` and returns the same `Document` shape whether served from cache or freshly fetched.
+
+## Respond-Now Short Circuit
+
+Adds a user-triggered short circuit to force an immediate answer with currently gathered context when running Agent or Deep Research optimization modes.
+
+- API: POST `/api/respond-now` with `{ messageId }` to trigger a per-run soft-stop and abort in-flight retrieval.
+- Reset: The soft-stop is cleared at the start of a new `/api/chat` request for the same `messageId` and when a request is cancelled.
+- Agents: Both `SimplifiedAgent` and `DeepResearchAgent` check `isSoftStop(messageId)` between steps. When set, they skip remaining retrieval and jump to synthesis using whatever context has been collected.
+- Tools: Retrieval-aware tools accept `config.configurable.retrievalSignal` (AbortSignal) and should exit early on `AbortError` without failing the run.
+- UI: `MessageBoxLoading` renders an “Answer now” button during active runs. It posts to `/api/respond-now` with the current `messageId` and disables itself after click.
+
+Implementation files:
+- Run control registry: `src/lib/utils/runControl.ts` (softStop flag + retrieval AbortController per messageId)
+- Endpoint: `src/app/api/respond-now/route.ts`
+- Resets and registration: `src/app/api/chat/route.ts` (registers retrieval controller, clears softStop at start, cleans up on end/cancel)
+- Agents: `src/lib/search/simplifiedAgent.ts`, `src/lib/search/deepResearchAgent.ts`
+- Tools: `src/lib/tools/agents/simpleWebSearchTool.ts`, `src/lib/tools/agents/urlSummarizationTool.ts`, `src/lib/tools/agents/imageSearchTool.ts`
+- SearXNG client: `src/lib/searxng.ts` now accepts an optional AbortSignal
+- Web content: The `getWebContent` function in `src/lib/utils/documents.ts` now accepts an optional AbortSignal
+- UI: `src/components/MessageBoxLoading.tsx` (button), plumbed via `src/components/Chat.tsx` and `src/components/ChatWindow.tsx`.
 
 For fact/quote extraction used by the deep research pipeline, prefer `extractFactsAndQuotes` over `summarizeWebContent`:
 
@@ -251,4 +271,4 @@ For fact/quote extraction used by the deep research pipeline, prefer `extractFac
 - On-disk format: JSON with `{ url, createdAt, lastAccess, title?, pageContent, html? }`
 - In-memory metadata: `{ path, url, createdAt, lastAccess }` only
 
-Implementation lives in `src/lib/utils/webCache.ts` and is used by `src/lib/utils/documents.ts#getWebContent`. This cache is transparent to callers of `getWebContent` and returns the same `Document` shape whether served from cache or freshly fetched.
+Implementation lives in `src/lib/utils/webCache.ts` and is used by the `getWebContent` function in `src/lib/utils/documents.ts`. This cache is transparent to callers of `getWebContent` and returns the same `Document` shape whether served from cache or freshly fetched.
