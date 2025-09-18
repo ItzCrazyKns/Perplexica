@@ -3,8 +3,15 @@ import { htmlToText } from 'html-to-text';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { Document } from '@langchain/core/documents';
 import pdfParse from 'pdf-parse';
+import { crawlAndEnrich, isFirecrawlEnabled } from '../firecrawl';
 
-export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
+export const getDocumentsFromLinks = async ({
+  links,
+  useFirecrawl,
+}: {
+  links: string[];
+  useFirecrawl?: boolean;
+}) => {
   const splitter = new RecursiveCharacterTextSplitter();
 
   let docs: Document[] = [];
@@ -17,6 +24,48 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
           : `https://${link}`;
 
       try {
+        // Try Firecrawl first if enabled and requested by client
+        if (isFirecrawlEnabled() && useFirecrawl) {
+          console.log('[Firecrawl] scraping', link);
+          const enriched = await crawlAndEnrich(link);
+          if (
+            enriched &&
+            (enriched.markdown || enriched.html || enriched.raw)
+          ) {
+            const baseContent =
+              enriched.markdown || enriched.html || enriched.raw || '';
+            const parsed = baseContent
+              .replace(/(\r\n|\n|\r)/gm, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+
+            const chunks = await splitter.splitText(parsed);
+            const meta = enriched.metadata || {};
+            const title = meta.title || link;
+
+            const linkDocs = chunks.map(
+              (text) =>
+                new Document({
+                  pageContent: text,
+                  metadata: {
+                    title,
+                    url: link,
+                    ...meta,
+                  },
+                }),
+            );
+
+            docs.push(...linkDocs);
+            console.log('[Firecrawl] success', link, {
+              title: title?.slice(0, 120),
+              length: parsed.length,
+            });
+            return;
+          }
+          console.log('[Firecrawl] no data, falling back', link);
+        }
+
+        // Fallback to legacy HTML/PDF extraction
         const res = await axios.get(link, {
           responseType: 'arraybuffer',
         });

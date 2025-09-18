@@ -46,6 +46,7 @@ type Body = {
   chatModel: ChatModel;
   embeddingModel: EmbeddingModel;
   systemInstructions: string;
+  useFirecrawl?: boolean;
 };
 
 const handleEmitterEvents = async (
@@ -276,6 +277,8 @@ export const POST = async (req: Request) => {
       );
     }
 
+    console.log('[Firecrawl] useFirecrawl flag:', body.useFirecrawl === true, 'env:', Boolean(process.env.FIRECRAWL_API_KEY));
+
     const stream = await handler.searchAndAnswer(
       message.content,
       history,
@@ -284,6 +287,7 @@ export const POST = async (req: Request) => {
       body.optimizationMode,
       body.files,
       body.systemInstructions,
+      { useFirecrawl: body.useFirecrawl === true },
     );
 
     const responseStream = new TransformStream();

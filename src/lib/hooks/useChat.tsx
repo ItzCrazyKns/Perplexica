@@ -566,6 +566,7 @@ export const ChatProvider = ({
         files: fileIds,
         focusMode: focusMode,
         optimizationMode: optimizationMode,
+        useFirecrawl: localStorage.getItem('useFirecrawl') === 'true',
         history: rewrite
           ? chatHistory.slice(0, messageIndex === -1 ? undefined : messageIndex)
           : chatHistory,

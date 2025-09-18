@@ -34,6 +34,7 @@ export interface MetaSearchAgentType {
     optimizationMode: 'speed' | 'balanced' | 'quality',
     fileIds: string[],
     systemInstructions: string,
+    options?: { useFirecrawl?: boolean },
   ) => Promise<eventEmitter>;
 }
 
@@ -60,7 +61,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     this.config = config;
   }
 
-  private async createSearchRetrieverChain(llm: BaseChatModel) {
+  private async createSearchRetrieverChain(llm: BaseChatModel, useFirecrawl?: boolean) {
     (llm as unknown as ChatOpenAI).temperature = 0;
 
     return RunnableSequence.from([
@@ -92,7 +93,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
           let docs: Document[] = [];
 
-          const linkDocs = await getDocumentsFromLinks({ links });
+          const linkDocs = await getDocumentsFromLinks({ links, useFirecrawl });
 
           const docGroups: Document[] = [];
 
@@ -210,6 +211,22 @@ class MetaSearchAgent implements MetaSearchAgentType {
             engines: this.config.activeEngines,
           });
 
+          // If Firecrawl is enabled in options, try enriching the top URLs
+          if (useFirecrawl) {
+            console.log('[Firecrawl] enriching SearXNG URLs with Firecrawl');
+            try {
+              const links = res.results.map((r) => r.url).slice(0, 8);
+              const documents = await getDocumentsFromLinks({
+                links,
+                useFirecrawl: true,
+              });
+              return { query: question, docs: documents };
+            } catch (e) {
+              // Fall back to basic mapping
+              console.log('[Firecrawl] enrichment failed, falling back');
+            }
+          }
+
           const documents = res.results.map(
             (result) =>
               new Document({
@@ -238,6 +255,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'balanced' | 'quality',
     systemInstructions: string,
+    options?: { useFirecrawl?: boolean },
   ) {
     return RunnableSequence.from([
       RunnableMap.from({
@@ -255,7 +273,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
           if (this.config.searchWeb) {
             const searchRetrieverChain =
-              await this.createSearchRetrieverChain(llm);
+              await this.createSearchRetrieverChain(llm, options?.useFirecrawl);
 
             const searchRetrieverResult = await searchRetrieverChain.invoke({
               chat_history: processedHistory,
@@ -472,28 +490,47 @@ class MetaSearchAgent implements MetaSearchAgentType {
     optimizationMode: 'speed' | 'balanced' | 'quality',
     fileIds: string[],
     systemInstructions: string,
+    options?: { useFirecrawl?: boolean },
   ) {
     const emitter = new eventEmitter();
 
-    const answeringChain = await this.createAnsweringChain(
-      llm,
-      fileIds,
-      embeddings,
-      optimizationMode,
-      systemInstructions,
-    );
+    try {
+      const answeringChain = await this.createAnsweringChain(
+        llm,
+        fileIds,
+        embeddings,
+        optimizationMode,
+        systemInstructions,
+        options,
+      );
 
-    const stream = answeringChain.streamEvents(
-      {
-        chat_history: history,
-        query: message,
-      },
-      {
-        version: 'v1',
-      },
-    );
+      const stream = answeringChain.streamEvents(
+        {
+          chat_history: history,
+          query: message,
+        },
+        {
+          version: 'v1',
+        },
+      );
 
-    this.handleStream(stream, emitter);
+      this.handleStream(stream, emitter).catch((err) => {
+        // Ensure the client is notified instead of hanging forever
+        emitter.emit(
+          'error',
+          JSON.stringify({ type: 'error', data: String(err?.message || err) }),
+        );
+        emitter.emit('end');
+      });
+    } catch (err: any) {
+      // Catch early failures (e.g., search retriever construction)
+      emitter.emit(
+        'error',
+        JSON.stringify({ type: 'error', data: String(err?.message || err) }),
+      );
+      // Immediately end so the HTTP stream closes on the client
+      process.nextTick(() => emitter.emit('end'));
+    }
 
     return emitter;
   }

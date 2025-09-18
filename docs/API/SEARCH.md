@@ -41,7 +41,6 @@ The API accepts a JSON object in the request body, where you define the focus mo
 ### Request Parameters
 
 - **`chatModel`** (object, optional): Defines the chat model to be used for the query. For model details you can send a GET request at `http://localhost:3000/api/models`. Make sure to use the key value (For example "gpt-4o-mini" instead of the display name "GPT 4 omni mini").
-
   - `provider`: Specifies the provider for the chat model (e.g., `openai`, `ollama`).
   - `name`: The specific model from the chosen provider (e.g., `gpt-4o-mini`).
   - Optional fields for custom OpenAI configuration:
@@ -49,16 +48,13 @@ The API accepts a JSON object in the request body, where you define the focus mo
     - `customOpenAIKey`: The API key for a custom OpenAI instance.
 
 - **`embeddingModel`** (object, optional): Defines the embedding model for similarity-based searching. For model details you can send a GET request at `http://localhost:3000/api/models`. Make sure to use the key value (For example "text-embedding-3-large" instead of the display name "Text Embedding 3 Large").
-
   - `provider`: The provider for the embedding model (e.g., `openai`).
   - `name`: The specific embedding model (e.g., `text-embedding-3-large`).
 
 - **`focusMode`** (string, required): Specifies which focus mode to use. Available modes:
-
   - `webSearch`, `academicSearch`, `writingAssistant`, `wolframAlphaSearch`, `youtubeSearch`, `redditSearch`.
 
 - **`optimizationMode`** (string, optional): Specifies the optimization mode to control the balance between performance and quality. Available modes:
-
   - `speed`: Prioritize speed and return the fastest answer.
   - `balanced`: Provide a balanced answer with good speed and reasonable quality.
 
