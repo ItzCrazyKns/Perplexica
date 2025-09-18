@@ -32,4 +32,13 @@ RUN mkdir /home/perplexica/uploads
 
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
+# Change ownership of app directory to node user
+RUN chown -R node:node /app
+
+# Switch to a non-root user
+USER node
+
+# Switch to non-root user
+USER node
+
 CMD ["./entrypoint.sh"]
