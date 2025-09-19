@@ -118,7 +118,6 @@ export class DeepResearchAgent {
     try {
       this.query = query;
       this.chatHistory = history as any;
-      this.emitResponse(`Query: ${query}\n`);
       if (this.chatId) {
         ensureSessionDirs(this.chatId);
         const manifest: SessionManifest = {
@@ -138,6 +137,11 @@ export class DeepResearchAgent {
         };
         writeManifest(this.chatId, manifest);
       }
+
+      // Write this on a background thread after a delay otherwise the emitter won't be listening
+      setTimeout(() => {
+        this.emitResponse(''); // Empty response, to give the UI a message to display.
+      }, 100);
 
       try {
         do {
@@ -502,6 +506,7 @@ export class DeepResearchAgent {
   private async planPhase(query: string, history: any[]) {
     this.ensureNotAborted();
     if (this.shouldJumpToSynthesis()) return;
+
     // First, use System LLM to craft an optimized search query using structured output tool
     this.emitProgress('Plan', 'Generating search query', this.phasePercent());
     let optimizedQuery = query;
@@ -645,18 +650,42 @@ export class DeepResearchAgent {
             (f?.facts?.longContent?.length || 0) > 0),
       );
 
-      console.log(cleanedFacts);
+      // Emit sources as they're gathered during search phase
+      if (cleanedFacts.length > 0) {
+        const sources = cleanedFacts.map((c, idx) => ({
+          metadata: {
+            title: c.title || c.url || `Source ${idx + 1}`,
+            url: c.url,
+            processingType: 'url-content-extraction',
+            snippet:
+              c.facts?.facts?.join(' ').slice(0, 200) ||
+              c.facts?.quotes?.join(' ').slice(0, 200) ||
+              '',
+          },
+        }));
+
+        this.emitter.emit(
+          'data',
+          JSON.stringify({
+            type: 'sources_added',
+            data: sources,
+            searchQuery: sq,
+            searchUrl: '',
+          }),
+        );
+      }
 
       perSub[i] = {
         subquestion: sq,
         extracted: cleanedFacts,
         sufficiency: 'pending',
       };
-    }
 
-    this.state.perSubquery = perSub;
-    // Maintain legacy flattened candidates for downstream compatibility/UX
-    this.state.candidates = perSub.flatMap((p) => p.extracted);
+      totalCandidates += cleanedFacts.length;
+      this.state.perSubquery = perSub;
+      // Maintain legacy flattened candidates for downstream compatibility/UX
+      this.state.candidates = perSub.flatMap((p) => p.extracted);
+    }
 
     this.emitProgress(
       'Search',
@@ -911,12 +940,8 @@ export class DeepResearchAgent {
     let usage = { input_tokens: 0, output_tokens: 0, total_tokens: 0 };
 
     if (this.shouldJumpToSynthesis()) {
-      this.emitter.emit(
-        'data',
-        JSON.stringify({
-          type: 'response',
-          data: `## ⚠︎ Early response triggered by budget or user request. ⚠︎\nResponse may be incomplete, lack citations, or omit important content.\n\n---\n\n`,
-        }),
+      this.emitResponse(
+        `## ⚠︎ Early response triggered by budget or user request. ⚠︎\nResponse may be incomplete, lack citations, or omit important content.\n\n---\n\n`,
       );
     }
 
@@ -927,10 +952,7 @@ export class DeepResearchAgent {
       if (event.event === 'on_chat_model_stream' && event.data?.chunk) {
         const chunk = event.data.chunk;
         if (chunk.content && typeof chunk.content === 'string') {
-          this.emitter.emit(
-            'data',
-            JSON.stringify({ type: 'response', data: chunk.content }),
-          );
+          this.emitResponse(chunk.content);
         }
       }
 

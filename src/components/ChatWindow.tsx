@@ -352,6 +352,14 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
   const [notFound, setNotFound] = useState(false);
 
+  // State for tracking sources during gathering phase
+  const [gatheringSources, setGatheringSources] = useState<
+    Array<{
+      searchQuery: string;
+      sources: Document[];
+    }>
+  >([]);
+
   useEffect(() => {
     const savedOptimizationMode = localStorage.getItem('optimizationMode');
 
@@ -431,6 +439,8 @@ const ChatWindow = ({ id }: { id?: string }) => {
     }
 
     setLoading(true);
+    setGatheringSources([]); // Reset gathering sources for new conversation
+    setAnalysisProgress(null);
 
     let sources: Document[] | undefined = undefined;
     let recievedMessage = '';
@@ -494,8 +504,42 @@ const ChatWindow = ({ id }: { id?: string }) => {
         return;
       }
 
+      if (data.type === 'sources_added') {
+        // Track gathering sources during search phase with search query
+        if (
+          data.searchQuery &&
+          data.searchQuery.trim() &&
+          optimizationMode !== 'speed'
+        ) {
+          setGatheringSources((prev) => {
+            const existingIndex = prev.findIndex(
+              (group) => group.searchQuery === data.searchQuery,
+            );
+            if (existingIndex >= 0) {
+              // Update existing group
+              const updated = [...prev];
+              updated[existingIndex] = {
+                searchQuery: data.searchQuery,
+                sources: [...updated[existingIndex].sources, ...data.data],
+              };
+              return updated;
+            } else {
+              // Add new group
+              return [
+                ...prev,
+                {
+                  searchQuery: data.searchQuery,
+                  sources: data.data,
+                },
+              ];
+            }
+          });
+        }
+      }
+
       if (data.type === 'sources') {
         sources = data.data;
+
         if (!added) {
           setMessages((prevMessages) => [
             ...prevMessages,
@@ -570,7 +614,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         tokenCount++;
 
         // Only update UI every bufferThreshold tokens
-        if (tokenCount >= bufferThreshold) {
+        if (tokenCount >= bufferThreshold || !added) {
           if (!added) {
             setMessages((prevMessages) => [
               ...prevMessages,
@@ -632,6 +676,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
         ]);
 
         setLoading(false);
+        setGatheringSources([]); // Clear gathering sources when message is complete
         setScrollTrigger((prev) => prev + 1);
 
         const lastMsg = messagesRef.current[messagesRef.current.length - 1];
@@ -881,6 +926,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
               systemPromptIds={systemPromptIds}
               setSystemPromptIds={setSystemPromptIds}
               onThinkBoxToggle={handleThinkBoxToggle}
+              gatheringSources={gatheringSources}
             />
           </>
         ) : (

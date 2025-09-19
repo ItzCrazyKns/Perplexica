@@ -248,6 +248,7 @@ Adds a user-triggered short circuit to force an immediate answer with currently 
 - UI: `MessageBoxLoading` renders an “Answer now” button during active runs. It posts to `/api/respond-now` with the current `messageId` and disables itself after click.
 
 Implementation files:
+
 - Run control registry: `src/lib/utils/runControl.ts` (softStop flag + retrieval AbortController per messageId)
 - Endpoint: `src/app/api/respond-now/route.ts`
 - Resets and registration: `src/app/api/chat/route.ts` (registers retrieval controller, clears softStop at start, cleans up on end/cancel)

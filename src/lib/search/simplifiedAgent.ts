@@ -1,33 +1,29 @@
-import { createReactAgent } from '@langchain/langgraph/prebuilt';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { BaseMessage, HumanMessage, AIMessage } from '@langchain/core/messages';
-import { Embeddings } from '@langchain/core/embeddings';
-import { EventEmitter } from 'events';
-import { RunnableConfig, RunnableSequence } from '@langchain/core/runnables';
-import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { buildChatPrompt } from '@/lib/prompts/simplifiedAgent/chat';
+import { buildFirefoxAIPrompt } from '@/lib/prompts/simplifiedAgent/firefoxAI';
+import { buildLocalResearchPrompt } from '@/lib/prompts/simplifiedAgent/localResearch';
+import { buildWebSearchPrompt } from '@/lib/prompts/simplifiedAgent/webSearch';
+import { formattingAndCitationsWeb } from '@/lib/prompts/templates';
 import { SimplifiedAgentState } from '@/lib/state/chatAgentState';
 import {
   allAgentTools,
   coreTools,
-  webSearchTools,
   fileSearchTools,
+  webSearchTools,
 } from '@/lib/tools/agents';
-import { getModelName } from '../utils/modelUtils';
-import { removeThinkingBlocksFromMessages } from '../utils/contentUtils';
 import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
 import { encodeHtmlAttribute } from '@/lib/utils/html';
-import { buildChatPrompt } from '@/lib/prompts/simplifiedAgent/chat';
-import { buildWebSearchPrompt } from '@/lib/prompts/simplifiedAgent/webSearch';
-import { buildLocalResearchPrompt } from '@/lib/prompts/simplifiedAgent/localResearch';
-import { buildFirefoxAIPrompt } from '@/lib/prompts/simplifiedAgent/firefoxAI';
-import { synthesizerPrompt } from '@/lib/prompts/synthesizer';
-import {
-  formattingAndCitationsScholarly,
-  formattingAndCitationsWeb,
-} from '@/lib/prompts/templates';
 import { isSoftStop } from '@/lib/utils/runControl';
+import { Embeddings } from '@langchain/core/embeddings';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { RunnableConfig, RunnableSequence } from '@langchain/core/runnables';
+import { createReactAgent } from '@langchain/langgraph/prebuilt';
+import { EventEmitter } from 'events';
 import { webSearchResponsePrompt } from '../prompts/webSearch';
 import { formatDateForLLM } from '../utils';
+import { removeThinkingBlocksFromMessages } from '../utils/contentUtils';
+import { getModelName } from '../utils/modelUtils';
 
 /**
  * Normalize usage metadata from different LLM providers
@@ -99,6 +95,10 @@ export class SimplifiedAgent {
     this.signal = signal;
     this.messageId = messageId;
     this.retrievalSignal = retrievalSignal;
+  }
+
+  private emitResponse(text: string) {
+    this.emitter.emit('data', JSON.stringify({ type: 'response', data: text }));
   }
 
   /**
@@ -246,6 +246,11 @@ export class SimplifiedAgent {
       console.log(`SimplifiedAgent: Focus mode: ${focusMode}`);
       console.log(`SimplifiedAgent: File IDs: ${fileIds.join(', ')}`);
 
+      // Write this on a background thread after a delay otherwise the emitter won't be listening
+      setTimeout(() => {
+        this.emitResponse(''); // Empty response, to give the UI a message to display.
+      }, 100);
+
       const messagesHistory = [
         ...removeThinkingBlocksFromMessages(history),
         new HumanMessage(query),
@@ -335,6 +340,35 @@ export class SimplifiedAgent {
             }
           }
 
+          const emitNewDocs = (newDocs: any[]) => {
+            //Group by metadata.searchQuery and emit separate source blocks for each
+            const groupedBySearchQuery = newDocs.reduce(
+              (acc, doc) => {
+                const searchQuery = doc.metadata?.searchQuery || 'Agent Search';
+                if (!acc[searchQuery]) {
+                  acc[searchQuery] = [];
+                }
+                acc[searchQuery].push(doc);
+                return acc;
+              },
+              {} as Record<string, Document[]>,
+            );
+
+            for (const [searchQuery, docs] of Object.entries(
+              groupedBySearchQuery,
+            )) {
+              this.emitter.emit(
+                'data',
+                JSON.stringify({
+                  type: 'sources_added',
+                  data: docs,
+                  searchQuery,
+                  searchUrl: '',
+                }),
+              );
+            }
+          };
+
           // Handle different event types
           if (
             event.event === 'on_chain_end' &&
@@ -344,6 +378,7 @@ export class SimplifiedAgent {
             // Collect relevant documents from the final result
             if (finalResult && finalResult.relevantDocuments) {
               collectedDocuments.push(...finalResult.relevantDocuments);
+              emitNewDocs(finalResult.relevantDocuments);
             }
           }
 
@@ -364,6 +399,7 @@ export class SimplifiedAgent {
                   Array.isArray(item.update.relevantDocuments)
                 ) {
                   collectedDocuments.push(...item.update.relevantDocuments);
+                  emitNewDocs(item.update.relevantDocuments);
                 }
               }
             }
@@ -556,13 +592,7 @@ export class SimplifiedAgent {
               currentResponseBuffer += chunk.content;
 
               // Emit the individual token
-              this.emitter.emit(
-                'data',
-                JSON.stringify({
-                  type: 'response',
-                  data: chunk.content,
-                }),
-              );
+              this.emitResponse(chunk.content);
             }
           }
         }
@@ -590,7 +620,7 @@ ${url ? `<url>${url}</url>` : ''}
 
           const prompt = await ChatPromptTemplate.fromMessages([
             ['system', webSearchResponsePrompt],
-            ['user', query]
+            ['user', query],
           ]).partial({
             //recursionLimitReached: '',
             formattingAndCitations: this.personaInstructions
@@ -614,16 +644,18 @@ ${url ? `<url>${url}</url>` : ''}
             { query },
             { version: 'v2', ...getLangfuseCallbacks() },
           );
+
+          this.emitResponse(
+            `## ⚠︎ Early response triggered by budget or user request. ⚠︎\nResponse may be incomplete, lack citations, or omit important content.\n\n---\n\n`,
+          );
+
           for await (const event of eventStream2) {
             if (this.signal.aborted) break;
             if (event.event === 'on_chat_model_stream' && event.data?.chunk) {
               const chunk = event.data.chunk;
               if (chunk.content && typeof chunk.content === 'string') {
                 currentResponseBuffer += chunk.content;
-                this.emitter.emit(
-                  'data',
-                  JSON.stringify({ type: 'response', data: chunk.content }),
-                );
+                this.emitResponse(chunk.content);
               }
             }
             if (event.event === 'on_chat_model_end' && event.data?.output) {
@@ -682,13 +714,7 @@ ${url ? `<url>${url}</url>` : ''}
         if (finalMessage && finalMessage.content) {
           console.log('SimplifiedAgent: Emitting complete response (fallback)');
 
-          this.emitter.emit(
-            'data',
-            JSON.stringify({
-              type: 'response',
-              data: finalMessage.content,
-            }),
-          );
+          this.emitResponse(finalMessage.content);
         }
       }
 
@@ -700,12 +726,8 @@ ${url ? `<url>${url}</url>` : ''}
           finalResult.messages.length === 0)
       ) {
         console.warn('SimplifiedAgent: No valid response found');
-        this.emitter.emit(
-          'data',
-          JSON.stringify({
-            type: 'response',
-            data: 'I apologize, but I was unable to generate a complete response to your query. Please try rephrasing your question or providing more specific details.',
-          }),
+        this.emitResponse(
+          'I apologize, but I was unable to generate a complete response to your query. Please try rephrasing your question or providing more specific details.',
         );
       }
 
@@ -745,21 +767,11 @@ ${url ? `<url>${url}</url>` : ''}
       // Handle specific error types
       if (this.signal.aborted) {
         console.warn('SimplifiedAgent: Operation was aborted');
-        this.emitter.emit(
-          'data',
-          JSON.stringify({
-            type: 'response',
-            data: 'The search operation was cancelled.',
-          }),
-        );
+        this.emitResponse('The search operation was cancelled.');
       } else {
         // General error handling
-        this.emitter.emit(
-          'data',
-          JSON.stringify({
-            type: 'response',
-            data: 'I encountered an error while processing your request. Please try rephrasing your query or contact support if the issue persists.',
-          }),
+        this.emitResponse(
+          'I encountered an error while processing your request. Please try rephrasing your query or contact support if the issue persists.',
         );
       }
 

@@ -13,7 +13,10 @@ function get(messageId: string): Entry {
   return store[messageId];
 }
 
-export function registerRetrieval(messageId: string, controller: AbortController) {
+export function registerRetrieval(
+  messageId: string,
+  controller: AbortController,
+) {
   const e = get(messageId);
   e.retrievalController = controller;
 }

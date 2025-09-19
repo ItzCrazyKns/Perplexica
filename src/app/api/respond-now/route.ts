@@ -12,6 +12,9 @@ export async function POST(req: NextRequest) {
     abortRetrieval(messageId);
     return Response.json({ success: true });
   } catch (e: any) {
-    return Response.json({ error: e?.message || 'Bad Request' }, { status: 400 });
+    return Response.json(
+      { error: e?.message || 'Bad Request' },
+      { status: 400 },
+    );
   }
 }

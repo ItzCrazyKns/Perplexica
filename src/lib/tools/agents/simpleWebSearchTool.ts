@@ -68,10 +68,10 @@ export const simpleWebSearchTool = tool(
 
       const llm = config.configurable.systemLlm;
       const embeddings: Embeddings = config.configurable.embeddings;
-      const retrievalSignal: AbortSignal | undefined =
-        (config as any)?.configurable?.retrievalSignal;
-      const messageId: string | undefined =
-        (config as any)?.configurable?.messageId;
+      const retrievalSignal: AbortSignal | undefined = (config as any)
+        ?.configurable?.retrievalSignal;
+      const messageId: string | undefined = (config as any)?.configurable
+        ?.messageId;
 
       const searchQuery = query;
       console.log(

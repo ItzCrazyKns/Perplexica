@@ -229,7 +229,7 @@ ${i === 0 ? content.metadata.html : content.pageContent}`;
 
     // // If lite content is not relevant, try full content
     // console.log(`Lite content not relevant for URL ${url}, trying full content extraction`);
-  const webContent = await getWebContent(url, 50000, true, signal);
+    const webContent = await getWebContent(url, 50000, true, signal);
 
     // Process full content or return null if no content
     if (

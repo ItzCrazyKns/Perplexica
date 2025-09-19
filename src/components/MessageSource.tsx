@@ -7,6 +7,7 @@ interface MessageSourceProps {
   index?: number;
   style?: React.CSSProperties;
   className?: string;
+  oneLiner?: boolean;
 }
 
 const MessageSource = ({
@@ -14,8 +15,33 @@ const MessageSource = ({
   index,
   style,
   className,
+  oneLiner = false,
 }: MessageSourceProps) => {
-  return (
+  return oneLiner ? (
+    <a
+      className={`bg-surface hover:bg-surface-2 transition duration-200 rounded-lg p-2 flex flex-row no-underline items-center space-x-2 font-medium border border-surface-2 ${className || ''}`}
+      href={source.metadata.url}
+      target="_blank"
+      style={style}
+    >
+      {source.metadata.url === 'File' ? (
+        <div className="bg-surface-2 hover:bg-surface transition duration-200 flex items-center justify-center w-6 h-6 rounded-full">
+          <File size={14} className="text-fg/70" />
+        </div>
+      ) : (
+        <img
+          src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
+          width={20}
+          height={20}
+          alt="favicon"
+          className="rounded-lg h-5 w-5"
+        />
+      )}
+      <span className="text-xs text-fg/70 truncate">
+        {source.metadata.title || source.metadata.url}
+      </span>
+    </a>
+  ) : (
     <a
       className={`bg-surface hover:bg-surface-2 transition duration-200 rounded-lg p-4 flex flex-row no-underline space-x-3 font-medium border border-surface-2 ${className || ''}`}
       href={source.metadata.url}

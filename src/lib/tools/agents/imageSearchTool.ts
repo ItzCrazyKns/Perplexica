@@ -41,8 +41,8 @@ export const imageSearchTool = tool(
       let currentDocCount = currentState.relevantDocuments.length;
 
       console.log(`ImageSearchTool: Searching images for query: "${query}"`);
-      const retrievalSignal: AbortSignal | undefined =
-        (config as any)?.configurable?.retrievalSignal;
+      const retrievalSignal: AbortSignal | undefined = (config as any)
+        ?.configurable?.retrievalSignal;
 
       const searchResults = await searchSearxng(
         query,

@@ -136,7 +136,10 @@ const handleEmitterEvents = async (
       );
 
       recievedMessage += parsedData.data;
-    } else if (parsedData.type === 'sources') {
+    } else if (
+      parsedData.type === 'sources' ||
+      parsedData.type === 'sources_added'
+    ) {
       // Capture the search query if available
       if (parsedData.searchQuery) {
         searchQuery = parsedData.searchQuery;
@@ -148,7 +151,7 @@ const handleEmitterEvents = async (
       writer.write(
         encoder.encode(
           JSON.stringify({
-            type: 'sources',
+            type: parsedData.type,
             data: parsedData.data,
             searchQuery: parsedData.searchQuery,
             messageId: aiMessageId,

@@ -3,6 +3,7 @@ import { Check, Pencil, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Message } from './ChatWindow';
 import MessageTabs from './MessageTabs';
+import { Document } from '@langchain/core/documents';
 
 const MessageBox = ({
   message,
@@ -14,6 +15,10 @@ const MessageBox = ({
   sendMessage,
   handleEditMessage,
   onThinkBoxToggle,
+  analysisProgress,
+  modelStats,
+  gatheringSources,
+  actionMessageId,
 }: {
   message: Message;
   messageIndex: number;
@@ -35,6 +40,34 @@ const MessageBox = ({
     thinkBoxId: string,
     expanded: boolean,
   ) => void;
+  analysisProgress?: {
+    message: string;
+    current: number;
+    total: number;
+    subMessage?: string;
+  } | null;
+  modelStats?: {
+    usage?: {
+      input_tokens: number;
+      output_tokens: number;
+      total_tokens: number;
+    };
+    usageChat?: {
+      input_tokens: number;
+      output_tokens: number;
+      total_tokens: number;
+    };
+    usageSystem?: {
+      input_tokens: number;
+      output_tokens: number;
+      total_tokens: number;
+    };
+  } | null;
+  gatheringSources?: Array<{
+    searchQuery: string;
+    sources: Document[];
+  }>;
+  actionMessageId?: string;
 }) => {
   // Local state for editing functionality
   const [isEditing, setIsEditing] = useState(false);
@@ -183,6 +216,10 @@ const MessageBox = ({
           rewrite={rewrite}
           sendMessage={sendMessage}
           onThinkBoxToggle={onThinkBoxToggle}
+          analysisProgress={analysisProgress}
+          modelStats={modelStats}
+          gatheringSources={gatheringSources}
+          actionMessageId={actionMessageId}
         />
       )}
     </div>

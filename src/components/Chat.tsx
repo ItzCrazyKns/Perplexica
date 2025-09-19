@@ -3,8 +3,8 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { File, Message } from './ChatWindow';
 import MessageBox from './MessageBox';
-import MessageBoxLoading from './MessageBoxLoading';
 import MessageInput from './MessageInput';
+import { Document } from '@langchain/core/documents';
 
 const Chat = ({
   loading,
@@ -26,6 +26,7 @@ const Chat = ({
   systemPromptIds,
   setSystemPromptIds,
   onThinkBoxToggle,
+  gatheringSources = [],
 }: {
   messages: Message[];
   sendMessage: (
@@ -77,6 +78,10 @@ const Chat = ({
     thinkBoxId: string,
     expanded: boolean,
   ) => void;
+  gatheringSources?: Array<{
+    searchQuery: string;
+    sources: Document[];
+  }>;
 }) => {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [manuallyScrolledUp, setManuallyScrolledUp] = useState(false);
@@ -211,6 +216,7 @@ const Chat = ({
         .reverse()
         .find((m) => m.role === 'user');
       setCurrentMessageId(lastUserMsg?.messageId);
+      console.log('Set currentMessageId to', lastUserMsg?.messageId, messages);
     } else {
       setCurrentMessageId(undefined);
     }
@@ -248,6 +254,10 @@ const Chat = ({
               sendMessage={sendMessage}
               handleEditMessage={handleEditMessage}
               onThinkBoxToggle={onThinkBoxToggle}
+              analysisProgress={analysisProgress}
+              modelStats={modelStats}
+              gatheringSources={gatheringSources}
+              actionMessageId={currentMessageId}
             />
             {!isLast && msg.role === 'assistant' && (
               <div className="h-px w-full bg-surface-2" />
@@ -255,14 +265,7 @@ const Chat = ({
           </Fragment>
         );
       })}
-      {loading && (
-        <MessageBoxLoading
-          progress={analysisProgress}
-          modelStats={modelStats}
-          messageId={currentMessageId}
-        />
-      )}
-      <div className="fixed bottom-24 lg:bottom-10 z-40" style={inputStyle}>
+      <div className="fixed bottom-16 lg:bottom-6 z-40" style={inputStyle}>
         {/* Scroll to bottom button - appears above the MessageInput when user has scrolled up */}
         {manuallyScrolledUp && !isAtBottom && (
           <div className="absolute -top-14 right-2 z-10">

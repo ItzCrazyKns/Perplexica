@@ -76,10 +76,10 @@ export const urlSummarizationTool = tool(
         throw new Error('System LLM not available in config');
       }
       const llm = config.configurable.systemLlm;
-      const retrievalSignal: AbortSignal | undefined =
-        (config as any)?.configurable?.retrievalSignal;
-      const messageId: string | undefined =
-        (config as any)?.configurable?.messageId;
+      const retrievalSignal: AbortSignal | undefined = (config as any)
+        ?.configurable?.retrievalSignal;
+      const messageId: string | undefined = (config as any)?.configurable
+        ?.messageId;
       const documents: Document[] = [];
 
       // Process each URL

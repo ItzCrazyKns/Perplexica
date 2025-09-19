@@ -24,6 +24,8 @@ import Rewrite from './MessageActions/Rewrite';
 import MessageSources from './MessageSources';
 import SearchImages from './SearchImages';
 import SearchVideos from './SearchVideos';
+import MessageBoxLoading from './MessageBoxLoading';
+import { Document } from '@langchain/core/documents';
 
 type TabType = 'text' | 'sources' | 'images' | 'videos';
 
@@ -48,6 +50,34 @@ interface SearchTabsProps {
     thinkBoxId: string,
     expanded: boolean,
   ) => void;
+  analysisProgress?: {
+    message: string;
+    current: number;
+    total: number;
+    subMessage?: string;
+  } | null;
+  modelStats?: {
+    usage?: {
+      input_tokens: number;
+      output_tokens: number;
+      total_tokens: number;
+    };
+    usageChat?: {
+      input_tokens: number;
+      output_tokens: number;
+      total_tokens: number;
+    };
+    usageSystem?: {
+      input_tokens: number;
+      output_tokens: number;
+      total_tokens: number;
+    };
+  } | null;
+  gatheringSources?: Array<{
+    searchQuery: string;
+    sources: Document[];
+  }>;
+  actionMessageId?: string;
 }
 
 const MessageTabs = ({
@@ -60,6 +90,10 @@ const MessageTabs = ({
   rewrite,
   sendMessage,
   onThinkBoxToggle,
+  analysisProgress,
+  modelStats,
+  gatheringSources,
+  actionMessageId,
 }: SearchTabsProps) => {
   const [activeTab, setActiveTab] = useState<TabType>('text');
   const [imageCount, setImageCount] = useState(0);
@@ -268,13 +302,18 @@ const MessageTabs = ({
       </div>
 
       {/* Tab content */}
-      <div
-        className="min-h-[150px] transition-all duration-200 ease-in-out"
-        role="tabpanel"
-      >
+      <div className="transition-all duration-200 ease-in-out" role="tabpanel">
         {/* Answer Tab */}
         {activeTab === 'text' && (
           <div className="flex flex-col space-y-4 animate-fadeIn">
+            {loading && isLast && (
+              <MessageBoxLoading
+                progress={analysisProgress || null}
+                modelStats={modelStats}
+                actionMessageId={actionMessageId}
+                gatheringSources={gatheringSources}
+              />
+            )}
             <MarkdownRenderer
               content={parsedMessage}
               className="px-4"
@@ -310,6 +349,15 @@ const MessageTabs = ({
                       <Volume2 size={18} />
                     )}
                   </button>
+                </div>
+              </div>
+            )}
+            {loading && (
+              <div className="pl-3 flex items-center justify-start">
+                <div className="flex space-x-1">
+                  <div className="w-1.5 h-1.5 bg-fg/40 rounded-full animate-[high-bounce_1s_infinite] [animation-delay:-0.3s]"></div>
+                  <div className="w-1.5 h-1.5 bg-fg/40 rounded-full animate-[high-bounce_1s_infinite] [animation-delay:-0.15s]"></div>
+                  <div className="w-1.5 h-1.5 bg-fg/40 rounded-full animate-[high-bounce_1s_infinite]"></div>
                 </div>
               </div>
             )}
