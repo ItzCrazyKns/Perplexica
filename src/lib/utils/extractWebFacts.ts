@@ -130,6 +130,7 @@ ${body}`;
 
     const res = await structured.invoke(prompt, {
       signal,
+      timeout: 60_000,
       callbacks: [
         {
           handleLLMEnd: async (output, _runId, _parentRunId) => {

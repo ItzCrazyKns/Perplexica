@@ -166,6 +166,7 @@ ${i === 0 ? content.metadata.html : content.pageContent}`;
 
           const result = await llm.invoke(prompt, {
             signal,
+            timeout: 60_000,
             ...getLangfuseCallbacks(),
           });
           summary = removeThinkingBlocks(result.content as string);
