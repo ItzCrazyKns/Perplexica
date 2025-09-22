@@ -1,7 +1,8 @@
-import { Clock, Edit, Share, Trash, FileText, FileDown } from 'lucide-react';
+import { Clock, Edit, Share, FileText, FileDown } from 'lucide-react';
 import { Message } from './ChatWindow';
 import { useEffect, useState, Fragment } from 'react';
-import { formatTimeDifference } from '@/lib/utils';
+import { formatRelativeTime, formatDate } from '@/lib/utils';
+import { useLocale, useTranslations } from 'next-intl';
 import DeleteChat from './DeleteChat';
 import {
   Popover,
@@ -9,8 +10,17 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
-import jsPDF from 'jspdf';
 import { useChat } from '@/lib/hooks/useChat';
+import jsPDF from 'jspdf';
+import { ensureNotoSansTC } from '@/lib/pdfFont';
+
+type ExportLabels = {
+  chatExportTitle: (p: { title: string }) => string;
+  exportedOn: string;
+  user: string;
+  assistant: string;
+  citations: string;
+};
 
 const downloadFile = (filename: string, content: string, type: string) => {
   const blob = new Blob([content], { type });
@@ -26,18 +36,22 @@ const downloadFile = (filename: string, content: string, type: string) => {
   }, 0);
 };
 
-const exportAsMarkdown = (messages: Message[], title: string) => {
-  const date = new Date(messages[0]?.createdAt || Date.now()).toLocaleString();
-  let md = `# 💬 Chat Export: ${title}\n\n`;
-  md += `*Exported on: ${date}*\n\n---\n`;
-  messages.forEach((msg, idx) => {
+const exportAsMarkdown = (
+  messages: Message[],
+  title: string,
+  labels: ExportLabels,
+  locale: string,
+) => {
+  const date = formatDate(messages[0]?.createdAt || Date.now(), locale);
+  let md = `# 💬 ${labels.chatExportTitle({ title })}\n\n`;
+  md += `*${labels.exportedOn} ${date}*\n\n---\n`;
+  messages.forEach((msg) => {
     md += `\n---\n`;
-    md += `**${msg.role === 'user' ? '🧑 User' : '🤖 Assistant'}**  
-`;
-    md += `*${new Date(msg.createdAt).toLocaleString()}*\n\n`;
+    md += `**${msg.role === 'user' ? `🧑 ${labels.user}` : `🤖 ${labels.assistant}`}**  \n`;
+    md += `*${formatDate(msg.createdAt, locale)}*\n\n`;
     md += `> ${msg.content.replace(/\n/g, '\n> ')}\n`;
     if (msg.sources && msg.sources.length > 0) {
-      md += `\n**Citations:**\n`;
+      md += `\n**${labels.citations}**\n`;
       msg.sources.forEach((src: any, i: number) => {
         const url = src.metadata?.url || '';
         md += `- [${i + 1}] [${url}](${url})\n`;
@@ -48,33 +62,45 @@ const exportAsMarkdown = (messages: Message[], title: string) => {
   downloadFile(`${title || 'chat'}.md`, md, 'text/markdown');
 };
 
-const exportAsPDF = (messages: Message[], title: string) => {
+const exportAsPDF = async (
+  messages: Message[],
+  title: string,
+  labels: ExportLabels,
+  locale: string,
+) => {
   const doc = new jsPDF();
-  const date = new Date(messages[0]?.createdAt || Date.now()).toLocaleString();
+  // Ensure CJK-capable font is available, then set fonts
+  try {
+    await ensureNotoSansTC(doc);
+    doc.setFont('NotoSansTC', 'normal');
+  } catch (e) {
+    // If network fails, fallback to default font (may garble CJK)
+  }
+  const date = formatDate(messages[0]?.createdAt || Date.now(), locale);
   let y = 15;
   const pageHeight = doc.internal.pageSize.height;
   doc.setFontSize(18);
-  doc.text(`Chat Export: ${title}`, 10, y);
+  doc.text(labels.chatExportTitle({ title }), 10, y);
   y += 8;
   doc.setFontSize(11);
   doc.setTextColor(100);
-  doc.text(`Exported on: ${date}`, 10, y);
+  doc.text(`${labels.exportedOn} ${date}`, 10, y);
   y += 8;
   doc.setDrawColor(200);
   doc.line(10, y, 200, y);
   y += 6;
   doc.setTextColor(30);
-  messages.forEach((msg, idx) => {
+  messages.forEach((msg) => {
     if (y > pageHeight - 30) {
       doc.addPage();
       y = 15;
     }
-    doc.setFont('helvetica', 'bold');
-    doc.text(`${msg.role === 'user' ? 'User' : 'Assistant'}`, 10, y);
-    doc.setFont('helvetica', 'normal');
+    doc.setFont('NotoSansTC', 'bold');
+    doc.text(`${msg.role === 'user' ? labels.user : labels.assistant}`, 10, y);
+    doc.setFont('NotoSansTC', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(120);
-    doc.text(`${new Date(msg.createdAt).toLocaleString()}`, 40, y);
+    doc.text(`${formatDate(msg.createdAt, locale)}`, 40, y);
     y += 6;
     doc.setTextColor(30);
     doc.setFontSize(12);
@@ -94,7 +120,7 @@ const exportAsPDF = (messages: Message[], title: string) => {
         doc.addPage();
         y = 15;
       }
-      doc.text('Citations:', 12, y);
+      doc.text(labels.citations, 12, y);
       y += 5;
       msg.sources.forEach((src: any, i: number) => {
         const url = src.metadata?.url || '';
@@ -121,7 +147,10 @@ const exportAsPDF = (messages: Message[], title: string) => {
 
 const Navbar = () => {
   const [title, setTitle] = useState<string>('');
-  const [timeAgo, setTimeAgo] = useState<string>('');
+  const tCommon = useTranslations('common');
+  const tNavbar = useTranslations('navbar');
+  const tExport = useTranslations('export');
+  const locale = useLocale();
 
   const { messages, chatId } = useChat();
 
@@ -132,28 +161,8 @@ const Navbar = () => {
           ? `${messages[0].content.substring(0, 20).trim()}...`
           : messages[0].content;
       setTitle(newTitle);
-      const newTimeAgo = formatTimeDifference(
-        new Date(),
-        messages[0].createdAt,
-      );
-      setTimeAgo(newTimeAgo);
     }
   }, [messages]);
-
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      if (messages.length > 0) {
-        const newTimeAgo = formatTimeDifference(
-          new Date(),
-          messages[0].createdAt,
-        );
-        setTimeAgo(newTimeAgo);
-      }
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <div className="fixed z-40 top-0 left-0 right-0 px-4 lg:pl-[104px] lg:pr-6 lg:px-8 flex flex-row items-center justify-between w-full py-4 text-sm text-black dark:text-white/70 border-b bg-light-primary dark:bg-dark-primary border-light-100 dark:border-dark-200">
@@ -165,7 +174,13 @@ const Navbar = () => {
       </a>
       <div className="hidden lg:flex flex-row items-center justify-center space-x-2">
         <Clock size={17} />
-        <p className="text-xs">{timeAgo} ago</p>
+        <p className="text-xs">
+          {formatRelativeTime(
+            new Date(),
+            messages[0]?.createdAt || new Date(),
+            locale,
+          )}
+        </p>
       </div>
       <p className="hidden lg:flex">{title}</p>
 
@@ -187,17 +202,43 @@ const Navbar = () => {
               <div className="flex flex-col py-3 px-3 gap-2">
                 <button
                   className="flex items-center gap-2 px-4 py-2 text-left hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors text-black dark:text-white rounded-lg font-medium"
-                  onClick={() => exportAsMarkdown(messages, title || '')}
+                  onClick={async () => {
+                    exportAsMarkdown(
+                      messages,
+                      title || '',
+                      {
+                        chatExportTitle: (p) => tExport('chatExportTitle', p),
+                        exportedOn: tCommon('exportedOn'),
+                        user: tCommon('user'),
+                        assistant: tCommon('assistant'),
+                        citations: tCommon('citations'),
+                      },
+                      locale,
+                    );
+                  }}
                 >
                   <FileText size={17} className="text-[#24A0ED]" />
-                  Export as Markdown
+                  {tNavbar('exportAsMarkdown')}
                 </button>
                 <button
                   className="flex items-center gap-2 px-4 py-2 text-left hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors text-black dark:text-white rounded-lg font-medium"
-                  onClick={() => exportAsPDF(messages, title || '')}
+                  onClick={async () => {
+                    await exportAsPDF(
+                      messages,
+                      title || '',
+                      {
+                        chatExportTitle: (p) => tExport('chatExportTitle', p),
+                        exportedOn: tCommon('exportedOn'),
+                        user: tCommon('user'),
+                        assistant: tCommon('assistant'),
+                        citations: tCommon('citations'),
+                      },
+                      locale,
+                    );
+                  }}
                 >
                   <FileDown size={17} className="text-[#24A0ED]" />
-                  Export as PDF
+                  {tNavbar('exportAsPDF')}
                 </button>
               </div>
             </PopoverPanel>
