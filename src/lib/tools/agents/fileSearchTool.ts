@@ -2,7 +2,6 @@ import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 import { RunnableConfig } from '@langchain/core/runnables';
 import { Document } from 'langchain/document';
-import { Embeddings } from '@langchain/core/embeddings';
 import { Command, getCurrentTaskInput } from '@langchain/langgraph';
 import { ToolMessage } from '@langchain/core/messages';
 import { SimplifiedAgentStateType } from '@/lib/state/chatAgentState';
@@ -10,6 +9,7 @@ import {
   processFilesToDocuments,
   getRankedDocs,
 } from '@/lib/utils/fileProcessing';
+import { CachedEmbeddings } from '@/lib/utils/cachedEmbeddings';
 
 // Schema for file search tool input
 const FileSearchToolSchema = z.object({
@@ -80,7 +80,7 @@ export const fileSearchTool = tool(
         throw new Error('System LLM not available in config');
       }
 
-      const embeddings: Embeddings = config.configurable.embeddings;
+      const embeddings: CachedEmbeddings = config.configurable.embeddings;
 
       // Step 1: Process files to documents
       console.log('FileSearchTool: Processing files to documents...');

@@ -14,6 +14,7 @@ import {
 } from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
 import { getPersonaInstructionsOnly } from '@/lib/utils/prompts';
+import { CachedEmbeddings } from '@/lib/utils/cachedEmbeddings';
 import { ChatOllama } from '@langchain/ollama';
 
 interface chatModel {
@@ -88,7 +89,7 @@ export const POST = async (req: Request) => {
 
     let chatLlm: BaseChatModel | undefined;
     let systemLlm: BaseChatModel | undefined;
-    let embeddings: Embeddings | undefined;
+    let embeddings: CachedEmbeddings | undefined;
 
     if (body.chatModel?.provider === 'custom_openai') {
       chatLlm = new ChatOpenAI({
@@ -148,9 +149,17 @@ export const POST = async (req: Request) => {
       embeddingModelProviders[embeddingModelProvider] &&
       embeddingModelProviders[embeddingModelProvider][embeddingModel]
     ) {
-      embeddings = embeddingModelProviders[embeddingModelProvider][
+      const rawEmbeddings = embeddingModelProviders[embeddingModelProvider][
         embeddingModel
       ].model as Embeddings | undefined;
+
+      if (rawEmbeddings) {
+        embeddings = new CachedEmbeddings(
+          rawEmbeddings,
+          embeddingModelProvider,
+          embeddingModel,
+        );
+      }
     }
 
     if (!chatLlm || !embeddings || !systemLlm) {

@@ -25,6 +25,7 @@ import {
   cleanupRun,
   clearSoftStop,
 } from '@/lib/utils/runControl';
+import { CachedEmbeddings } from '@/lib/utils/cachedEmbeddings';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -382,7 +383,11 @@ export const POST = async (req: Request) => {
 
     let chatLlm: BaseChatModel | undefined;
     let systemLlm: BaseChatModel | undefined;
-    let embedding = embeddingModel.model;
+    let embedding = new CachedEmbeddings(
+      embeddingModel.model,
+      body.embeddingModel?.provider || Object.keys(embeddingModelProviders)[0],
+      body.embeddingModel?.name || Object.keys(embeddingProvider)[0],
+    );
 
     if (body.chatModel?.provider === 'custom_openai') {
       chatLlm = new ChatOpenAI({

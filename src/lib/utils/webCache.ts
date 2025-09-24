@@ -53,7 +53,7 @@ async function readJsonFile<T>(filePath: string): Promise<T | null> {
 
 async function writeJsonFile(filePath: string, value: unknown): Promise<void> {
   const tmp = `${filePath}.tmp`;
-  await fsp.writeFile(tmp, JSON.stringify(value));
+  await fsp.writeFile(tmp, JSON.stringify(value), { flush: true });
   await fsp.rename(tmp, filePath);
 }
 

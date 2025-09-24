@@ -4,6 +4,7 @@ import { BaseMessage } from '@langchain/core/messages';
 import { EventEmitter } from 'events';
 import { SimplifiedAgent } from './simplifiedAgent';
 import DeepResearchAgent from './deepResearchAgent';
+import { CachedEmbeddings } from '../utils/cachedEmbeddings';
 
 /**
  * Agent Search class implementing LangGraph Supervisor pattern
@@ -19,7 +20,7 @@ export class AgentSearch {
   constructor(
     chatLlm: BaseChatModel,
     systemLlm: BaseChatModel,
-    embeddings: Embeddings,
+    embeddings: CachedEmbeddings,
     emitter: EventEmitter,
     personaInstructions: string = '',
     signal: AbortSignal,

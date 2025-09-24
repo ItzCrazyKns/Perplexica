@@ -66,7 +66,7 @@ export async function deepPlannerTool(
       onUsage(response.usage);
     }
     console.log(`deepPlannerTool response for ${query}:`, response);
-    return response;
+    return response as PlannerOutput;
   } catch (e) {
     console.error('deepPlannerTool error:', e);
   }

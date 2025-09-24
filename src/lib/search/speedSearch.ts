@@ -7,6 +7,7 @@ import {
   MessagesPlaceholder,
   PromptTemplate,
 } from '@langchain/core/prompts';
+import { CachedEmbeddings } from '../utils/cachedEmbeddings';
 import {
   RunnableLambda,
   RunnableMap,
@@ -35,7 +36,7 @@ export interface SpeedSearchAgentType {
     history: BaseMessage[],
     chatLlm: BaseChatModel,
     systemLlm: BaseChatModel,
-    embeddings: Embeddings,
+    embeddings: CachedEmbeddings,
     signal: AbortSignal,
     personaInstructions?: string,
     focusMode?: string,
@@ -301,7 +302,7 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
   private async createAnsweringChain(
     chatLlm: BaseChatModel,
     systemLlm: BaseChatModel,
-    embeddings: Embeddings,
+    embeddings: CachedEmbeddings,
     signal: AbortSignal,
     emitter: eventEmitter,
     personaInstructions?: string,
@@ -401,7 +402,7 @@ class SpeedSearchAgent implements SpeedSearchAgentType {
   private async rerankDocsForSpeed(
     query: string,
     docs: Document[],
-    embeddings: Embeddings,
+    embeddings: CachedEmbeddings,
     emitter: eventEmitter,
     signal: AbortSignal,
   ): Promise<Document[]> {
@@ -528,7 +529,7 @@ ${docs[index].metadata?.url.toLowerCase().includes('file') ? '' : '\n<url>' + do
     history: BaseMessage[],
     chatLlm: BaseChatModel,
     systemLlm: BaseChatModel,
-    embeddings: Embeddings,
+    embeddings: CachedEmbeddings,
     signal: AbortSignal,
     personaInstructions?: string,
     focusMode?: string,

@@ -222,7 +222,7 @@ const MessageBoxLoading = ({
               {gatheringSources.map((group, groupIndex) => (
                 <div key={groupIndex} className="space-y-2">
                   <div className="text-xs font-medium text-fg/70 bg-surface-2 px-2 py-1 rounded">
-                    Search: "{group.searchQuery}"
+                    Search: &quot;{group.searchQuery}&quot;
                   </div>
                   <div className="grid gap-2">
                     {group.sources.map((source, sourceIndex) => (
@@ -248,7 +248,7 @@ const MessageBoxLoading = ({
 // TokenPill moved to shared component
 
 function PhaseTimeline({ percent }: { percent: number }) {
-  const phases = ['Plan', 'Search', 'Analyze', 'Answer'];
+  const phases = ['Plan', 'Search', 'Enhance', 'Analyze', 'Answer'];
   const stepPct = 100 / phases.length;
   const completed = Math.floor(percent / stepPct + 0.0001);
   return (

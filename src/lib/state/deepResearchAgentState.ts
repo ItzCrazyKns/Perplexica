@@ -1,4 +1,4 @@
-export type PhaseName = 'Plan' | 'Search' | 'Analyze' | 'Answer';
+import { Phase } from '../types/deepResearchPhase';
 
 export type SessionManifest = {
   chatId: string;
@@ -10,7 +10,7 @@ export type SessionManifest = {
     llmTurnsHard: number;
     llmTurnsSoft: number;
   };
-  tokensByPhase: Partial<Record<PhaseName, number>>;
+  tokensByPhase: Partial<Record<Phase, number>>;
   llmTurnsUsed: number;
   counts: {
     candidates?: number;
@@ -19,9 +19,7 @@ export type SessionManifest = {
     clusters?: number;
     evidenceItems?: number;
   };
-  phases: Partial<
-    Record<PhaseName, { startedAt?: string; completedAt?: string }>
-  >;
+  phases: Partial<Record<Phase, { startedAt?: string; completedAt?: string }>>;
   // Extended (optional) fields for richer state/telemetry
   relevantDocuments?: Array<{ url: string; title?: string }>;
   draftSections?: Array<{ title: string; bullets: string[] }>;

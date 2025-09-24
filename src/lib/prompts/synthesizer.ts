@@ -12,6 +12,9 @@ Your task is to provide answers that are:
 # Conversation History Context:
 {conversationHistory}
 
+# Subquestions Explored:
+{exploredSubquestions}
+
 # Available Information:
 {relevantDocuments}
 

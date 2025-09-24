@@ -26,23 +26,28 @@ import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
 import { searchSearxng } from '../searxng';
 import {
-  extractFactsAndQuotes,
+  extractWebFactsAndQuotes,
   ExtractFactsOutput,
+  extractContentFactsAndQuotes,
 } from '../utils/extractWebFacts';
 import { withStructuredOutput } from '@/lib/utils/structuredOutput';
 import z from 'zod';
 import { Subquery } from 'drizzle-orm';
 import pLimit from 'p-limit';
 import { isSoftStop } from '@/lib/utils/runControl';
+import { Phase } from '@/lib/types/deepResearchPhase';
+import { getWebContent } from '../utils/documents';
+import computeSimilarity from '../utils/computeSimilarity';
+import { CachedEmbeddings } from '../utils/cachedEmbeddings';
 
 /**
  * DeepResearchAgent — phased orchestrator with budgets, cancellation, and progress streaming.
  * Tools and persistence are stubbed for now; real tool calls and FS writes land in later tasks.
  */
 export class DeepResearchAgent {
-  // Budgets: 15 minutes wall clock, 50 LLM turns (soft stop at ~85%)
+  // Budgets: 15 minutes wall clock, 100 LLM turns (soft stop at ~85%)
   private static readonly WALL_CLOCK_LIMIT_MS = 15 * 60 * 1000; // 15 minutes
-  private static readonly LLM_TURNS_HARD_LIMIT = 50;
+  private static readonly LLM_TURNS_HARD_LIMIT = 100;
   private static readonly LLM_TURNS_SOFT_LIMIT = Math.floor(
     DeepResearchAgent.LLM_TURNS_HARD_LIMIT * 0.85,
   );
@@ -70,7 +75,7 @@ export class DeepResearchAgent {
   > = {};
 
   // Phase tracking
-  private phases: Phase[] = ['Plan', 'Search', 'Analyze', 'Answer'];
+  private phases: Phase[] = ['Plan', 'Search', 'Enhance', 'Analyze', 'Answer'];
   private currentPhaseIndex = 0;
   private earlySynthesisTriggered = false;
 
@@ -96,7 +101,7 @@ export class DeepResearchAgent {
   constructor(
     private llm: BaseChatModel,
     private systemLlm: BaseChatModel,
-    private embeddings: Embeddings,
+    private embeddings: CachedEmbeddings,
     private emitter: EventEmitter,
     private personaInstructions: string,
     private signal: AbortSignal,
@@ -154,6 +159,13 @@ export class DeepResearchAgent {
           if (!this.shouldJumpToSynthesis()) {
             await this.runPhase('Search', async () => {
               await this.searchPhase(history);
+            });
+          }
+
+          // Phase: Enhance
+          if (!this.shouldJumpToSynthesis()) {
+            await this.runPhase('Enhance', async () => {
+              await this.enhancePhase();
             });
           }
         } while (await this.needsMoreInfo());
@@ -540,7 +552,14 @@ export class DeepResearchAgent {
         this.retrievalSignal,
       );
       const top = searx.results
-        .filter((r) => r.title && r.url && r.content && r.content.length > 0)
+        .filter(
+          (r) =>
+            r.title &&
+            r.url &&
+            !r.url.endsWith('.pdf') &&
+            r.content &&
+            r.content.length > 0,
+        )
         .slice(0, 10);
       webContext = top
         .map((r, i) => {
@@ -618,49 +637,130 @@ export class DeepResearchAgent {
       );
 
       const limit = pLimit(2);
-      const facts = await limit.map(
-        subqueryResult.results.slice(0, 5),
+      let extractCount = 0;
+      const candidates = await limit.map(
+        subqueryResult.results.filter(
+          (r) =>
+            r.title &&
+            r.url &&
+            !r.url.endsWith('.pdf') &&
+            r.content &&
+            r.content.length > 0,
+        ),
         async (result) => {
-          if (this.abortedOrTimedOut())
-            return {
-              url: result.url,
-              title: result.title,
-              facts: { facts: [], quotes: [], longContent: [] },
-            };
-          const extracted = await extractFactsAndQuotes(
-            result.url,
+          const empty = {
+            url: result.url,
+            title: result.title,
+            rankedCandidates: [],
+            facts: { facts: [], quotes: [], longContent: [] },
+          };
+
+          if (extractCount >= 5) {
+            return empty;
+          }
+          if (this.abortedOrTimedOut()) return empty;
+          // For each result, get the top ranked text segments by similarity to the query and subquery.
+          // We are NOT YET filling out the facts/quotes structure. That will only happen if necessary.
+          let rankedCandidates: string[] = [];
+          try {
+            const queryVector = await this.embeddings.embedQuery(sq);
+            const webContent = await getWebContent(
+              result.url,
+              100000,
+              false,
+              this.retrievalSignal,
+              true,
+            );
+
+            if (
+              !webContent?.pageContent ||
+              webContent.pageContent.length === 0
+            ) {
+              console.warn(
+                `Search phase - no content extracted from ${result.url}`,
+              );
+              return empty;
+            }
+
+            extractCount++;
+
+            const words = webContent?.pageContent.split(/\s+/) || [];
+            // If the content is small enough, use all of it as a single candidate.
+            // This is best since it preserves context and avoids chunking issues.
+            // Otherwise, chunk the content and rank the chunks by similarity to the subquery.
+            // 1200 words is a mid-sized blog post or news article.
+            if (words.length <= 1200) {
+              console.log(
+                `Search phase - using full content for ${result.url} (${(
+                  webContent?.pageContent?.length || 0
+                ).toLocaleString()} chars)`,
+              );
+              rankedCandidates = [webContent?.pageContent || ''];
+            } else {
+              // Split entire content into chunks of ~300 tokens with some overlap
+              const chunkSize = 300;
+              const overlap = 50;
+              const chunks: string[] = [];
+              for (
+                let start = 0;
+                start < words.length;
+                start += chunkSize - overlap
+              ) {
+                const chunk = words.slice(start, start + chunkSize).join(' ');
+                chunks.push(chunk);
+              }
+              // Embed each chunk and compute similarity
+              const chunkVectors = await Promise.all(
+                chunks.map(async (c) => await this.embeddings.embedQuery(c)),
+              );
+              const similarities = chunkVectors.map((vec) =>
+                computeSimilarity(vec, queryVector),
+              );
+              // Rank chunks by similarity and take top 5
+              const ranked = chunks
+                .map((chunk, idx) => ({ chunk, score: similarities[idx] }))
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 5)
+                .map((c) => c.chunk);
+              rankedCandidates = ranked;
+            }
+          } catch (e) {
+            console.warn('Subquery candidate extraction failed:', e);
+          }
+
+          // Extract facts and quotes from the top-ranked candidates
+          // This is a potentially costly LLM operation so we do it only for the top few candidates
+          const extracted = await extractContentFactsAndQuotes(
+            rankedCandidates.join('\n\n'),
             sq,
             this.systemLlm,
             this.retrievalSignal || this.signal,
             (usage) => this.addPhaseUsage('Search', usage, 'system'),
           );
+
           return {
             url: result.url,
             title: result.title,
+            rankedCandidates,
             facts: extracted || { facts: [], quotes: [], longContent: [] },
           };
         },
       );
 
-      const cleanedFacts = facts.filter(
-        (f) =>
-          f.facts &&
-          ((f?.facts?.facts?.length || 0) > 0 ||
-            (f?.facts?.quotes?.length || 0) > 0 ||
-            (f?.facts?.longContent?.length || 0) > 0),
+      const candidateSources = candidates.filter(
+        (c) =>
+          c.facts.facts.length > 0 ||
+          c.facts.quotes.length > 0 ||
+          c.facts.longContent.length > 0,
       );
 
       // Emit sources as they're gathered during search phase
-      if (cleanedFacts.length > 0) {
-        const sources = cleanedFacts.map((c, idx) => ({
+      if (candidateSources.length > 0) {
+        const sources = candidateSources.map((c, idx) => ({
           metadata: {
             title: c.title || c.url || `Source ${idx + 1}`,
             url: c.url,
             processingType: 'url-content-extraction',
-            snippet:
-              c.facts?.facts?.join(' ').slice(0, 200) ||
-              c.facts?.quotes?.join(' ').slice(0, 200) ||
-              '',
           },
         }));
 
@@ -677,11 +777,16 @@ export class DeepResearchAgent {
 
       perSub[i] = {
         subquestion: sq,
-        extracted: cleanedFacts,
+        extracted: candidateSources,
         sufficiency: 'pending',
       };
 
-      totalCandidates += cleanedFacts.length;
+      console.log(
+        `Search phase - subquery "${sq}" found ${candidateSources.length} candidate sources`,
+        candidateSources,
+      );
+
+      totalCandidates += candidateSources.length;
       this.state.perSubquery = perSub;
       // Maintain legacy flattened candidates for downstream compatibility/UX
       this.state.candidates = perSub.flatMap((p) => p.extracted);
@@ -700,6 +805,215 @@ export class DeepResearchAgent {
     }
   }
 
+  private async enhancePhase() {
+    this.ensureNotAborted();
+    const perSub = this.state.perSubquery || [];
+
+    // Filter to only subqueries with pending sufficiency
+    const pendingSubqueries = perSub.filter(
+      (sub) => sub.sufficiency === 'pending',
+    );
+
+    if (pendingSubqueries.length === 0) {
+      this.emitProgress(
+        'Enhance',
+        'No subqueries need enhancement',
+        this.phasePercent(true),
+      );
+      return;
+    }
+
+    this.emitProgress(
+      'Enhance',
+      `Enhancing ${pendingSubqueries.length} subqueries`,
+      this.phasePercent(),
+    );
+
+    // Schema for structured LLM response to determine if subquery can be answered
+    const SubquerySufficiencySchema = z.object({
+      canAnswer: z
+        .enum(['yes', 'no'])
+        .describe(
+          'Can the subquery be answered using the provided content in the context of the main user query?',
+        ),
+      reason: z
+        .string()
+        .optional()
+        .nullable()
+        .describe(
+          'Brief explanation of why it can or cannot be answered (optional). Less than 30 words if provided.',
+        ),
+    });
+
+    // Process each pending subquery
+    for (let i = 0; i < pendingSubqueries.length; i++) {
+      if (this.abortedOrTimedOut()) break;
+
+      const subqueryResult = pendingSubqueries[i];
+      const subquery = subqueryResult.subquestion;
+      console.log(`Enhance phase - evaluating subquery: "${subquery}"`);
+
+      this.emitProgress(
+        'Enhance',
+        `Evaluating "${subquery}" (${i + 1}/${pendingSubqueries.length})`,
+        this.phaseSubPercent(i, pendingSubqueries.length),
+      );
+
+      // Prepare content from rankedCandidates
+      const contentSummary = this.formattedCandidates(subqueryResult.extracted);
+
+      if (!contentSummary || contentSummary.trim().length === 0) {
+        // No content to evaluate, mark as needing enhancement
+        this.emitProgress(
+          'Enhance',
+          `No content for "${subquery}" - extracting facts`,
+          this.phaseSubPercent(i, pendingSubqueries.length),
+        );
+        await this.enhanceSubqueryWithFacts(subqueryResult);
+        continue;
+      }
+
+      try {
+        // Ask the system LLM if the subquery can be answered with current content
+        const judge = withStructuredOutput(
+          this.systemLlm,
+          SubquerySufficiencySchema,
+          {},
+        );
+        const messages = [
+          new SystemMessage(
+            [
+              'You are evaluating whether a subquery can be adequately answered using the provided content.',
+              'Consider the context of the main user query and whether the content provides sufficient information.',
+              'Be conservative: if important details are missing or the content is too sparse, answer no.',
+              'Respond with JSON containing "canAnswer" (yes/no) and optionally "reason".',
+            ].join(' '),
+          ),
+          new HumanMessage(
+            [
+              `Main user query: ${this.query}`,
+              `Subquery to evaluate: ${subquery}`,
+              `Available content:\n${contentSummary}`,
+            ].join('\n\n'),
+          ),
+        ];
+
+        console.log(
+          'Enhance phase - judging subquery with messages:',
+          messages,
+        );
+
+        const result = await judge.invoke(messages, {
+          signal: this.signal,
+          callbacks: [
+            {
+              handleLLMEnd: async (output, _runId, _parentRunId) => {
+                if (
+                  output.llmOutput?.estimatedTokenUsage ||
+                  output.llmOutput?.tokenUsage
+                ) {
+                  this.addPhaseUsage(
+                    'Enhance',
+                    output.llmOutput.estimatedTokenUsage ||
+                      output.llmOutput.tokenUsage,
+                    'system',
+                  );
+                }
+              },
+            },
+          ],
+        });
+        this.countLLMTurns();
+
+        console.log('Enhance phase - judging subquery result:', result);
+
+        if (result?.canAnswer === 'yes') {
+          // Mark subquery as sufficient
+          subqueryResult.sufficiency = 'sufficient';
+          this.emitProgress(
+            'Enhance',
+            `"${subquery}" marked as sufficient`,
+            this.phaseSubPercent(i, pendingSubqueries.length),
+          );
+        } else {
+          // Extract more facts and quotes for this subquery
+          this.emitProgress(
+            'Enhance',
+            `Extracting facts for "${subquery}"`,
+            this.phaseSubPercent(i, pendingSubqueries.length),
+          );
+          await this.enhanceSubqueryWithFacts(subqueryResult);
+        }
+      } catch (err) {
+        console.warn(
+          `Subquery evaluation failed for "${subquery}", extracting facts:`,
+          err,
+        );
+        // On evaluation failure, err on the side of gathering more info
+        await this.enhanceSubqueryWithFacts(subqueryResult);
+      }
+    }
+
+    const enhancedCount = pendingSubqueries.filter(
+      (sub) => sub.sufficiency === 'sufficient',
+    ).length;
+
+    this.emitProgress(
+      'Enhance',
+      'Enhancement complete',
+      this.phasePercent(true),
+      `${enhancedCount}/${pendingSubqueries.length} subqueries marked sufficient`,
+    );
+  }
+
+  private async enhanceSubqueryWithFacts(subqueryResult: SubqueryResult) {
+    const subquery = subqueryResult.subquestion;
+    const limit = pLimit(2); // Limit concurrent extractions
+
+    // Extract facts and quotes from each candidate source
+    await Promise.all(
+      subqueryResult.extracted.map((candidate) =>
+        limit(async () => {
+          if (this.abortedOrTimedOut()) return;
+
+          try {
+            const extracted = await extractWebFactsAndQuotes(
+              candidate.url,
+              subquery,
+              this.systemLlm,
+              this.retrievalSignal || this.signal,
+              (usage) => this.addPhaseUsage('Enhance', usage, 'system'),
+            );
+
+            if (
+              extracted &&
+              (extracted.facts.length > 0 ||
+                extracted.quotes.length > 0 ||
+                extracted.longContent.length > 0)
+            ) {
+              // Merge the extracted facts with existing ones
+              candidate.facts = {
+                facts: [...(candidate.facts.facts || []), ...extracted.facts],
+                quotes: [
+                  ...(candidate.facts.quotes || []),
+                  ...extracted.quotes,
+                ],
+                longContent: [
+                  ...(candidate.facts.longContent || []),
+                  ...extracted.longContent,
+                ],
+              };
+            }
+          } catch (err) {
+            console.warn(`Fact extraction failed for ${candidate.url}:`, err);
+          }
+        }),
+      ),
+    );
+
+    // Leave the subquery marked as 'pending' - it will be checked later by needsMoreInfo
+  }
+
   private async needsMoreInfo(): Promise<boolean> {
     this.ensureNotAborted();
     if (this.shouldJumpToSynthesis()) return false;
@@ -713,12 +1027,14 @@ export class DeepResearchAgent {
         (p.extracted?.length || 0) > 0 &&
         p.extracted.some(
           (e) =>
-            (e.facts?.facts?.length || 0) +
+            (e.rankedCandidates?.length || 0) +
+              (e.facts?.facts?.length || 0) +
               (e.facts?.quotes?.length || 0) +
               (e.facts?.longContent?.length || 0) >
             0,
         ),
     );
+
     if (filtered.length !== before) {
       this.emitProgress(
         'Analyze',
@@ -726,6 +1042,7 @@ export class DeepResearchAgent {
         this.phasePercent(),
       );
     }
+
     this.state.perSubquery = filtered;
     this.state.candidates = filtered.flatMap((p) => p.extracted || []);
 
@@ -912,6 +1229,8 @@ export class DeepResearchAgent {
         ? this.personaInstructions
         : formattingAndCitationsScholarly.content,
       conversationHistory: '',
+      exploredSubquestions: (this.state.plan?.subquestions || []).join('\n'),
+      // Cap context to ~12,000 characters to keep within LLM input limits
       relevantDocuments: docsString || 'No context documents available.',
     });
 
@@ -1033,8 +1352,6 @@ ${url ? `<url>${url}</url>` : ''}
   }
 }
 
-type Phase = 'Plan' | 'Search' | 'Analyze' | 'Answer';
-
 export default DeepResearchAgent;
 
 // Local types
@@ -1047,5 +1364,6 @@ type SubqueryResult = {
 type Candidate = {
   url: string;
   title: string;
+  rankedCandidates: string[];
   facts: ExtractFactsOutput;
 };

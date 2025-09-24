@@ -1,18 +1,9 @@
-import { Document } from '@langchain/core/documents';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { z } from 'zod';
-import { getWebContent } from './documents';
 import { formatDateForLLM } from '../utils';
+import { getWebContent } from './documents';
 import { setTemperature } from './modelUtils';
 import { withStructuredOutput } from './structuredOutput';
-import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
-import CallbackHandler from 'langfuse-langchain';
-import {
-  CallbackManager,
-  CallbackManagerForLLMRun,
-} from '@langchain/core/callbacks/manager';
-import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
-import { getModelContextSize } from '@langchain/core/language_models/base';
 
 export type ExtractFactsOutput = {
   facts: string[];
@@ -62,13 +53,13 @@ const ExtractionSchema = z.object({
 });
 
 /**
- * Extract short facts and direct quotes from a URL, targeted to a specific query.
+ * Extract short facts and direct quotes from content, targeted to a specific query.
  * - Single pass regardless of content size; no short-content or html modes
  * - Uses structured output for compact, reliable parsing
  * - Returns facts/quotes only when content is relevant to the query
  */
-export async function extractFactsAndQuotes(
-  url: string,
+export async function extractContentFactsAndQuotes(
+  content: string,
   query: string,
   llm: BaseChatModel,
   signal: AbortSignal,
@@ -76,21 +67,7 @@ export async function extractFactsAndQuotes(
 ): Promise<ExtractFactsOutput | null> {
   setTemperature(llm, 0);
   try {
-    const content = await getWebContent(url, 50000, false, signal);
-    if (!content) {
-      return {
-        facts: [],
-        quotes: [],
-        longContent: [],
-        notRelevantReason: 'No content at URL',
-      };
-    }
-
-    const structured = withStructuredOutput(llm, ExtractionSchema, {
-      name: 'extract_facts_and_quotes',
-    });
-    const body = content.pageContent || content.metadata.html || '';
-    if (!body || body.trim().length === 0) {
+    if (!content || content.trim().length === 0) {
       return {
         facts: [],
         quotes: [],
@@ -99,6 +76,9 @@ export async function extractFactsAndQuotes(
       };
     }
 
+    const structured = withStructuredOutput(llm, ExtractionSchema, {
+      name: 'extract_facts_and_quotes',
+    });
     const prompt = `You extract short, atomic facts and direct quotes with provenance.
 
 # Task
@@ -126,7 +106,7 @@ User query:
 ${query}
 
 Web content:
-${body}`;
+${content}`;
 
     const res = await structured.invoke(prompt, {
       signal,
@@ -178,4 +158,24 @@ ${body}`;
   } finally {
     setTemperature(llm);
   }
+}
+
+/**
+ * Extract short facts and direct quotes from a URL, targeted to a specific query.
+ * - Single pass regardless of content size; no short-content or html modes
+ * - Uses structured output for compact, reliable parsing
+ * - Returns facts/quotes only when content is relevant to the query
+ */
+export async function extractWebFactsAndQuotes(
+  url: string,
+  query: string,
+  llm: BaseChatModel,
+  signal: AbortSignal,
+  onUsage?: (usage: any) => void,
+): Promise<ExtractFactsOutput | null> {
+  const content = await getWebContent(url, 50000, false, signal);
+
+  const body = content?.pageContent || content?.metadata.html || '';
+
+  return await extractContentFactsAndQuotes(body, query, llm, signal, onUsage);
 }

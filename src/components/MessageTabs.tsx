@@ -352,7 +352,7 @@ const MessageTabs = ({
                 </div>
               </div>
             )}
-            {loading && (
+            {loading && isLast && (
               <div className="pl-3 flex items-center justify-start">
                 <div className="flex space-x-1">
                   <div className="w-1.5 h-1.5 bg-fg/40 rounded-full animate-[high-bounce_1s_infinite] [animation-delay:-0.3s]"></div>

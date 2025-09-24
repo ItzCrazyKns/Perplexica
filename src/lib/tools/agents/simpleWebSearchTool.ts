@@ -7,12 +7,12 @@ import { webSearchRetrieverAgentPrompt } from '@/lib/prompts/webSearch';
 import { searchSearxng } from '@/lib/searxng';
 import { formatDateForLLM } from '@/lib/utils';
 import { Document } from 'langchain/document';
-import { Embeddings } from '@langchain/core/embeddings';
 import computeSimilarity from '@/lib/utils/computeSimilarity';
 import { Command, getCurrentTaskInput } from '@langchain/langgraph';
 import { ToolMessage } from '@langchain/core/messages';
 import { SimplifiedAgentStateType } from '@/lib/state/chatAgentState';
 import { isSoftStop } from '@/lib/utils/runControl';
+import { CachedEmbeddings } from '@/lib/utils/cachedEmbeddings';
 
 // Schema for search query generation
 const SearchQuerySchema = z.object({
@@ -67,7 +67,7 @@ export const simpleWebSearchTool = tool(
       }
 
       const llm = config.configurable.systemLlm;
-      const embeddings: Embeddings = config.configurable.embeddings;
+      const embeddings: CachedEmbeddings = config.configurable.embeddings;
       const retrievalSignal: AbortSignal | undefined = (config as any)
         ?.configurable?.retrievalSignal;
       const messageId: string | undefined = (config as any)?.configurable
@@ -126,9 +126,8 @@ export const simpleWebSearchTool = tool(
       // Calculate similarities for all results
       const resultsWithSimilarity = await Promise.all(
         searchResults.results.map(async (result) => {
-          const vector = await embeddings.embedQuery(
-            result.title + ' ' + (result.content || ''),
-          );
+          const content = result.title + ' ' + (result.content || '');
+          const vector = await embeddings.embedQuery(content);
           const similarity = computeSimilarity(vector, queryVector);
           return { result, similarity };
         }),

@@ -1,20 +1,17 @@
+import {
+  loadCachedRecord,
+  purgeWebCache,
+  writeCachedRecord,
+} from '@/lib/utils/webCache';
 import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio';
 import { PlaywrightWebBaseLoader } from '@langchain/community/document_loaders/web/playwright';
 import { Document } from '@langchain/core/documents';
-import { Embeddings } from '@langchain/core/embeddings';
 import { Readability } from '@mozilla/readability';
 import axios from 'axios';
 import { JSDOM } from 'jsdom';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
-import fetch from 'node-fetch';
 import pdfParse from 'pdf-parse';
 import type { Browser, Page } from 'playwright';
-import computeSimilarity from './computeSimilarity';
-import {
-  loadCachedRecord,
-  writeCachedRecord,
-  purgeWebCache,
-} from '@/lib/utils/webCache';
 
 export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
   const splitter = new RecursiveCharacterTextSplitter();
@@ -113,6 +110,9 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
  *
  * @param url - The URL to fetch content from.
  * @param getHtml - Whether to include the HTML content in the metadata.
+ * @param signal - Optional AbortSignal to cancel the operation.
+ * @param truncateToLength - Maximum length of the returned text content.
+ * @param performAggressiveValidation - If true, performs additional validation on the fetched content. Like ensuring the parsed article has a title and sufficient length.
  * @returns A Promise that resolves to a Document object or null if parsing fails.
  */
 export const getWebContent = async (
@@ -120,6 +120,7 @@ export const getWebContent = async (
   truncateToLength: number = 30000,
   getHtml: boolean = false,
   signal?: AbortSignal,
+  performAggressiveValidation: boolean = false,
 ): Promise<Document | null> => {
   try {
     if (signal?.aborted) {
@@ -149,6 +150,7 @@ export const getWebContent = async (
       launchOptions: {
         headless: true,
         timeout: 30000,
+        chromiumSandbox: true,
       },
       gotoOptions: {
         waitUntil: 'domcontentloaded',
@@ -161,7 +163,10 @@ export const getWebContent = async (
         // Allow some time for dynamic content to load
         await page.waitForTimeout(3000);
 
-        return await page.content();
+        const content = await page.content();
+        browser.close();
+
+        return content;
       },
     });
 
@@ -177,8 +182,21 @@ export const getWebContent = async (
     const doc = docs[0];
 
     const dom = new JSDOM(doc.pageContent, { url });
-    const reader = new Readability(dom.window.document, { charThreshold: 25 });
+    const reader = new Readability(dom.window.document);
     const article = reader.parse();
+    if (
+      performAggressiveValidation &&
+      (!article ||
+        !article.title ||
+        !article.textContent ||
+        article.textContent.length < 200 ||
+        article.title.length < 5)
+    ) {
+      throw new Error(
+        'Readability parsing failed or returned insufficient content for Playwright-loaded page on url: ' +
+          url,
+      );
+    }
 
     // Normalize the text content
     const normalizedText =
@@ -227,10 +245,21 @@ export const getWebContent = async (
 
         // Apply Readability to extract meaningful content from Cheerio HTML
         const dom = new JSDOM(doc.pageContent, { url });
-        const reader = new Readability(dom.window.document, {
-          charThreshold: 25,
-        });
+        const reader = new Readability(dom.window.document);
         const article = reader.parse();
+        if (
+          performAggressiveValidation &&
+          (!article ||
+            !article.title ||
+            !article.textContent ||
+            article.textContent.length < 200 ||
+            article.title.length < 5)
+        ) {
+          console.log(
+            `Cheerio fallback also failed Readability validation for URL: ${url}`,
+          );
+          return null;
+        }
 
         // Normalize the text content
         const normalizedText =

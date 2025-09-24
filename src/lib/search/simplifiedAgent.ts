@@ -24,6 +24,7 @@ import { webSearchResponsePrompt } from '../prompts/webSearch';
 import { formatDateForLLM } from '../utils';
 import { removeThinkingBlocksFromMessages } from '../utils/contentUtils';
 import { getModelName } from '../utils/modelUtils';
+import { CachedEmbeddings } from '../utils/cachedEmbeddings';
 
 /**
  * Normalize usage metadata from different LLM providers
@@ -69,7 +70,7 @@ function normalizeUsageMetadata(usageData: any): {
 export class SimplifiedAgent {
   private chatLlm: BaseChatModel;
   private systemLlm: BaseChatModel;
-  private embeddings: Embeddings;
+  private embeddings: CachedEmbeddings;
   private emitter: EventEmitter;
   private personaInstructions: string;
   private signal: AbortSignal;
@@ -80,7 +81,7 @@ export class SimplifiedAgent {
   constructor(
     chatLlm: BaseChatModel,
     systemLlm: BaseChatModel,
-    embeddings: Embeddings,
+    embeddings: CachedEmbeddings,
     emitter: EventEmitter,
     personaInstructions: string = '',
     signal: AbortSignal,

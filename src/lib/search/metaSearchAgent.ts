@@ -4,6 +4,7 @@ import { BaseMessage } from '@langchain/core/messages';
 import eventEmitter from 'events';
 import { AgentSearch } from './agentSearch';
 import SpeedSearchAgent from './speedSearch';
+import { CachedEmbeddings } from '../utils/cachedEmbeddings';
 
 export interface MetaSearchAgentType {
   searchAndAnswer: (
@@ -12,7 +13,7 @@ export interface MetaSearchAgentType {
     chatId: string,
     chatLlm: BaseChatModel,
     systemLlm: BaseChatModel,
-    embeddings: Embeddings,
+    embeddings: CachedEmbeddings,
     optimizationMode: 'speed' | 'agent' | 'deepResearch',
     fileIds: string[],
     signal: AbortSignal,
@@ -47,7 +48,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
   private async executeAgentWorkflow(
     chatLlm: BaseChatModel,
     systemLlm: BaseChatModel,
-    embeddings: Embeddings,
+    embeddings: CachedEmbeddings,
     emitter: eventEmitter,
     message: string,
     history: BaseMessage[],
@@ -96,7 +97,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     chatId: string,
     chatLlm: BaseChatModel,
     systemLlm: BaseChatModel,
-    embeddings: Embeddings,
+    embeddings: CachedEmbeddings,
     optimizationMode: 'speed' | 'agent' | 'deepResearch',
     fileIds: string[],
     signal: AbortSignal,

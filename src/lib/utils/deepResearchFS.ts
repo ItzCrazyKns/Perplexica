@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { SessionManifest, PhaseName } from '@/lib/state/deepResearchAgentState';
+import { SessionManifest } from '@/lib/state/deepResearchAgentState';
+import { Phase } from '@/lib/types/deepResearchPhase';
 
 const ROOT = path.resolve(
   process.cwd(),
@@ -69,7 +70,7 @@ export function readManifest(chatId: string): SessionManifest | null {
 export function updateManifest(
   chatId: string,
   update: Partial<SessionManifest> & {
-    phase?: PhaseName;
+    phase?: Phase;
     phaseEvent?: 'start' | 'complete';
   },
 ) {
