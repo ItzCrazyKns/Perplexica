@@ -440,6 +440,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
     setLoading(true);
     setGatheringSources([]); // Reset gathering sources for new conversation
+    setLiveModelStats(null);
     setAnalysisProgress(null);
 
     let sources: Document[] | undefined = undefined;
@@ -478,6 +479,11 @@ const ChatWindow = ({ id }: { id?: string }) => {
         createdAt: new Date(),
       },
     ]);
+
+    // If this is a new chat (no chatId in URL), replace the URL to include the new chatId
+    if (messages.length <= 1) {
+      window.history.replaceState({}, '', `/c/${chatId}`);
+    }
 
     const messageHandler = async (data: any) => {
       if (data.type === 'error') {
@@ -677,6 +683,7 @@ const ChatWindow = ({ id }: { id?: string }) => {
 
         setLoading(false);
         setGatheringSources([]); // Clear gathering sources when message is complete
+        setLiveModelStats(null);
         setScrollTrigger((prev) => prev + 1);
 
         const lastMsg = messagesRef.current[messagesRef.current.length - 1];

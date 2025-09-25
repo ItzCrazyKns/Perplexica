@@ -39,6 +39,7 @@ import { Phase } from '@/lib/types/deepResearchPhase';
 import { getWebContent } from '../utils/documents';
 import computeSimilarity from '../utils/computeSimilarity';
 import { CachedEmbeddings } from '../utils/cachedEmbeddings';
+import { TokenTextSplitter } from '@langchain/textsplitters';
 
 /**
  * DeepResearchAgent — phased orchestrator with budgets, cancellation, and progress streaming.
@@ -684,12 +685,19 @@ export class DeepResearchAgent {
 
             extractCount++;
 
-            const words = webContent?.pageContent.split(/\s+/) || [];
+            const splitter = new TokenTextSplitter({
+              chunkSize: 300,
+              chunkOverlap: 50,
+            });
+            const chunks = await splitter.splitText(
+              webContent?.pageContent || '',
+            );
+
             // If the content is small enough, use all of it as a single candidate.
             // This is best since it preserves context and avoids chunking issues.
             // Otherwise, chunk the content and rank the chunks by similarity to the subquery.
             // 1200 words is a mid-sized blog post or news article.
-            if (words.length <= 1200) {
+            if (chunks.length <= 4) {
               console.log(
                 `Search phase - using full content for ${result.url} (${(
                   webContent?.pageContent?.length || 0
@@ -697,18 +705,6 @@ export class DeepResearchAgent {
               );
               rankedCandidates = [webContent?.pageContent || ''];
             } else {
-              // Split entire content into chunks of ~300 tokens with some overlap
-              const chunkSize = 300;
-              const overlap = 50;
-              const chunks: string[] = [];
-              for (
-                let start = 0;
-                start < words.length;
-                start += chunkSize - overlap
-              ) {
-                const chunk = words.slice(start, start + chunkSize).join(' ');
-                chunks.push(chunk);
-              }
               // Embed each chunk and compute similarity
               const chunkVectors = await Promise.all(
                 chunks.map(async (c) => await this.embeddings.embedQuery(c)),

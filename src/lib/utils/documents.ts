@@ -68,13 +68,28 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
 
         if (webDocs && webDocs.length > 0) {
           const webDoc = webDocs[0];
+          // Parse via Readability for better content extraction
+          const dom = new JSDOM(webDoc.pageContent, { url: link });
+          const reader = new Readability(dom.window.document);
+          const article = reader.parse();
+          if (!article || !article.textContent) {
+            throw new Error('Readability parsing failed for url: ' + link);
+          }
+
+          // Normalize the text content
+          webDoc.pageContent = article.textContent
+            .split('\n')
+            .map((line) => line.trim())
+            .filter((line) => line.length > 0)
+            .join('\n');
+
           const splittedText = await splitter.splitText(webDoc.pageContent);
 
           const linkDocs = splittedText.map((text) => {
             return new Document({
               pageContent: text,
               metadata: {
-                title: webDoc.metadata.title || link,
+                title: article.title || webDoc.metadata.title || link,
                 url: link,
               },
             });
