@@ -165,7 +165,7 @@ export const getWebContent = async (
       launchOptions: {
         headless: true,
         timeout: 30000,
-        //chromiumSandbox: true,
+        chromiumSandbox: true,
       },
       gotoOptions: {
         waitUntil: 'domcontentloaded',

@@ -13,6 +13,7 @@ _This is a fork of [ItzCrazyKns/Perplexica](https://github.com/ItzCrazyKns/Perpl
   - [Getting Started with Docker (Recommended)](#getting-started-with-docker-recommended)
   - [Non-Docker Installation](#non-docker-installation)
   - [Ollama Connection Errors](#ollama-connection-errors)
+- [Updating](#updating)
 - [Using as a Search Engine](#using-as-a-search-engine)
 - [Using Perplexica's API](#using-perplexicas-api)
 - [Expose Perplexica to network](#expose-perplexica-to-network)
@@ -122,6 +123,27 @@ If you're encountering an Ollama connection error, it is likely due to the backe
    - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0"`. Then restart Ollama by `systemctl restart ollama`. For more information see [Ollama docs](https://github.com/ollama/ollama/blob/main/docs/faq.md#setting-environment-variables-on-linux)
 
    - Ensure that the port (default is 11434) is not blocked by your firewall.
+
+## Updating
+
+Version `3.0.0` is a major update that switches to running the docker image as a non-privilaged user. When migrating from prior versions, you will need to migrate your data to allow the new user to access it. You can do this by running the following commands in the directory where your `docker-compose.yaml` file is located:
+
+Note: If you've changed the names of the volumes in your `docker-compose.yaml`, make sure to replace `perplexica_backend-dbstore`, `perplexica_uploads`, and `perplexica_deep-research` with your custom volume names.
+
+```bash
+# Stop the running containers if any
+docker compose down
+
+# Change ownership of the data directory to UID 1000 (the new user) for the backend-dbstore volume
+docker run --rm -v perplexica_backend-dbstore:/data busybox sh -c 'chown -R 1000:1000 /data'
+# Change ownership of the uploads directory to UID 1000 (the new user) for the uploads volume
+docker run --rm -v perplexica_uploads:/data busybox sh -c 'chown -R 1000:1000 /data'
+# Change ownership of the deep-research directory to UID 1000 (the new user) for the deep-research volume
+docker run --rm -v perplexica_deep-research:/data busybox sh -c 'chown -R 1000:1000 /data'
+
+# Start the containers again
+docker compose up -d
+```
 
 ## Using as a Search Engine
 

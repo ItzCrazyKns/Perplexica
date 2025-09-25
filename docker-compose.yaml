@@ -13,6 +13,8 @@ services:
     build:
       context: .
       dockerfile: app.dockerfile
+    cap_add:
+      - SYS_ADMIN  # Required for Playwright sandboxing
     environment:
       - SEARXNG_API_URL=http://searxng:8080
       - DATA_DIR=/home/perplexica

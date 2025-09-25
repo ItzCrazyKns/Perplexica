@@ -34,12 +34,20 @@ COPY --from=builder /home/perplexica/migrator/index.js ./migrate.js
 COPY entrypoint.sh ./entrypoint.sh
 
 RUN mkdir /home/perplexica/uploads && \
+    chown -R node:node /home/perplexica && \
     chmod +x /home/perplexica/entrypoint.sh && \
-    npm install playwright --no-fund --no-audit && \
-    npx -y playwright install chromium --only-shell --with-deps && \
-    rm -rf /root/.npm && \
+    npm install playwright -g --no-fund --no-audit && \
+    npx playwright install-deps chromium && \
     apt-get update && \
     apt-get install -y procps && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    apt-get clean && rm -rf /var/lib/apt/lists/* && \
+    rm -rf ~/.npm
+
+# Configure the container to run in an unprivileged mode
+USER node
+
+# Install Playwright and its dependencies
+RUN npx -y playwright install chromium --only-shell && \
+    rm -rf ~/.npm
 
 CMD ["./entrypoint.sh"]
