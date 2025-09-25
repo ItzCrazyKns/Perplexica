@@ -73,17 +73,30 @@ const checkConfig = async (
       localStorage.setItem('autoVideoSearch', 'false');
     }
 
-    const providers = await fetch(`/api/models`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }).then(async (res) => {
-      if (!res.ok)
-        throw new Error(
-          `Failed to fetch models: ${res.status} ${res.statusText}`,
-        );
-      return res.json();
-    });
+    const [providers, config] = await Promise.all([
+      fetch(`/api/models`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).then(async (res) => {
+        if (!res.ok)
+          throw new Error(
+            `Failed to fetch models: ${res.status} ${res.statusText}`,
+          );
+        return res.json();
+      }),
+      fetch(`/api/config`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).then(async (res) => {
+        if (!res.ok)
+          throw new Error(
+            `Failed to fetch config: ${res.status} ${res.statusText}`,
+          );
+        return res.json();
+      })
+    ]);
 
     if (
       !chatModel ||
@@ -115,7 +128,11 @@ const checkConfig = async (
           return setHasError(true);
         }
 
-        chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
+        if (config.defaultChatModel && chatModelProviders[chatModelProvider] && chatModelProviders[chatModelProvider][config.defaultChatModel]) {
+          chatModel = config.defaultChatModel;
+        } else {
+          chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
+        }
       }
 
       if (!embeddingModel || !embeddingModelProvider) {
@@ -128,9 +145,14 @@ const checkConfig = async (
           return toast.error('No embedding models available');
 
         embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
-        embeddingModel = Object.keys(
-          embeddingModelProviders[embeddingModelProvider],
-        )[0];
+        
+        if (config.defaultEmbeddingModel && embeddingModelProviders[embeddingModelProvider] && embeddingModelProviders[embeddingModelProvider][config.defaultEmbeddingModel]) {
+          embeddingModel = config.defaultEmbeddingModel;
+        } else {
+          embeddingModel = Object.keys(
+            embeddingModelProviders[embeddingModelProvider],
+          )[0];
+        }
       }
 
       localStorage.setItem('chatModel', chatModel!);
