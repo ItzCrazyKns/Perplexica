@@ -95,7 +95,7 @@ const checkConfig = async (
             `Failed to fetch config: ${res.status} ${res.statusText}`,
           );
         return res.json();
-      })
+      }),
     ]);
 
     if (
@@ -128,7 +128,11 @@ const checkConfig = async (
           return setHasError(true);
         }
 
-        if (config.defaultChatModel && chatModelProviders[chatModelProvider] && chatModelProviders[chatModelProvider][config.defaultChatModel]) {
+        if (
+          config.defaultChatModel &&
+          chatModelProviders[chatModelProvider] &&
+          chatModelProviders[chatModelProvider][config.defaultChatModel]
+        ) {
           chatModel = config.defaultChatModel;
         } else {
           chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
@@ -145,8 +149,14 @@ const checkConfig = async (
           return toast.error('No embedding models available');
 
         embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
-        
-        if (config.defaultEmbeddingModel && embeddingModelProviders[embeddingModelProvider] && embeddingModelProviders[embeddingModelProvider][config.defaultEmbeddingModel]) {
+
+        if (
+          config.defaultEmbeddingModel &&
+          embeddingModelProviders[embeddingModelProvider] &&
+          embeddingModelProviders[embeddingModelProvider][
+            config.defaultEmbeddingModel
+          ]
+        ) {
           embeddingModel = config.defaultEmbeddingModel;
         } else {
           embeddingModel = Object.keys(

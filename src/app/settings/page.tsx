@@ -185,41 +185,61 @@ const Page = () => {
         localStorage.getItem('chatModelProvider') ||
         defaultChatModelProvider ||
         '';
-      
+
       let defaultChatModelName = '';
-      if (data.defaultChatModel && data.chatModelProviders && data.chatModelProviders[chatModelProvider]) {
-        const modelExists = data.chatModelProviders[chatModelProvider].some((model: any) => model.name === data.defaultChatModel);
+      if (
+        data.defaultChatModel &&
+        data.chatModelProviders &&
+        data.chatModelProviders[chatModelProvider]
+      ) {
+        const modelExists = data.chatModelProviders[chatModelProvider].some(
+          (model: any) => model.name === data.defaultChatModel,
+        );
         if (modelExists) {
           defaultChatModelName = data.defaultChatModel;
         }
       }
-      
-      if (!defaultChatModelName && data.chatModelProviders && data.chatModelProviders[chatModelProvider]?.length > 0) {
-        defaultChatModelName = data.chatModelProviders[chatModelProvider][0].name;
+
+      if (
+        !defaultChatModelName &&
+        data.chatModelProviders &&
+        data.chatModelProviders[chatModelProvider]?.length > 0
+      ) {
+        defaultChatModelName =
+          data.chatModelProviders[chatModelProvider][0].name;
       }
-      
+
       const chatModel =
-        localStorage.getItem('chatModel') ||
-        defaultChatModelName ||
-        '';
-        
+        localStorage.getItem('chatModel') || defaultChatModelName || '';
+
       const embeddingModelProvider =
         localStorage.getItem('embeddingModelProvider') ||
         defaultEmbeddingModelProvider ||
         '';
-        
+
       let defaultEmbeddingModelName = '';
-      if (data.defaultEmbeddingModel && data.embeddingModelProviders && data.embeddingModelProviders[embeddingModelProvider]) {
-        const modelExists = data.embeddingModelProviders[embeddingModelProvider].some((model: any) => model.name === data.defaultEmbeddingModel);
+      if (
+        data.defaultEmbeddingModel &&
+        data.embeddingModelProviders &&
+        data.embeddingModelProviders[embeddingModelProvider]
+      ) {
+        const modelExists = data.embeddingModelProviders[
+          embeddingModelProvider
+        ].some((model: any) => model.name === data.defaultEmbeddingModel);
         if (modelExists) {
           defaultEmbeddingModelName = data.defaultEmbeddingModel;
         }
       }
-      
-      if (!defaultEmbeddingModelName && data.embeddingModelProviders && data.embeddingModelProviders[embeddingModelProvider]?.[0].name) {
-        defaultEmbeddingModelName = data.embeddingModelProviders[embeddingModelProvider][0].name;
+
+      if (
+        !defaultEmbeddingModelName &&
+        data.embeddingModelProviders &&
+        data.embeddingModelProviders[embeddingModelProvider]?.[0].name
+      ) {
+        defaultEmbeddingModelName =
+          data.embeddingModelProviders[embeddingModelProvider][0].name;
       }
-      
+
       const embeddingModel =
         localStorage.getItem('embeddingModel') ||
         defaultEmbeddingModelName ||

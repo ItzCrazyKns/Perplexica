@@ -95,9 +95,11 @@ export const getOllamaApiEndpoint = () => loadConfig().MODELS.OLLAMA.API_URL;
 
 export const getOllamaApiKey = () => loadConfig().MODELS.OLLAMA.API_KEY;
 
-export const getDefaultChatModel = () => loadConfig().GENERAL.DEFAULT_CHAT_MODEL;
+export const getDefaultChatModel = () =>
+  loadConfig().GENERAL.DEFAULT_CHAT_MODEL;
 
-export const getDefaultEmbeddingModel = () => loadConfig().GENERAL.DEFAULT_EMBEDDING_MODEL;
+export const getDefaultEmbeddingModel = () =>
+  loadConfig().GENERAL.DEFAULT_EMBEDDING_MODEL;
 
 export const getDeepseekApiKey = () => loadConfig().MODELS.DEEPSEEK.API_KEY;
 
