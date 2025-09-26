@@ -879,11 +879,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
       }
 
       sendMessage(initialMessage);
-
-      // Remove the query parameter from the URL to prevent re-execution on page reload
-      const url = new URL(window.location.href);
-      url.searchParams.delete('q');
-      router.replace(url.pathname + url.search, { scroll: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfigReady, isReady, initialMessage]);
