@@ -11,7 +11,6 @@ import axios from 'axios';
 import { JSDOM } from 'jsdom';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import pdfParse from 'pdf-parse';
-import type { Browser, Page } from 'playwright';
 
 export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
   const splitter = new RecursiveCharacterTextSplitter();
@@ -164,25 +163,24 @@ export const getWebContent = async (
     const loader = new PlaywrightWebBaseLoader(url, {
       launchOptions: {
         headless: true,
-        timeout: 30000,
         chromiumSandbox: true,
       },
       gotoOptions: {
-        waitUntil: 'domcontentloaded',
+        waitUntil: 'networkidle',
         timeout: 10000,
       },
-      async evaluate(page: Page, browser: Browser) {
-        // Wait for the content to load properly
-        await page.waitForLoadState('networkidle', { timeout: 10000 });
+      // async evaluate(page: Page, browser: Browser) {
+      //   // Wait for the content to load properly
+      //   await page.waitForLoadState('networkidle', { timeout: 10000 });
 
-        // Allow some time for dynamic content to load
-        await page.waitForTimeout(3000);
+      //   // Allow some time for dynamic content to load
+      //   await page.waitForTimeout(3000);
 
-        const content = await page.content();
-        browser.close();
+      //   const content = await page.content();
+      //   browser.close();
 
-        return content;
-      },
+      //   return content;
+      // },
     });
 
     // Best-effort: Playwright loader doesn't expose signal; emulate via early return hooks
