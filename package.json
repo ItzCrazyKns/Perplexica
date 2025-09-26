@@ -5,13 +5,13 @@
   "author": "ItzCrazyKns",
   "scripts": {
     "dev": "next dev",
-    "build": "npm run db:push && next build",
+    "build": "npm run db:migrate && next build",
     "memory:reset": "tsx src/scripts/resetMemory.ts",
     "memory:export": "tsx src/scripts/exportMemory.ts",
     "start": "next start",
     "lint": "next lint",
     "format:write": "prettier . --write",
-    "db:push": "drizzle-kit push"
+    "db:migrate": "node ./src/lib/db/migrate.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",

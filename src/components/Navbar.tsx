@@ -10,7 +10,7 @@ import {
   Transition,
 } from '@headlessui/react';
 import jsPDF from 'jspdf';
-import { useChat } from '@/lib/hooks/useChat';
+import { useChat, Section } from '@/lib/hooks/useChat';
 
 const downloadFile = (filename: string, content: string, type: string) => {
   const blob = new Blob([content], { type });
@@ -26,19 +26,37 @@ const downloadFile = (filename: string, content: string, type: string) => {
   }, 0);
 };
 
-const exportAsMarkdown = (messages: Message[], title: string) => {
-  const date = new Date(messages[0]?.createdAt || Date.now()).toLocaleString();
+const exportAsMarkdown = (sections: Section[], title: string) => {
+  const date = new Date(
+    sections[0]?.userMessage?.createdAt || Date.now(),
+  ).toLocaleString();
   let md = `# 💬 Chat Export: ${title}\n\n`;
   md += `*Exported on: ${date}*\n\n---\n`;
-  messages.forEach((msg, idx) => {
-    md += `\n---\n`;
-    md += `**${msg.role === 'user' ? '🧑 User' : '🤖 Assistant'}**  
+
+  sections.forEach((section, idx) => {
+    if (section.userMessage) {
+      md += `\n---\n`;
+      md += `**🧑 User**  
 `;
-    md += `*${new Date(msg.createdAt).toLocaleString()}*\n\n`;
-    md += `> ${msg.content.replace(/\n/g, '\n> ')}\n`;
-    if (msg.sources && msg.sources.length > 0) {
+      md += `*${new Date(section.userMessage.createdAt).toLocaleString()}*\n\n`;
+      md += `> ${section.userMessage.content.replace(/\n/g, '\n> ')}\n`;
+    }
+
+    if (section.assistantMessage) {
+      md += `\n---\n`;
+      md += `**🤖 Assistant**  
+`;
+      md += `*${new Date(section.assistantMessage.createdAt).toLocaleString()}*\n\n`;
+      md += `> ${section.assistantMessage.content.replace(/\n/g, '\n> ')}\n`;
+    }
+
+    if (
+      section.sourceMessage &&
+      section.sourceMessage.sources &&
+      section.sourceMessage.sources.length > 0
+    ) {
       md += `\n**Citations:**\n`;
-      msg.sources.forEach((src: any, i: number) => {
+      section.sourceMessage.sources.forEach((src: any, i: number) => {
         const url = src.metadata?.url || '';
         md += `- [${i + 1}] [${url}](${url})\n`;
       });
@@ -48,9 +66,11 @@ const exportAsMarkdown = (messages: Message[], title: string) => {
   downloadFile(`${title || 'chat'}.md`, md, 'text/markdown');
 };
 
-const exportAsPDF = (messages: Message[], title: string) => {
+const exportAsPDF = (sections: Section[], title: string) => {
   const doc = new jsPDF();
-  const date = new Date(messages[0]?.createdAt || Date.now()).toLocaleString();
+  const date = new Date(
+    sections[0]?.userMessage?.createdAt || Date.now(),
+  ).toLocaleString();
   let y = 15;
   const pageHeight = doc.internal.pageSize.height;
   doc.setFontSize(18);
@@ -64,57 +84,109 @@ const exportAsPDF = (messages: Message[], title: string) => {
   doc.line(10, y, 200, y);
   y += 6;
   doc.setTextColor(30);
-  messages.forEach((msg, idx) => {
-    if (y > pageHeight - 30) {
-      doc.addPage();
-      y = 15;
-    }
-    doc.setFont('helvetica', 'bold');
-    doc.text(`${msg.role === 'user' ? 'User' : 'Assistant'}`, 10, y);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(120);
-    doc.text(`${new Date(msg.createdAt).toLocaleString()}`, 40, y);
-    y += 6;
-    doc.setTextColor(30);
-    doc.setFontSize(12);
-    const lines = doc.splitTextToSize(msg.content, 180);
-    for (let i = 0; i < lines.length; i++) {
-      if (y > pageHeight - 20) {
+
+  sections.forEach((section, idx) => {
+    if (section.userMessage) {
+      if (y > pageHeight - 30) {
         doc.addPage();
         y = 15;
       }
-      doc.text(lines[i], 12, y);
+      doc.setFont('helvetica', 'bold');
+      doc.text('User', 10, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(120);
+      doc.text(
+        `${new Date(section.userMessage.createdAt).toLocaleString()}`,
+        40,
+        y,
+      );
       y += 6;
-    }
-    if (msg.sources && msg.sources.length > 0) {
-      doc.setFontSize(11);
-      doc.setTextColor(80);
-      if (y > pageHeight - 20) {
-        doc.addPage();
-        y = 15;
-      }
-      doc.text('Citations:', 12, y);
-      y += 5;
-      msg.sources.forEach((src: any, i: number) => {
-        const url = src.metadata?.url || '';
-        if (y > pageHeight - 15) {
+      doc.setTextColor(30);
+      doc.setFontSize(12);
+      const userLines = doc.splitTextToSize(section.userMessage.content, 180);
+      for (let i = 0; i < userLines.length; i++) {
+        if (y > pageHeight - 20) {
           doc.addPage();
           y = 15;
         }
-        doc.text(`- [${i + 1}] ${url}`, 15, y);
-        y += 5;
-      });
+        doc.text(userLines[i], 12, y);
+        y += 6;
+      }
+      y += 6;
+      doc.setDrawColor(230);
+      if (y > pageHeight - 10) {
+        doc.addPage();
+        y = 15;
+      }
+      doc.line(10, y, 200, y);
+      y += 4;
+    }
+
+    if (section.assistantMessage) {
+      if (y > pageHeight - 30) {
+        doc.addPage();
+        y = 15;
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.text('Assistant', 10, y);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(120);
+      doc.text(
+        `${new Date(section.assistantMessage.createdAt).toLocaleString()}`,
+        40,
+        y,
+      );
+      y += 6;
       doc.setTextColor(30);
+      doc.setFontSize(12);
+      const assistantLines = doc.splitTextToSize(
+        section.assistantMessage.content,
+        180,
+      );
+      for (let i = 0; i < assistantLines.length; i++) {
+        if (y > pageHeight - 20) {
+          doc.addPage();
+          y = 15;
+        }
+        doc.text(assistantLines[i], 12, y);
+        y += 6;
+      }
+
+      if (
+        section.sourceMessage &&
+        section.sourceMessage.sources &&
+        section.sourceMessage.sources.length > 0
+      ) {
+        doc.setFontSize(11);
+        doc.setTextColor(80);
+        if (y > pageHeight - 20) {
+          doc.addPage();
+          y = 15;
+        }
+        doc.text('Citations:', 12, y);
+        y += 5;
+        section.sourceMessage.sources.forEach((src: any, i: number) => {
+          const url = src.metadata?.url || '';
+          if (y > pageHeight - 15) {
+            doc.addPage();
+            y = 15;
+          }
+          doc.text(`- [${i + 1}] ${url}`, 15, y);
+          y += 5;
+        });
+        doc.setTextColor(30);
+      }
+      y += 6;
+      doc.setDrawColor(230);
+      if (y > pageHeight - 10) {
+        doc.addPage();
+        y = 15;
+      }
+      doc.line(10, y, 200, y);
+      y += 4;
     }
-    y += 6;
-    doc.setDrawColor(230);
-    if (y > pageHeight - 10) {
-      doc.addPage();
-      y = 15;
-    }
-    doc.line(10, y, 200, y);
-    y += 4;
   });
   doc.save(`${title || 'chat'}.pdf`);
 };
@@ -123,29 +195,29 @@ const Navbar = () => {
   const [title, setTitle] = useState<string>('');
   const [timeAgo, setTimeAgo] = useState<string>('');
 
-  const { messages, chatId } = useChat();
+  const { sections, chatId } = useChat();
 
   useEffect(() => {
-    if (messages.length > 0) {
+    if (sections.length > 0 && sections[0].userMessage) {
       const newTitle =
-        messages[0].content.length > 20
-          ? `${messages[0].content.substring(0, 20).trim()}...`
-          : messages[0].content;
+        sections[0].userMessage.content.length > 20
+          ? `${sections[0].userMessage.content.substring(0, 20).trim()}...`
+          : sections[0].userMessage.content;
       setTitle(newTitle);
       const newTimeAgo = formatTimeDifference(
         new Date(),
-        messages[0].createdAt,
+        sections[0].userMessage.createdAt,
       );
       setTimeAgo(newTimeAgo);
     }
-  }, [messages]);
+  }, [sections]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
-      if (messages.length > 0) {
+      if (sections.length > 0 && sections[0].userMessage) {
         const newTimeAgo = formatTimeDifference(
           new Date(),
-          messages[0].createdAt,
+          sections[0].userMessage.createdAt,
         );
         setTimeAgo(newTimeAgo);
       }
@@ -156,54 +228,91 @@ const Navbar = () => {
   }, []);
 
   return (
-    <div className="fixed z-40 top-0 left-0 right-0 px-4 lg:pl-[104px] lg:pr-6 lg:px-8 flex flex-row items-center justify-between w-full py-4 text-sm text-black dark:text-white/70 border-b bg-light-primary dark:bg-dark-primary border-light-100 dark:border-dark-200">
-      <a
-        href="/"
-        className="active:scale-95 transition duration-100 cursor-pointer lg:hidden"
-      >
-        <Edit size={17} />
-      </a>
-      <div className="hidden lg:flex flex-row items-center justify-center space-x-2">
-        <Clock size={17} />
-        <p className="text-xs">{timeAgo} ago</p>
-      </div>
-      <p className="hidden lg:flex">{title}</p>
+    <div className="sticky -mx-4 lg:mx-0 top-0 z-40 bg-light-primary/95 dark:bg-dark-primary/95 backdrop-blur-sm border-b border-light-200/50 dark:border-dark-200/30">
+      <div className="px-4 lg:px-6 py-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center min-w-0">
+            <a
+              href="/"
+              className="lg:hidden mr-3 p-2 -ml-2 rounded-lg hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200"
+            >
+              <Edit size={18} className="text-black/70 dark:text-white/70" />
+            </a>
+            <div className="hidden lg:flex items-center gap-2 text-black/50 dark:text-white/50 min-w-0">
+              <Clock size={14} />
+              <span className="text-xs whitespace-nowrap">{timeAgo} ago</span>
+            </div>
+          </div>
 
-      <div className="flex flex-row items-center space-x-4">
-        <Popover className="relative">
-          <PopoverButton className="active:scale-95 transition duration-100 cursor-pointer p-2 rounded-full hover:bg-light-secondary dark:hover:bg-dark-secondary">
-            <Share size={17} />
-          </PopoverButton>
-          <Transition
-            as={Fragment}
-            enter="transition ease-out duration-100"
-            enterFrom="opacity-0 translate-y-1"
-            enterTo="opacity-100 translate-y-0"
-            leave="transition ease-in duration-75"
-            leaveFrom="opacity-100 translate-y-0"
-            leaveTo="opacity-0 translate-y-1"
-          >
-            <PopoverPanel className="absolute right-0 mt-2 w-64 rounded-xl shadow-xl bg-light-primary dark:bg-dark-primary border border-light-200 dark:border-dark-200 z-50">
-              <div className="flex flex-col py-3 px-3 gap-2">
-                <button
-                  className="flex items-center gap-2 px-4 py-2 text-left hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors text-black dark:text-white rounded-lg font-medium"
-                  onClick={() => exportAsMarkdown(messages, title || '')}
-                >
-                  <FileText size={17} className="text-[#24A0ED]" />
-                  Export as Markdown
-                </button>
-                <button
-                  className="flex items-center gap-2 px-4 py-2 text-left hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors text-black dark:text-white rounded-lg font-medium"
-                  onClick={() => exportAsPDF(messages, title || '')}
-                >
-                  <FileDown size={17} className="text-[#24A0ED]" />
-                  Export as PDF
-                </button>
-              </div>
-            </PopoverPanel>
-          </Transition>
-        </Popover>
-        <DeleteChat redirect chatId={chatId!} chats={[]} setChats={() => {}} />
+          <div className="flex-1 mx-4 min-w-0">
+            <h1 className="text-center text-sm font-medium text-black/80 dark:text-white/90 truncate">
+              {title || 'New Conversation'}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-1 min-w-0">
+            <Popover className="relative">
+              <PopoverButton className="p-2 rounded-lg hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200">
+                <Share size={16} className="text-black/60 dark:text-white/60" />
+              </PopoverButton>
+              <Transition
+                as={Fragment}
+                enter="transition ease-out duration-200"
+                enterFrom="opacity-0 translate-y-1"
+                enterTo="opacity-100 translate-y-0"
+                leave="transition ease-in duration-150"
+                leaveFrom="opacity-100 translate-y-0"
+                leaveTo="opacity-0 translate-y-1"
+              >
+                <PopoverPanel className="absolute right-0 mt-2 w-64 origin-top-right rounded-2xl bg-light-primary dark:bg-dark-primary border border-light-200 dark:border-dark-200 shadow-xl shadow-black/10 dark:shadow-black/30 z-50">
+                  <div className="p-3">
+                    <div className="mb-2">
+                      <p className="text-xs font-medium text-black/40 dark:text-white/40 uppercase tracking-wide">
+                        Export Chat
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <button
+                        className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200"
+                        onClick={() => exportAsMarkdown(sections, title || '')}
+                      >
+                        <FileText size={16} className="text-[#24A0ED]" />
+                        <div>
+                          <p className="text-sm font-medium text-black dark:text-white">
+                            Markdown
+                          </p>
+                          <p className="text-xs text-black/50 dark:text-white/50">
+                            .md format
+                          </p>
+                        </div>
+                      </button>
+                      <button
+                        className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200"
+                        onClick={() => exportAsPDF(sections, title || '')}
+                      >
+                        <FileDown size={16} className="text-[#24A0ED]" />
+                        <div>
+                          <p className="text-sm font-medium text-black dark:text-white">
+                            PDF
+                          </p>
+                          <p className="text-xs text-black/50 dark:text-white/50">
+                            Document format
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </PopoverPanel>
+              </Transition>
+            </Popover>
+            <DeleteChat
+              redirect
+              chatId={chatId!}
+              chats={[]}
+              setChats={() => {}}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -56,7 +56,6 @@ const handleEmitterEvents = async (
   stream: EventEmitter,
   writer: WritableStreamDefaultWriter,
   encoder: TextEncoder,
-  aiMessageId: string,
   chatId: string,
   userId?: string,
   sessionId?: string,
@@ -65,6 +64,7 @@ const handleEmitterEvents = async (
 ) => {
   let recievedMessage = '';
   let sources: any[] = [];
+  const aiMessageId = crypto.randomBytes(7).toString('hex');
 
   stream.on('data', (data) => {
     const parsedData = JSON.parse(data);
@@ -81,6 +81,7 @@ const handleEmitterEvents = async (
 
       recievedMessage += parsedData.data;
     } else if (parsedData.type === 'sources') {
+      sources = parsedData.data;
       writer.write(
         encoder.encode(
           JSON.stringify({
@@ -91,7 +92,17 @@ const handleEmitterEvents = async (
         ),
       );
 
-      sources = parsedData.data;
+      const sourceMessageId = crypto.randomBytes(7).toString('hex');
+
+      db.insert(messagesSchema)
+        .values({
+          chatId: chatId,
+          messageId: sourceMessageId,
+          role: 'source',
+          sources: parsedData.data,
+          createdAt: new Date().toString(),
+        })
+        .execute();
     }
   });
   stream.on('end', async () => {
@@ -99,7 +110,6 @@ const handleEmitterEvents = async (
       encoder.encode(
         JSON.stringify({
           type: 'messageEnd',
-          messageId: aiMessageId,
         }) + '\n',
       ),
     );
@@ -112,10 +122,7 @@ const handleEmitterEvents = async (
         chatId: chatId,
         messageId: aiMessageId,
         role: 'assistant',
-        metadata: JSON.stringify({
-          createdAt: new Date(),
-          ...(sources && sources.length > 0 && { sources }),
-        }),
+        createdAt: new Date().toString(),
       })
       .execute();
 
@@ -211,9 +218,7 @@ const handleHistorySave = async (
         chatId: message.chatId,
         messageId: humanMessageId,
         role: 'user',
-        metadata: JSON.stringify({
-          createdAt: new Date(),
-        }),
+        createdAt: new Date().toString(),
       })
       .execute();
   } else {
@@ -322,7 +327,6 @@ export const POST = async (req: Request) => {
 
     const humanMessageId =
       message.messageId ?? crypto.randomBytes(7).toString('hex');
-    const aiMessageId = crypto.randomBytes(7).toString('hex');
 
     const history: BaseMessage[] = body.history.map((msg) => {
       if (msg[0] === 'human') {
@@ -373,7 +377,6 @@ export const POST = async (req: Request) => {
       stream,
       writer,
       encoder,
-      aiMessageId,
       message.chatId,
       userId,
       sessionId,
