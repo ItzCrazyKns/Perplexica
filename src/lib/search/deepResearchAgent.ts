@@ -9,7 +9,6 @@ import {
   writeManifest,
 } from '@/lib/utils/deepResearchFS';
 import { getModelName } from '@/lib/utils/modelUtils';
-import { Embeddings } from '@langchain/core/embeddings';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import {
   BaseMessage,
@@ -22,33 +21,32 @@ import { formatDateForLLM } from '../utils';
 // import { RunnableConfig } from '@langchain/core/runnables';
 import { synthesizerPrompt } from '@/lib/prompts/synthesizer';
 import { formattingAndCitationsScholarly } from '@/lib/prompts/templates';
+import { Phase } from '@/lib/types/deepResearchPhase';
+import { isSoftStop } from '@/lib/utils/runControl';
+import { withStructuredOutput } from '@/lib/utils/structuredOutput';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
+import { TokenTextSplitter } from '@langchain/textsplitters';
+import pLimit from 'p-limit';
+import z from 'zod';
 import { searchSearxng } from '../searxng';
+import { CachedEmbeddings } from '../utils/cachedEmbeddings';
+import computeSimilarity from '../utils/computeSimilarity';
+import { getWebContent } from '../utils/documents';
 import {
-  extractWebFactsAndQuotes,
   ExtractFactsOutput,
   extractContentFactsAndQuotes,
+  extractWebFactsAndQuotes,
 } from '../utils/extractWebFacts';
-import { withStructuredOutput } from '@/lib/utils/structuredOutput';
-import z from 'zod';
-import { Subquery } from 'drizzle-orm';
-import pLimit from 'p-limit';
-import { isSoftStop } from '@/lib/utils/runControl';
-import { Phase } from '@/lib/types/deepResearchPhase';
-import { getWebContent } from '../utils/documents';
-import computeSimilarity from '../utils/computeSimilarity';
-import { CachedEmbeddings } from '../utils/cachedEmbeddings';
-import { TokenTextSplitter } from '@langchain/textsplitters';
 
 /**
  * DeepResearchAgent — phased orchestrator with budgets, cancellation, and progress streaming.
  * Tools and persistence are stubbed for now; real tool calls and FS writes land in later tasks.
  */
 export class DeepResearchAgent {
-  // Budgets: 15 minutes wall clock, 100 LLM turns (soft stop at ~85%)
-  private static readonly WALL_CLOCK_LIMIT_MS = 15 * 60 * 1000; // 15 minutes
-  private static readonly LLM_TURNS_HARD_LIMIT = 100;
+  // Budgets: 30 minutes wall clock, 200 LLM turns (soft stop at ~85%)
+  private static readonly WALL_CLOCK_LIMIT_MS = 30 * 60 * 1000; // 30 minutes
+  private static readonly LLM_TURNS_HARD_LIMIT = 200;
   private static readonly LLM_TURNS_SOFT_LIMIT = Math.floor(
     DeepResearchAgent.LLM_TURNS_HARD_LIMIT * 0.85,
   );
@@ -319,6 +317,7 @@ export class DeepResearchAgent {
         'Respond-now triggered — moving to answer',
         this.phasePercent(),
       );
+      console.log('DeepResearchAgent: Respond-now triggered; moving to synthesis');
       this.earlySynthesisTriggered = true;
       return true;
     }
@@ -330,6 +329,7 @@ export class DeepResearchAgent {
         'Soft budget reached — moving to answer early',
         this.phasePercent(),
       );
+      console.log('DeepResearchAgent: soft LLM-turn limit reached; moving to synthesis');
       return true;
     }
     return false;
@@ -347,6 +347,7 @@ export class DeepResearchAgent {
         'Wall-clock limit reached',
         this.phasePercent(),
       );
+      console.log(`Aborted due to wall-clock limit: ${DeepResearchAgent.WALL_CLOCK_LIMIT_MS}ms`);
       this.earlySynthesisTriggered = true; // force moving on
       return true;
     }
