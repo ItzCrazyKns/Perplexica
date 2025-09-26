@@ -55,6 +55,33 @@ interface Config {
   API_ENDPOINTS: {
     SEARXNG: string;
   };
+  MEMORY: {
+    ENABLED: boolean;
+    PROVIDER: string;
+    CLOUD: {
+      API_KEY: string;
+      ORGANIZATION_NAME: string;
+      PROJECT_NAME: string;
+      ORGANIZATION_ID: string;
+      PROJECT_ID: string;
+    };
+    SELF_HOSTED: {
+      EMBEDDER_PROVIDER: string;
+      EMBEDDER_MODEL: string;
+      EMBEDDER_API_KEY: string;
+      VECTOR_STORE_PROVIDER: string;
+      VECTOR_STORE_URL: string;
+      VECTOR_STORE_API_KEY: string;
+      LLM_PROVIDER: string;
+      LLM_MODEL: string;
+      LLM_API_KEY: string;
+    };
+    STORAGE: {
+      RETENTION_DAYS: number;
+      MAX_MEMORIES_PER_USER: number;
+      AUTO_CLEANUP: boolean;
+    };
+  };
 }
 
 type RecursivePartial<T> = {
@@ -113,6 +140,55 @@ export const getLemonadeApiEndpoint = () =>
   loadConfig().MODELS.LEMONADE.API_URL;
 
 export const getLemonadeApiKey = () => loadConfig().MODELS.LEMONADE.API_KEY;
+
+// Memory configuration getters
+export const getMemoryEnabled = () => {
+  try {
+    return loadConfig().MEMORY?.ENABLED ?? false;
+  } catch (error) {
+    return false;
+  }
+};
+
+export const getMemoryProvider = () => {
+  try {
+    return loadConfig().MEMORY?.PROVIDER ?? 'cloud';
+  } catch (error) {
+    return 'cloud';
+  }
+};
+
+export const getMemoryCloudConfig = () => {
+  try {
+    return loadConfig().MEMORY?.CLOUD ?? {};
+  } catch (error) {
+    return {};
+  }
+};
+
+export const getMemorySelfHostedConfig = () => {
+  try {
+    return loadConfig().MEMORY?.SELF_HOSTED ?? {};
+  } catch (error) {
+    return {};
+  }
+};
+
+export const getMemoryStorageConfig = () => {
+  try {
+    return loadConfig().MEMORY?.STORAGE ?? {
+      RETENTION_DAYS: 365,
+      MAX_MEMORIES_PER_USER: 10000,
+      AUTO_CLEANUP: true,
+    };
+  } catch (error) {
+    return {
+      RETENTION_DAYS: 365,
+      MAX_MEMORIES_PER_USER: 10000,
+      AUTO_CLEANUP: true,
+    };
+  }
+};
 
 const mergeConfigs = (current: any, update: any): any => {
   if (update === null || update === undefined) {

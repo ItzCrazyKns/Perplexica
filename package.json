@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "npm run db:push && next build",
+    "memory:reset": "tsx src/scripts/resetMemory.ts",
+    "memory:export": "tsx src/scripts/exportMemory.ts",
     "start": "next start",
     "lint": "next lint",
     "format:write": "prettier . --write",
@@ -48,7 +50,8 @@
     "tailwind-merge": "^2.2.2",
     "winston": "^3.17.0",
     "yet-another-react-lightbox": "^3.17.2",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "mem0ai": "^2.1.37"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
