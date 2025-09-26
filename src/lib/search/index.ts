@@ -1,7 +1,9 @@
 import MetaSearchAgent from '@/lib/search/metaSearchAgent';
 import prompts from '../prompts';
+import { createMemoryEnhancedHandler } from '../memory/memoryEnhancedSearch';
 
-export const searchHandlers: Record<string, MetaSearchAgent> = {
+// Original search handlers
+const originalHandlers: Record<string, MetaSearchAgent> = {
   webSearch: new MetaSearchAgent({
     activeEngines: [],
     queryGeneratorPrompt: prompts.webSearchRetrieverPrompt,
@@ -57,3 +59,11 @@ export const searchHandlers: Record<string, MetaSearchAgent> = {
     searchWeb: true,
   }),
 };
+
+// Memory-enhanced search handlers
+export const searchHandlers: Record<string, any> = {};
+
+// Wrap each handler with memory enhancement
+Object.entries(originalHandlers).forEach(([key, handler]) => {
+  searchHandlers[key] = createMemoryEnhancedHandler(handler, key);
+});

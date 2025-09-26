@@ -17,6 +17,8 @@ import {
   getCustomOpenaiModelName,
 } from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
+import memoryService from '@/lib/memory';
+import { extractConversationContext, isMemoryWorthy, generateUserId, buildMemoryPrompt } from '@/lib/memory/utils';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,6 +48,8 @@ type Body = {
   chatModel: ChatModel;
   embeddingModel: EmbeddingModel;
   systemInstructions: string;
+  userId?: string; // Optional user identifier for memory
+  sessionId?: string; // Optional session identifier
 };
 
 const handleEmitterEvents = async (
@@ -53,8 +57,13 @@ const handleEmitterEvents = async (
   writer: WritableStreamDefaultWriter,
   encoder: TextEncoder,
   chatId: string,
+  userId?: string,
+  sessionId?: string,
+  userMessage?: string,
+  focusMode?: string,
 ) => {
   let recievedMessage = '';
+  let sources: any[] = [];
   const aiMessageId = crypto.randomBytes(7).toString('hex');
 
   stream.on('data', (data) => {
@@ -72,6 +81,7 @@ const handleEmitterEvents = async (
 
       recievedMessage += parsedData.data;
     } else if (parsedData.type === 'sources') {
+      sources = parsedData.data;
       writer.write(
         encoder.encode(
           JSON.stringify({
@@ -95,7 +105,7 @@ const handleEmitterEvents = async (
         .execute();
     }
   });
-  stream.on('end', () => {
+  stream.on('end', async () => {
     writer.write(
       encoder.encode(
         JSON.stringify({
@@ -105,7 +115,8 @@ const handleEmitterEvents = async (
     );
     writer.close();
 
-    db.insert(messagesSchema)
+    // Save message to database
+    await db.insert(messagesSchema)
       .values({
         content: recievedMessage,
         chatId: chatId,
@@ -114,6 +125,41 @@ const handleEmitterEvents = async (
         createdAt: new Date().toString(),
       })
       .execute();
+
+    // Add conversation to memory if enabled and user is identified
+    if (memoryService.isEnabled() && userId && userMessage) {
+      try {
+        const conversationContext = extractConversationContext(
+          [
+            { role: 'user', content: userMessage },
+            { role: 'assistant', content: recievedMessage }
+          ],
+          userId,
+          chatId,
+          sessionId,
+          focusMode
+        );
+
+        await memoryService.addConversationContext(conversationContext);
+
+        // Also add user message separately if it's worth remembering
+        if (isMemoryWorthy(userMessage)) {
+          await memoryService.addMemory(userMessage, {
+            userId,
+            memoryType: 'chat',
+            chatId,
+            sessionId,
+            metadata: {
+              focusMode,
+              hasAssistantResponse: true,
+              sources: sources.length > 0 ? sources : undefined,
+            },
+          });
+        }
+      } catch (error) {
+        console.error('Failed to store conversation in memory:', error);
+      }
+    }
   });
   stream.on('error', (data) => {
     const parsedData = JSON.parse(data);
@@ -202,6 +248,33 @@ export const POST = async (req: Request) => {
       );
     }
 
+    // Generate user ID if not provided
+    const userId = body.userId || generateUserId(message.chatId);
+    const sessionId = body.sessionId || `session_${message.chatId}`;
+
+    // Get memory context if memory is enabled
+    let memoryEnhancedMessage = message.content;
+    if (memoryService.isEnabled() && userId) {
+      try {
+        const memoryContext = await memoryService.getMemoryContext(
+          message.content,
+          userId,
+          message.chatId,
+          sessionId
+        );
+
+        if (memoryContext.relevantMemories.length > 0) {
+          memoryEnhancedMessage = buildMemoryPrompt(
+            message.content,
+            memoryContext.relevantMemories
+          );
+        }
+      } catch (error) {
+        console.error('Failed to get memory context:', error);
+        // Continue without memory enhancement
+      }
+    }
+
     const [chatModelProviders, embeddingModelProviders] = await Promise.all([
       getAvailableChatModelProviders(),
       getAvailableEmbeddingModelProviders(),
@@ -279,20 +352,37 @@ export const POST = async (req: Request) => {
     }
 
     const stream = await handler.searchAndAnswer(
-      message.content,
+      memoryEnhancedMessage,
       history,
       llm,
       embedding,
       body.optimizationMode,
       body.files,
       body.systemInstructions,
+      {
+        userId,
+        sessionId,
+        focusMode: body.focusMode,
+        includeUserMemories: true,
+        includeSessionMemories: true,
+        memoryLimit: 5,
+      }
     );
 
     const responseStream = new TransformStream();
     const writer = responseStream.writable.getWriter();
     const encoder = new TextEncoder();
 
-    handleEmitterEvents(stream, writer, encoder, message.chatId);
+    handleEmitterEvents(
+      stream,
+      writer,
+      encoder,
+      message.chatId,
+      userId,
+      sessionId,
+      message.content,
+      body.focusMode
+    );
     handleHistorySave(message, humanMessageId, body.focusMode, body.files);
 
     return new Response(responseStream.readable, {
