@@ -175,31 +175,15 @@ export const getWebContent = async (
 
     // Set a timeout for navigation and content loading
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 10000 });
-    // Wait an additional 3 seconds for no more network traffic
-    await page.waitForLoadState('networkidle', { timeout: 3000 });
 
-    // const loader = new PlaywrightWebBaseLoader(url, {
-    //   launchOptions: {
-    //     headless: true,
-    //     chromiumSandbox: true,
-    //   },
-    //   gotoOptions: {
-    //     waitUntil: 'networkidle',
-    //     timeout: 10000,
-    //   },
-    //   // async evaluate(page: Page, browser: Browser) {
-    //   //   // Wait for the content to load properly
-    //   //   await page.waitForLoadState('networkidle', { timeout: 10000 });
-
-    //   //   // Allow some time for dynamic content to load
-    //   //   await page.waitForTimeout(3000);
-
-    //   //   const content = await page.content();
-    //   //   browser.close();
-
-    //   //   return content;
-    //   // },
-    // });
+    try {
+      // Wait an additional 3 seconds for no more network traffic
+      await page.waitForLoadState('networkidle', { timeout: 3000 });
+    } catch (e) {
+      // Ignore timeout errors from waitForLoadState. This is just a best-effort wait.
+      // We'll still attempt to get the content even if network isn't fully idle.
+      console.warn(`Timeout waiting for networkidle on URL: ${url}`);
+    }
 
     // Best-effort: Playwright loader doesn't expose signal; emulate via early return hooks
     if (signal?.aborted) return null;
