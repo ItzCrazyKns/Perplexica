@@ -11,6 +11,7 @@ import axios from 'axios';
 import { JSDOM } from 'jsdom';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import pdfParse from 'pdf-parse';
+import { chromium, Page, Browser, BrowserContext } from 'playwright';
 
 export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
   const splitter = new RecursiveCharacterTextSplitter();
@@ -136,6 +137,10 @@ export const getWebContent = async (
   signal?: AbortSignal,
   performAggressiveValidation: boolean = false,
 ): Promise<Document | null> => {
+  let browser: Browser | null = null;
+  let context: BrowserContext | null = null;
+  let page: Page | null = null;
+
   try {
     if (signal?.aborted) {
       console.warn(`getWebContent aborted before start for URL: ${url}`);
@@ -160,41 +165,48 @@ export const getWebContent = async (
 
     console.log(`Fetching content from URL: ${url}`);
 
-    const loader = new PlaywrightWebBaseLoader(url, {
-      launchOptions: {
-        headless: true,
-        chromiumSandbox: true,
-      },
-      gotoOptions: {
-        waitUntil: 'networkidle',
-        timeout: 10000,
-      },
-      // async evaluate(page: Page, browser: Browser) {
-      //   // Wait for the content to load properly
-      //   await page.waitForLoadState('networkidle', { timeout: 10000 });
-
-      //   // Allow some time for dynamic content to load
-      //   await page.waitForTimeout(3000);
-
-      //   const content = await page.content();
-      //   browser.close();
-
-      //   return content;
-      // },
+    browser = await chromium.launch({
+      headless: true,
+      chromiumSandbox: true,
     });
+
+    context = await browser.newContext();
+    page = await context.newPage();
+
+    // Set a timeout for navigation and content loading
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 10000 });
+    // Wait an additional 3 seconds for no more network traffic
+    await page.waitForLoadState('networkidle', { timeout: 3000 });
+
+    // const loader = new PlaywrightWebBaseLoader(url, {
+    //   launchOptions: {
+    //     headless: true,
+    //     chromiumSandbox: true,
+    //   },
+    //   gotoOptions: {
+    //     waitUntil: 'networkidle',
+    //     timeout: 10000,
+    //   },
+    //   // async evaluate(page: Page, browser: Browser) {
+    //   //   // Wait for the content to load properly
+    //   //   await page.waitForLoadState('networkidle', { timeout: 10000 });
+
+    //   //   // Allow some time for dynamic content to load
+    //   //   await page.waitForTimeout(3000);
+
+    //   //   const content = await page.content();
+    //   //   browser.close();
+
+    //   //   return content;
+    //   // },
+    // });
 
     // Best-effort: Playwright loader doesn't expose signal; emulate via early return hooks
     if (signal?.aborted) return null;
-    const docs = await loader.load();
 
-    if (!docs || docs.length === 0) {
-      console.warn(`Failed to load content for URL: ${url}`);
-      return null;
-    }
+    const html = await page.content();
 
-    const doc = docs[0];
-
-    const dom = new JSDOM(doc.pageContent, { url });
+    const dom = new JSDOM(html, { url });
     const reader = new Readability(dom.window.document);
     const article = reader.parse();
     if (
@@ -222,7 +234,7 @@ export const getWebContent = async (
     // Write to cache (store html regardless of getHtml flag)
     await writeCachedRecord(url, {
       pageContent: normalizedText,
-      title: article?.title || doc.metadata.title || '',
+      title: article?.title || (await page.title()) || '',
       html: article?.content ?? undefined,
     });
 
@@ -232,7 +244,7 @@ export const getWebContent = async (
           ? normalizedText.slice(0, truncateToLength)
           : normalizedText,
       metadata: {
-        title: article?.title || doc.metadata.title || '',
+        title: article?.title || (await page.title()) || '',
         url: url,
         html: getHtml ? article?.content : undefined,
       },
@@ -315,5 +327,14 @@ export const getWebContent = async (
     }
 
     return null;
+  } finally {
+    // Ensure browser is closed to prevent resource leaks
+    try {
+      if (page) await page.close();
+      if (context) await context.close();
+      if (browser) await browser.close(); // Theoretically this is the only thing we need to close but we'll close the context and page too for good measure
+    } catch (closeError) {
+      console.error('Error closing Playwright resources:', closeError);
+    }
   }
 };
