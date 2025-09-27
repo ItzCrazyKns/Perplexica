@@ -11,6 +11,7 @@ import {
   Settings,
   Image as ImageIcon,
   BotIcon,
+  TvIcon,
 } from 'lucide-react';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import { useEffect, useState } from 'react';
@@ -70,12 +71,16 @@ const ToolCall = ({
   type,
   query,
   urls,
+  url,
+  videoId,
   count,
   children,
 }: {
   type?: string;
   query?: string;
   urls?: string;
+  url?: string;
+  videoId?: string;
   count?: string;
   children?: React.ReactNode;
 }) => {
@@ -95,6 +100,10 @@ const ToolCall = ({
         return <ImageIcon size={16} className="text-blue-600" />;
       case 'firefoxAI':
         return <BotIcon size={16} className="text-indigo-600" />;
+      case 'youtube_transcript':
+        return <TvIcon size={16} className="text-red-600" />;
+      case 'pdf_loader':
+        return <FileText size={16} className="text-red-600" />;
       default:
         return <Settings size={16} className="text-fg/70" />;
     }
@@ -138,6 +147,18 @@ const ToolCall = ({
       );
     }
 
+    if (type === 'pdf_loader' && url) {
+      return (
+        <>
+          <span className="mr-2">{getIcon(type)}</span>
+          <span>Loading PDF document:</span>
+          <a target='_blank' href={decodeHtmlEntities(url)} className="ml-2 px-2 py-0.5 bg-fg/5 rounded font-mono text-sm">
+            {decodeHtmlEntities(url)}
+          </a>
+        </>
+      );
+    }
+
     if (type === 'image' || type === 'image_search') {
       return (
         <>
@@ -156,6 +177,28 @@ const ToolCall = ({
           <span className="mr-2">{getIcon(type)}</span>
           <span>Firefox AI detected, tools disabled</span>
         </>
+      );
+    }
+
+    if (type === 'youtube_transcript' && videoId) {
+      console.log('Rendering YouTube transcript tool with video ID:', videoId);
+      return (
+        <div className="w-full">
+          <div className="flex items-center mb-2">
+            <span className="mr-2">{getIcon(type)}</span>
+            <span>Retrieved YouTube Transcript</span>
+          </div>
+          <div className="mt-2 rounded">
+            <div className="w-full">
+              <iframe
+                src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1`}
+                className="w-full aspect-video rounded-2xl"
+                allowFullScreen
+                allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+              />
+            </div>
+          </div>
+        </div>
       );
     }
 

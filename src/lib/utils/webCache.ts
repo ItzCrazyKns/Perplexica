@@ -16,6 +16,7 @@ export type CachedRecord = {
   title?: string;
   pageContent: string;
   html?: string;
+  metadata?: Record<string, any>;
 };
 
 type CacheMeta = {

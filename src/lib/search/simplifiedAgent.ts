@@ -10,7 +10,10 @@ import {
   fileSearchTools,
   webSearchTools,
 } from '@/lib/tools/agents';
-import { getLangfuseCallbacks } from '@/lib/tracing/langfuse';
+import {
+  getLangfuseCallbacks,
+  getLangfuseHandler,
+} from '@/lib/tracing/langfuse';
 import { encodeHtmlAttribute } from '@/lib/utils/html';
 import { isSoftStop } from '@/lib/utils/runControl';
 import { Embeddings } from '@langchain/core/embeddings';
@@ -309,7 +312,35 @@ export class SimplifiedAgent {
       const eventStream = agent.streamEvents(initialState, {
         ...config,
         version: 'v2',
-        ...getLangfuseCallbacks(),
+        callbacks: [
+          {
+            handleToolEnd: (output, runId, parentRunId, tags) => {
+              console.log('SimplifiedAgent: Tool completed:', {
+                output,
+                runId,
+                parentRunId,
+                tags,
+              });
+              const videoId =
+                output?.update?.relevantDocuments[0]?.metadata?.source;
+              if (!videoId) {
+                return;
+              }
+              const toolMarkdown = `<ToolCall type=\"youtube_transcript\" videoId=\"${encodeHtmlAttribute(videoId)}\"></ToolCall>`;
+              // Emit the thought message
+              this.emitter.emit(
+                'data',
+                JSON.stringify({
+                  type: 'tool_call',
+                  data: {
+                    content: toolMarkdown,
+                  },
+                }),
+              );
+            },
+          },
+          getLangfuseHandler() || {},
+        ],
       });
 
       let finalResult: any = null;
@@ -524,6 +555,13 @@ export class SimplifiedAgent {
                       break;
                     case 'image_search':
                       toolMarkdown = `<ToolCall type=\"image\" query=\"${encodeHtmlAttribute(toolArgs.query || 'relevant images')}\"></ToolCall>`;
+                      break;
+                    case 'youtube_transcript':
+                      break;
+                    case 'pdf_loader':
+                      toolMarkdown = `<ToolCall type=\"pdf_loader\" url=\"${encodeHtmlAttribute(
+                        toolArgs.pdfUrl || 'PDF URL',
+                      )}\"></ToolCall>`;
                       break;
                     default:
                       toolMarkdown = `<ToolCall type="${toolName}"></ToolCall>`;

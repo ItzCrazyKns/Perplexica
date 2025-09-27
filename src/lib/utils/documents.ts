@@ -5,6 +5,7 @@ import {
 } from '@/lib/utils/webCache';
 import { CheerioWebBaseLoader } from '@langchain/community/document_loaders/web/cheerio';
 import { PlaywrightWebBaseLoader } from '@langchain/community/document_loaders/web/playwright';
+import { YoutubeLoader } from '@langchain/community/document_loaders/web/youtube';
 import { Document } from '@langchain/core/documents';
 import { Readability } from '@mozilla/readability';
 import axios from 'axios';
@@ -12,6 +13,7 @@ import { JSDOM } from 'jsdom';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import pdfParse from 'pdf-parse';
 import { chromium, Page, Browser, BrowserContext } from 'playwright';
+import { WebPDFLoader } from '@langchain/community/document_loaders/web/pdf';
 
 export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
   const splitter = new RecursiveCharacterTextSplitter();
@@ -118,6 +120,108 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
   return docs;
 };
 
+export const retrievePdfDoc = async (url: string): Promise<Document | null> => {
+  try {
+    // Read pdf into a Blob and pass to WebPDFLoader
+    console.log(
+      '[retrievePdfDoc] Retrieving PDF content for URL:',
+      url,
+    );
+    const cached = await loadCachedRecord(url + '_pdf');
+    if (cached) {
+      console.log(
+        '[retrievePdfDoc] Typed content found in cache for URL:',
+        url,
+      );
+      return new Document({
+        pageContent: cached.pageContent || '',
+        metadata: {
+          title: cached.title || '',
+          url: cached.url,
+          html: cached.html || undefined,
+          ...cached.metadata,
+        },
+      });
+    }
+    const res = await axios.get(url, {
+      responseType: 'arraybuffer',
+    });
+    const pdfBlob = new Blob([res.data], { type: 'application/pdf' });
+    const pdfLoader = new WebPDFLoader(pdfBlob, { splitPages: false });
+    const docs = await pdfLoader.load();
+    console.log(
+      '[retrievePdfDoc] PDF content retrieved successfully:',
+      docs,
+    );
+    if (docs.length > 0) {
+      docs[0].metadata.url = url;
+      docs[0].metadata.title = docs[0].metadata.title || 'PDF Document';
+      // Write to cache
+      await writeCachedRecord(url + '_pdf', docs[0]);
+      return docs[0];
+    }
+  } catch (error) {
+    console.error('[retrievePdfDoc] Error retrieving PDF content:', error);
+  }
+  return null;
+};
+
+export const retrieveYoutubeTranscript = async (url: string): Promise<Document | null> => {
+  try {
+    console.log(
+      '[retrieveYoutubeTranscript] Retrieving YouTube transcript for URL:',
+      url,
+    );
+    const cached = await loadCachedRecord(url + '_youtube');
+    if (cached) {
+      console.log(
+        '[retrieveYoutubeTranscript] Typed content found in cache for URL:',
+        url,
+      );
+      return new Document({
+        pageContent: cached.pageContent || '',
+        metadata: {
+          title: cached.title || '',
+          url: cached.url,
+          html: cached.html || undefined,
+          ...cached.metadata,
+        },
+      });
+    }
+
+    const transcriptLoader = YoutubeLoader.createFromUrl(url, {
+      language: 'en',
+      addVideoInfo: true,
+    });
+    const transcript = await transcriptLoader.load();
+    console.log(
+      '[retrieveYoutubeTranscript] YouTube transcript retrieved successfully:',
+      transcript,
+    );
+    if (transcript.length > 0) {
+      transcript[0].metadata.url = url;
+      transcript[0].metadata.title =
+        transcript[0].metadata.title || 'YouTube Video Transcript';
+      transcript[0].metadata.source = transcript[0].metadata.source || undefined;
+      // Write to cache
+      await writeCachedRecord(url + '_youtube', transcript[0]);
+      return transcript[0];
+    }
+  } catch (error) {
+    console.error('Error retrieving YouTube transcript:', error);
+  }
+  return null;
+};
+
+export const retrieveTypedContentFunc = async (url: string): Promise<Document | null> => {
+  if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) {
+    return await retrieveYoutubeTranscript(url);
+  } else if (url.endsWith('.pdf')) {
+    return await retrievePdfDoc(url);
+  }
+  return null;
+};
+
 /**
  * Fetches web content from a given URL using LangChain's PlaywrightWebBaseLoader.
  * Parses it using Readability for better content extraction.
@@ -128,6 +232,7 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
  * @param signal - Optional AbortSignal to cancel the operation.
  * @param truncateToLength - Maximum length of the returned text content.
  * @param performAggressiveValidation - If true, performs additional validation on the fetched content. Like ensuring the parsed article has a title and sufficient length.
+ * @param retrieveTypedContent - If true, attempts to retrieve typed content (e.g., youtube transcripts) when applicable.
  * @returns A Promise that resolves to a Document object or null if parsing fails.
  */
 export const getWebContent = async (
@@ -136,6 +241,7 @@ export const getWebContent = async (
   getHtml: boolean = false,
   signal?: AbortSignal,
   performAggressiveValidation: boolean = false,
+  retrieveTypedContent: boolean = false,
 ): Promise<Document | null> => {
   let browser: Browser | null = null;
   let context: BrowserContext | null = null;
@@ -164,6 +270,14 @@ export const getWebContent = async (
     }
 
     console.log(`Fetching content from URL: ${url}`);
+
+    // Attempt to retrieve typed content first if enabled
+    if (retrieveTypedContent) {
+      const typedDoc = await retrieveTypedContentFunc(url);
+      if (typedDoc) {
+        return typedDoc;
+      }
+    }
 
     browser = await chromium.launch({
       headless: true,

@@ -558,7 +558,6 @@ export class DeepResearchAgent {
           (r) =>
             r.title &&
             r.url &&
-            !r.url.endsWith('.pdf') &&
             r.content &&
             r.content.length > 0,
         )
@@ -645,7 +644,6 @@ export class DeepResearchAgent {
           (r) =>
             r.title &&
             r.url &&
-            !r.url.endsWith('.pdf') &&
             r.content &&
             r.content.length > 0,
         ),
@@ -672,6 +670,7 @@ export class DeepResearchAgent {
               false,
               this.retrievalSignal,
               true,
+              true
             );
 
             if (

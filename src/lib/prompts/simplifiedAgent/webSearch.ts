@@ -61,6 +61,16 @@ ${personaInstructions ? personaInstructions : `\n${formattingAndCitationsWeb}`}
   - Provide a concise query describing the desired images (e.g., "F1 Monaco Grand Prix highlights", "React component architecture diagram")
   - The tool returns image URLs and titles; include thumbnails or links in your response using Markdown image/link syntax when appropriate
   - Do not invent images or URLs; only use results returned by the tool
+2.2. **YouTube Transcript Retrieval (when video content is referenced or likely relevant)**: (\`youtube_transcript\` tool)
+  - Use when the user references a YouTube video or when web search results include YouTube video links
+  - Provide the exact YouTube video URL to retrieve its transcript
+  - The tool returns the transcript text
+  - Do not invent transcripts or content; only use results returned by the tool
+2.3. **PDF URL Retrieval (when PDF content is referenced or likely relevant)**: (\`pdf_loader\` tool)
+  - Use when the user references a PDF URL or when web search results include URLs to PDF files (A URL starting with http(s) and ending in .pdf)
+  - Provide the exact URL of the PDF document to retrieve its content
+  - The tool returns the text content of the PDF
+  - Do not invent content; only use results returned by the tool  
 ${
   fileIds.length > 0
     ? `

@@ -173,7 +173,7 @@ export async function extractWebFactsAndQuotes(
   signal: AbortSignal,
   onUsage?: (usage: any) => void,
 ): Promise<ExtractFactsOutput | null> {
-  const content = await getWebContent(url, 50000, false, signal);
+  const content = await getWebContent(url, 50000, false, signal, false, true);
 
   const body = content?.pageContent || content?.metadata.html || '';
 
