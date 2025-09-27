@@ -14,6 +14,8 @@ import {
   getLemonadeApiKey,
   updateConfig,
   getOllamaApiKey,
+  getDefaultChatModel,
+  getDefaultEmbeddingModel,
 } from '@/lib/config';
 import {
   getAvailableChatModelProviders,
@@ -57,6 +59,8 @@ export const GET = async (req: Request) => {
     config['openaiApiKey'] = getOpenaiApiKey();
     config['ollamaApiUrl'] = getOllamaApiEndpoint();
     config['ollamaApiKey'] = getOllamaApiKey();
+    config['defaultChatModel'] = getDefaultChatModel();
+    config['defaultEmbeddingModel'] = getDefaultEmbeddingModel();
     config['lmStudioApiUrl'] = getLMStudioApiEndpoint();
     config['lemonadeApiUrl'] = getLemonadeApiEndpoint();
     config['lemonadeApiKey'] = getLemonadeApiKey();
@@ -84,6 +88,10 @@ export const POST = async (req: Request) => {
     const config = await req.json();
 
     const updatedConfig = {
+      GENERAL: {
+        DEFAULT_CHAT_MODEL: config.defaultChatModel,
+        DEFAULT_EMBEDDING_MODEL: config.defaultEmbeddingModel,
+      },
       MODELS: {
         OPENAI: {
           API_KEY: config.openaiApiKey,
