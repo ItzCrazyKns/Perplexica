@@ -123,10 +123,7 @@ export const getDocumentsFromLinks = async ({ links }: { links: string[] }) => {
 export const retrievePdfDoc = async (url: string): Promise<Document | null> => {
   try {
     // Read pdf into a Blob and pass to WebPDFLoader
-    console.log(
-      '[retrievePdfDoc] Retrieving PDF content for URL:',
-      url,
-    );
+    console.log('[retrievePdfDoc] Retrieving PDF content for URL:', url);
     const cached = await loadCachedRecord(url + '_pdf');
     if (cached) {
       console.log(
@@ -149,10 +146,7 @@ export const retrievePdfDoc = async (url: string): Promise<Document | null> => {
     const pdfBlob = new Blob([res.data], { type: 'application/pdf' });
     const pdfLoader = new WebPDFLoader(pdfBlob, { splitPages: false });
     const docs = await pdfLoader.load();
-    console.log(
-      '[retrievePdfDoc] PDF content retrieved successfully:',
-      docs,
-    );
+    console.log('[retrievePdfDoc] PDF content retrieved successfully:', docs);
     if (docs.length > 0) {
       docs[0].metadata.url = url;
       docs[0].metadata.title = docs[0].metadata.title || 'PDF Document';
@@ -166,7 +160,9 @@ export const retrievePdfDoc = async (url: string): Promise<Document | null> => {
   return null;
 };
 
-export const retrieveYoutubeTranscript = async (url: string): Promise<Document | null> => {
+export const retrieveYoutubeTranscript = async (
+  url: string,
+): Promise<Document | null> => {
   try {
     console.log(
       '[retrieveYoutubeTranscript] Retrieving YouTube transcript for URL:',
@@ -202,7 +198,8 @@ export const retrieveYoutubeTranscript = async (url: string): Promise<Document |
       transcript[0].metadata.url = url;
       transcript[0].metadata.title =
         transcript[0].metadata.title || 'YouTube Video Transcript';
-      transcript[0].metadata.source = transcript[0].metadata.source || undefined;
+      transcript[0].metadata.source =
+        transcript[0].metadata.source || undefined;
       // Write to cache
       await writeCachedRecord(url + '_youtube', transcript[0]);
       return transcript[0];
@@ -213,7 +210,9 @@ export const retrieveYoutubeTranscript = async (url: string): Promise<Document |
   return null;
 };
 
-export const retrieveTypedContentFunc = async (url: string): Promise<Document | null> => {
+export const retrieveTypedContentFunc = async (
+  url: string,
+): Promise<Document | null> => {
   if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) {
     return await retrieveYoutubeTranscript(url);
   } else if (url.endsWith('.pdf')) {

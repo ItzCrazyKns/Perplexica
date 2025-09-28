@@ -36,11 +36,13 @@ export const youtubeTranscriptTool = tool(
       console.log(
         `[youtubeTranscriptTool] Retrieving transcript for video: "${videoUrl}"`,
       );
-      
+
       const doc = await retrieveYoutubeTranscript(videoUrl);
 
       if (!doc) {
-        console.log(`[youtubeTranscriptTool] No documents found for video: ${videoUrl}`);
+        console.log(
+          `[youtubeTranscriptTool] No documents found for video: ${videoUrl}`,
+        );
         return new Command({
           update: {
             relevantDocuments: [],
@@ -54,7 +56,9 @@ export const youtubeTranscriptTool = tool(
         });
       }
 
-      console.log(`[youtubeTranscriptTool] Retrieved document from video: ${videoUrl}`);
+      console.log(
+        `[youtubeTranscriptTool] Retrieved document from video: ${videoUrl}`,
+      );
       return new Command({
         update: {
           relevantDocuments: [doc],
@@ -69,7 +73,10 @@ export const youtubeTranscriptTool = tool(
         },
       });
     } catch (error) {
-      console.error('[youtubeTranscriptTool] Error during transcript retrieval:', error);
+      console.error(
+        '[youtubeTranscriptTool] Error during transcript retrieval:',
+        error,
+      );
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
 
@@ -87,8 +94,7 @@ export const youtubeTranscriptTool = tool(
   },
   {
     name: 'youtube_transcript',
-    description:
-      'Retrieves the transcript of a YouTube video given its URL.',
+    description: 'Retrieves the transcript of a YouTube video given its URL.',
     schema: YoutubeTranscriptToolSchema,
   },
 );

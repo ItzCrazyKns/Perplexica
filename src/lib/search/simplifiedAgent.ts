@@ -348,7 +348,8 @@ export class SimplifiedAgent {
                   output?.update?.relevantDocuments[0]?.metadata?.source;
                 if (
                   !videoId ||
-                  (output?.update?.relevantDocuments[0].pageContent?.length || 0) === 0
+                  (output?.update?.relevantDocuments[0].pageContent?.length ||
+                    0) === 0
                 ) {
                   return;
                 }

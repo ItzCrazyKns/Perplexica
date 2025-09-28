@@ -317,7 +317,9 @@ export class DeepResearchAgent {
         'Respond-now triggered — moving to answer',
         this.phasePercent(),
       );
-      console.log('DeepResearchAgent: Respond-now triggered; moving to synthesis');
+      console.log(
+        'DeepResearchAgent: Respond-now triggered; moving to synthesis',
+      );
       this.earlySynthesisTriggered = true;
       return true;
     }
@@ -329,7 +331,9 @@ export class DeepResearchAgent {
         'Soft budget reached — moving to answer early',
         this.phasePercent(),
       );
-      console.log('DeepResearchAgent: soft LLM-turn limit reached; moving to synthesis');
+      console.log(
+        'DeepResearchAgent: soft LLM-turn limit reached; moving to synthesis',
+      );
       return true;
     }
     return false;
@@ -347,7 +351,9 @@ export class DeepResearchAgent {
         'Wall-clock limit reached',
         this.phasePercent(),
       );
-      console.log(`Aborted due to wall-clock limit: ${DeepResearchAgent.WALL_CLOCK_LIMIT_MS}ms`);
+      console.log(
+        `Aborted due to wall-clock limit: ${DeepResearchAgent.WALL_CLOCK_LIMIT_MS}ms`,
+      );
       this.earlySynthesisTriggered = true; // force moving on
       return true;
     }
@@ -554,13 +560,7 @@ export class DeepResearchAgent {
         this.retrievalSignal,
       );
       const top = searx.results
-        .filter(
-          (r) =>
-            r.title &&
-            r.url &&
-            r.content &&
-            r.content.length > 0,
-        )
+        .filter((r) => r.title && r.url && r.content && r.content.length > 0)
         .slice(0, 10);
       webContext = top
         .map((r, i) => {
@@ -641,11 +641,7 @@ export class DeepResearchAgent {
       let extractCount = 0;
       const candidates = await limit.map(
         subqueryResult.results.filter(
-          (r) =>
-            r.title &&
-            r.url &&
-            r.content &&
-            r.content.length > 0,
+          (r) => r.title && r.url && r.content && r.content.length > 0,
         ),
         async (result) => {
           const empty = {
@@ -670,7 +666,7 @@ export class DeepResearchAgent {
               false,
               this.retrievalSignal,
               true,
-              true
+              true,
             );
 
             if (

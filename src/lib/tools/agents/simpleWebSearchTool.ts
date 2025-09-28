@@ -16,7 +16,11 @@ import { CachedEmbeddings } from '@/lib/utils/cachedEmbeddings';
 
 // Schema for simple web search tool input
 const SimpleWebSearchToolSchema = z.object({
-  query: z.string().describe('The query to use for web search. You can limit the scope to specific websites by including "site:example.com" in the query.'),
+  query: z
+    .string()
+    .describe(
+      'The query to use for web search. You can limit the scope to specific websites by including "site:example.com" in the query.',
+    ),
 });
 
 /**
@@ -158,7 +162,8 @@ export const simpleWebSearchTool = tool(
       );
 
       console.log(
-        `SimpleWebSearchTool: Created ${documents.length} documents from search results`, documents
+        `SimpleWebSearchTool: Created ${documents.length} documents from search results`,
+        documents,
       );
 
       //return { documents };

@@ -4,7 +4,10 @@ import { RunnableConfig } from '@langchain/core/runnables';
 import { Command, getCurrentTaskInput } from '@langchain/langgraph';
 import { SimplifiedAgentStateType } from '@/lib/state/chatAgentState';
 import { ToolMessage } from '@langchain/core/messages';
-import { retrievePdfDoc, retrieveYoutubeTranscript } from '@/lib/utils/documents';
+import {
+  retrievePdfDoc,
+  retrieveYoutubeTranscript,
+} from '@/lib/utils/documents';
 
 // Schema for PDF transcript tool input
 const PDFLoaderToolSchema = z.object({
@@ -33,9 +36,7 @@ export const pdfLoaderTool = tool(
 
       const currentState = getCurrentTaskInput() as SimplifiedAgentStateType;
 
-      console.log(
-        `[pdfLoaderTool] Retrieving content for PDF: "${pdfUrl}"`,
-      );
+      console.log(`[pdfLoaderTool] Retrieving content for PDF: "${pdfUrl}"`);
 
       const doc = await retrievePdfDoc(pdfUrl);
 
@@ -69,7 +70,10 @@ export const pdfLoaderTool = tool(
         },
       });
     } catch (error) {
-      console.error('[pdfLoaderTool] Error during PDF content retrieval:', error);
+      console.error(
+        '[pdfLoaderTool] Error during PDF content retrieval:',
+        error,
+      );
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
 
@@ -87,8 +91,7 @@ export const pdfLoaderTool = tool(
   },
   {
     name: 'pdf_loader',
-    description:
-      'Retrieves the content of a PDF document given its URL.',
+    description: 'Retrieves the content of a PDF document given its URL.',
     schema: PDFLoaderToolSchema,
   },
 );

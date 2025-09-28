@@ -152,7 +152,11 @@ const ToolCall = ({
         <>
           <span className="mr-2">{getIcon(type)}</span>
           <span>Loading PDF document:</span>
-          <a target='_blank' href={decodeHtmlEntities(url)} className="ml-2 px-2 py-0.5 bg-fg/5 rounded font-mono text-sm">
+          <a
+            target="_blank"
+            href={decodeHtmlEntities(url)}
+            className="ml-2 px-2 py-0.5 bg-fg/5 rounded font-mono text-sm"
+          >
             {decodeHtmlEntities(url)}
           </a>
         </>
