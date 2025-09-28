@@ -334,6 +334,57 @@ export class SimplifiedAgent {
                 runName,
               });
               toolCalls[runId] = runName || tool.name || 'unknown';
+
+              // Emit a tool_call_started event so UI can display a running state spinner.
+              try {
+                const type = (runName || tool.name || 'unknown').trim();
+                // We only include lightweight identifying args for now; avoid large payloads.
+                let extraAttr = '';
+                try {
+                  if (input && typeof input === 'string') {
+                    // Construct an object from the input json string if possible
+                    const trimmed = input.trim();
+                    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+                      try {
+                        input = JSON.parse(trimmed);
+                      } catch {
+                        // If parsing fails, fall back to original string
+                        input = trimmed;
+                      }
+                    }
+                  }
+                  if (input && typeof input === 'object') {
+                    if (typeof (input as any).query === 'string') {
+                      // Encode query as attribute (basic escaping)
+                      const q = encodeHtmlAttribute((input as any).query.slice(0, 200));
+                      extraAttr = ` query="${q}"`;
+                    } else if (Array.isArray((input as any).urls)) {
+                      const count = (input as any).urls.length;
+                      extraAttr = ` count="${count}"`;
+                    } else if (typeof (input as any).pdfUrl === 'string') {
+                      const u = encodeHtmlAttribute((input as any).pdfUrl.slice(0, 300));
+                      extraAttr = ` url="${u}"`;
+                    }
+                  }
+                } catch (attrErr) {
+                  // Ignore attribute extraction errors
+                }
+
+                this.emitter.emit(
+                  'data',
+                  JSON.stringify({
+                    type: 'tool_call_started',
+                    data: {
+                      // Provide initial markup with status running; toolCallId used for later update.
+                      content: `<ToolCall type="${encodeHtmlAttribute(type)}" status="running" toolCallId="${encodeHtmlAttribute(runId)}"${extraAttr}></ToolCall>`,
+                      toolCallId: runId,
+                      status: 'running',
+                    },
+                  }),
+                );
+              } catch (emitErr) {
+                console.warn('Failed to emit tool_call_started event', emitErr);
+              }
             },
             handleToolEnd: (output, runId, parentRunId, tags) => {
               console.log('SimplifiedAgent: Tool completed:', {
@@ -343,29 +394,55 @@ export class SimplifiedAgent {
                 tags,
               });
 
+              // If youtube transcript tool, capture videoId for potential future UI enhancements
+              let extra: Record<string, string> | undefined;
               if (toolCalls[runId] === 'youtube_transcript') {
-                const videoId =
-                  output?.update?.relevantDocuments[0]?.metadata?.source;
-                if (
-                  !videoId ||
-                  (output?.update?.relevantDocuments[0].pageContent?.length ||
-                    0) === 0
-                ) {
-                  return;
+                const videoId = output?.update?.relevantDocuments?.[0]?.metadata?.source;
+                if (videoId) {
+                  extra = { videoId: String(videoId) };
                 }
-                const toolMarkdown = `<ToolCall type=\"youtube_transcript\" videoId=\"${encodeHtmlAttribute(videoId)}\"></ToolCall>`;
-                // Emit the thought message
+              }
+              toolCalls[runId] && delete toolCalls[runId];
+
+              // Emit success update so UI can swap spinner for checkmark
+              try {
+                this.emitter.emit('data', JSON.stringify({
+                  type: 'tool_call_success',
+                  data: {
+                    toolCallId: runId,
+                    status: 'success',
+                    ...(extra ? { extra } : {}),
+                  },
+                }));
+              } catch (emitErr) {
+                console.warn('Failed to emit tool_call_success event', emitErr);
+              }
+            },
+            handleToolError: (err, runId, parentRunId, tags) => {
+              console.error('SimplifiedAgent: Tool error:', {
+                error: err,
+                runId,
+                parentRunId,
+                tags,
+              });
+
+              const message = (err && (err.message || err.toString())) || 'Unknown tool error';
+              // Emit error update to UI
+              try {
                 this.emitter.emit(
                   'data',
                   JSON.stringify({
-                    type: 'tool_call',
+                    type: 'tool_call_error',
                     data: {
-                      content: toolMarkdown,
+                      toolCallId: runId,
+                      status: 'error',
+                      error: message.substring(0, 500),
                     },
                   }),
                 );
+              } catch (emitErr) {
+                console.warn('Failed to emit tool_call_error event', emitErr);
               }
-              toolCalls[runId] && delete toolCalls[runId];
             },
           },
           getLangfuseHandler() || {},
@@ -387,17 +464,22 @@ export class SimplifiedAgent {
         for await (const event of eventStream) {
           if (!initialMessageSent) {
             initialMessageSent = true;
-            // If Firefox AI was detected, emit a special note
+            // If Firefox AI was detected, emit synthetic lifecycle events so UI can show a completed pseudo-tool
             if (firefoxAIDetected) {
-              this.emitter.emit(
-                'data',
-                JSON.stringify({
-                  type: 'tool_call',
+              const syntheticId = `firefoxAI-${Date.now()}`;
+              try {
+                // Emit single started event already marked success to avoid double UI churn
+                this.emitter.emit('data', JSON.stringify({
+                  type: 'tool_call_started',
                   data: {
-                    content: '<ToolCall type="firefoxAI"></ToolCall>',
+                    content: `<ToolCall type="firefoxAI" status="success" toolCallId="${syntheticId}"></ToolCall>`,
+                    toolCallId: syntheticId,
+                    status: 'success',
                   },
-                }),
-              );
+                }));
+              } catch (e) {
+                console.warn('Failed to emit firefoxAI synthetic tool event', e);
+              }
             }
           }
 
@@ -553,62 +635,6 @@ export class SimplifiedAgent {
               );
             }
 
-            if (
-              output._getType() === 'ai' &&
-              output.tool_calls &&
-              output.tool_calls.length > 0
-            ) {
-              const aiMessage = output as AIMessage;
-
-              // Process each tool call and emit thought messages
-              for (const toolCall of aiMessage.tool_calls || []) {
-                if (toolCall && toolCall.name) {
-                  const toolName = toolCall.name;
-                  const toolArgs = toolCall.args || {};
-
-                  // Create user-friendly messages for different tools using markdown components
-                  let toolMarkdown = '';
-                  switch (toolName) {
-                    case 'web_search':
-                      toolMarkdown = `<ToolCall type=\"search\" query=\"${encodeHtmlAttribute(toolArgs.query || 'relevant information')}\"></ToolCall>`;
-                      break;
-                    case 'file_search':
-                      toolMarkdown = `<ToolCall type=\"file\" query=\"${encodeHtmlAttribute(toolArgs.query || 'relevant information')}\"></ToolCall>`;
-                      break;
-                    case 'url_summarization':
-                      if (Array.isArray(toolArgs.urls)) {
-                        toolMarkdown = `<ToolCall type="url" count="${toolArgs.urls.length}"></ToolCall>`;
-                      } else {
-                        toolMarkdown = `<ToolCall type="url" count="1"></ToolCall>`;
-                      }
-                      break;
-                    case 'image_search':
-                      toolMarkdown = `<ToolCall type=\"image\" query=\"${encodeHtmlAttribute(toolArgs.query || 'relevant images')}\"></ToolCall>`;
-                      break;
-                    case 'youtube_transcript':
-                      break;
-                    case 'pdf_loader':
-                      toolMarkdown = `<ToolCall type=\"pdf_loader\" url=\"${encodeHtmlAttribute(
-                        toolArgs.pdfUrl || 'PDF URL',
-                      )}\"></ToolCall>`;
-                      break;
-                    default:
-                      toolMarkdown = `<ToolCall type="${toolName}"></ToolCall>`;
-                  }
-
-                  // Emit the thought message
-                  this.emitter.emit(
-                    'data',
-                    JSON.stringify({
-                      type: 'tool_call',
-                      data: {
-                        content: toolMarkdown,
-                      },
-                    }),
-                  );
-                }
-              }
-            }
           }
 
           // Handle LLM end events for token usage tracking

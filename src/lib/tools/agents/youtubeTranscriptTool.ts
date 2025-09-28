@@ -28,69 +28,34 @@ export const youtubeTranscriptTool = tool(
     input: z.infer<typeof YoutubeTranscriptToolSchema>,
     config?: RunnableConfig,
   ) => {
-    try {
-      const { videoUrl } = input;
+    const { videoUrl } = input;
 
-      const currentState = getCurrentTaskInput() as SimplifiedAgentStateType;
+    console.log(
+      `[youtubeTranscriptTool] Retrieving transcript for video: "${videoUrl}"`,
+    );
 
-      console.log(
-        `[youtubeTranscriptTool] Retrieving transcript for video: "${videoUrl}"`,
-      );
+    const doc = await retrieveYoutubeTranscript(videoUrl);
 
-      const doc = await retrieveYoutubeTranscript(videoUrl);
-
-      if (!doc) {
-        console.log(
-          `[youtubeTranscriptTool] No documents found for video: ${videoUrl}`,
-        );
-        return new Command({
-          update: {
-            relevantDocuments: [],
-            messages: [
-              new ToolMessage({
-                content: 'No transcript available for this video.',
-                tool_call_id: (config as any)?.toolCall.id,
-              }),
-            ],
-          },
-        });
-      }
-
-      console.log(
-        `[youtubeTranscriptTool] Retrieved document from video: ${videoUrl}`,
-      );
-      return new Command({
-        update: {
-          relevantDocuments: [doc],
-          messages: [
-            new ToolMessage({
-              content: JSON.stringify({
-                document: [doc],
-              }),
-              tool_call_id: (config as any)?.toolCall.id,
-            }),
-          ],
-        },
-      });
-    } catch (error) {
-      console.error(
-        '[youtubeTranscriptTool] Error during transcript retrieval:',
-        error,
-      );
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-
-      return new Command({
-        update: {
-          messages: [
-            new ToolMessage({
-              content: 'Error occurred during image search: ' + errorMessage,
-              tool_call_id: (config as any)?.toolCall?.id,
-            }),
-          ],
-        },
-      });
+    if (!doc) {
+      throw new Error(`Failed to retrieve transcript for video: ${videoUrl}`);
     }
+
+    console.log(
+      `[youtubeTranscriptTool] Retrieved document from video: ${videoUrl}`,
+    );
+    return new Command({
+      update: {
+        relevantDocuments: [doc],
+        messages: [
+          new ToolMessage({
+            content: JSON.stringify({
+              document: [doc],
+            }),
+            tool_call_id: (config as any)?.toolCall.id,
+          }),
+        ],
+      },
+    });
   },
   {
     name: 'youtube_transcript',

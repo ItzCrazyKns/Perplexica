@@ -216,7 +216,7 @@ const Chat = ({
         .reverse()
         .find((m) => m.role === 'user');
       setCurrentMessageId(lastUserMsg?.messageId);
-      console.log('Set currentMessageId to', lastUserMsg?.messageId, messages);
+      //console.log('Set currentMessageId to', lastUserMsg?.messageId, messages);
     } else {
       setCurrentMessageId(undefined);
     }

@@ -1,3 +1,4 @@
+import { updateToolCallMarkup } from '@/lib/utils/toolCallMarkup';
 import { cleanupCancelToken, registerCancelToken } from '@/lib/cancel-tokens';
 import {
   getCustomOpenaiApiKey,
@@ -125,6 +126,7 @@ const handleEmitterEvents = async (
 
   stream.on('data', (data) => {
     const parsedData = JSON.parse(data);
+
     if (parsedData.type === 'response') {
       writer.write(
         encoder.encode(
@@ -162,20 +164,35 @@ const handleEmitterEvents = async (
       );
 
       sources = parsedData.data;
-    } else if (parsedData.type === 'tool_call') {
-      // Handle tool call events - stream them directly to the client AND accumulate for database
+    } else if (
+      parsedData.type === 'tool_call_started' ||
+      parsedData.type === 'tool_call_success' ||
+      parsedData.type === 'tool_call_error'
+    ) {
+      // Forward new granular tool lifecycle events
       writer.write(
         encoder.encode(
           JSON.stringify({
-            type: 'tool_call',
+            type: parsedData.type,
             data: parsedData.data,
             messageId: aiMessageId,
           }) + '\n',
         ),
       );
-
-      // Add tool call content to the received message for database storage
-      recievedMessage += parsedData.data.content;
+      if (parsedData.type === 'tool_call_started' && parsedData.data?.content) {
+        // Append initial placeholder markup to message content for persistence
+        recievedMessage += parsedData.data.content;
+      } else if (
+        parsedData.type === 'tool_call_success' ||
+        parsedData.type === 'tool_call_error'
+      ) {
+        // Rewrite existing ToolCall tag with final status (and error if applicable)
+        recievedMessage = updateToolCallMarkup(recievedMessage, parsedData.data.toolCallId, {
+          status: parsedData.data.status,
+          error: parsedData.data.error,
+          extra: parsedData.data.extra,
+        });
+      }
     }
   });
 

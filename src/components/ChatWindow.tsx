@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { updateToolCallMarkup } from '@/lib/utils/toolCallMarkup';
 import { Document } from '@langchain/core/documents';
 import Navbar from './Navbar';
 import Chat from './Chat';
@@ -575,17 +576,18 @@ const ChatWindow = ({ id }: { id?: string }) => {
         }
       }
 
-      if (data.type === 'tool_call') {
-        // Add the tool content to the current assistant message (already formatted with newlines)
-        const toolContent = data.data.content;
 
+      // (Inline ToolCall status updater removed; using shared updateToolCallMarkup helper.)
+
+      if (data.type === 'tool_call_started') {
+        const toolContent = data.data.content; // Already a <ToolCall ... status="running" ...>
+        console.log('Tool call started:', toolContent);
         if (!added) {
-          // Create initial message with tool content
           setMessages((prevMessages) => [
             ...prevMessages,
             {
               content: toolContent,
-              messageId: data.messageId, // Use the AI message ID from the backend
+              messageId: data.messageId,
               chatId: chatId!,
               role: 'assistant',
               sources: sources,
@@ -594,21 +596,41 @@ const ChatWindow = ({ id }: { id?: string }) => {
           ]);
           added = true;
         } else {
-          // Append tool content to existing message
           setMessages((prev) =>
-            prev.map((message) => {
-              if (message.messageId === data.messageId) {
-                return {
-                  ...message,
-                  content: message.content + toolContent,
-                };
-              }
-              return message;
-            }),
+            prev.map((message) =>
+              message.messageId === data.messageId
+                ? { ...message, content: message.content + toolContent }
+                : message,
+            ),
           );
         }
-
         recievedMessage += toolContent;
+        setScrollTrigger((prev) => prev + 1);
+        return;
+      }
+
+      if (data.type === 'tool_call_success' || data.type === 'tool_call_error') {
+        console.log('Tool call ended:', data);
+        const { toolCallId, status, extra } = data.data;
+        const errorMsg = data.type === 'tool_call_error' ? data.data.error : undefined;
+        setMessages((prev) =>
+          prev.map((message) => {
+            if (message.messageId === data.messageId) {
+              const updatedContent = updateToolCallMarkup(message.content, toolCallId, {
+                status,
+                error: errorMsg,
+                extra,
+              });
+              return { ...message, content: updatedContent };
+            }
+            return message;
+          }),
+        );
+        recievedMessage = updateToolCallMarkup(recievedMessage, toolCallId, {
+          status,
+          error: errorMsg,
+          extra,
+        });
         setScrollTrigger((prev) => prev + 1);
         return;
       }

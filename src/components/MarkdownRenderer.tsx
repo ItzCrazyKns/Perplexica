@@ -12,6 +12,8 @@ import {
   Image as ImageIcon,
   BotIcon,
   TvIcon,
+  X,
+  Loader2,
 } from 'lucide-react';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import { useEffect, useState } from 'react';
@@ -74,6 +76,8 @@ const ToolCall = ({
   url,
   videoId,
   count,
+  status,
+  error,
   children,
 }: {
   type?: string;
@@ -82,6 +86,8 @@ const ToolCall = ({
   url?: string;
   videoId?: string;
   count?: string;
+  status?: string; // running | success | error
+  error?: string;
   children?: React.ReactNode;
 }) => {
   const getIcon = (toolType: string) => {
@@ -185,7 +191,6 @@ const ToolCall = ({
     }
 
     if (type === 'youtube_transcript' && videoId) {
-      console.log('Rendering YouTube transcript tool with video ID:', videoId);
       return (
         <div className="w-full">
           <div className="flex items-center mb-2">
@@ -220,9 +225,27 @@ const ToolCall = ({
 
   return (
     <div className="my-3 px-4 py-3 bg-surface border border-surface-2 rounded-lg">
-      <div className="flex items-center text-sm font-medium">
-        {formatToolMessage()}
+      <div className="flex items-start justify-between gap-2 text-sm font-medium">
+        <div className="flex items-center flex-wrap gap-1">
+          {formatToolMessage()}
+        </div>
+        <div className="flex items-center h-5">
+          {status === 'running' && (
+            <div className="w-4 h-4">
+              <Loader2 className="animate-spin text-fg/70" />
+            </div>
+          )}
+          {status === 'success' && (
+            <CheckCheck size={16} className="text-green-500" />
+          )}
+          {status === 'error' && <X size={16} className="text-red-500" />}
+        </div>
       </div>
+      {status === 'error' && error && (
+        <div className="mt-2 text-xs text-red-400 break-words font-mono whitespace-pre-wrap">
+          {decodeHtmlEntities(error)}
+        </div>
+      )}
     </div>
   );
 };
