@@ -14,29 +14,9 @@ import { SimplifiedAgentStateType } from '@/lib/state/chatAgentState';
 import { isSoftStop } from '@/lib/utils/runControl';
 import { CachedEmbeddings } from '@/lib/utils/cachedEmbeddings';
 
-// Schema for search query generation
-const SearchQuerySchema = z.object({
-  searchQuery: z
-    .string()
-    .describe('The optimized search query to use for web search'),
-  reasoning: z
-    .string()
-    .describe(
-      'A short explanation of how the search query was optimized for better results',
-    ),
-});
-
 // Schema for simple web search tool input
 const SimpleWebSearchToolSchema = z.object({
-  query: z.string().describe('The search query or task to process'),
-  searchInstructions: z
-    .string()
-    .optional()
-    .describe('Additional instructions for search refinement'),
-  context: z
-    .string()
-    .optional()
-    .describe('Additional context about the search'),
+  query: z.string().describe('The query to use for web search. You can limit the scope to specific websites by including "site:example.com" in the query.'),
 });
 
 /**
@@ -54,7 +34,7 @@ export const simpleWebSearchTool = tool(
     config?: RunnableConfig,
   ) => {
     try {
-      const { query, searchInstructions, context = '' } = input;
+      const { query } = input;
       const currentState = getCurrentTaskInput() as SimplifiedAgentStateType;
       let currentDocCount = currentState.relevantDocuments.length;
 
@@ -178,7 +158,7 @@ export const simpleWebSearchTool = tool(
       );
 
       console.log(
-        `SimpleWebSearchTool: Created ${documents.length} documents from search results`,
+        `SimpleWebSearchTool: Created ${documents.length} documents from search results`, documents
       );
 
       //return { documents };

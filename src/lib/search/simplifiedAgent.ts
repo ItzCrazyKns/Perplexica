@@ -266,6 +266,7 @@ export class SimplifiedAgent {
       const containsSelection = trimmed.includes('<selection>');
       const firefoxAIDetected =
         (startsWithAscii || startsWithCurly) && containsSelection;
+      let toolCalls: Record<string, string> = {};
 
       // Initialize agent with the provided focus mode and file context
       // Pass the number of messages that will be sent to the LLM so prompts can adapt.
@@ -314,6 +315,26 @@ export class SimplifiedAgent {
         version: 'v2',
         callbacks: [
           {
+            handleToolStart: (
+              tool,
+              input,
+              runId,
+              parentRunId?,
+              tags?,
+              metadata?,
+              runName?,
+            ) => {
+              console.log('SimplifiedAgent: Tool started:', {
+                tool,
+                input,
+                runId,
+                parentRunId,
+                tags,
+                metadata,
+                runName,
+              });
+              toolCalls[runId] = runName || tool.name || 'unknown';
+            },
             handleToolEnd: (output, runId, parentRunId, tags) => {
               console.log('SimplifiedAgent: Tool completed:', {
                 output,
@@ -321,22 +342,29 @@ export class SimplifiedAgent {
                 parentRunId,
                 tags,
               });
-              const videoId =
-                output?.update?.relevantDocuments[0]?.metadata?.source;
-              if (!videoId) {
-                return;
+
+              if (toolCalls[runId] === 'youtube_transcript') {
+                const videoId =
+                  output?.update?.relevantDocuments[0]?.metadata?.source;
+                if (
+                  !videoId ||
+                  (output?.update?.relevantDocuments[0].pageContent?.length || 0) === 0
+                ) {
+                  return;
+                }
+                const toolMarkdown = `<ToolCall type=\"youtube_transcript\" videoId=\"${encodeHtmlAttribute(videoId)}\"></ToolCall>`;
+                // Emit the thought message
+                this.emitter.emit(
+                  'data',
+                  JSON.stringify({
+                    type: 'tool_call',
+                    data: {
+                      content: toolMarkdown,
+                    },
+                  }),
+                );
               }
-              const toolMarkdown = `<ToolCall type=\"youtube_transcript\" videoId=\"${encodeHtmlAttribute(videoId)}\"></ToolCall>`;
-              // Emit the thought message
-              this.emitter.emit(
-                'data',
-                JSON.stringify({
-                  type: 'tool_call',
-                  data: {
-                    content: toolMarkdown,
-                  },
-                }),
-              );
+              toolCalls[runId] && delete toolCalls[runId];
             },
           },
           getLangfuseHandler() || {},

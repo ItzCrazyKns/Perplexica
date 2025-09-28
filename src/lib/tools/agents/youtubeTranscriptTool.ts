@@ -1,13 +1,10 @@
-import { tool } from '@langchain/core/tools';
-import { z } from 'zod';
-import { RunnableConfig } from '@langchain/core/runnables';
-import { Document } from 'langchain/document';
-import { searchSearxng } from '@/lib/searxng';
-import { Command, getCurrentTaskInput } from '@langchain/langgraph';
 import { SimplifiedAgentStateType } from '@/lib/state/chatAgentState';
-import { ToolMessage } from '@langchain/core/messages';
-import { YoutubeLoader } from '@langchain/community/document_loaders/web/youtube';
 import { retrieveYoutubeTranscript } from '@/lib/utils/documents';
+import { ToolMessage } from '@langchain/core/messages';
+import { RunnableConfig } from '@langchain/core/runnables';
+import { tool } from '@langchain/core/tools';
+import { Command, getCurrentTaskInput } from '@langchain/langgraph';
+import { z } from 'zod';
 
 // Schema for YouTube transcript tool input
 const YoutubeTranscriptToolSchema = z.object({

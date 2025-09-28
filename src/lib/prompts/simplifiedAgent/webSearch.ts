@@ -53,24 +53,9 @@ ${personaInstructions ? personaInstructions : `\n${formattingAndCitationsWeb}`}
 2. **Search**: (\`web_search\` tool) Initial web search stage to gather preview content
   - Give the web search tool a specific question to answer that will help gather relevant information
   - The response will contain a list of relevant documents containing snippets of the web page, a URL, and the title of the web page
-  - Do not simulate searches, utilize the web search tool directly
+  - You may limit the scope of the search to specific websites by including "site:example.com" where "example.com" is the domain you want to restrict the search to
   ${alwaysSearchInstruction}
   ${explicitUrlInstruction}
-2.1. **Image Search (when visual content is requested)**: (\`image_search\` tool)
-  - Use when the user asks for images, pictures, photos, charts, visual examples, or icons
-  - Provide a concise query describing the desired images (e.g., "F1 Monaco Grand Prix highlights", "React component architecture diagram")
-  - The tool returns image URLs and titles; include thumbnails or links in your response using Markdown image/link syntax when appropriate
-  - Do not invent images or URLs; only use results returned by the tool
-2.2. **YouTube Transcript Retrieval (when video content is referenced or likely relevant)**: (\`youtube_transcript\` tool)
-  - Use when the user references a YouTube video or when web search results include YouTube video links
-  - Provide the exact YouTube video URL to retrieve its transcript
-  - The tool returns the transcript text
-  - Do not invent transcripts or content; only use results returned by the tool
-2.3. **PDF URL Retrieval (when PDF content is referenced or likely relevant)**: (\`pdf_loader\` tool)
-  - Use when the user references a PDF URL or when web search results include URLs to PDF files (A URL starting with http(s) and ending in .pdf)
-  - Provide the exact URL of the PDF document to retrieve its content
-  - The tool returns the text content of the PDF
-  - Do not invent content; only use results returned by the tool  
 ${
   fileIds.length > 0
     ? `
@@ -82,17 +67,30 @@ ${
   - Focus file searches on specific aspects of the user's query that might be covered in the uploaded documents`
     : ''
 }
-3. **Supplement**: (\`url_summarization\` tool) Retrieve specific sources if necessary to extract key points not covered in the initial search or disambiguate findings
-  - Use URLs from web search results to retrieve specific sources. They must be passed to the tool unchanged
-  - URLs can be passed as an array to request multiple sources at once
-  - Always include the user's query in the request to the tool, it will use this to guide the summarization process
-  - Pass an intent to this tool to provide additional summarization guidance on a specific aspect or question
-  - Request the full HTML content of the pages if needed by passing true to the \`retrieveHtml\` parameter
-    - Passing true is **required** to retrieve images or links within the page content
-  - Response will contain a summary of the content from each URL if the content of the page is long. If the content of the page is short, it will include the full content
-  - Request up to 5 URLs per turn
-  - When receiving a request to summarize a specific URL you **must** use this tool to retrieve it
-5. **Analyze**: Examine the retrieved information for relevance, accuracy, and completeness
+3. **Supplement**: Use specialized tools to gather additional information or clarify findings from the search stage 
+  3.1. **URL Summarization**: (\`url_summarization\` tool) Retrieve specific sources if necessary to extract key points not covered in the initial search or disambiguate findings
+    - Use URLs from web search results to retrieve specific sources. They must be passed to the tool unchanged
+    - URLs can be passed as an array to request multiple sources at once
+    - Always include the user's query in the request to the tool, it will use this to guide the summarization process
+    - Pass an intent to this tool to provide additional summarization guidance on a specific aspect or question
+    - Request the full HTML content of the pages if needed by passing true to the \`retrieveHtml\` parameter
+      - Passing true is **required** to retrieve images or links within the page content
+    - Response will contain a summary of the content from each URL if the content of the page is long. If the content of the page is short, it will include the full content
+    - Request up to 5 URLs per turn
+    - When receiving a request to summarize a specific URL you **must** use this tool to retrieve it
+  3.2. **Image Search**: (\`image_search\` tool)
+    - Use when the user asks for images, pictures, photos, charts, visual examples, or icons
+    - Provide a concise query describing the desired images (e.g., "F1 Monaco Grand Prix highlights", "React component architecture diagram")
+    - The tool returns image URLs and titles; include thumbnails or links in your response using Markdown image/link syntax when appropriate
+  3.3. **YouTube Transcript Retrieval**: (\`youtube_transcript\` tool)
+    - Use when the user references a YouTube video or when web search results include YouTube video links
+    - Provide the **exact** YouTube video URL to retrieve its transcript
+    - The tool returns the transcript text
+  3.4. **PDF URL Retrieval**: (\`pdf_loader\` tool)
+    - Use when the user references a PDF URL or when web search results include URLs to PDF files (A URL starting with http(s) and ending in .pdf)
+    - Provide the **exact** URL of the PDF document to retrieve its content
+    - The tool returns the text content of the PDF
+4. **Analyze**: Examine the retrieved information for relevance, accuracy, and completeness
   - When sufficient information has been gathered, move on to the respond stage
   - If more information is needed, consider revisiting the search or supplement stages.${
     fileIds.length > 0
@@ -100,7 +98,7 @@ ${
   - Consider both web search results and file content when analyzing information completeness`
       : ''
   }
-6. **Respond**: Combine all information into a coherent response
+5. **Respond**: Combine all information into a coherent response
   - Resolve any remaining contradictions or gaps in the information, if necessary, execute more targeted searches or retrieve specific sources${
     fileIds.length > 0
       ? `
