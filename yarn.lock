@@ -732,7 +732,7 @@
     "@google/generative-ai" "^0.24.0"
     uuid "^11.1.0"
 
-"@langchain/groq@^0.2.3":
+"@langchain/groq@^0.2.4":
   version "0.2.4"
   resolved "https://registry.yarnpkg.com/@langchain/groq/-/groq-0.2.4.tgz#e770d2329994e182ba74d2fc769f9c67c777d0d2"
   integrity sha512-5/XteG1Kio2UEe6irm8Ne8fazO5ZKKNGutIPxiAp5slLb/SKzdNbZoocvYlOnD4w5z8ZmM+0LzisCinUNv9YeA==

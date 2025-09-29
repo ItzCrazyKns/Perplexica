@@ -9,6 +9,7 @@ import { plannerPrompt } from '@/lib/prompts/deepResearch/planner';
 import { removeThinkingBlocksFromMessages } from '@/lib/utils/contentUtils';
 import { withStructuredOutput } from '@/lib/utils/structuredOutput';
 import z from 'zod';
+import { setTemperature } from '@/lib/utils/modelUtils';
 
 export type PlannerOutput = {
   subquestions: string[];
@@ -59,6 +60,7 @@ export async function deepPlannerTool(
     new HumanMessage(`${query}`),
   ];
   try {
+    setTemperature(llm, 0.2);
     const structuredllm = withStructuredOutput(llm, PlannerSchema, {});
     const response = await structuredllm.invoke(messages, { signal });
 
@@ -67,8 +69,7 @@ export async function deepPlannerTool(
     }
     console.log(`deepPlannerTool response for ${query}:`, response);
     return response as PlannerOutput;
-  } catch (e) {
-    console.error('deepPlannerTool error:', e);
+  } finally {
+    setTemperature(llm);
   }
-  return { subquestions: [] };
 }

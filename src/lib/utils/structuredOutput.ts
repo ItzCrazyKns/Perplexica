@@ -17,16 +17,16 @@ export function withStructuredOutput<T extends z.ZodType>(
   schema: T,
   options: StructuredOutputOptions = {},
 ) {
-  // const isGroqModel = llm instanceof ChatGroq;
+  const isGroqModel = llm instanceof ChatGroq;
 
-  // if (isGroqModel) {
-  //   return llm.withStructuredOutput(schema, {
-  //     name: options.name,
-  //     method: 'jsonMode' as const,
-  //   });
-  // } else {
-  return llm.withStructuredOutput(schema, {
-    name: options.name,
-  });
-  // }
+  if (isGroqModel) {
+    return llm.withStructuredOutput(schema, {
+      name: options.name,
+      method: 'jsonMode' as const,
+    });
+  } else {
+    return llm.withStructuredOutput(schema, {
+      name: options.name,
+    });
+  }
 }
