@@ -356,13 +356,17 @@ export class SimplifiedAgent {
                   if (input && typeof input === 'object') {
                     if (typeof (input as any).query === 'string') {
                       // Encode query as attribute (basic escaping)
-                      const q = encodeHtmlAttribute((input as any).query.slice(0, 200));
+                      const q = encodeHtmlAttribute(
+                        (input as any).query.slice(0, 200),
+                      );
                       extraAttr = ` query="${q}"`;
                     } else if (Array.isArray((input as any).urls)) {
                       const count = (input as any).urls.length;
                       extraAttr = ` count="${count}"`;
                     } else if (typeof (input as any).pdfUrl === 'string') {
-                      const u = encodeHtmlAttribute((input as any).pdfUrl.slice(0, 300));
+                      const u = encodeHtmlAttribute(
+                        (input as any).pdfUrl.slice(0, 300),
+                      );
                       extraAttr = ` url="${u}"`;
                     }
                   }
@@ -397,7 +401,8 @@ export class SimplifiedAgent {
               // If youtube transcript tool, capture videoId for potential future UI enhancements
               let extra: Record<string, string> | undefined;
               if (toolCalls[runId] === 'youtube_transcript') {
-                const videoId = output?.update?.relevantDocuments?.[0]?.metadata?.source;
+                const videoId =
+                  output?.update?.relevantDocuments?.[0]?.metadata?.source;
                 if (videoId) {
                   extra = { videoId: String(videoId) };
                 }
@@ -406,14 +411,17 @@ export class SimplifiedAgent {
 
               // Emit success update so UI can swap spinner for checkmark
               try {
-                this.emitter.emit('data', JSON.stringify({
-                  type: 'tool_call_success',
-                  data: {
-                    toolCallId: runId,
-                    status: 'success',
-                    ...(extra ? { extra } : {}),
-                  },
-                }));
+                this.emitter.emit(
+                  'data',
+                  JSON.stringify({
+                    type: 'tool_call_success',
+                    data: {
+                      toolCallId: runId,
+                      status: 'success',
+                      ...(extra ? { extra } : {}),
+                    },
+                  }),
+                );
               } catch (emitErr) {
                 console.warn('Failed to emit tool_call_success event', emitErr);
               }
@@ -426,7 +434,9 @@ export class SimplifiedAgent {
                 tags,
               });
 
-              const message = (err && (err.message || err.toString())) || 'Unknown tool error';
+              const message =
+                (err && (err.message || err.toString())) ||
+                'Unknown tool error';
               // Emit error update to UI
               try {
                 this.emitter.emit(
@@ -469,16 +479,22 @@ export class SimplifiedAgent {
               const syntheticId = `firefoxAI-${Date.now()}`;
               try {
                 // Emit single started event already marked success to avoid double UI churn
-                this.emitter.emit('data', JSON.stringify({
-                  type: 'tool_call_started',
-                  data: {
-                    content: `<ToolCall type="firefoxAI" status="success" toolCallId="${syntheticId}"></ToolCall>`,
-                    toolCallId: syntheticId,
-                    status: 'success',
-                  },
-                }));
+                this.emitter.emit(
+                  'data',
+                  JSON.stringify({
+                    type: 'tool_call_started',
+                    data: {
+                      content: `<ToolCall type="firefoxAI" status="success" toolCallId="${syntheticId}"></ToolCall>`,
+                      toolCallId: syntheticId,
+                      status: 'success',
+                    },
+                  }),
+                );
               } catch (e) {
-                console.warn('Failed to emit firefoxAI synthetic tool event', e);
+                console.warn(
+                  'Failed to emit firefoxAI synthetic tool event',
+                  e,
+                );
               }
             }
           }
@@ -634,7 +650,6 @@ export class SimplifiedAgent {
                 }),
               );
             }
-
           }
 
           // Handle LLM end events for token usage tracking

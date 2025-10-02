@@ -187,11 +187,15 @@ const handleEmitterEvents = async (
         parsedData.type === 'tool_call_error'
       ) {
         // Rewrite existing ToolCall tag with final status (and error if applicable)
-        recievedMessage = updateToolCallMarkup(recievedMessage, parsedData.data.toolCallId, {
-          status: parsedData.data.status,
-          error: parsedData.data.error,
-          extra: parsedData.data.extra,
-        });
+        recievedMessage = updateToolCallMarkup(
+          recievedMessage,
+          parsedData.data.toolCallId,
+          {
+            status: parsedData.data.status,
+            error: parsedData.data.error,
+            extra: parsedData.data.extra,
+          },
+        );
       }
     }
   });

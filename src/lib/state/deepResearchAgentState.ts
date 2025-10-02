@@ -4,7 +4,12 @@ export type SessionManifest = {
   chatId: string;
   createdAt: string;
   updatedAt: string;
-  status: 'running' | 'cancelled' | 'completed' | 'error';
+  status:
+    | 'running'
+    | 'cancelled'
+    | 'completed'
+    | 'error'
+    | 'needs_clarification';
   budgets: {
     wallClockMs: number;
     llmTurnsHard: number;

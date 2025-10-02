@@ -4,7 +4,7 @@ import {
   HumanMessage,
   SystemMessage,
 } from '@langchain/core/messages';
-import { withStructuredOutput } from '@/lib/utils/structuredOutput';
+import { invokeStructuredOutputWithUsage } from '@/lib/utils/structuredOutputWithUsage';
 import { removeThinkingBlocksFromMessages } from '@/lib/utils/contentUtils';
 import { formatDateForLLM } from '@/lib/utils';
 import { z } from 'zod';
@@ -42,13 +42,15 @@ export async function searchQueryTool(
   ];
 
   try {
-    const structured = withStructuredOutput(llm, QuerySchema, {
-      name: 'generate_initial_search_query',
-    });
-    const response: any = await structured.invoke(messages, { signal });
-    if (onUsage && response?.usage) {
-      onUsage(response.usage);
-    }
+    const response = await invokeStructuredOutputWithUsage(
+      llm,
+      QuerySchema,
+      messages,
+      signal,
+      onUsage,
+      { name: 'generate_initial_search_query' },
+    );
+
     const candidate = (response?.searchQuery || '').trim();
     return { searchQuery: candidate };
   } catch (e) {

@@ -576,7 +576,6 @@ const ChatWindow = ({ id }: { id?: string }) => {
         }
       }
 
-
       // (Inline ToolCall status updater removed; using shared updateToolCallMarkup helper.)
 
       if (data.type === 'tool_call_started') {
@@ -609,18 +608,26 @@ const ChatWindow = ({ id }: { id?: string }) => {
         return;
       }
 
-      if (data.type === 'tool_call_success' || data.type === 'tool_call_error') {
+      if (
+        data.type === 'tool_call_success' ||
+        data.type === 'tool_call_error'
+      ) {
         console.log('Tool call ended:', data);
         const { toolCallId, status, extra } = data.data;
-        const errorMsg = data.type === 'tool_call_error' ? data.data.error : undefined;
+        const errorMsg =
+          data.type === 'tool_call_error' ? data.data.error : undefined;
         setMessages((prev) =>
           prev.map((message) => {
             if (message.messageId === data.messageId) {
-              const updatedContent = updateToolCallMarkup(message.content, toolCallId, {
-                status,
-                error: errorMsg,
-                extra,
-              });
+              const updatedContent = updateToolCallMarkup(
+                message.content,
+                toolCallId,
+                {
+                  status,
+                  error: errorMsg,
+                  extra,
+                },
+              );
               return { ...message, content: updatedContent };
             }
             return message;

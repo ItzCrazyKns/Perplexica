@@ -1,9 +1,10 @@
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { SystemMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 import { formatDateForLLM } from '../utils';
 import { getWebContent } from './documents';
 import { setTemperature } from './modelUtils';
-import { withStructuredOutput } from './structuredOutput';
+import { invokeStructuredOutputWithUsage } from './structuredOutputWithUsage';
 
 export type ExtractFactsOutput = {
   facts: string[];
@@ -76,9 +77,6 @@ export async function extractContentFactsAndQuotes(
       };
     }
 
-    const structured = withStructuredOutput(llm, ExtractionSchema, {
-      name: 'extract_facts_and_quotes',
-    });
     const prompt = `You extract short, atomic facts and direct quotes with provenance.
 
 # Task
@@ -108,26 +106,14 @@ ${query}
 Web content:
 ${content}`;
 
-    const res = await structured.invoke(prompt, {
+    const res = await invokeStructuredOutputWithUsage(
+      llm,
+      ExtractionSchema,
+      [new SystemMessage(prompt)],
       signal,
-      timeout: 60_000,
-      callbacks: [
-        {
-          handleLLMEnd: async (output, _runId, _parentRunId) => {
-            if (
-              onUsage &&
-              (output.llmOutput?.estimatedTokenUsage ||
-                output.llmOutput?.tokenUsage)
-            ) {
-              onUsage(
-                output.llmOutput.estimatedTokenUsage ||
-                  output.llmOutput.tokenUsage,
-              );
-            }
-          },
-        },
-      ],
-    });
+      onUsage,
+      { name: 'extract_facts_and_quotes' },
+    );
 
     if (!res || res.relevant === false) {
       return {

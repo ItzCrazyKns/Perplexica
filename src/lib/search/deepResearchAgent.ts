@@ -1,4 +1,5 @@
 import type { SessionManifest } from '@/lib/state/deepResearchAgentState';
+import { clarificationEvaluatorTool } from '@/lib/tools/agents/clarificationEvaluatorTool';
 import { deepPlannerTool } from '@/lib/tools/agents/deepPlannerTool';
 import { searchQueryTool } from '@/lib/tools/agents/searchQueryTool';
 import {
@@ -23,7 +24,6 @@ import { synthesizerPrompt } from '@/lib/prompts/synthesizer';
 import { formattingAndCitationsScholarly } from '@/lib/prompts/templates';
 import { Phase } from '@/lib/types/deepResearchPhase';
 import { isSoftStop } from '@/lib/utils/runControl';
-import { withStructuredOutput } from '@/lib/utils/structuredOutput';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { RunnableSequence } from '@langchain/core/runnables';
 import { TokenTextSplitter } from '@langchain/textsplitters';
@@ -38,6 +38,7 @@ import {
   extractContentFactsAndQuotes,
   extractWebFactsAndQuotes,
 } from '../utils/extractWebFacts';
+import { invokeStructuredOutputWithUsage } from '../utils/structuredOutputWithUsage';
 
 /**
  * DeepResearchAgent — phased orchestrator with budgets, cancellation, and progress streaming.
@@ -147,6 +148,47 @@ export class DeepResearchAgent {
         this.emitResponse(''); // Empty response, to give the UI a message to display.
       }, 100);
 
+      // Evaluate if clarification is needed (only on first pass with no prior plan)
+      if (this.planPass === 0 && history.length <= 2) {
+        const clarificationResult = await clarificationEvaluatorTool(
+          this.systemLlm,
+          query,
+          this.signal,
+          history as any,
+          (usage) => this.addPhaseUsage('Plan', usage, 'system'),
+        );
+        this.countLLMTurns();
+
+        if (
+          clarificationResult.needsClarification &&
+          clarificationResult.questions &&
+          clarificationResult.questions.length > 0
+        ) {
+          // Output clarification request as a standard response message
+          let clarificationMessage = `I need some clarification to provide better deep research:\n\n`;
+          clarificationResult.questions.forEach((question, index) => {
+            clarificationMessage += `${index + 1}. ${question}\n`;
+          });
+          clarificationMessage += `\nPlease provide more details so I can conduct a more focused and comprehensive research.`;
+
+          this.emitResponse(clarificationMessage);
+
+          // Emit model stats
+          this.emitModelStats();
+
+          // Update manifest and emit end
+          if (this.chatId) {
+            updateManifest(this.chatId, {
+              status: 'needs_clarification',
+              llmTurnsUsed: this.llmTurns,
+            });
+          }
+
+          this.emitter.emit('end');
+          return;
+        }
+      }
+
       try {
         do {
           // Phase: Plan
@@ -184,36 +226,7 @@ export class DeepResearchAgent {
       });
 
       // Finalize
-      this.emitter.emit(
-        'stats',
-        JSON.stringify({
-          type: 'modelStats',
-          data: {
-            modelName: getModelName(this.llm), // legacy
-            modelNameChat: getModelName(this.llm),
-            modelNameSystem: getModelName(this.systemLlm),
-            usage: {
-              input_tokens:
-                this.totalUsageChat.input_tokens +
-                this.totalUsageSystem.input_tokens,
-              output_tokens:
-                this.totalUsageChat.output_tokens +
-                this.totalUsageSystem.output_tokens,
-              total_tokens:
-                this.totalUsageChat.total_tokens +
-                this.totalUsageSystem.total_tokens,
-            },
-            usageChat: this.totalUsageChat,
-            usageSystem: this.totalUsageSystem,
-            phaseUsage: Object.fromEntries(
-              (Object.keys(this.phaseUsage) as Phase[]).map((p) => [
-                p,
-                this.phaseUsage[p]?.total_tokens ?? 0,
-              ]),
-            ),
-          },
-        }),
-      );
+      this.emitModelStats();
 
       if (this.chatId)
         updateManifest(this.chatId, {
@@ -270,36 +283,7 @@ export class DeepResearchAgent {
     // Persist tokens for this phase (prefer real if available)
     this.persistTokensByPhase(phase);
     // Emit a model stats snapshot including usage
-    this.emitter.emit(
-      'stats',
-      JSON.stringify({
-        type: 'modelStats',
-        data: {
-          modelName: getModelName(this.llm), // legacy
-          modelNameChat: getModelName(this.llm),
-          modelNameSystem: getModelName(this.systemLlm),
-          usage: {
-            input_tokens:
-              this.totalUsageChat.input_tokens +
-              this.totalUsageSystem.input_tokens,
-            output_tokens:
-              this.totalUsageChat.output_tokens +
-              this.totalUsageSystem.output_tokens,
-            total_tokens:
-              this.totalUsageChat.total_tokens +
-              this.totalUsageSystem.total_tokens,
-          },
-          usageChat: this.totalUsageChat,
-          usageSystem: this.totalUsageSystem,
-          phaseUsage: Object.fromEntries(
-            (Object.keys(this.phaseUsage) as Phase[]).map((p) => [
-              p,
-              this.phaseUsage[p]?.total_tokens ?? 0,
-            ]),
-          ),
-        },
-      }),
-    );
+    this.emitModelStats();
     if (this.chatId)
       updateManifest(this.chatId, {
         phase,
@@ -386,6 +370,39 @@ export class DeepResearchAgent {
     this.emitter.emit('data', JSON.stringify({ type: 'response', data: text }));
   }
 
+  private emitModelStats() {
+    this.emitter.emit(
+      'stats',
+      JSON.stringify({
+        type: 'modelStats',
+        data: {
+          modelName: getModelName(this.llm), // legacy
+          modelNameChat: getModelName(this.llm),
+          modelNameSystem: getModelName(this.systemLlm),
+          usage: {
+            input_tokens:
+              this.totalUsageChat.input_tokens +
+              this.totalUsageSystem.input_tokens,
+            output_tokens:
+              this.totalUsageChat.output_tokens +
+              this.totalUsageSystem.output_tokens,
+            total_tokens:
+              this.totalUsageChat.total_tokens +
+              this.totalUsageSystem.total_tokens,
+          },
+          usageChat: this.totalUsageChat,
+          usageSystem: this.totalUsageSystem,
+          phaseUsage: Object.fromEntries(
+            (Object.keys(this.phaseUsage) as Phase[]).map((p) => [
+              p,
+              this.phaseUsage[p]?.total_tokens ?? 0,
+            ]),
+          ),
+        },
+      }),
+    );
+  }
+
   // Normalize usage metadata fields from different providers
   private normalizeUsageMetadata(usageData: any): {
     input_tokens: number;
@@ -445,36 +462,7 @@ export class DeepResearchAgent {
       total_tokens: prev.total_tokens + norm.total_tokens,
     };
 
-    this.emitter.emit(
-      'stats',
-      JSON.stringify({
-        type: 'modelStats',
-        data: {
-          modelName: getModelName(this.llm), // legacy
-          modelNameChat: getModelName(this.llm),
-          modelNameSystem: getModelName(this.systemLlm),
-          usage: {
-            input_tokens:
-              this.totalUsageChat.input_tokens +
-              this.totalUsageSystem.input_tokens,
-            output_tokens:
-              this.totalUsageChat.output_tokens +
-              this.totalUsageSystem.output_tokens,
-            total_tokens:
-              this.totalUsageChat.total_tokens +
-              this.totalUsageSystem.total_tokens,
-          },
-          usageChat: this.totalUsageChat,
-          usageSystem: this.totalUsageSystem,
-          phaseUsage: Object.fromEntries(
-            (Object.keys(this.phaseUsage) as Phase[]).map((p) => [
-              p,
-              this.phaseUsage[p]?.total_tokens ?? 0,
-            ]),
-          ),
-        },
-      }),
-    );
+    this.emitModelStats();
   }
 
   private emitProgress(
@@ -866,12 +854,6 @@ export class DeepResearchAgent {
       }
 
       try {
-        // Ask the system LLM if the subquery can be answered with current content
-        const judge = withStructuredOutput(
-          this.systemLlm,
-          SubquerySufficiencySchema,
-          {},
-        );
         const messages = [
           new SystemMessage(
             [
@@ -895,26 +877,17 @@ export class DeepResearchAgent {
           messages,
         );
 
-        const result = await judge.invoke(messages, {
-          signal: this.signal,
-          callbacks: [
-            {
-              handleLLMEnd: async (output, _runId, _parentRunId) => {
-                if (
-                  output.llmOutput?.estimatedTokenUsage ||
-                  output.llmOutput?.tokenUsage
-                ) {
-                  this.addPhaseUsage(
-                    'Enhance',
-                    output.llmOutput.estimatedTokenUsage ||
-                      output.llmOutput.tokenUsage,
-                    'system',
-                  );
-                }
-              },
-            },
-          ],
-        });
+        const result = await invokeStructuredOutputWithUsage(
+          this.systemLlm,
+          SubquerySufficiencySchema,
+          messages,
+          this.signal,
+          (usage) => this.addPhaseUsage('Enhance', usage, 'system'),
+          {
+            name: 'SubquerySufficiencyEvaluator',
+          },
+        );
+
         this.countLLMTurns();
 
         console.log('Enhance phase - judging subquery result:', result);
@@ -1084,7 +1057,6 @@ export class DeepResearchAgent {
     });
 
     try {
-      const judge = withStructuredOutput(this.systemLlm, SufficiencySchema, {});
       const messages = [
         new SystemMessage(
           [
@@ -1111,26 +1083,16 @@ export class DeepResearchAgent {
         ),
       ];
 
-      const result = await judge.invoke(messages, {
-        signal: this.signal,
-        callbacks: [
-          {
-            handleLLMEnd: async (output, _runId, _parentRunId) => {
-              if (
-                output.llmOutput?.estimatedTokenUsage ||
-                output.llmOutput?.tokenUsage
-              ) {
-                this.addPhaseUsage(
-                  'Analyze',
-                  output.llmOutput.estimatedTokenUsage ||
-                    output.llmOutput.tokenUsage,
-                  'system',
-                );
-              }
-            },
-          },
-        ],
-      });
+      const result = await invokeStructuredOutputWithUsage(
+        this.systemLlm,
+        SufficiencySchema,
+        messages,
+        this.signal,
+        (usage) => this.addPhaseUsage('Analyze', usage, 'system'),
+        {
+          name: 'SufficiencyJudge',
+        },
+      );
       this.countLLMTurns();
 
       const isSufficient = result?.sufficient === 'yes';

@@ -1,18 +1,14 @@
-import { tool } from '@langchain/core/tools';
-import { z } from 'zod';
-import { RunnableConfig } from '@langchain/core/runnables';
-import { withStructuredOutput } from '@/lib/utils/structuredOutput';
-import { PromptTemplate } from '@langchain/core/prompts';
-import { webSearchRetrieverAgentPrompt } from '@/lib/prompts/webSearch';
 import { searchSearxng } from '@/lib/searxng';
-import { formatDateForLLM } from '@/lib/utils';
-import { Document } from 'langchain/document';
-import computeSimilarity from '@/lib/utils/computeSimilarity';
-import { Command, getCurrentTaskInput } from '@langchain/langgraph';
-import { ToolMessage } from '@langchain/core/messages';
 import { SimplifiedAgentStateType } from '@/lib/state/chatAgentState';
-import { isSoftStop } from '@/lib/utils/runControl';
 import { CachedEmbeddings } from '@/lib/utils/cachedEmbeddings';
+import computeSimilarity from '@/lib/utils/computeSimilarity';
+import { isSoftStop } from '@/lib/utils/runControl';
+import { ToolMessage } from '@langchain/core/messages';
+import { RunnableConfig } from '@langchain/core/runnables';
+import { tool } from '@langchain/core/tools';
+import { Command, getCurrentTaskInput } from '@langchain/langgraph';
+import { Document } from 'langchain/document';
+import { z } from 'zod';
 
 // Schema for simple web search tool input
 const SimpleWebSearchToolSchema = z.object({

@@ -7,7 +7,7 @@ import {
 } from '@langchain/core/messages';
 import { plannerPrompt } from '@/lib/prompts/deepResearch/planner';
 import { removeThinkingBlocksFromMessages } from '@/lib/utils/contentUtils';
-import { withStructuredOutput } from '@/lib/utils/structuredOutput';
+import { invokeStructuredOutputWithUsage } from '@/lib/utils/structuredOutputWithUsage';
 import z from 'zod';
 import { setTemperature } from '@/lib/utils/modelUtils';
 
@@ -61,12 +61,16 @@ export async function deepPlannerTool(
   ];
   try {
     setTemperature(llm, 0.2);
-    const structuredllm = withStructuredOutput(llm, PlannerSchema, {});
-    const response = await structuredllm.invoke(messages, { signal });
 
-    if (onUsage && response.usage) {
-      onUsage(response.usage);
-    }
+    const response = await invokeStructuredOutputWithUsage(
+      llm,
+      PlannerSchema,
+      messages,
+      signal,
+      onUsage,
+      { name: 'deep_planner' },
+    );
+
     console.log(`deepPlannerTool response for ${query}:`, response);
     return response as PlannerOutput;
   } finally {
