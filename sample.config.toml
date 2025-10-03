@@ -1,6 +1,8 @@
 [GENERAL]
 SIMILARITY_MEASURE = "cosine" # "cosine" or "dot"
 KEEP_ALIVE = "5m" # How long to keep Ollama models loaded into memory. (Instead of using -1 use "-1m")
+DEFAULT_CHAT_MODEL = "" # Default chat model to use for any provider - e.g., "llama3.2:latest"
+DEFAULT_EMBEDDING_MODEL = "" # Default embedding model to use for any provider - e.g., "mxbai-embed-large:latest"
 
 [MODELS.OPENAI]
 API_KEY = ""
