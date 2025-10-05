@@ -1,14 +1,6 @@
-import type { SessionManifest } from '@/lib/state/deepResearchAgentState';
 import { clarificationEvaluatorTool } from '@/lib/tools/agents/clarificationEvaluatorTool';
 import { deepPlannerTool } from '@/lib/tools/agents/deepPlannerTool';
 import { searchQueryTool } from '@/lib/tools/agents/searchQueryTool';
-import {
-  ensureSessionDirs,
-  readManifest,
-  updateManifest,
-  writeArtifact,
-  writeManifest,
-} from '@/lib/utils/deepResearchFS';
 import { getModelName } from '@/lib/utils/modelUtils';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import {
@@ -123,25 +115,6 @@ export class DeepResearchAgent {
     try {
       this.query = query;
       this.chatHistory = history as any;
-      if (this.chatId) {
-        ensureSessionDirs(this.chatId);
-        const manifest: SessionManifest = {
-          chatId: this.chatId,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          status: 'running',
-          budgets: {
-            wallClockMs: DeepResearchAgent.WALL_CLOCK_LIMIT_MS,
-            llmTurnsHard: DeepResearchAgent.LLM_TURNS_HARD_LIMIT,
-            llmTurnsSoft: DeepResearchAgent.LLM_TURNS_SOFT_LIMIT,
-          },
-          tokensByPhase: {},
-          llmTurnsUsed: 0,
-          counts: {},
-          phases: {},
-        };
-        writeManifest(this.chatId, manifest);
-      }
 
       // Write this on a background thread after a delay otherwise the emitter won't be listening
       setTimeout(() => {
@@ -175,14 +148,6 @@ export class DeepResearchAgent {
 
           // Emit model stats
           this.emitModelStats();
-
-          // Update manifest and emit end
-          if (this.chatId) {
-            updateManifest(this.chatId, {
-              status: 'needs_clarification',
-              llmTurnsUsed: this.llmTurns,
-            });
-          }
 
           this.emitter.emit('end');
           return;
@@ -228,11 +193,6 @@ export class DeepResearchAgent {
       // Finalize
       this.emitModelStats();
 
-      if (this.chatId)
-        updateManifest(this.chatId, {
-          status: 'completed',
-          llmTurnsUsed: this.llmTurns,
-        });
       this.emitter.emit('end');
     } catch (err: any) {
       if (this.aborted || this.signal.aborted) {
@@ -240,21 +200,12 @@ export class DeepResearchAgent {
         this.emitResponse(
           `\n[Deep Research] cancelled. Emitting best-effort summary.\n`,
         );
-        if (this.chatId)
-          updateManifest(this.chatId, {
-            status: 'cancelled',
-            llmTurnsUsed: this.llmTurns,
-          });
+
         // We could attempt a brief synthesis here if not yet done.
         this.emitter.emit('end');
         return;
       }
       // Unexpected error
-      if (this.chatId)
-        updateManifest(this.chatId, {
-          status: 'error',
-          llmTurnsUsed: this.llmTurns,
-        });
       this.emitter.emit('error', err);
     }
   }
@@ -267,8 +218,6 @@ export class DeepResearchAgent {
     this.currentPhaseIndex = this.phases.indexOf(phase);
     const pct = this.phasePercent();
     this.emitProgress(phase, `Starting ${phase} phase`, pct);
-    if (this.chatId)
-      updateManifest(this.chatId, { phase, phaseEvent: 'start' });
 
     await fn();
 
@@ -280,16 +229,8 @@ export class DeepResearchAgent {
       this.totalUsageChat.total_tokens + this.totalUsageSystem.total_tokens;
     const subMsg = `Tokens this phase: ${Math.round(phaseTok)} • Total: ${Math.round(totalTok)}`;
     this.emitProgress(phase, `${phase} complete`, afterPct, subMsg);
-    // Persist tokens for this phase (prefer real if available)
-    this.persistTokensByPhase(phase);
     // Emit a model stats snapshot including usage
     this.emitModelStats();
-    if (this.chatId)
-      updateManifest(this.chatId, {
-        phase,
-        phaseEvent: 'complete',
-        llmTurnsUsed: this.llmTurns,
-      });
   }
 
   private shouldJumpToSynthesis(): boolean {
@@ -497,19 +438,19 @@ export class DeepResearchAgent {
     }
   }
 
-  private persistTokensByPhase(phase: Phase) {
-    if (!this.chatId) return;
-    const manifest = readManifest(this.chatId);
-    if (!manifest) return;
-    // 7.4: persist only real observed tokens for this phase; if none observed, store 0
-    const real = this.phaseUsage[phase]?.total_tokens;
-    const tokens = typeof real === 'number' ? real : 0;
-    writeManifest(this.chatId, {
-      ...manifest,
-      tokensByPhase: { ...(manifest.tokensByPhase || {}), [phase]: tokens },
-      updatedAt: new Date().toISOString(),
-    } as SessionManifest);
-  }
+  // private persistTokensByPhase(phase: Phase) {
+  //   if (!this.chatId) return;
+  //   const manifest = readManifest(this.chatId);
+  //   if (!manifest) return;
+  //   // 7.4: persist only real observed tokens for this phase; if none observed, store 0
+  //   const real = this.phaseUsage[phase]?.total_tokens;
+  //   const tokens = typeof real === 'number' ? real : 0;
+  //   writeManifest(this.chatId, {
+  //     ...manifest,
+  //     tokensByPhase: { ...(manifest.tokensByPhase || {}), [phase]: tokens },
+  //     updatedAt: new Date().toISOString(),
+  //   } as SessionManifest);
+  // }
 
   private async planPhase(query: string, history: any[]) {
     this.ensureNotAborted();
@@ -585,13 +526,6 @@ export class DeepResearchAgent {
       this.phasePercent(true),
       `${this.state.plan.subquestions.length} subquestions`,
     );
-    if (this.chatId) {
-      writeArtifact(this.chatId, 'plan', 'plan', this.state.plan);
-      // Persist plan counts into manifest
-      updateManifest(this.chatId, {
-        counts: { candidates: 0 },
-      });
-    }
     this.planPass += 1;
   }
 
@@ -778,11 +712,6 @@ export class DeepResearchAgent {
       this.phaseSubPercent(subqs.length - 1, subqs.length, true),
       `${totalCandidates} total across ${perSub.length} subqueries`,
     );
-    if (this.chatId) {
-      updateManifest(this.chatId, {
-        counts: { candidates: totalCandidates },
-      });
-    }
   }
 
   private async enhancePhase() {
