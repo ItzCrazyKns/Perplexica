@@ -19,6 +19,7 @@ interface chatModel {
   name: string;
   customOpenAIKey?: string;
   customOpenAIBaseURL?: string;
+  configuration?: Record<string, any>;
 }
 
 interface embeddingModel {
@@ -87,6 +88,7 @@ export const POST = async (req: Request) => {
           baseURL:
             body.chatModel?.customOpenAIBaseURL || getCustomOpenaiApiUrl(),
         },
+        modelKwargs: body.chatModel.configuration,
       }) as unknown as BaseChatModel;
     } else if (
       chatModelProviders[chatModelProvider] &&
