@@ -35,5 +35,8 @@ API_URL = "" # LM Studio API URL - http://host.docker.internal:1234
 API_URL = "" # Lemonade API URL - http://host.docker.internal:8000
 API_KEY = "" # Optional API key for Lemonade
 
+[MODELS.BEDROCK]
+REGION = "" # AWS Region (e.g., us-west-2) - credentials will be loaded from AWS default credential chain
+
 [API_ENDPOINTS]
 SEARXNG = "" # SearxNG API URL - http://localhost:32768

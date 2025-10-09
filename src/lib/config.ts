@@ -51,6 +51,9 @@ interface Config {
       API_KEY: string;
       MODEL_NAME: string;
     };
+    BEDROCK: {
+      REGION: string;
+    };
   };
   API_ENDPOINTS: {
     SEARXNG: string;
@@ -113,6 +116,8 @@ export const getLemonadeApiEndpoint = () =>
   loadConfig().MODELS.LEMONADE.API_URL;
 
 export const getLemonadeApiKey = () => loadConfig().MODELS.LEMONADE.API_KEY;
+
+export const getBedrockRegion = () => loadConfig().MODELS.BEDROCK.REGION;
 
 const mergeConfigs = (current: any, update: any): any => {
   if (update === null || update === undefined) {
