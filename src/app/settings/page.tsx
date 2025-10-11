@@ -30,6 +30,11 @@ interface SettingsType {
   customOpenaiApiKey: string;
   customOpenaiApiUrl: string;
   customOpenaiModelName: string;
+  exaApiKey: string;
+  tavilyApiKey: string;
+  firecrawlApiKey: string;
+  jinaApiKey: string;
+  searchProvider: string;
 }
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -951,6 +956,104 @@ const Page = () => {
                       }));
                     }}
                     onSave={(value) => saveConfig('lmStudioApiUrl', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    EXA API Key
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="EXA API Key"
+                    value={config.exaApiKey}
+                    isSaving={savingStates['exaApiKey']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        exaApiKey: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('exaApiKey', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    TAVILY API Key
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="TAVILY API Key"
+                    value={config.tavilyApiKey}
+                    isSaving={savingStates['tavilyApiKey']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        tavilyApiKey: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('tavilyApiKey', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    FIRECRAWL API Key
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="FIRECRAWL API Key"
+                    value={config.firecrawlApiKey}
+                    isSaving={savingStates['firecrawlApiKey']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        firecrawlApiKey: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('firecrawlApiKey', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    JINA API Key
+                  </p>
+                  <Input
+                    type="text"
+                    placeholder="JINA API Key"
+                    value={config.jinaApiKey}
+                    isSaving={savingStates['jinaApiKey']}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        jinaApiKey: e.target.value,
+                      }));
+                    }}
+                    onSave={(value) => saveConfig('jinaApiKey', value)}
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <p className="text-black/70 dark:text-white/70 text-sm">
+                    Search Provider
+                  </p>
+                  <Select
+                    value={config.searchProvider}
+                    onChange={(e) => {
+                      setConfig((prev) => ({
+                        ...prev!,
+                        searchProvider: e.target.value,
+                      }));
+                    }}
+                    options={[
+                      { value: 'searxng', label: 'SearXNG' },
+                      { value: 'exa', label: 'EXA' },
+                      { value: 'jina-ai', label: 'JINA AI' },
+                      { value: 'tavily', label: 'TAVILY' },
+                      { value: 'firecrawl', label: 'FireCrawl' },
+                    ]}
                   />
                 </div>
               </div>

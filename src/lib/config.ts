@@ -1,4 +1,5 @@
 import toml from '@iarna/toml';
+import { SearchProviderNames } from './search/searchProviders/types';
 
 // Use dynamic imports for Node.js modules to prevent client-side errors
 let fs: any;
@@ -51,6 +52,24 @@ interface Config {
       API_KEY: string;
       MODEL_NAME: string;
     };
+    EXA: {
+      API_KEY: string;
+    };
+    TAVILY: {
+      API_KEY: string;
+    };
+    FIRECRAWL: {
+      API_KEY: string;
+    };
+    JINA: {
+      API_KEY: string;
+    };
+  };
+  SEARCH: {
+    PROVIDER: SearchProviderNames;
+    LANGUAGE: string;
+    COUNT: number;
+    PROVIDERS: Record<SearchProviderNames, any>;
   };
   API_ENDPOINTS: {
     SEARXNG: string;
@@ -61,7 +80,7 @@ type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>;
 };
 
-const loadConfig = () => {
+export const loadConfig = () => {
   // Server-side only
   if (typeof window === 'undefined') {
     return toml.parse(
@@ -113,6 +132,23 @@ export const getLemonadeApiEndpoint = () =>
   loadConfig().MODELS.LEMONADE.API_URL;
 
 export const getLemonadeApiKey = () => loadConfig().MODELS.LEMONADE.API_KEY;
+
+//
+// AI search providers
+//
+
+export const getExaApiKey = () => loadConfig().MODELS.EXA.API_KEY;
+
+export const getTavilyApiKey = () => loadConfig().MODELS.TAVILY.API_KEY;
+
+export const getFirecrawlApiKey = () => loadConfig().MODELS.FIRECRAWL.API_KEY;
+
+export const getJinaApiKey = () => loadConfig().MODELS.JINA.API_KEY;
+
+export const getSearchProvider = () =>
+  loadConfig()?.SEARCH?.PROVIDER || 'searxng';
+
+export const getSearchLanguage = () => loadConfig().SEARCH.LANGUAGE;
 
 const mergeConfigs = (current: any, update: any): any => {
   if (update === null || update === undefined) {

@@ -16,8 +16,9 @@ import {
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
 } from '@/lib/config';
-import { searchHandlers } from '@/lib/search';
 import { z } from 'zod';
+import { getSearchHandler, HandlerNames } from '@/lib/search';
+import { isValidFocusMode } from '@/lib/validation';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -120,12 +121,14 @@ const handleEmitterEvents = async (
 
       const sourceMessageId = crypto.randomBytes(7).toString('hex');
 
+      const sources = Array.isArray(parsedData.data) ? parsedData.data : [];
+
       db.insert(messagesSchema)
         .values({
           chatId: chatId,
           messageId: sourceMessageId,
           role: 'source',
-          sources: parsedData.data,
+          sources,
           createdAt: new Date().toString(),
         })
         .execute();
@@ -313,9 +316,18 @@ export const POST = async (req: Request) => {
       }
     });
 
-    const handler = searchHandlers[body.focusMode];
+    const focusMode = body.focusMode;
+    if (!isValidFocusMode(focusMode)) {
+      return Response.json({ message: 'Invalid focus mode' }, { status: 400 });
+    }
 
-    if (!handler) {
+    const metaSearchAgent = getSearchHandler(
+      focusMode as HandlerNames,
+      llm,
+      embedding,
+    );
+
+    if (!metaSearchAgent) {
       return Response.json(
         {
           message: 'Invalid focus mode',
@@ -324,11 +336,9 @@ export const POST = async (req: Request) => {
       );
     }
 
-    const stream = await handler.searchAndAnswer(
+    const stream = await metaSearchAgent.searchAndAnswer(
       message.content,
       history,
-      llm,
-      embedding,
       body.optimizationMode,
       body.files,
       body.systemInstructions as string,

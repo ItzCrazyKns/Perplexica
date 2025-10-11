@@ -37,3 +37,52 @@ API_KEY = "" # Optional API key for Lemonade
 
 [API_ENDPOINTS]
 SEARXNG = "" # SearxNG API URL - http://localhost:32768
+
+[MODELS.EXA]
+API_KEY = ""
+
+[MODELS.TAVILY]
+API_KEY = ""
+
+[MODELS.FIRECRAWL]
+API_KEY = ""
+
+[MODELS.JINA]
+API_KEY = ""
+
+[SEARCH]
+PROVIDER = "searxng"
+LANGUAGE = "en"
+# The number of search results to return.
+COUNT = 20
+
+[SEARCH.PROVIDERS]
+  # Provider specific settings. Uncomment and configure as needed.
+
+  # [SEARCH.PROVIDERS.searxng]
+  # A list of engines to use for the search. See SearxNG documentation for available engines.
+  # ENGINES = ["google", "bing"]
+
+  # [SEARCH.PROVIDERS.exa]
+  # Use autoprompt to automatically transform the query.
+  # USE_AUTOPROMPT = false
+  # Other options: START_CRAWL_DATE, END_CRAWL_DATE, SUMMARY, etc.
+
+  # [SEARCH.PROVIDERS.tavily]
+  # Search depth can be 'basic' or 'advanced'.
+  # SEARCH_DEPTH = "basic"
+  # Include raw content in the results.
+  # INCLUDE_RAW_CONTENT = false
+  # Other options: TOPIC, DAYS, INCLUDE_DOMAINS, etc.
+
+  # [SEARCH.PROVIDERS.firecrawl]
+  # Specify the format of the content.
+  # FORMATS = ["markdown"]
+  # Scrape only the main content of the page.
+  # ONLY_MAIN_CONTENT = true
+
+  # [SEARCH.PROVIDERS.jina-ai]
+  # Prevent caching of results.
+  # NO_CACHE = false
+  # Gather images from the page.
+  # GATHER_IMAGES = false
