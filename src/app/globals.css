@@ -36,3 +36,10 @@
     font-size: 16px !important;
   }
 }
+
+html,
+body {
+  overflow-x: hidden;
+  position: relative;
+  width: 100%;
+}
