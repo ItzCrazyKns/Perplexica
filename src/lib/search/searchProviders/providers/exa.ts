@@ -1,18 +1,11 @@
 import { getExaApiKey } from '@/lib/config';
-import { SearchProvider, SearchResult, SearchOptions } from '../types';
+import {
+  SearchProvider,
+  SearchResult,
+  ExaSearchOptions,
+  SearchProviderNames,
+} from '../types';
 import Exa from 'exa-js';
-
-export interface ExaSearchOptions extends SearchOptions {
-  useAutoprompt?: boolean;
-  numResults?: number;
-  startCrawlDate?: string;
-  endCrawlDate?: string;
-  textContentsOnly?: boolean;
-  summary?: boolean;
-  highlightTitle?: boolean;
-  highlightUrl?: boolean;
-  highlightText?: boolean;
-}
 
 export interface ExaSearchResult extends SearchResult {
   score?: number;
@@ -42,7 +35,7 @@ export class ExaProvider implements SearchProvider {
   ): Promise<ExaSearchResult[]> {
     try {
       const searchOptions: any = {
-        numResults: opts?.numResults,
+        numResults: opts?.count || 10, // Use common count option
         startCrawlDate: opts?.startCrawlDate,
         endCrawlDate: opts?.endCrawlDate,
       };
@@ -102,7 +95,7 @@ export class ExaProvider implements SearchProvider {
     }
   }
 
-  getName(): string {
+  getName(): SearchProviderNames {
     return 'exa';
   }
 

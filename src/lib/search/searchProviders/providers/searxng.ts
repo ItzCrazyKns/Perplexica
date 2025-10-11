@@ -1,5 +1,10 @@
 import { getSearxngApiEndpoint } from '@/lib/config';
-import { SearchProvider, SearchResult, SearchOptions } from '../types';
+import {
+  SearchProvider,
+  SearchProviderNames,
+  SearchResult,
+  SearxngSearchOptions,
+} from '../types';
 import axios from 'axios';
 
 export class SearxngProvider implements SearchProvider {
@@ -12,13 +17,19 @@ export class SearxngProvider implements SearchProvider {
     }
   }
 
-  private buildSearchURL(query: string, opts?: SearchOptions): URL {
+  private buildSearchURL(query: string, opts?: SearxngSearchOptions): URL {
     const url = new URL(`${this.searxngURL}/search?format=json`);
     url.searchParams.append('q', query);
 
     if (opts) {
+      if (opts.count) {
+        url.searchParams.append('limit', String(opts.count));
+      }
+
       Object.keys(opts).forEach((key) => {
-        const value = opts[key as keyof SearchOptions];
+        if (key === 'count') return; // Already handled
+
+        const value = opts[key as keyof SearxngSearchOptions];
         if (Array.isArray(value)) {
           url.searchParams.append(key, value.join(','));
           return;
@@ -43,7 +54,10 @@ export class SearxngProvider implements SearchProvider {
     }));
   }
 
-  async search(query: string, opts?: SearchOptions): Promise<SearchResult[]> {
+  async search(
+    query: string,
+    opts?: SearxngSearchOptions,
+  ): Promise<SearchResult[]> {
     const url = this.buildSearchURL(query, opts);
 
     try {
@@ -59,7 +73,7 @@ export class SearxngProvider implements SearchProvider {
     }
   }
 
-  getName(): string {
+  getName(): SearchProviderNames {
     return 'searxng';
   }
 

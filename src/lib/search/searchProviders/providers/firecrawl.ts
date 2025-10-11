@@ -1,13 +1,11 @@
 import { getFirecrawlApiKey } from '@/lib/config';
-import { SearchProvider, SearchResult, SearchOptions } from '../types';
+import {
+  SearchProvider,
+  SearchResult,
+  FirecrawlSearchOptions,
+  SearchProviderNames,
+} from '../types';
 import Firecrawl from '@mendable/firecrawl-js';
-
-export interface FirecrawlSearchOptions extends SearchOptions {
-  formats?: ('markdown' | 'html' | 'rawHtml')[];
-  onlyMainContent?: boolean;
-  timeout?: number;
-  waitFor?: number;
-}
 
 export interface FirecrawlCrawlOptions {
   limit?: number;
@@ -62,7 +60,7 @@ export class FirecrawlProvider implements SearchProvider {
     }
   }
 
-  getName(): string {
+  getName(): SearchProviderNames {
     return 'firecrawl';
   }
 

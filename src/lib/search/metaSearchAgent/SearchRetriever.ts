@@ -97,17 +97,14 @@ export class SearchRetriever {
         } else {
           question = question.replace(/<think>.*?<\/think>/g, '');
 
-          const searchOptions = {
-            language: getSearchLanguage() || 'en',
-            engines: this.configManager.activeEngines,
-          };
-
           const provider = getSearchProvider();
           const searchProvider =
             baseSearchProviderManager.getProvider(provider);
           if (!searchProvider) {
             throw new Error('Search provider not found');
           }
+
+          const searchOptions = this.configManager.getSearchOptionsFor(provider);
 
           // You can specify a specific provider or leave it empty to use all available ones
           const providerResults = await searchProvider.search(

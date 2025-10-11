@@ -1,12 +1,11 @@
 import { getJinaApiKey } from '@/lib/config';
-import { SearchProvider, SearchResult, SearchOptions } from '../types';
+import {
+  SearchProvider,
+  SearchResult,
+  JinaSearchOptions,
+  SearchProviderNames,
+} from '../types';
 import axios from 'axios';
-
-export interface JinaSearchOptions extends SearchOptions {
-  noCache?: boolean;
-  gatherImages?: boolean;
-  gatherLinks?: boolean;
-}
 
 export class JinaAIProvider implements SearchProvider {
   private apiKey: string;
@@ -76,7 +75,7 @@ export class JinaAIProvider implements SearchProvider {
     }
   }
 
-  getName(): string {
+  getName(): SearchProviderNames {
     return 'jina-ai';
   }
 

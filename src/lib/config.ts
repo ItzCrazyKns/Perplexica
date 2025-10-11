@@ -1,4 +1,5 @@
 import toml from '@iarna/toml';
+import { SearchProviderNames } from './search/searchProviders/types';
 
 // Use dynamic imports for Node.js modules to prevent client-side errors
 let fs: any;
@@ -67,6 +68,8 @@ interface Config {
   SEARCH: {
     PROVIDER: 'searxng' | 'exa' | 'jina-ai' | 'tavily' | 'firecrawl';
     LANGUAGE: string;
+    COUNT: number;
+    PROVIDERS: Record<SearchProviderNames, any>;
   };
   API_ENDPOINTS: {
     SEARXNG: string;
@@ -77,7 +80,7 @@ type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>;
 };
 
-const loadConfig = () => {
+export const loadConfig = () => {
   // Server-side only
   if (typeof window === 'undefined') {
     return toml.parse(
@@ -142,7 +145,8 @@ export const getFirecrawlApiKey = () => loadConfig().MODELS.FIRECRAWL.API_KEY;
 
 export const getJinaApiKey = () => loadConfig().MODELS.JINA.API_KEY;
 
-export const getSearchProvider = () => loadConfig().SEARCH.PROVIDER;
+export const getSearchProvider = () =>
+  loadConfig()?.SEARCH?.PROVIDER || 'searxng';
 
 export const getSearchLanguage = () => loadConfig().SEARCH.LANGUAGE;
 

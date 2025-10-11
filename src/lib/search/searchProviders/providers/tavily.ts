@@ -1,19 +1,11 @@
 import { getTavilyApiKey } from '@/lib/config';
-import { SearchProvider, SearchResult, SearchOptions } from '../types';
+import {
+  SearchProvider,
+  SearchProviderNames,
+  SearchResult,
+  TavilySearchOptions,
+} from '../types';
 import { tavily } from '@tavily/core';
-
-export interface TavilySearchOptions extends SearchOptions {
-  searchDepth?: 'basic' | 'advanced';
-  topic?: 'general' | 'news' | 'finance';
-  days?: number;
-  timeRange?: 'd' | 'w' | 'm' | 'y';
-  maxResults?: number;
-  includeImages?: boolean;
-  includeAnswer?: boolean;
-  includeRawContent?: boolean;
-  includeDomains?: string[];
-  excludeDomains?: string[];
-}
 
 export interface TavilySearchResult extends SearchResult {
   score?: number;
@@ -38,7 +30,7 @@ export class TavilyProvider implements SearchProvider {
       const searchOptions: any = {
         searchDepth: opts?.searchDepth || 'basic',
         topic: opts?.topic || 'general',
-        maxResults: opts?.maxResults || 5,
+        maxResults: opts?.count || 10, // Use common count option
       };
 
       if (opts?.days) {
@@ -88,7 +80,7 @@ export class TavilyProvider implements SearchProvider {
     }
   }
 
-  getName(): string {
+  getName(): SearchProviderNames {
     return 'tavily';
   }
 
