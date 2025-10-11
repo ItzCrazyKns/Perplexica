@@ -1,14 +1,18 @@
-import axios from 'axios';
-import { getSearxngApiEndpoint } from './config';
+/**
+ * @deprecated This file is kept for backward compatibility.
+ * Please use the new search provider system instead:
+ * import { search } from './search/providers';
+ *
+ * The new system supports multiple search providers (SearxNG, Google Custom Search, etc.)
+ * Configure via config.toml [SEARCH] section.
+ */
 
-interface SearxngSearchOptions {
-  categories?: string[];
-  engines?: string[];
-  language?: string;
-  pageno?: number;
-}
+import { search } from './search/providers';
+import type { SearchOptions, SearchResponse } from './search/providers';
 
-interface SearxngSearchResult {
+// Re-export types for backward compatibility
+export interface SearxngSearchOptions extends SearchOptions {}
+export interface SearxngSearchResult {
   title: string;
   url: string;
   img_src?: string;
@@ -19,30 +23,13 @@ interface SearxngSearchResult {
   iframe_src?: string;
 }
 
+/**
+ * @deprecated Use the new `search()` function from './search/providers' instead
+ * This function now delegates to the configured search provider
+ */
 export const searchSearxng = async (
   query: string,
   opts?: SearxngSearchOptions,
-) => {
-  const searxngURL = getSearxngApiEndpoint();
-
-  const url = new URL(`${searxngURL}/search?format=json`);
-  url.searchParams.append('q', query);
-
-  if (opts) {
-    Object.keys(opts).forEach((key) => {
-      const value = opts[key as keyof SearxngSearchOptions];
-      if (Array.isArray(value)) {
-        url.searchParams.append(key, value.join(','));
-        return;
-      }
-      url.searchParams.append(key, value as string);
-    });
-  }
-
-  const res = await axios.get(url.toString());
-
-  const results: SearxngSearchResult[] = res.data.results;
-  const suggestions: string[] = res.data.suggestions;
-
-  return { results, suggestions };
+): Promise<SearchResponse> => {
+  return search(query, opts);
 };

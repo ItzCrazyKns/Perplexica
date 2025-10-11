@@ -2,6 +2,16 @@
 SIMILARITY_MEASURE = "cosine" # "cosine" or "dot"
 KEEP_ALIVE = "5m" # How long to keep Ollama models loaded into memory. (Instead of using -1 use "-1m")
 
+[SEARCH]
+PROVIDER = "searxng" # Options: "searxng" or "google_custom_search"
+
+[SEARCH.SEARXNG]
+API_URL = "" # SearxNG API URL - http://localhost:32768 or http://searxng:8080 (Docker)
+
+[SEARCH.GOOGLE_CUSTOM_SEARCH]
+API_KEY = "" # Google Custom Search API Key - Get from https://developers.google.com/custom-search/v1/overview
+CX = "" # Custom Search Engine ID - Get from https://programmablesearchengine.google.com/
+
 [MODELS.OPENAI]
 API_KEY = ""
 
@@ -36,4 +46,4 @@ API_URL = "" # Lemonade API URL - http://host.docker.internal:8000
 API_KEY = "" # Optional API key for Lemonade
 
 [API_ENDPOINTS]
-SEARXNG = "" # SearxNG API URL - http://localhost:32768
+SEARXNG = "" # DEPRECATED: Use [SEARCH.SEARXNG.API_URL] instead. Legacy support maintained for backward compatibility.

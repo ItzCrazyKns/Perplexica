@@ -7,7 +7,7 @@ import { ChatPromptTemplate } from '@langchain/core/prompts';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
-import { searchSearxng } from '../searxng';
+import { search } from '../search/providers';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import LineOutputParser from '../outputParsers/lineOutputParser';
 
@@ -73,7 +73,7 @@ const createImageSearchChain = (llm: BaseChatModel) => {
       return await queryParser.parse(input);
     }),
     RunnableLambda.from(async (input: string) => {
-      const res = await searchSearxng(input, {
+      const res = await search(input, {
         engines: ['bing images', 'google images'],
       });
 
