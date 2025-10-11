@@ -16,6 +16,16 @@ interface Config {
     SIMILARITY_MEASURE: string;
     KEEP_ALIVE: string;
   };
+  SEARCH: {
+    PROVIDER: string;
+    SEARXNG: {
+      API_URL: string;
+    };
+    GOOGLE_CUSTOM_SEARCH: {
+      API_KEY: string;
+      CX: string;
+    };
+  };
   MODELS: {
     OPENAI: {
       API_KEY: string;
@@ -86,8 +96,30 @@ export const getAnthropicApiKey = () => loadConfig().MODELS.ANTHROPIC.API_KEY;
 
 export const getGeminiApiKey = () => loadConfig().MODELS.GEMINI.API_KEY;
 
-export const getSearxngApiEndpoint = () =>
-  process.env.SEARXNG_API_URL || loadConfig().API_ENDPOINTS.SEARXNG;
+export const getSearchProvider = () => {
+  const config = loadConfig();
+  return config.SEARCH?.PROVIDER || 'searxng';
+};
+
+export const getSearxngApiEndpoint = () => {
+  const config = loadConfig();
+  return (
+    process.env.SEARXNG_API_URL ||
+    config.SEARCH?.SEARXNG?.API_URL ||
+    config.API_ENDPOINTS?.SEARXNG ||
+    ''
+  );
+};
+
+export const getGoogleCustomSearchApiKey = () => {
+  const config = loadConfig();
+  return config.SEARCH?.GOOGLE_CUSTOM_SEARCH?.API_KEY || '';
+};
+
+export const getGoogleCustomSearchCx = () => {
+  const config = loadConfig();
+  return config.SEARCH?.GOOGLE_CUSTOM_SEARCH?.CX || '';
+};
 
 export const getOllamaApiEndpoint = () => loadConfig().MODELS.OLLAMA.API_URL;
 

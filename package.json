@@ -4,7 +4,7 @@
   "license": "MIT",
   "author": "ItzCrazyKns",
   "scripts": {
-    "dev": "next dev",
+    "dev": "PORT=8001 next dev",
     "build": "npm run db:migrate && next build",
     "start": "next start",
     "lint": "next lint",

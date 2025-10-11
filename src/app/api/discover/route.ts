@@ -1,4 +1,4 @@
-import { searchSearxng } from '@/lib/searxng';
+import { search } from '@/lib/search/providers';
 
 const websitesForTopic = {
   tech: {
@@ -45,7 +45,7 @@ export const GET = async (req: Request) => {
           selectedTopic.links.flatMap((link) =>
             selectedTopic.query.map(async (query) => {
               return (
-                await searchSearxng(`site:${link} ${query}`, {
+                await search(`site:${link} ${query}`, {
                   engines: ['bing news'],
                   pageno: 1,
                   language: 'en',
@@ -65,7 +65,7 @@ export const GET = async (req: Request) => {
         .sort(() => Math.random() - 0.5);
     } else {
       data = (
-        await searchSearxng(
+        await search(
           `site:${selectedTopic.links[Math.floor(Math.random() * selectedTopic.links.length)]} ${selectedTopic.query[Math.floor(Math.random() * selectedTopic.query.length)]}`,
           {
             engines: ['bing news'],
