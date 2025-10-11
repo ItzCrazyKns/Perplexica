@@ -66,7 +66,7 @@ interface Config {
     };
   };
   SEARCH: {
-    PROVIDER: 'searxng' | 'exa' | 'jina-ai' | 'tavily' | 'firecrawl';
+    PROVIDER: SearchProviderNames;
     LANGUAGE: string;
     COUNT: number;
     PROVIDERS: Record<SearchProviderNames, any>;
