@@ -16,6 +16,8 @@ import {
 } from '@langchain/core/prompts';
 import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 import { BasicChainInput } from './types';
+import { getSearchProvider } from '@/lib/config';
+import { SearchProviderNames } from '../searchProviders/types';
 
 export class AnswerGenerator {
   private strParser = new StringOutputParser();
@@ -25,12 +27,6 @@ export class AnswerGenerator {
     private configManager: ConfigManager,
     private embeddings: Embeddings,
   ) {}
-
-  private processDocs(docs: Document[]) {
-    return docs
-      .map((doc, idx) => `${idx + 1}. ${doc.metadata.title} ${doc.pageContent}`)
-      .join('\n');
-  }
 
   async createAnsweringChain(
     fileIds: string[],
@@ -65,18 +61,27 @@ export class AnswerGenerator {
             docs = searchResult.docs;
           }
 
-          const ranker = new DocumentRanker(
-            this.configManager,
-            this.embeddings,
-          );
-          const sortedDocs = await ranker.rerankDocs(
-            query,
-            docs ?? [],
-            fileIds,
-            optimizationMode,
-          );
+          const provider = getSearchProvider();
+          const providersThatNeedReranking: SearchProviderNames[] = ['searxng'];
 
-          return sortedDocs;
+          // rerank only if needed
+          if (provider && providersThatNeedReranking.includes(provider)) {
+            console.log('use reranking');
+            const ranker = new DocumentRanker(
+              this.configManager,
+              this.embeddings,
+            );
+            const sortedDocs = await ranker.rerankDocs(
+              query,
+              docs ?? [],
+              fileIds,
+              optimizationMode,
+            );
+
+            return sortedDocs;
+          }
+
+          return docs ?? [];
         }).withConfig({
           runName: 'FinalSourceRetriever',
         }),

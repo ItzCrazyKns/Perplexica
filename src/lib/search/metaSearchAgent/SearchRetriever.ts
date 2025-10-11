@@ -102,7 +102,6 @@ export class SearchRetriever {
             engines: this.configManager.activeEngines,
           };
 
-          // const searchProvider = baseSearchProviderManager.getProvider('searxng');
           const provider = getSearchProvider();
           const searchProvider =
             baseSearchProviderManager.getProvider(provider);
