@@ -12,6 +12,11 @@ import {
   getLMStudioApiEndpoint,
   getLemonadeApiEndpoint,
   getLemonadeApiKey,
+  getExaApiKey,
+  getSearchProvider,
+  getTavilyApiKey,
+  getFirecrawlApiKey,
+  getJinaApiKey,
   updateConfig,
   getOllamaApiKey,
 } from '@/lib/config';
@@ -65,6 +70,11 @@ export const GET = async (req: Request) => {
     config['geminiApiKey'] = getGeminiApiKey();
     config['deepseekApiKey'] = getDeepseekApiKey();
     config['aimlApiKey'] = getAimlApiKey();
+    config['exaApiKey'] = getExaApiKey();
+    config['tavilyApiKey'] = getTavilyApiKey();
+    config['firecrawlApiKey'] = getFirecrawlApiKey();
+    config['jinaApiKey'] = getJinaApiKey();
+    config['searchProvider'] = getSearchProvider();
     config['customOpenaiApiUrl'] = getCustomOpenaiApiUrl();
     config['customOpenaiApiKey'] = getCustomOpenaiApiKey();
     config['customOpenaiModelName'] = getCustomOpenaiModelName();
@@ -119,6 +129,21 @@ export const POST = async (req: Request) => {
           API_KEY: config.customOpenaiApiKey,
           MODEL_NAME: config.customOpenaiModelName,
         },
+        EXA: {
+          API_KEY: config.exaApiKey,
+        },
+        TAVILY: {
+          API_KEY: config.tavilyApiKey,
+        },
+        FIRECRAWL: {
+          API_KEY: config.firecrawlApiKey,
+        },
+        JINA: {
+          API_KEY: config.jinaApiKey,
+        },
+      },
+      SEARCH: {
+        PROVIDER: config.searchProvider,
       },
     };
 

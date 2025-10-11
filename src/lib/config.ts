@@ -51,6 +51,22 @@ interface Config {
       API_KEY: string;
       MODEL_NAME: string;
     };
+    EXA: {
+      API_KEY: string;
+    };
+    TAVILY: {
+      API_KEY: string;
+    };
+    FIRECRAWL: {
+      API_KEY: string;
+    };
+    JINA: {
+      API_KEY: string;
+    };
+  };
+  SEARCH: {
+    PROVIDER: 'searxng' | 'exa' | 'jina-ai' | 'tavily' | 'firecrawl';
+    LANGUAGE: string;
   };
   API_ENDPOINTS: {
     SEARXNG: string;
@@ -113,6 +129,22 @@ export const getLemonadeApiEndpoint = () =>
   loadConfig().MODELS.LEMONADE.API_URL;
 
 export const getLemonadeApiKey = () => loadConfig().MODELS.LEMONADE.API_KEY;
+
+//
+// AI search providers
+//
+
+export const getExaApiKey = () => loadConfig().MODELS.EXA.API_KEY;
+
+export const getTavilyApiKey = () => loadConfig().MODELS.TAVILY.API_KEY;
+
+export const getFirecrawlApiKey = () => loadConfig().MODELS.FIRECRAWL.API_KEY;
+
+export const getJinaApiKey = () => loadConfig().MODELS.JINA.API_KEY;
+
+export const getSearchProvider = () => loadConfig().SEARCH.PROVIDER;
+
+export const getSearchLanguage = () => loadConfig().SEARCH.LANGUAGE;
 
 const mergeConfigs = (current: any, update: any): any => {
   if (update === null || update === undefined) {

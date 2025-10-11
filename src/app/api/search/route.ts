@@ -1,18 +1,18 @@
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import type { Embeddings } from '@langchain/core/embeddings';
+import { Embeddings } from '@langchain/core/embeddings';
 import { ChatOpenAI } from '@langchain/openai';
 import {
   getAvailableChatModelProviders,
   getAvailableEmbeddingModelProviders,
 } from '@/lib/providers';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
-import { MetaSearchAgentType } from '@/lib/search/metaSearchAgent';
 import {
   getCustomOpenaiApiKey,
   getCustomOpenaiApiUrl,
   getCustomOpenaiModelName,
 } from '@/lib/config';
-import { searchHandlers } from '@/lib/search';
+import { getSearchHandler, HandlerNames } from '@/lib/search';
+import { isValidFocusMode } from '@/lib/validation';
 
 interface chatModel {
   provider: string;
@@ -112,17 +112,24 @@ export const POST = async (req: Request) => {
       );
     }
 
-    const searchHandler: MetaSearchAgentType = searchHandlers[body.focusMode];
-
-    if (!searchHandler) {
+    const focusMode = body.focusMode;
+    if (!isValidFocusMode(focusMode)) {
       return Response.json({ message: 'Invalid focus mode' }, { status: 400 });
     }
 
-    const emitter = await searchHandler.searchAndAnswer(
-      body.query,
-      history,
+    const metaSearchAgent = getSearchHandler(
+      focusMode as HandlerNames,
       llm,
       embeddings,
+    );
+
+    if (!metaSearchAgent) {
+      return Response.json({ message: 'Invalid focus mode' }, { status: 400 });
+    }
+
+    const emitter = await metaSearchAgent.searchAndAnswer(
+      body.query,
+      history,
       body.optimizationMode,
       [],
       body.systemInstructions || '',

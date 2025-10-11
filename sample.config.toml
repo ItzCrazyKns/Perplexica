@@ -37,3 +37,19 @@ API_KEY = "" # Optional API key for Lemonade
 
 [API_ENDPOINTS]
 SEARXNG = "" # SearxNG API URL - http://localhost:32768
+
+[MODELS.EXA]
+API_KEY = ""
+
+[MODELS.TAVILY]
+API_KEY = ""
+
+[MODELS.FIRECRAWL]
+API_KEY = ""
+
+[MODELS.JINA]
+API_KEY = ""
+
+[SEARCH]
+PROVIDER = "searxng"
+LANGUAGE = "en"
