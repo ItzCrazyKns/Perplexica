@@ -304,7 +304,7 @@ export class SimplifiedAgent {
           messageId: this.messageId,
           retrievalSignal: this.retrievalSignal,
         },
-        recursionLimit: 35, // Allow sufficient iterations for tool use
+        recursionLimit: 75, // Allow sufficient iterations for tool use
         signal: this.retrievalSignal,
         ...getLangfuseCallbacks(),
       };
