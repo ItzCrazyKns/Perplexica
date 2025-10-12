@@ -7,21 +7,21 @@ const OptimizationModes = [
     key: 'speed',
     title: 'Speed',
     description:
-      'Prioritize speed and get the quickest possible answer. Uses only web search results - attached files will not be processed.',
+      'Prioritize speed and get the quickest possible answer. Uses only web search preview results. Full web content and file content will not be retrieved or processed. Best for simple questions when you need a fast response with low token usage.',
     icon: <Zap size={20} className="text-accent" />,
   },
   {
     key: 'agent',
-    title: 'Agent (Experimental)',
+    title: 'Agent',
     description:
-      'Use an agentic workflow to answer complex multi-part questions. This mode may take longer and is experimental. It requires a model that supports tool calling.',
+      'Use an agentic workflow that uses the chat model to explore and answer complex multi-part questions. This requires using a chat model that supports tool use. Medium speed and token usage. It will use web search preview results, can retrieve full web content and file content as needed to answer the question.',
     icon: <Bot size={20} className="text-accent" />,
   },
   {
     key: 'deepResearch',
     title: 'Deep Research',
     description:
-      'Run a comprehensive, multi-phase research with clustering, synthesis, and inline citations. Streams progress; can take up to ~15 minutes.',
+      'Performs deep, thorough, multi-turn web research. This mode may take longer to respond but aims to provide the most comprehensive answer. It will explore multiple facets of the question and gather information from a variety of sources. Best for in-depth research tasks. Typically slower and highest token usage.',
     icon: <Microscope size={20} className="text-accent" />,
   },
 ];

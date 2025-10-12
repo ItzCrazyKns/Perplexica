@@ -1,7 +1,6 @@
 import db from '@/lib/db';
 import { chats, messages } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { deleteSessionArtifacts } from '@/lib/utils/deepResearchFS';
 
 export const GET = async (
   req: Request,
@@ -55,13 +54,6 @@ export const DELETE = async (
 
     await db.delete(chats).where(eq(chats.id, id)).execute();
     await db.delete(messages).where(eq(messages.chatId, id)).execute();
-
-    // Best-effort cleanup of deep research artifacts
-    try {
-      deleteSessionArtifacts(id);
-    } catch (e) {
-      console.warn('Failed to delete deep research artifacts for chat', id, e);
-    }
 
     return Response.json(
       { message: 'Chat deleted successfully' },
