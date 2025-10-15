@@ -21,6 +21,10 @@ const bedrockChatModels: Record<string, string>[] = [
     key: 'us.anthropic.claude-opus-4-1-20250805-v1:0',
   },
   {
+    displayName: 'Claude 4 Opus',
+    key: 'us.anthropic.claude-opus-4-20250514-v1:0',
+  },
+  {
     displayName: 'Claude 4.0 Sonnet',
     key: 'us.anthropic.claude-sonnet-4-20250514-v1:0',
   },
@@ -29,24 +33,24 @@ const bedrockChatModels: Record<string, string>[] = [
     key: 'us.anthropic.claude-sonnet-4-20250514-v1:0:1m',
   },
   {
-    displayName: 'Claude 3.7 Sonnet v1',
-    key: 'anthropic.claude-3-7-sonnet-20250219-v1:0',
+    displayName: 'Claude 3.7 Sonnet',
+    key: 'us.anthropic.claude-3-7-sonnet-20250219-v1:0',
   },
   {
     displayName: 'Claude 3.5 Sonnet v2',
-    key: 'anthropic.claude-3-5-sonnet-20241022-v2:0',
+    key: 'us.anthropic.claude-3-5-sonnet-20241022-v2:0',
   },
   {
     displayName: 'Claude 3.5 Sonnet',
-    key: 'anthropic.claude-3-5-sonnet-20240620-v1:0',
+    key: 'us.anthropic.claude-3-5-sonnet-20240620-v1:0',
   },
   {
     displayName: 'Claude 3.5 Haiku',
-    key: 'anthropic.claude-3-5-haiku-20241022-v1:0',
+    key: 'us.anthropic.claude-3-5-haiku-20241022-v1:0',
   },
   {
     displayName: 'Claude 3 Opus',
-    key: 'anthropic.claude-3-opus-20240229-v1:0',
+    key: 'us.anthropic.claude-3-opus-20240229-v1:0',
   },
   {
     displayName: 'Claude 3 Sonnet',
@@ -54,7 +58,31 @@ const bedrockChatModels: Record<string, string>[] = [
   },
   {
     displayName: 'Claude 3 Haiku',
-    key: 'anthropic.claude-3-haiku-20240307-v1:0',
+    key: 'us.anthropic.claude-3-haiku-20240307-v1:0',
+  },
+  {
+    displayName: 'Claude Intelligent Router',
+    key: 'default-prompt-router/anthropic.claude:1',
+  },
+  {
+    displayName: 'Nova Micro',
+    key: 'us.amazon.nova-micro-v1:0',
+  },
+  {
+    displayName: 'Nova Lite',
+    key: 'us.amazon.nova-lite-v1:0',
+  },
+  {
+    displayName: 'Nova Pro',
+    key: 'us.amazon.nova-pro-v1:0',
+  },
+  {
+    displayName: 'Nova Premier',
+    key: 'us.amazon.nova-premier-v1:0',
+  },
+  {
+    displayName: 'GPT OSS 120B',
+    key: 'openai.gpt-oss-120b-1:0',
   },
 ];
 
