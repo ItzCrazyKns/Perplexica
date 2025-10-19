@@ -1,12 +1,12 @@
 import { ChatAnthropic } from '@langchain/anthropic';
 import { ChatModel } from '.';
 import { getAnthropicApiKey } from '../config';
+import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 export const PROVIDER_INFO = {
   key: 'anthropic',
   displayName: 'Anthropic',
 };
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 
 const anthropicChatModels: Record<string, string>[] = [
   {
@@ -20,6 +20,14 @@ const anthropicChatModels: Record<string, string>[] = [
   {
     displayName: 'Claude 4 Sonnet',
     key: 'claude-sonnet-4-20250514',
+  },
+  {
+    displayName: 'Claude 4.5 Sonnet',
+    key: 'claude-sonnet-4-5-20250929',
+  },
+  {
+    displayName: 'Claude 4.5 Haiku',
+    key: 'claude-haiku-4-5-20251001',
   },
   {
     displayName: 'Claude 3.7 Sonnet',
@@ -60,13 +68,26 @@ export const loadAnthropicChatModels = async () => {
     const chatModels: Record<string, ChatModel> = {};
 
     anthropicChatModels.forEach((model) => {
+      const baseConfig: any = {
+        apiKey: anthropicApiKey,
+        modelName: model.key,
+      };
+
+      const chatModel = new ChatAnthropic(baseConfig) as unknown as BaseChatModel;
+
+      if ((chatModel as any).temperature !== undefined) {
+        delete (chatModel as any).temperature;
+      }
+      if ((chatModel as any).topP !== undefined) {
+        delete (chatModel as any).topP;
+      }
+      if ((chatModel as any).top_p !== undefined) {
+        delete (chatModel as any).top_p;
+      }
+
       chatModels[model.key] = {
         displayName: model.displayName,
-        model: new ChatAnthropic({
-          apiKey: anthropicApiKey,
-          modelName: model.key,
-          temperature: 0.7,
-        }) as unknown as BaseChatModel,
+        model: chatModel,
       };
     });
 
