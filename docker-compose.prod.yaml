@@ -1,0 +1,25 @@
+services:
+  app:
+    image: itzcrazykns1337/perplexica:main
+    build:
+      context: .
+      dockerfile: app.dockerfile
+    environment:
+      - SEARXNG_API_URL=https://searchweb.trangvang.ai
+      - DATA_DIR=/home/perplexica
+    ports:
+      - 3000:3000
+    networks:
+      - perplexica-network
+    volumes:
+      - backend-dbstore:/home/perplexica/data
+      - uploads:/home/perplexica/uploads
+      - ./config.toml:/home/perplexica/config.toml
+    restart: unless-stopped
+
+networks:
+  perplexica-network:
+
+volumes:
+  backend-dbstore:
+  uploads:
