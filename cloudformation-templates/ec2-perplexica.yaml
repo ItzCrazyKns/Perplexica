@@ -1,0 +1,216 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Deploy Perplexica AI Search Engine on EC2 t3.small with Docker Compose'
+
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t3.small
+    AllowedValues:
+      - t3.small
+      - t3.medium
+      - t3.large
+      - t2.small
+      - t2.medium
+      - t2.large
+
+  VpcId:
+    Description: VPC ID to launch the instance in
+    Type: AWS::EC2::VPC::Id
+
+  SubnetId:
+    Description: Subnet ID to launch the instance in
+    Type: AWS::EC2::Subnet::Id
+
+  SSHAllowCIDR:
+    Description: CIDR block allowed for SSH access
+    Type: String
+    Default: 0.0.0.0/0
+
+  WebAllowCIDR:
+    Description: CIDR block allowed for web access
+    Type: String
+    Default: 0.0.0.0/0
+
+Mappings:
+  AWSRegionToAMI:
+    us-east-1:
+      AMI: ami-0c02fb55956c7d316
+    us-east-2:
+      AMI: ami-0233c2d874b811deb
+    us-west-1:
+      AMI: ami-053b0d53c279acc90
+    us-west-2:
+      AMI: ami-08d8ac128e33b731a
+    eu-west-1:
+      AMI: ami-0d729a607b3e3b33b
+    eu-west-2:
+      AMI: ami-0d19799fb63b0fbb1
+    ap-southeast-1:
+      AMI: ami-0e5b6a6c8733b3b2e
+    ap-southeast-2:
+      AMI: ami-048939013088685ff
+    ap-northeast-1:
+      AMI: ami-0a8aee1f8b679373d
+
+Resources:
+  # Security Group for EC2 instance
+  PerplexicaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Perplexica EC2 instance
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHAllowCIDR
+          Description: SSH access
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Ref WebAllowCIDR
+          Description: HTTP access
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref WebAllowCIDR
+          Description: HTTPS access
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: !Ref WebAllowCIDR
+          Description: Perplexica Web UI access
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
+      Tags:
+        - Key: Name
+          Value: Perplexica-Security-Group
+
+  # IAM Role for EC2 instance
+  PerplexicaInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: Name
+          Value: Perplexica-Instance-Role
+
+  PerplexicaInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref PerplexicaInstanceRole
+
+  # EC2 Instance
+  PerplexicaInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !FindInMap [AWSRegionToAMI, !Ref 'AWS::Region', AMI]
+      KeyName: !Ref KeyName
+      IamInstanceProfile: !Ref PerplexicaInstanceProfile
+      SecurityGroupIds:
+        - !Ref PerplexicaSecurityGroup
+      SubnetId: !Ref SubnetId
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+
+          # Update system packages
+          yum update -y
+
+          # Install Docker
+          yum install -y docker
+          systemctl start docker
+          systemctl enable docker
+          usermod -a -G docker ec2-user
+
+          # Install Docker Compose
+          curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          chmod +x /usr/local/bin/docker-compose
+
+          # Install Git
+          yum install -y git
+
+          # Create application directory
+          mkdir -p /opt/perplexica
+          cd /opt/perplexica
+
+          # Clone Perplexica repository
+          git clone https://github.com/ItzCrazyKns/Perplexica.git .
+
+          # Create configuration file from sample
+          if [ ! -f config.toml ]; then
+            cp sample.config.toml config.toml
+          fi
+
+          # Create searxng configuration directory
+          mkdir -p ./searxng
+
+          # Start Docker Compose
+          /usr/local/bin/docker-compose up -d
+
+          # Wait for services to be ready
+          sleep 60
+
+          # Show status
+          /usr/local/bin/docker-compose ps
+
+          # Log IP address to user data log
+          echo "Perplexica is being deployed on instance:"
+          curl -s http://169.254.169.254/latest/meta-data/public-ipv4
+
+      Tags:
+        - Key: Name
+          Value: Perplexica-EC2-Instance
+        - Key: Project
+          Value: Perplexica-AI-Search
+
+Outputs:
+  InstanceId:
+    Description: Instance ID of the Perplexica EC2 instance
+    Value: !Ref PerplexicaInstance
+    Export:
+      Name: !Sub "${AWS::StackName}-InstanceId"
+
+  PublicIP:
+    Description: Public IP address of the Perplexica EC2 instance
+    Value: !GetAtt PerplexicaInstance.PublicIp
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicIP"
+
+  PublicDNS:
+    Description: Public DNS name of the Perplexica EC2 instance
+    Value: !GetAtt PerplexicaInstance.PublicDnsName
+    Export:
+      Name: !Sub "${AWS::StackName}-PublicDNS"
+
+  PerplexicaURL:
+    Description: URL to access Perplexica Web UI
+    Value: !Sub "http://${PerplexicaInstance.PublicIp}:3000"
+    Export:
+      Name: !Sub "${AWS::StackName}-PerplexicaURL"
+
+  SshCommand:
+    Description: SSH command to connect to the instance
+    Value: !Sub "ssh -i ${KeyName}.pem ec2-user@${PerplexicaInstance.PublicIp}"
+    Export:
+      Name: !Sub "${AWS::StackName}-SSHCommand"
