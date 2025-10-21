@@ -11,6 +11,12 @@ search:
 
 server:
   secret_key: 'a2fb23f1b02e6ee83875b09826990de0f6bd908b6638e8c10277d415f6ab852b' # Is overwritten by ${SEARXNG_SECRET}
+  bind_address: "0.0.0.0"
+  port: 8080
+  base_url: "http://localhost:8080/"  # Will be updated by deployment script
+  limiter: true  # Enable rate limiting
+  image_proxy: true
+  public_instance: false
 
 engines:
   - name: wolframalpha

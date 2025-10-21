@@ -1,0 +1,362 @@
+name: Deploy Node.js to EC2
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+  push:
+    branches: [ develop, main, develop-nodejs-cicd ]
+
+env:
+  AWS_REGION: ap-southeast-1
+  STACK_NAME_STAGING: perplexica-staging
+  STACK_NAME_PRODUCTION: perplexica-prod
+  KEY_NAME: perplexica-key
+
+jobs:
+  # Deploy to Staging
+  deploy-staging:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment: staging
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run type checking
+        run: npx tsc --noEmit
+
+      - name: Run database migration
+        run: npm run db:migrate
+
+      - name: Build application
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Check if CloudFormation stack exists
+        id: check-stack
+        run: |
+          if aws cloudformation describe-stacks --stack-name ${{ env.STACK_NAME_STAGING }} --region ${{ env.AWS_REGION }} 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy CloudFormation stack
+        run: |
+          if [ "${{ steps.check-stack.outputs.exists }}" == "true" ]; then
+            echo "Stack exists, skipping CloudFormation deployment..."
+          else
+            echo "Creating CloudFormation stack..."
+            aws cloudformation create-stack \
+              --stack-name ${{ env.STACK_NAME_STAGING }} \
+              --template-body file://cloudformation-templates/perplexica-ec2-stack.yaml \
+              --parameters \
+                ParameterKey=KeyName,ParameterValue=${{ env.KEY_NAME }} \
+                ParameterKey=InstanceType,ParameterValue=t3.small \
+                ParameterKey=VolumeSize,ParameterValue=20 \
+                ParameterKey=SSHLocation,ParameterValue=0.0.0.0/0 \
+                ParameterKey=AllocateElasticIP,ParameterValue=true \
+                ParameterKey=DomainName,ParameterValue=staging.perplexica.trangvang.ai \
+                ParameterKey=EmailAddress,ParameterValue=admin@trangvang.ai \
+              --region ${{ env.AWS_REGION }} \
+              --capabilities CAPABILITY_IAM
+            
+            echo "Waiting for stack creation..."
+            aws cloudformation wait stack-create-complete \
+              --stack-name ${{ env.STACK_NAME_STAGING }} \
+              --region ${{ env.AWS_REGION }}
+          fi
+
+      - name: Setup EC2 instance for Node.js
+        run: |
+          PUBLIC_IP=$(aws cloudformation describe-stacks \
+            --stack-name ${{ env.STACK_NAME_STAGING }} \
+            --query 'Stacks[0].Outputs[?OutputKey==`PublicIP`].OutputValue' \
+            --output text \
+            --region ${{ env.AWS_REGION }})
+          
+          echo "EC2_IP=$PUBLIC_IP" >> $GITHUB_ENV
+          
+          # Setup Node.js environment on EC2
+          ssh -i ~/.ssh/${{ env.KEY_NAME }}.pem -o StrictHostKeyChecking=no ubuntu@$PUBLIC_IP << 'EOF'
+          set -e
+          
+          # Update system
+          sudo apt update
+          
+          # Install Node.js 18
+          curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+          
+          # Install PM2 globally
+          sudo npm install -g pm2
+          
+          # Install build tools
+          sudo apt-get install -y build-essential python3
+          
+          # Create app directory
+          sudo mkdir -p /opt/Perplexica
+          sudo chown -R ubuntu:ubuntu /opt/Perplexica
+          
+          # Create log directory
+          sudo mkdir -p /var/log/perplexica
+          sudo chown -R ubuntu:ubuntu /var/log/perplexica
+          
+          echo "EC2 setup completed"
+          EOF
+
+      - name: Deploy application to staging
+        run: |
+          ./scripts/deploy-nodejs.sh staging ${{ env.EC2_IP }}
+
+      - name: Update config.toml on staging
+        run: |
+          # Create staging config.toml
+          cat > staging-config.toml << 'EOF'
+          [GENERAL]
+          SIMILARITY_MEASURE = "cosine"
+          KEEP_ALIVE = "5m"
+
+          [MODELS.GROQ]
+          API_KEY = "${{ secrets.GROQ_API_KEY }}"
+
+          [MODELS.GEMINI]
+          API_KEY = "${{ secrets.GEMINI_API_KEY }}"
+
+          [MODELS.CUSTOM_OPENAI]
+          API_KEY = "${{ secrets.CUSTOM_OPENAI_API_KEY }}"
+          API_URL = "https://api.z.ai/api/coding/paas/v4"
+          MODEL_NAME = "glm-4.5"
+
+          [API_ENDPOINTS]
+          SEARXNG = "https://searchweb.trangvang.ai"
+          EOF
+
+          # Copy config to staging instance
+          scp -i ~/.ssh/${{ env.KEY_NAME }}.pem -o StrictHostKeyChecking=no \
+            staging-config.toml ubuntu@${{ env.EC2_IP }}:/opt/Perplexica/config.toml
+
+      - name: Restart staging service
+        run: |
+          ssh -i ~/.ssh/${{ env.KEY_NAME }}.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }} \
+            "pm2 restart perplexica && pm2 status perplexica"
+
+      - name: Health check staging
+        run: |
+          # Wait for service to be ready
+          for i in {1..30}; do
+            if curl -f -s "https://staging.perplexica.trangvang.ai/api/config" > /dev/null; then
+              echo "✅ Staging health check passed"
+              break
+            fi
+            echo "⏳ Waiting for staging to be ready... ($i/30)"
+            sleep 10
+          done
+
+      - name: Notify deployment
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          channel: '#deployments'
+          text: |
+            🚀 Staging deployment successful!
+            URL: https://staging.perplexica.trangvang.ai
+            Commit: ${{ github.sha }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # Deploy to Production
+  deploy-production:
+    runs-on: ubuntu-latest
+    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment: production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run type checking
+        run: npx tsc --noEmit
+
+      - name: Run database migration
+        run: npm run db:migrate
+
+      - name: Build application
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Check if CloudFormation stack exists
+        id: check-stack-prod
+        run: |
+          if aws cloudformation describe-stacks --stack-name ${{ env.STACK_NAME_PRODUCTION }} --region ${{ env.AWS_REGION }} 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy CloudFormation stack
+        run: |
+          if [ "${{ steps.check-stack-prod.outputs.exists }}" == "true" ]; then
+            echo "Stack exists, skipping CloudFormation deployment..."
+          else
+            echo "Creating CloudFormation stack..."
+            aws cloudformation create-stack \
+              --stack-name ${{ env.STACK_NAME_PRODUCTION }} \
+              --template-body file://cloudformation-templates/perplexica-ec2-stack.yaml \
+              --parameters \
+                ParameterKey=KeyName,ParameterValue=${{ env.KEY_NAME }} \
+                ParameterKey=InstanceType,ParameterValue=t3.small \
+                ParameterKey=VolumeSize,ParameterValue=30 \
+                ParameterKey=SSHLocation,ParameterValue=0.0.0.0/0 \
+                ParameterKey=AllocateElasticIP,ParameterValue=true \
+                ParameterKey=DomainName,ParameterValue=perplexica.trangvang.ai \
+                ParameterKey=EmailAddress,ParameterValue=admin@trangvang.ai \
+              --region ${{ env.AWS_REGION }} \
+              --capabilities CAPABILITY_IAM
+            
+            echo "Waiting for stack creation..."
+            aws cloudformation wait stack-create-complete \
+              --stack-name ${{ env.STACK_NAME_PRODUCTION }} \
+              --region ${{ env.AWS_REGION }}
+          fi
+
+      - name: Setup EC2 instance for Node.js
+        run: |
+          PUBLIC_IP=$(aws cloudformation describe-stacks \
+            --stack-name ${{ env.STACK_NAME_PRODUCTION }} \
+            --query 'Stacks[0].Outputs[?OutputKey==`PublicIP`].OutputValue' \
+            --output text \
+            --region ${{ env.AWS_REGION }})
+          
+          echo "EC2_IP=$PUBLIC_IP" >> $GITHUB_ENV
+          
+          # Setup Node.js environment on EC2
+          ssh -i ~/.ssh/${{ env.KEY_NAME }}.pem -o StrictHostKeyChecking=no ubuntu@$PUBLIC_IP << 'EOF'
+          set -e
+          
+          # Update system
+          sudo apt update
+          
+          # Install Node.js 18
+          curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+          
+          # Install PM2 globally
+          sudo npm install -g pm2
+          
+          # Install build tools
+          sudo apt-get install -y build-essential python3
+          
+          # Create app directory
+          sudo mkdir -p /opt/Perplexica
+          sudo chown -R ubuntu:ubuntu /opt/Perplexica
+          
+          # Create log directory
+          sudo mkdir -p /var/log/perplexica
+          sudo chown -R ubuntu:ubuntu /var/log/perplexica
+          
+          echo "EC2 setup completed"
+          EOF
+
+      - name: Deploy application to production
+        run: |
+          ./scripts/deploy-nodejs.sh production ${{ env.EC2_IP }}
+
+      - name: Update config.toml on production
+        run: |
+          # Create production config.toml
+          cat > production-config.toml << 'EOF'
+          [GENERAL]
+          SIMILARITY_MEASURE = "cosine"
+          KEEP_ALIVE = "5m"
+
+          [MODELS.GROQ]
+          API_KEY = "${{ secrets.GROQ_API_KEY }}"
+
+          [MODELS.GEMINI]
+          API_KEY = "${{ secrets.GEMINI_API_KEY }}"
+
+          [MODELS.CUSTOM_OPENAI]
+          API_KEY = "${{ secrets.CUSTOM_OPENAI_API_KEY }}"
+          API_URL = "https://api.z.ai/api/coding/paas/v4"
+          MODEL_NAME = "glm-4.5"
+
+          [API_ENDPOINTS]
+          SEARXNG = "https://searchweb.trangvang.ai"
+          EOF
+
+          # Copy config to production instance
+          scp -i ~/.ssh/${{ env.KEY_NAME }}.pem -o StrictHostKeyChecking=no \
+            production-config.toml ubuntu@${{ env.EC2_IP }}:/opt/Perplexica/config.toml
+
+      - name: Restart production service
+        run: |
+          ssh -i ~/.ssh/${{ env.KEY_NAME }}.pem -o StrictHostKeyChecking=no ubuntu@${{ env.EC2_IP }} \
+            "pm2 restart perplexica && pm2 status perplexica"
+
+      - name: Health check production
+        run: |
+          # Wait for service to be ready
+          for i in {1..30}; do
+            if curl -f -s "https://perplexica.trangvang.ai/api/config" > /dev/null; then
+              echo "✅ Production health check passed"
+              break
+            fi
+            echo "⏳ Waiting for production to be ready... ($i/30)"
+            sleep 10
+          done
+
+      - name: Notify deployment
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          channel: '#deployments'
+          text: |
+            🚀 Production deployment successful!
+            URL: https://perplexica.trangvang.ai
+            Commit: ${{ github.sha }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

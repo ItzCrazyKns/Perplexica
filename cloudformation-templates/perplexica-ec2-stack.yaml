@@ -1,0 +1,341 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Perplexica deployment on EC2 t3.small with Docker Compose, Nginx, and auto SSL setup'
+
+Parameters:
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: EC2 Key Pair for SSH access
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair
+
+  InstanceType:
+    Type: String
+    Default: t3.small
+    AllowedValues:
+      - t3.small
+      - t3.medium
+    Description: EC2 instance type (default t3.small for cost efficiency)
+
+  VolumeSize:
+    Type: Number
+    Default: 30
+    MinValue: 20
+    MaxValue: 100
+    Description: EBS volume size in GB
+
+  SSHLocation:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: IP CIDR cho phep SSH (nen thay bang IP cua ban, vi du 1.2.3.4/32)
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    ConstraintDescription: Must be a valid CIDR (e.g., 0.0.0.0/0 or 1.2.3.4/32)
+
+  DomainName:
+    Type: String
+    Default: ''
+    Description: (Optional) Domain name for HTTPS (leave empty if not using domain yet)
+
+  EmailAddress:
+    Type: String
+    Default: ''
+    Description: (Optional) Email for Let's Encrypt certificates (required if DomainName is set)
+
+  AllocateElasticIP:
+    Type: String
+    Default: 'true'
+    AllowedValues:
+      - 'true'
+      - 'false'
+    Description: Allocate Elastic IP for fixed public IP
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "EC2 Configuration"
+        Parameters:
+          - KeyName
+          - InstanceType
+          - VolumeSize
+          - AllocateElasticIP
+      - Label:
+          default: "Network Security"
+        Parameters:
+          - SSHLocation
+      - Label:
+          default: "HTTPS/Domain (Optional)"
+        Parameters:
+          - DomainName
+          - EmailAddress
+
+Conditions:
+  CreateEIP: !Equals [!Ref AllocateElasticIP, 'true']
+  HasDomain: !Not [!Equals [!Ref DomainName, '']]
+
+Resources:
+  # Security Group
+  PerplexicaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Sub '${AWS::StackName}-sg'
+      GroupDescription: Security group for Perplexica EC2 instance
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHLocation
+          Description: SSH access
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP access
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: HTTPS access
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-sg'
+        - Key: Application
+          Value: Perplexica
+
+  # EC2 Instance
+  PerplexicaInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: !Sub '{{resolve:ssm:/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id}}'
+      SecurityGroupIds:
+        - !Ref PerplexicaSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: !Ref VolumeSize
+            VolumeType: gp3
+            DeleteOnTermination: true
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -e
+          exec > >(tee /var/log/user-data.log)
+          exec 2>&1
+
+          echo "=== Starting Perplexica EC2 setup ==="
+
+          # Update system
+          apt-get update
+          apt-get upgrade -y
+
+          # Install Docker
+          apt-get install -y ca-certificates curl gnupg
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+          apt-get update
+          apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+          # Add ubuntu user to docker group
+          usermod -aG docker ubuntu
+
+          # Configure Docker log rotation
+          mkdir -p /etc/docker
+          cat > /etc/docker/daemon.json <<'DOCKERJSON'
+          {
+            "log-driver": "local",
+            "log-opts": {
+              "max-size": "10m",
+              "max-file": "3"
+            }
+          }
+          DOCKERJSON
+          systemctl restart docker
+
+          # Create 2GB swap for t3.small (important for memory optimization)
+          fallocate -l 2G /swapfile
+          chmod 600 /swapfile
+          mkswap /swapfile
+          swapon /swapfile
+          echo '/swapfile none swap sw 0 0' >> /etc/fstab
+          echo 'vm.swappiness=10' >> /etc/sysctl.conf
+
+          # Create application directories
+          mkdir -p /opt/Perplexica/data /opt/Perplexica/uploads /opt/Perplexica/searxng
+          chown -R ubuntu:ubuntu /opt/Perplexica
+
+          # Install Nginx and Certbot
+          apt-get install -y nginx certbot python3-certbot-nginx
+
+          # Create docker-compose.prod.yaml
+          cat > /opt/Perplexica/docker-compose.prod.yaml <<'COMPOSEYAML'
+          services:
+            searxng:
+              image: docker.io/searxng/searxng:latest
+              volumes:
+                - ./searxng:/etc/searxng:rw
+              networks:
+                - perplexica-network
+              restart: unless-stopped
+
+            app:
+              image: itzcrazykns1337/perplexica:main
+              environment:
+                - SEARXNG_API_URL=http://searxng:8080
+                - DATA_DIR=/home/perplexica
+                - NODE_ENV=production
+              ports:
+                - 3000:3000
+              networks:
+                - perplexica-network
+              volumes:
+                - /opt/Perplexica/data:/home/perplexica/data
+                - /opt/Perplexica/uploads:/home/perplexica/uploads
+                - ./config.toml:/home/perplexica/config.toml
+              restart: unless-stopped
+
+          networks:
+            perplexica-network:
+          COMPOSEYAML
+
+          # Create default config.toml (PLACEHOLDER - must replace with real LLM API keys)
+          cat > /opt/Perplexica/config.toml <<'CONFIGTOML'
+          # ⚠️ WARNING: This is a placeholder config without LLM API keys
+          # Perplexica WILL NOT WORK without valid LLM API keys
+          # After stack creation, you MUST:
+          #   1. Copy your real config.toml with API keys to this instance
+          #   2. Restart: sudo systemctl restart perplexica
+          # See https://console.groq.com/ for free Groq API key
+
+          [GENERAL]
+          SIMILARITY_MEASURE = "cosine"
+
+          [MODELS.GROQ]
+          API_KEY = ""
+
+          [MODELS.OPENAI]
+          API_KEY = ""
+
+          [API_ENDPOINTS]
+          SEARXNG = "http://searxng:8080"
+          CONFIGTOML
+
+          chown -R ubuntu:ubuntu /opt/Perplexica
+
+          # Pull images
+          cd /opt/Perplexica
+          docker compose -f docker-compose.prod.yaml pull
+
+          # Create systemd service
+          cat > /etc/systemd/system/perplexica.service <<'SYSTEMD'
+          [Unit]
+          Description=Perplexica Docker Compose
+          After=docker.service
+          Requires=docker.service
+
+          [Service]
+          WorkingDirectory=/opt/Perplexica
+          ExecStart=/usr/bin/docker compose -f docker-compose.prod.yaml up -d
+          ExecStop=/usr/bin/docker compose -f docker-compose.prod.yaml down
+          Restart=always
+          TimeoutStartSec=0
+
+          [Install]
+          WantedBy=multi-user.target
+          SYSTEMD
+
+          systemctl daemon-reload
+          systemctl enable perplexica
+          systemctl start perplexica
+
+          # Configure Nginx reverse proxy
+          cat > /etc/nginx/sites-available/perplexica <<'NGINXCONF'
+          server {
+            listen 80 default_server;
+            server_name _;
+
+            location / {
+              proxy_pass http://127.0.0.1:3000;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+            }
+          }
+          NGINXCONF
+
+          rm -f /etc/nginx/sites-enabled/default
+          ln -sf /etc/nginx/sites-available/perplexica /etc/nginx/sites-enabled/perplexica
+          nginx -t && systemctl reload nginx
+
+          # Setup HTTPS if domain is provided
+          if [ -n "${DomainName}" ] && [ -n "${EmailAddress}" ]; then
+            sleep 30
+            certbot --nginx -d ${DomainName} --non-interactive --agree-tos -m ${EmailAddress} || echo "Certbot failed, run manually later"
+          fi
+
+          echo "=== Perplexica EC2 setup completed ==="
+          echo "Setup completed at $(date)" > /var/log/user-data-complete.log
+
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-instance'
+        - Key: Application
+          Value: Perplexica
+
+  # Elastic IP (conditional)
+  PerplexicaEIP:
+    Type: AWS::EC2::EIP
+    Condition: CreateEIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-eip'
+
+  PerplexicaEIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Condition: CreateEIP
+    Properties:
+      InstanceId: !Ref PerplexicaInstance
+      EIP: !Ref PerplexicaEIP
+
+Outputs:
+  InstanceId:
+    Description: EC2 Instance ID
+    Value: !Ref PerplexicaInstance
+    Export:
+      Name: !Sub '${AWS::StackName}-InstanceId'
+
+  PublicIP:
+    Description: Public IP address (Elastic IP if allocated, otherwise instance public IP)
+    Value: !If 
+      - CreateEIP
+      - !Ref PerplexicaEIP
+      - !GetAtt PerplexicaInstance.PublicIp
+    Export:
+      Name: !Sub '${AWS::StackName}-PublicIP'
+
+  PublicDNS:
+    Description: Public DNS name
+    Value: !GetAtt PerplexicaInstance.PublicDnsName
+
+  SSHCommand:
+    Description: SSH command to connect
+    Value: !Sub 'ssh -i ~/.ssh/${KeyName}.pem ubuntu@${PerplexicaInstance.PublicIp}'
+
+  ApplicationURL:
+    Description: Application URL (HTTP)
+    Value: !If
+      - HasDomain
+      - !Sub 'https://${DomainName}'
+      - !Sub 'http://${PerplexicaInstance.PublicIp}'
+
+  NextSteps:
+    Description: Next steps after deployment
+    Value: |
+      1. SSH into instance and copy your config.toml to /opt/Perplexica/
+      2. If using custom searxng config, copy to /opt/Perplexica/searxng/
+      3. Restart: sudo systemctl restart perplexica
+      4. View logs: docker compose -f /opt/Perplexica/docker-compose.prod.yaml logs -f
+
