@@ -4,8 +4,8 @@ RUN apt-get update && apt-get install -y python3 python3-pip sqlite3 && rm -rf /
 
 WORKDIR /home/perplexica
 
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile --network-timeout 600000
+COPY package.json package-lock.json ./
+RUN npm install
 
 COPY tsconfig.json next.config.mjs next-env.d.ts postcss.config.js drizzle.config.ts tailwind.config.ts ./
 COPY src ./src
@@ -13,10 +13,10 @@ COPY public ./public
 COPY drizzle ./drizzle
 
 RUN mkdir -p /home/perplexica/data
-RUN yarn build
+RUN npm run build
 
-RUN yarn add --dev @vercel/ncc
-RUN yarn ncc build ./src/lib/db/migrate.ts -o migrator
+RUN npm install --save-dev @vercel/ncc
+RUN npx ncc build ./src/lib/db/migrate.ts -o migrator
 
 FROM node:24.5.0-slim
 

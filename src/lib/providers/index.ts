@@ -4,7 +4,6 @@ import {
   loadOpenAIChatModels,
   loadOpenAIEmbeddingModels,
   PROVIDER_INFO as OpenAIInfo,
-  PROVIDER_INFO,
 } from './openai';
 import {
   getCustomOpenaiApiKey,
@@ -91,37 +90,12 @@ export const chatModelProviders: Record<
   aimlapi: loadAimlApiChatModels,
   lmstudio: loadLMStudioChatModels,
   lemonade: loadLemonadeChatModels,
-};
+  custom_openai: async () => {
+    const customOpenAiApiKey = getCustomOpenaiApiKey();
+    const customOpenAiApiUrl = getCustomOpenaiApiUrl();
+    const customOpenAiModelName = getCustomOpenaiModelName();
 
-export const embeddingModelProviders: Record<
-  string,
-  () => Promise<Record<string, EmbeddingModel>>
-> = {
-  openai: loadOpenAIEmbeddingModels,
-  ollama: loadOllamaEmbeddingModels,
-  gemini: loadGeminiEmbeddingModels,
-  transformers: loadTransformersEmbeddingsModels,
-  aimlapi: loadAimlApiEmbeddingModels,
-  lmstudio: loadLMStudioEmbeddingsModels,
-  lemonade: loadLemonadeEmbeddingModels,
-};
-
-export const getAvailableChatModelProviders = async () => {
-  const models: Record<string, Record<string, ChatModel>> = {};
-
-  for (const provider in chatModelProviders) {
-    const providerModels = await chatModelProviders[provider]();
-    if (Object.keys(providerModels).length > 0) {
-      models[provider] = providerModels;
-    }
-  }
-
-  const customOpenAiApiKey = getCustomOpenaiApiKey();
-  const customOpenAiApiUrl = getCustomOpenaiApiUrl();
-  const customOpenAiModelName = getCustomOpenaiModelName();
-
-  models['custom_openai'] = {
-    ...(customOpenAiApiKey && customOpenAiApiUrl && customOpenAiModelName
+    return customOpenAiApiKey && customOpenAiApiUrl && customOpenAiModelName
       ? {
           [customOpenAiModelName]: {
             displayName: customOpenAiModelName,
@@ -150,8 +124,32 @@ export const getAvailableChatModelProviders = async () => {
             }) as unknown as BaseChatModel,
           },
         }
-      : {}),
-  };
+      : {};
+  },
+};
+
+export const embeddingModelProviders: Record<
+  string,
+  () => Promise<Record<string, EmbeddingModel>>
+> = {
+  openai: loadOpenAIEmbeddingModels,
+  ollama: loadOllamaEmbeddingModels,
+  gemini: loadGeminiEmbeddingModels,
+  transformers: loadTransformersEmbeddingsModels,
+  aimlapi: loadAimlApiEmbeddingModels,
+  lmstudio: loadLMStudioEmbeddingsModels,
+  lemonade: loadLemonadeEmbeddingModels,
+};
+
+export const getAvailableChatModelProviders = async () => {
+  const models: Record<string, Record<string, ChatModel>> = {};
+
+  for (const provider in chatModelProviders) {
+    const providerModels = await chatModelProviders[provider]();
+    if (Object.keys(providerModels).length > 0) {
+      models[provider] = providerModels;
+    }
+  }
 
   return models;
 };
