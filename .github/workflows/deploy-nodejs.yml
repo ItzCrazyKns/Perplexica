@@ -12,7 +12,7 @@ on:
         - staging
         - production
   push:
-    branches: [ develop, main ]
+    branches: [ develop, main, develop-nodejs-cicd ]
 
 env:
   AWS_REGION: ap-southeast-1
