@@ -15,7 +15,41 @@ export const POST = async (req: Request) => {
       );
     }
 
-    const res = await fetch(
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    const fetchWithRetry = async (url: string, attempts = 3, backoffMs = 1000) => {
+      let lastError: unknown;
+
+      for (let attempt = 1; attempt <= attempts; attempt++) {
+        try {
+          const response = await fetch(url);
+
+          if (!response.ok) {
+            if (response.status >= 500 && attempt < attempts) {
+              await delay(backoffMs * Math.pow(2, attempt - 1));
+              continue;
+            }
+
+            return response;
+          }
+
+          return response;
+        } catch (error) {
+          lastError = error;
+
+          if (attempt < attempts) {
+            await delay(backoffMs * Math.pow(2, attempt - 1));
+            continue;
+          }
+
+          throw error;
+        }
+      }
+
+      throw lastError ?? new Error('Unknown error fetching weather');
+    };
+
+    const res = await fetchWithRetry(
       `https://api.open-meteo.com/v1/forecast?latitude=${body.lat}&longitude=${body.lng}&current=weather_code,temperature_2m,is_day,relative_humidity_2m,wind_speed_10m&timezone=auto${
         body.measureUnit === 'Metric' ? '' : '&temperature_unit=fahrenheit'
       }${body.measureUnit === 'Metric' ? '' : '&wind_speed_unit=mph'}`,
