@@ -359,15 +359,17 @@ export class SimplifiedAgent {
                       const q = encodeHtmlAttribute(
                         (input as any).query.slice(0, 200),
                       );
-                      extraAttr = ` query="${q}"`;
-                    } else if (Array.isArray((input as any).urls)) {
+                      extraAttr += ` query="${q}"`;
+                    }
+                    if (Array.isArray((input as any).urls)) {
                       const count = (input as any).urls.length;
-                      extraAttr = ` count="${count}"`;
-                    } else if (typeof (input as any).pdfUrl === 'string') {
+                      extraAttr += ` count="${count}"`;
+                    }
+                    if (typeof (input as any).pdfUrl === 'string') {
                       const u = encodeHtmlAttribute(
                         (input as any).pdfUrl.slice(0, 300),
                       );
-                      extraAttr = ` url="${u}"`;
+                      extraAttr += ` url="${u}"`;
                     }
                   }
                 } catch (attrErr) {
