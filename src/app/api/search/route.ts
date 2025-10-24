@@ -13,7 +13,7 @@ import {
 } from '@/lib/config';
 import { getSearchHandler, HandlerNames } from '@/lib/search';
 import { isValidFocusMode } from '@/lib/validation';
-
+//
 interface chatModel {
   provider: string;
   name: string;
@@ -35,6 +35,7 @@ interface ChatRequestBody {
   history: Array<[string, string]>;
   stream?: boolean;
   systemInstructions?: string;
+  searchLanguage?: string;
 }
 
 export const POST = async (req: Request) => {
@@ -121,6 +122,7 @@ export const POST = async (req: Request) => {
       focusMode as HandlerNames,
       llm,
       embeddings,
+      body.searchLanguage,
     );
 
     if (!metaSearchAgent) {

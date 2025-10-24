@@ -6,7 +6,10 @@ import {
 import { loadConfig } from '@/lib/config';
 
 export class ConfigManager {
-  constructor(private config: Config) {}
+  constructor(
+    private config: Config,
+    private language?: string,
+  ) {}
 
   get queryGeneratorPrompt() {
     return this.config.queryGeneratorPrompt;
@@ -32,7 +35,7 @@ export class ConfigManager {
     // 1. Base options from config.toml [SEARCH] section
     const baseOptions = {
       count: config.SEARCH.COUNT,
-      language: config.SEARCH.LANGUAGE,
+      language: this.language || config.SEARCH.LANGUAGE,
     };
 
     // 2. Provider-specific options from config.toml [SEARCH.PROVIDERS] section

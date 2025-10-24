@@ -86,7 +86,8 @@ export const getSearchHandler = (
   handlerName: HandlerNames,
   llm: BaseChatModel,
   embeddings: Embeddings,
+  language?: string,
 ): MetaSearchAgent => {
   const config = getHandlerConfig(handlerName);
-  return new MetaSearchAgent(config, llm, embeddings);
+  return new MetaSearchAgent(config, llm, embeddings, language);
 };

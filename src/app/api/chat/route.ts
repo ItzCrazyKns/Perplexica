@@ -61,6 +61,7 @@ const bodySchema = z.object({
   chatModel: chatModelSchema.optional().default({}),
   embeddingModel: embeddingModelSchema.optional().default({}),
   systemInstructions: z.string().nullable().optional().default(''),
+  searchLanguage: z.string().optional().default(''),
 });
 
 type Message = z.infer<typeof messageSchema>;
@@ -325,6 +326,7 @@ export const POST = async (req: Request) => {
       focusMode as HandlerNames,
       llm,
       embedding,
+      body.searchLanguage,
     );
 
     if (!metaSearchAgent) {

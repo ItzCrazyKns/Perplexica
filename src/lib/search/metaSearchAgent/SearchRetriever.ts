@@ -104,7 +104,8 @@ export class SearchRetriever {
             throw new Error('Search provider not found');
           }
 
-          const searchOptions = this.configManager.getSearchOptionsFor(provider);
+          const searchOptions =
+            this.configManager.getSearchOptionsFor(provider);
 
           // You can specify a specific provider or leave it empty to use all available ones
           const providerResults = await searchProvider.search(

@@ -16,8 +16,9 @@ export class MetaSearchAgent implements MetaSearchAgentType {
     private config: Config,
     private llm: BaseChatModel,
     private embeddings: Embeddings,
+    private language?: string,
   ) {
-    this.configManager = new ConfigManager(this.config);
+    this.configManager = new ConfigManager(this.config, this.language);
     this.answerGenerator = new AnswerGenerator(
       this.llm,
       this.configManager,
