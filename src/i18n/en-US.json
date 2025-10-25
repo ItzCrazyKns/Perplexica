@@ -90,58 +90,102 @@
     },
     "settings": {
       "title": "Settings",
-      "sections": {
-        "preferences": "Preferences",
-        "automaticSearch": "Automatic Search",
-        "systemInstructions": "System Instructions",
-        "modelSettings": "Model Settings",
-        "apiKeys": "API Keys"
-      },
-      "preferences": {
-        "theme": "Theme",
-        "measurementUnits": "Measurement Units",
-        "language": "Language",
-        "metric": "Metric",
-        "imperial": "Imperial"
-      },
-      "automaticSearch": {
-        "image": {
-          "title": "Automatic Image Search",
-          "desc": "Automatically search for relevant images in chat responses"
+      "back": "Back",
+      "general": {
+        "title": "General",
+        "description": "Adjust common settings.",
+        "language": {
+          "title": "Language",
+          "description": "Choose the app language."
         },
-        "video": {
-          "title": "Automatic Video Search",
-          "desc": "Automatically search for relevant videos in chat responses"
+        "theme": {
+          "title": "Theme",
+          "description": "Choose the app theme.",
+          "options": {
+            "dark": "Dark",
+            "light": "Light"
+          }
+        },
+        "systemInstructions": {
+          "title": "System Instructions",
+          "description": "Provide special instructions for the large language model (LLM) to customize its behavior.",
+          "placeholder": "For example, 'Answer in a friendly, concise tone' or 'Use British English and format responses as bullet points'."
+        },
+        "measureUnit": {
+          "title": "Measurement Unit",
+          "description": "Choose the measurement unit for weather information.",
+          "options": {
+            "metric": "Metric (Celsius, Kilometers)",
+            "imperial": "Imperial (Fahrenheit, Miles)"
+          }
         }
       },
-      "model": {
-        "chatProvider": "Chat Model Provider",
-        "chat": "Chat Model",
-        "noModels": "No models available",
-        "invalidProvider": "Invalid provider, please check backend logs",
-        "custom": {
-          "modelName": "Model Name",
-          "apiKey": "Custom OpenAI API Key",
-          "baseUrl": "Custom OpenAI Base URL"
+      "models": {
+        "title": "Models",
+        "description": "Configure model settings.",
+        "select": {
+          "title": "Select Models",
+          "chat": {
+            "title": "Chat Model",
+            "description": "Select the model to use for chat."
+          },
+          "embedding": {
+            "title": "Embedding Model",
+            "description": "Select the model to use for embeddings."
+          }
+        },
+        "manage": {
+          "title": "Manage Model Providers",
+          "add": {
+            "title": "Add Provider",
+            "select": "Select model provider",
+            "name": {
+              "title": "Provider Name",
+              "placeholder": "Enter a custom name for this provider."
+            },
+            "apiKey": {
+              "title": "API Key",
+              "placeholder": "Enter the provider's API key."
+            },
+            "baseURL": {
+              "title": "Base URL",
+              "placeholder": "Enter the provider's custom Base URL."
+            },
+            "toast": {
+              "success": "Provider added successfully",
+              "error": "Error adding provider"
+            }
+          },
+          "update": {
+            "title": "Update Provider",
+            "name": {
+              "title": "Provider Name",
+              "placeholder": "Enter a custom name for this provider."
+            },
+            "toast": {
+              "success": "Provider updated successfully",
+              "error": "Error updating provider"
+            }
+          },
+          "delete": {
+            "title": "Delete Provider",
+            "confirm": "Are you sure you want to delete this model provider? This action cannot be undone.",
+            "cancel": "Cancel",
+            "toast": {
+              "success": "Provider deleted successfully",
+              "error": "Error deleting provider"
+            }
+          }
         }
       },
-      "embedding": {
-        "provider": "Embedding Model Provider",
-        "model": "Embedding Model"
-      },
-      "api": {
-        "openaiApiKey": "OpenAI API Key",
-        "ollamaApiUrl": "Ollama API URL",
-        "ollamaApiKey": "Ollama API Key (Can be left blank)",
-        "groqApiKey": "GROQ API Key",
-        "anthropicApiKey": "Anthropic API Key",
-        "geminiApiKey": "Gemini API Key",
-        "deepseekApiKey": "Deepseek API Key",
-        "aimlApiKey": "AI/ML API Key",
-        "lmStudioApiUrl": "LM Studio API URL"
-      },
-      "systemInstructions": {
-        "placeholder": "Any special instructions for the LLM"
+      "search": {
+        "title": "Search Settings",
+        "description": "Configure search engine settings.",
+        "searxngURL": {
+          "title": "SearXNG",
+          "description": "SearXNG instance URL",
+          "placeholder": "http://localhost:4000"
+        }
       }
     }
   },

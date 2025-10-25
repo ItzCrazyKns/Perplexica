@@ -90,58 +90,102 @@
     },
     "settings": {
       "title": "设置",
-      "sections": {
-        "preferences": "偏好设置",
-        "automaticSearch": "自动搜索",
-        "systemInstructions": "系统指示",
-        "modelSettings": "模型设置",
-        "apiKeys": "API 密钥"
-      },
-      "preferences": {
-        "theme": "主题",
-        "measurementUnits": "计量单位",
-        "language": "语言",
-        "metric": "公制",
-        "imperial": "英制"
-      },
-      "automaticSearch": {
-        "image": {
-          "title": "自动图片搜索",
-          "desc": "在聊天回复中自动搜索相关图片"
+      "back": "返回",
+      "general": {
+        "title": "通用设置",
+        "description": "调整常用设置。",
+        "language": {
+          "title": "语言",
+          "description": "选择应用程序语言。"
         },
-        "video": {
-          "title": "自动视频搜索",
-          "desc": "在聊天回复中自动搜索相关视频"
+        "theme": {
+          "title": "主题",
+          "description": "选择应用程序主题。",
+          "options": {
+            "dark": "深色模式",
+            "light": "浅色模式"
+          }
+        },
+        "systemInstructions": {
+          "title": "系统指令",
+          "description": "为大型语言模型 (LLM) 提供特别指示，以自定义其行为。",
+          "placeholder": "例如，「以友善简洁的语气回答」或「使用简体中文并将答案格式化为重点」。"
+        },
+        "measureUnit": {
+          "title": "度量单位",
+          "description": "选择用于天气信息的度量单位。",
+          "options": {
+            "metric": "公制（摄氏度、公里）",
+            "imperial": "英制（华氏度、英里）"
+          }
         }
       },
-      "model": {
-        "chatProvider": "聊天模型供应商",
-        "chat": "聊天模型",
-        "noModels": "没有可用的模型",
-        "invalidProvider": "供应商无效，请检查后端日志",
-        "custom": {
-          "modelName": "模型名称",
-          "apiKey": "自定义 OpenAI API 密钥",
-          "baseUrl": "自定义 OpenAI Base URL"
+      "models": {
+        "title": "模型设置",
+        "description": "配置模型设置。",
+        "select": {
+          "title": "选择模型",
+          "chat": {
+            "title": "聊天模型",
+            "description": "选择用于聊天的模型。"
+          },
+          "embedding": {
+            "title": "向量嵌入模型",
+            "description": "选择用于向量嵌入的模型。"
+          }
+        },
+        "manage": {
+          "title": "管理模型供应商",
+          "add": {
+            "title": "新增供应商",
+            "select": "选择模型供应商",
+            "name": {
+              "title": "供应商名称",
+              "placeholder": "为此供应商输入一个自定义名称。"
+            },
+            "apiKey": {
+              "title": "API 密钥",
+              "placeholder": "输入供应商的 API 密钥。"
+            },
+            "baseURL": {
+              "title": "Base URL",
+              "placeholder": "输入供应商的自定义 Base URL。"
+            },
+            "toast": {
+              "success": "供应商新增成功",
+              "error": "新增供应商时发生错误"
+            }
+          },
+          "update": {
+            "title": "更新供应商",
+            "name": {
+              "title": "供应商名称",
+              "placeholder": "为此供应商输入一个自定义名称。"
+            },
+            "toast": {
+              "success": "供应商更新成功",
+              "error": "更新供应商时发生错误"
+            }
+          },
+          "delete": {
+            "title": "删除供应商",
+            "confirm": "确定要删除此模型供应商吗？此操作无法撤销。",
+            "cancel": "取消",
+            "toast": {
+              "success": "供应商删除成功",
+              "error": "删除供应商时发生错误"
+            }
+          }
         }
       },
-      "embedding": {
-        "provider": "向量嵌入供应商",
-        "model": "向量嵌入模型"
-      },
-      "api": {
-        "openaiApiKey": "OpenAI API 密钥",
-        "ollamaApiUrl": "Ollama API 地址",
-        "ollamaApiKey": "Ollama API 密钥（可留空）",
-        "groqApiKey": "GROQ API 密钥",
-        "anthropicApiKey": "Anthropic API 密钥",
-        "geminiApiKey": "Gemini API 密钥",
-        "deepseekApiKey": "Deepseek API 密钥",
-        "aimlApiKey": "AI/ML 密钥",
-        "lmStudioApiUrl": "LM Studio API 地址"
-      },
-      "systemInstructions": {
-        "placeholder": "任何要给 LLM 的特别指示"
+      "search": {
+        "title": "搜索设置",
+        "description": "配置搜索引擎设置。",
+        "searxngURL": {
+          "title": "SearXNG",
+          "description": "SearXNG 实例 URL",
+          "placeholder": "http://localhost:4000"
+        }
       }
     }
   },

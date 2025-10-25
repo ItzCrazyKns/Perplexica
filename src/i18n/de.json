@@ -90,58 +90,102 @@
     },
     "settings": {
       "title": "Einstellungen",
-      "sections": {
-        "preferences": "Voreinstellungen",
-        "automaticSearch": "Automatische Suche",
-        "systemInstructions": "Systemanweisungen",
-        "modelSettings": "Modelleinstellungen",
-        "apiKeys": "API-Schlüssel"
-      },
-      "preferences": {
-        "theme": "Theme",
-        "measurementUnits": "Maßeinheiten",
-        "language": "Sprache",
-        "metric": "Metrisch",
-        "imperial": "Imperial"
-      },
-      "automaticSearch": {
-        "image": {
-          "title": "Automatische Bildsuche",
-          "desc": "Automatisch relevante Bilder in Chat-Antworten suchen"
+      "back": "Zurück",
+      "general": {
+        "title": "Allgemein",
+        "description": "Grundeinstellungen anpassen.",
+        "language": {
+          "title": "Sprache",
+          "description": "App-Sprache auswählen."
         },
-        "video": {
-          "title": "Automatische Videosuche",
-          "desc": "Automatisch relevante Videos in Chat-Antworten suchen"
+        "theme": {
+          "title": "Theme",
+          "description": "App-Theme auswählen.",
+          "options": {
+            "dark": "Dunkel",
+            "light": "Hell"
+          }
+        },
+        "systemInstructions": {
+          "title": "Systemanweisungen",
+          "description": "Spezielle Anweisungen für das große Sprachmodell (LLM) bereitstellen, um sein Verhalten anzupassen.",
+          "placeholder": "Zum Beispiel: 'Antworte in einem freundlichen, prägnanten Ton' oder 'Verwende britisches Englisch und formatiere Antworten als Stichpunkte'."
+        },
+        "measureUnit": {
+          "title": "Maßeinheit",
+          "description": "Maßeinheit für Wetterinformationen auswählen.",
+          "options": {
+            "metric": "Metrisch (Celsius, Kilometer)",
+            "imperial": "Imperial (Fahrenheit, Meilen)"
+          }
         }
       },
-      "model": {
-        "chatProvider": "Anbieter des Chat-Modells",
-        "chat": "Chat-Modell",
-        "noModels": "Keine Modelle verfügbar",
-        "invalidProvider": "Ungültiger Anbieter, bitte prüfen Sie die Backend-Logs",
-        "custom": {
-          "modelName": "Modellname",
-          "apiKey": "Benutzerdefinierter OpenAI API-Schlüssel",
-          "baseUrl": "Benutzerdefinierte OpenAI-Basis-URL"
+      "models": {
+        "title": "Modelle",
+        "description": "Modelleinstellungen konfigurieren.",
+        "select": {
+          "title": "Modelle auswählen",
+          "chat": {
+            "title": "Chat-Modell",
+            "description": "Modell für Chat auswählen."
+          },
+          "embedding": {
+            "title": "Embedding-Modell",
+            "description": "Modell für Embeddings auswählen."
+          }
+        },
+        "manage": {
+          "title": "Modellanbieter verwalten",
+          "add": {
+            "title": "Anbieter hinzufügen",
+            "select": "Modellanbieter auswählen",
+            "name": {
+              "title": "Anbietername",
+              "placeholder": "Einen benutzerdefinierten Namen für diesen Anbieter eingeben."
+            },
+            "apiKey": {
+              "title": "API-Schlüssel",
+              "placeholder": "API-Schlüssel des Anbieters eingeben."
+            },
+            "baseURL": {
+              "title": "Basis-URL",
+              "placeholder": "Benutzerdefinierte Basis-URL des Anbieters eingeben."
+            },
+            "toast": {
+              "success": "Anbieter erfolgreich hinzugefügt",
+              "error": "Fehler beim Hinzufügen des Anbieters"
+            }
+          },
+          "update": {
+            "title": "Anbieter aktualisieren",
+            "name": {
+              "title": "Anbietername",
+              "placeholder": "Einen benutzerdefinierten Namen für diesen Anbieter eingeben."
+            },
+            "toast": {
+              "success": "Anbieter erfolgreich aktualisiert",
+              "error": "Fehler beim Aktualisieren des Anbieters"
+            }
+          },
+          "delete": {
+            "title": "Anbieter löschen",
+            "confirm": "Sind Sie sicher, dass Sie diesen Modellanbieter löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+            "cancel": "Abbrechen",
+            "toast": {
+              "success": "Anbieter erfolgreich gelöscht",
+              "error": "Fehler beim Löschen des Anbieters"
+            }
+          }
         }
       },
-      "embedding": {
-        "provider": "Anbieter des Embedding-Modells",
-        "model": "Embedding-Modell"
-      },
-      "api": {
-        "openaiApiKey": "OpenAI API-Schlüssel",
-        "ollamaApiUrl": "Ollama API-URL",
-        "ollamaApiKey": "Ollama API-Schlüssel (Kann leer gelassen werden)",
-        "groqApiKey": "GROQ API-Schlüssel",
-        "anthropicApiKey": "Anthropic API-Schlüssel",
-        "geminiApiKey": "Gemini API-Schlüssel",
-        "deepseekApiKey": "Deepseek API-Schlüssel",
-        "aimlApiKey": "AI/ML API-Schlüssel",
-        "lmStudioApiUrl": "LM Studio API-URL"
-      },
-      "systemInstructions": {
-        "placeholder": "Besondere Anweisungen für das LLM"
+      "search": {
+        "title": "Sucheinstellungen",
+        "description": "Suchmaschineneinstellungen konfigurieren.",
+        "searxngURL": {
+          "title": "SearXNG",
+          "description": "SearXNG-Instanz-URL",
+          "placeholder": "http://localhost:4000"
+        }
       }
     }
   },

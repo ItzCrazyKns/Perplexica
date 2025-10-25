@@ -90,58 +90,102 @@
     },
     "settings": {
       "title": "설정",
-      "sections": {
-        "preferences": "기본 설정",
-        "automaticSearch": "자동 검색",
-        "systemInstructions": "시스템 지시",
-        "modelSettings": "모델 설정",
-        "apiKeys": "API 키"
-      },
-      "preferences": {
-        "theme": "테마",
-        "measurementUnits": "단위",
-        "language": "언어",
-        "metric": "미터법",
-        "imperial": "야드파운드법"
-      },
-      "automaticSearch": {
-        "image": {
-          "title": "자동 이미지 검색",
-          "desc": "채팅 응답에서 관련 이미지를 자동으로 검색"
+      "back": "뒤로",
+      "general": {
+        "title": "일반",
+        "description": "일반 설정을 조정합니다.",
+        "language": {
+          "title": "언어",
+          "description": "앱 언어를 선택하세요."
         },
-        "video": {
-          "title": "자동 비디오 검색",
-          "desc": "채팅 응답에서 관련 비디오를 자동으로 검색"
+        "theme": {
+          "title": "테마",
+          "description": "앱 테마를 선택하세요.",
+          "options": {
+            "dark": "다크",
+            "light": "라이트"
+          }
+        },
+        "systemInstructions": {
+          "title": "시스템 지시사항",
+          "description": "대형 언어 모델(LLM)의 동작을 사용자 지정하기 위한 특별한 지시사항을 제공합니다.",
+          "placeholder": "예: '친근하고 간결한 어조로 답변' 또는 '한국어를 사용하고 응답을 글머리 기호로 형식화'"
+        },
+        "measureUnit": {
+          "title": "측정 단위",
+          "description": "날씨 정보의 측정 단위를 선택하세요.",
+          "options": {
+            "metric": "미터법 (섭씨, 킬로미터)",
+            "imperial": "야드파운드법 (화씨, 마일)"
+          }
         }
       },
-      "model": {
-        "chatProvider": "채팅 모델 공급자",
-        "chat": "채팅 모델",
-        "noModels": "사용 가능한 모델이 없습니다",
-        "invalidProvider": "잘못된 공급자입니다. 백엔드 로그를 확인하세요",
-        "custom": {
-          "modelName": "모델 이름",
-          "apiKey": "사용자 지정 OpenAI API 키",
-          "baseUrl": "사용자 지정 OpenAI Base URL"
+      "models": {
+        "title": "모델",
+        "description": "모델 설정을 구성합니다.",
+        "select": {
+          "title": "모델 선택",
+          "chat": {
+            "title": "채팅 모델",
+            "description": "채팅에 사용할 모델을 선택하세요."
+          },
+          "embedding": {
+            "title": "임베딩 모델",
+            "description": "임베딩에 사용할 모델을 선택하세요."
+          }
+        },
+        "manage": {
+          "title": "모델 제공업체 관리",
+          "add": {
+            "title": "제공업체 추가",
+            "select": "모델 제공업체 선택",
+            "name": {
+              "title": "제공업체 이름",
+              "placeholder": "이 제공업체의 사용자 지정 이름을 입력하세요."
+            },
+            "apiKey": {
+              "title": "API 키",
+              "placeholder": "제공업체의 API 키를 입력하세요."
+            },
+            "baseURL": {
+              "title": "베이스 URL",
+              "placeholder": "제공업체의 사용자 지정 베이스 URL을 입력하세요."
+            },
+            "toast": {
+              "success": "제공업체가 성공적으로 추가되었습니다",
+              "error": "제공업체 추가 중 오류가 발생했습니다"
+            }
+          },
+          "update": {
+            "title": "제공업체 업데이트",
+            "name": {
+              "title": "제공업체 이름",
+              "placeholder": "이 제공업체의 사용자 지정 이름을 입력하세요."
+            },
+            "toast": {
+              "success": "제공업체가 성공적으로 업데이트되었습니다",
+              "error": "제공업체 업데이트 중 오류가 발생했습니다"
+            }
+          },
+          "delete": {
+            "title": "제공업체 삭제",
+            "confirm": "이 모델 제공업체를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+            "cancel": "취소",
+            "toast": {
+              "success": "제공업체가 성공적으로 삭제되었습니다",
+              "error": "제공업체 삭제 중 오류가 발생했습니다"
+            }
+          }
         }
       },
-      "embedding": {
-        "provider": "임베딩 모델 공급자",
-        "model": "임베딩 모델"
-      },
-      "api": {
-        "openaiApiKey": "OpenAI API 키",
-        "ollamaApiUrl": "Ollama API URL",
-        "ollamaApiKey": "Ollama API 키 (비워둘 수 있음)",
-        "groqApiKey": "GROQ API 키",
-        "anthropicApiKey": "Anthropic API 키",
-        "geminiApiKey": "Gemini API 키",
-        "deepseekApiKey": "Deepseek API 키",
-        "aimlApiKey": "AI/ML API 키",
-        "lmStudioApiUrl": "LM Studio API URL"
-      },
-      "systemInstructions": {
-        "placeholder": "LLM에 대한 특별한 지시사항"
+      "search": {
+        "title": "검색 설정",
+        "description": "검색 엔진 설정을 구성합니다.",
+        "searxngURL": {
+          "title": "SearXNG",
+          "description": "SearXNG 인스턴스 URL",
+          "placeholder": "http://localhost:4000"
+        }
       }
     }
   },

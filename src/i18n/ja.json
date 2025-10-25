@@ -90,58 +90,102 @@
     },
     "settings": {
       "title": "設定",
-      "sections": {
-        "preferences": "環境設定",
-        "automaticSearch": "自動検索",
-        "systemInstructions": "システム指示",
-        "modelSettings": "モデル設定",
-        "apiKeys": "API キー"
-      },
-      "preferences": {
-        "theme": "テーマ",
-        "measurementUnits": "単位",
-        "language": "言語",
-        "metric": "メートル法",
-        "imperial": "ヤード・ポンド法"
-      },
-      "automaticSearch": {
-        "image": {
-          "title": "自動画像検索",
-          "desc": "チャットの回答で関連画像を自動検索"
+      "back": "戻る",
+      "general": {
+        "title": "一般",
+        "description": "一般的な設定を調整します。",
+        "language": {
+          "title": "言語",
+          "description": "アプリの言語を選択します。"
         },
-        "video": {
-          "title": "自動画像検索",
-          "desc": "チャットの回答で関連動画を自動検索"
+        "theme": {
+          "title": "テーマ",
+          "description": "アプリのテーマを選択します。",
+          "options": {
+            "dark": "ダーク",
+            "light": "ライト"
+          }
+        },
+        "systemInstructions": {
+          "title": "システム指示",
+          "description": "大規模言語モデル（LLM）の動作をカスタマイズするための特別な指示を提供します。",
+          "placeholder": "例：「親しみやすく簡潔な口調で回答」や「日本語を使用し、回答を箇条書きで整理」"
+        },
+        "measureUnit": {
+          "title": "測定単位",
+          "description": "天気情報の測定単位を選択します。",
+          "options": {
+            "metric": "メートル法（摂氏、キロメートル）",
+            "imperial": "ヤードポンド法（華氏、マイル）"
+          }
         }
       },
-      "model": {
-        "chatProvider": "チャットモデルのプロバイダー",
-        "chat": "チャットモデル",
-        "noModels": "利用可能なモデルはありません",
-        "invalidProvider": "無効なプロバイダーです。バックエンドのログを確認してください",
-        "custom": {
-          "modelName": "モデル名",
-          "apiKey": "カスタム OpenAI API キー",
-          "baseUrl": "カスタム OpenAI Base URL"
+      "models": {
+        "title": "モデル",
+        "description": "モデル設定を構成します。",
+        "select": {
+          "title": "モデルを選択",
+          "chat": {
+            "title": "チャットモデル",
+            "description": "チャット用のモデルを選択します。"
+          },
+          "embedding": {
+            "title": "埋め込みモデル",
+            "description": "埋め込み用のモデルを選択します。"
+          }
+        },
+        "manage": {
+          "title": "モデルプロバイダー管理",
+          "add": {
+            "title": "プロバイダー追加",
+            "select": "モデルプロバイダーを選択",
+            "name": {
+              "title": "プロバイダー名",
+              "placeholder": "このプロバイダーのカスタム名を入力してください。"
+            },
+            "apiKey": {
+              "title": "API キー",
+              "placeholder": "プロバイダーの API キーを入力してください。"
+            },
+            "baseURL": {
+              "title": "ベース URL",
+              "placeholder": "プロバイダーのカスタムベース URL を入力してください。"
+            },
+            "toast": {
+              "success": "プロバイダーが正常に追加されました",
+              "error": "プロバイダーの追加中にエラーが発生しました"
+            }
+          },
+          "update": {
+            "title": "プロバイダー更新",
+            "name": {
+              "title": "プロバイダー名",
+              "placeholder": "このプロバイダーのカスタム名を入力してください。"
+            },
+            "toast": {
+              "success": "プロバイダーが正常に更新されました",
+              "error": "プロバイダーの更新中にエラーが発生しました"
+            }
+          },
+          "delete": {
+            "title": "プロバイダー削除",
+            "confirm": "このモデルプロバイダーを削除してもよろしいですか？この操作は元に戻すことができません。",
+            "cancel": "キャンセル",
+            "toast": {
+              "success": "プロバイダーが正常に削除されました",
+              "error": "プロバイダーの削除中にエラーが発生しました"
+            }
+          }
         }
       },
-      "embedding": {
-        "provider": "埋め込みモデルのプロバイダー",
-        "model": "埋め込みモデル"
-      },
-      "api": {
-        "openaiApiKey": "OpenAI API キー",
-        "ollamaApiUrl": "Ollama API URL",
-        "ollamaApiKey": "Ollama API キー（空白のままにすることもできます）",
-        "groqApiKey": "GROQ API キー",
-        "anthropicApiKey": "Anthropic API キー",
-        "geminiApiKey": "Gemini API キー",
-        "deepseekApiKey": "Deepseek API キー",
-        "aimlApiKey": "AI/ML API キー",
-        "lmStudioApiUrl": "LM Studio API URL"
-      },
-      "systemInstructions": {
-        "placeholder": "LLM への特別な指示があれば入力してください"
+      "search": {
+        "title": "検索設定",
+        "description": "検索エンジンの設定を構成します。",
+        "searxngURL": {
+          "title": "SearXNG",
+          "description": "SearXNG インスタンス URL",
+          "placeholder": "http://localhost:4000"
+        }
       }
     }
   },
