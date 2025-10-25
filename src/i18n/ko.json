@@ -1,0 +1,296 @@
+{
+  "metadata": {
+    "title": "Perplexica - 인터넷과 대화",
+    "description": "Perplexica는 인터넷에 연결된 AI 챗봇입니다."
+  },
+  "manifest": {
+    "name": "Perplexica - 인터넷과 대화",
+    "shortName": "Perplexica",
+    "description": "Perplexica는 인터넷에 연결된 AI 챗봇입니다."
+  },
+  "navigation": {
+    "home": "홈",
+    "discover": "디스커버",
+    "library": "라이브러리",
+    "settings": "설정"
+  },
+  "common": {
+    "appName": "Perplexica",
+    "exportedOn": "내보낸 날짜:",
+    "citations": "참고 출처:",
+    "user": "사용자",
+    "assistant": "도우미",
+    "errors": {
+      "noChatModelsAvailable": "사용 가능한 채팅 모델이 없습니다",
+      "chatProviderNotConfigured": "채팅 모델 공급자가 구성되지 않은 것 같습니다. 설정 페이지 또는 구성 파일에서 설정하세요.",
+      "noEmbeddingModelsAvailable": "사용 가능한 임베딩 모델이 없습니다",
+      "cannotSendBeforeConfigReady": "구성이 완료되기 전에는 메시지를 보낼 수 없습니다",
+      "failedToDeleteChat": "채팅 삭제에 실패했습니다"
+    }
+  },
+  "navbar": {
+    "exportAsMarkdown": "Markdown으로 내보내기",
+    "exportAsPDF": "PDF로 내보내기"
+  },
+  "export": {
+    "chatExportTitle": "채팅 내보내기: {title}"
+  },
+  "weather": {
+    "conditions": {
+      "clear": "맑음",
+      "mainlyClear": "대체로 맑음",
+      "partlyCloudy": "부분적으로 구름",
+      "cloudy": "흐림",
+      "fog": "안개",
+      "lightDrizzle": "약한 이슬비",
+      "moderateDrizzle": "보통 이슬비",
+      "denseDrizzle": "강한 이슬비",
+      "lightFreezingDrizzle": "약한 착빙성 이슬비",
+      "denseFreezingDrizzle": "강한 착빙성 이슬비",
+      "slightRain": "약한 비",
+      "moderateRain": "보통 비",
+      "heavyRain": "강한 비",
+      "lightFreezingRain": "약한 어는 비",
+      "heavyFreezingRain": "강한 어는 비",
+      "slightSnowFall": "약한 눈",
+      "moderateSnowFall": "눈",
+      "heavySnowFall": "폭설",
+      "snow": "강설",
+      "slightRainShowers": "약한 소나기",
+      "moderateRainShowers": "소나기",
+      "heavyRainShowers": "강한 소나기",
+      "slightSnowShowers": "약한 눈보라",
+      "moderateSnowShowers": "눈보라",
+      "heavySnowShowers": "강한 눈보라",
+      "thunderstorm": "뇌우",
+      "thunderstormSlightHail": "약한 우박을 동반한 뇌우",
+      "thunderstormHeavyHail": "강한 우박을 동반한 뇌우"
+    }
+  },
+  "pages": {
+    "home": {
+      "title": "채팅 - Perplexica",
+      "description": "인터넷과 대화하고 Perplexica와 대화하세요."
+    },
+    "discover": {
+      "title": "디스커버",
+      "topics": {
+        "tech": "기술과 과학",
+        "finance": "금융",
+        "art": "예술과 문화",
+        "sports": "스포츠",
+        "entertainment": "엔터테인먼트"
+      },
+      "errorFetchingData": "데이터를 가져오는 중 오류가 발생했습니다"
+    },
+    "library": {
+      "title": "라이브러리",
+      "empty": "채팅을 찾을 수 없습니다.",
+      "ago": "{time} 전"
+    },
+    "settings": {
+      "title": "설정",
+      "back": "뒤로",
+      "general": {
+        "title": "일반",
+        "description": "일반 설정을 조정합니다.",
+        "language": {
+          "title": "언어",
+          "description": "앱 언어를 선택하세요."
+        },
+        "theme": {
+          "title": "테마",
+          "description": "앱 테마를 선택하세요.",
+          "options": {
+            "dark": "다크",
+            "light": "라이트"
+          }
+        },
+        "systemInstructions": {
+          "title": "시스템 지시사항",
+          "description": "대형 언어 모델(LLM)의 동작을 사용자 지정하기 위한 특별한 지시사항을 제공합니다.",
+          "placeholder": "예: '친근하고 간결한 어조로 답변' 또는 '한국어를 사용하고 응답을 글머리 기호로 형식화'"
+        },
+        "measureUnit": {
+          "title": "측정 단위",
+          "description": "날씨 정보의 측정 단위를 선택하세요.",
+          "options": {
+            "metric": "미터법 (섭씨, 킬로미터)",
+            "imperial": "야드파운드법 (화씨, 마일)"
+          }
+        }
+      },
+      "models": {
+        "title": "모델",
+        "description": "모델 설정을 구성합니다.",
+        "select": {
+          "title": "모델 선택",
+          "chat": {
+            "title": "채팅 모델",
+            "description": "채팅에 사용할 모델을 선택하세요."
+          },
+          "embedding": {
+            "title": "임베딩 모델",
+            "description": "임베딩에 사용할 모델을 선택하세요."
+          }
+        },
+        "manage": {
+          "title": "모델 제공업체 관리",
+          "add": {
+            "title": "제공업체 추가",
+            "select": "모델 제공업체 선택",
+            "name": {
+              "title": "제공업체 이름",
+              "placeholder": "이 제공업체의 사용자 지정 이름을 입력하세요."
+            },
+            "apiKey": {
+              "title": "API 키",
+              "placeholder": "제공업체의 API 키를 입력하세요."
+            },
+            "baseURL": {
+              "title": "베이스 URL",
+              "placeholder": "제공업체의 사용자 지정 베이스 URL을 입력하세요."
+            },
+            "toast": {
+              "success": "제공업체가 성공적으로 추가되었습니다",
+              "error": "제공업체 추가 중 오류가 발생했습니다"
+            }
+          },
+          "update": {
+            "title": "제공업체 업데이트",
+            "name": {
+              "title": "제공업체 이름",
+              "placeholder": "이 제공업체의 사용자 지정 이름을 입력하세요."
+            },
+            "toast": {
+              "success": "제공업체가 성공적으로 업데이트되었습니다",
+              "error": "제공업체 업데이트 중 오류가 발생했습니다"
+            }
+          },
+          "delete": {
+            "title": "제공업체 삭제",
+            "confirm": "이 모델 제공업체를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+            "cancel": "취소",
+            "toast": {
+              "success": "제공업체가 성공적으로 삭제되었습니다",
+              "error": "제공업체 삭제 중 오류가 발생했습니다"
+            }
+          }
+        }
+      },
+      "search": {
+        "title": "검색 설정",
+        "description": "검색 엔진 설정을 구성합니다.",
+        "searxngURL": {
+          "title": "SearXNG",
+          "description": "SearXNG 인스턴스 URL",
+          "placeholder": "http://localhost:4000"
+        }
+      }
+    }
+  },
+  "components": {
+    "common": {
+      "viewMore": "추가 {count}개 보기"
+    },
+    "messageInput": {
+      "placeholder": "후속 질문하기"
+    },
+    "messageBox": {
+      "sources": "출처",
+      "answer": "답변",
+      "related": "관련"
+    },
+    "copilot": {
+      "label": "Copilot"
+    },
+    "attach": {
+      "attachedFiles": "첨부된 파일",
+      "add": "추가",
+      "clear": "지우기",
+      "attach": "첨부",
+      "uploading": "업로드 중...",
+      "files": "{count}개 파일"
+    },
+    "focus": {
+      "button": "포커스",
+      "modes": {
+        "webSearch": {
+          "title": "전체",
+          "description": "인터넷 전체 검색"
+        },
+        "academicSearch": {
+          "title": "학술",
+          "description": "발표된 학술 논문 검색"
+        },
+        "writingAssistant": {
+          "title": "글쓰기",
+          "description": "웹을 검색하지 않고 채팅"
+        },
+        "wolframAlphaSearch": {
+          "title": "Wolfram Alpha",
+          "description": "계산 지식 엔진"
+        },
+        "youtubeSearch": {
+          "title": "YouTube",
+          "description": "동영상 검색 및 시청"
+        },
+        "redditSearch": {
+          "title": "Reddit",
+          "description": "토론과 의견 검색"
+        }
+      }
+    },
+    "optimization": {
+      "modes": {
+        "speed": {
+          "title": "속도",
+          "description": "속도를 우선하여 가장 빠른 답변 얻기"
+        },
+        "balanced": {
+          "title": "균형",
+          "description": "속도와 정확성의 균형 맞추기"
+        },
+        "quality": {
+          "title": "품질(곧 제공)",
+          "description": "가장 철저하고 정확한 답변 얻기"
+        }
+      }
+    },
+    "messageActions": {
+      "rewrite": "다시 쓰기"
+    },
+    "searchImages": {
+      "searchButton": "이미지 검색"
+    },
+    "searchVideos": {
+      "searchButton": "동영상 검색",
+      "badge": "동영상"
+    },
+    "weather": {
+      "humidity": "습도",
+      "now": "지금"
+    },
+    "newsArticleWidget": {
+      "error": "뉴스를 불러올 수 없습니다."
+    },
+    "emptyChat": {
+      "title": "연구는 여기에서 시작됩니다."
+    },
+    "emptyChatMessageInput": {
+      "placeholder": "아무거나 물어보세요..."
+    },
+    "deleteChat": {
+      "title": "삭제 확인",
+      "description": "이 채팅을 삭제하시겠습니까?",
+      "cancel": "취소",
+      "delete": "삭제"
+    },
+    "themeSwitcher": {
+      "options": {
+        "light": "라이트",
+        "dark": "다크"
+      }
+    }
+  }
+}

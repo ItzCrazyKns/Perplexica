@@ -13,11 +13,8 @@ interface AnthropicConfig {
 const providerConfigFields: UIConfigField[] = [
   {
     type: 'password',
-    name: 'API Key',
     key: 'apiKey',
-    description: 'Your Anthropic API key',
     required: true,
-    placeholder: 'Anthropic API Key',
     env: 'ANTHROPIC_API_KEY',
     scope: 'server',
   },

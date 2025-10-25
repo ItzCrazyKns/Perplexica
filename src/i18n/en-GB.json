@@ -1,0 +1,296 @@
+{
+  "metadata": {
+    "title": "Perplexica - Chat with the internet",
+    "description": "Perplexica is an AI powered chatbot that is connected to the internet."
+  },
+  "manifest": {
+    "name": "Perplexica - Chat with the internet",
+    "shortName": "Perplexica",
+    "description": "Perplexica is an AI powered chatbot that is connected to the internet."
+  },
+  "navigation": {
+    "home": "Home",
+    "discover": "Discover",
+    "library": "Library",
+    "settings": "Settings"
+  },
+  "common": {
+    "appName": "Perplexica",
+    "exportedOn": "Exported on:",
+    "citations": "Citations:",
+    "user": "User",
+    "assistant": "Assistant",
+    "errors": {
+      "noChatModelsAvailable": "No chat models available",
+      "chatProviderNotConfigured": "Looks like you haven't configured any chat model providers. Please configure them from the settings page or the config file.",
+      "noEmbeddingModelsAvailable": "No embedding models available",
+      "cannotSendBeforeConfigReady": "Cannot send message before the configuration is ready",
+      "failedToDeleteChat": "Failed to delete chat"
+    }
+  },
+  "navbar": {
+    "exportAsMarkdown": "Export as Markdown",
+    "exportAsPDF": "Export as PDF"
+  },
+  "export": {
+    "chatExportTitle": "Chat Export: {title}"
+  },
+  "weather": {
+    "conditions": {
+      "clear": "Clear",
+      "mainlyClear": "Mainly Clear",
+      "partlyCloudy": "Partly Cloudy",
+      "cloudy": "Cloudy",
+      "fog": "Fog",
+      "lightDrizzle": "Light Drizzle",
+      "moderateDrizzle": "Moderate Drizzle",
+      "denseDrizzle": "Dense Drizzle",
+      "lightFreezingDrizzle": "Light Freezing Drizzle",
+      "denseFreezingDrizzle": "Dense Freezing Drizzle",
+      "slightRain": "Slight Rain",
+      "moderateRain": "Moderate Rain",
+      "heavyRain": "Heavy Rain",
+      "lightFreezingRain": "Light Freezing Rain",
+      "heavyFreezingRain": "Heavy Freezing Rain",
+      "slightSnowFall": "Slight Snow Fall",
+      "moderateSnowFall": "Moderate Snow Fall",
+      "heavySnowFall": "Heavy Snow Fall",
+      "snow": "Snow",
+      "slightRainShowers": "Slight Rain Showers",
+      "moderateRainShowers": "Moderate Rain Showers",
+      "heavyRainShowers": "Heavy Rain Showers",
+      "slightSnowShowers": "Slight Snow Showers",
+      "moderateSnowShowers": "Moderate Snow Showers",
+      "heavySnowShowers": "Heavy Snow Showers",
+      "thunderstorm": "Thunderstorm",
+      "thunderstormSlightHail": "Thunderstorm with Slight Hail",
+      "thunderstormHeavyHail": "Thunderstorm with Heavy Hail"
+    }
+  },
+  "pages": {
+    "home": {
+      "title": "Chat - Perplexica",
+      "description": "Chat with the internet, chat with Perplexica."
+    },
+    "discover": {
+      "title": "Discover",
+      "topics": {
+        "tech": "Tech & Science",
+        "finance": "Finance",
+        "art": "Art & Culture",
+        "sports": "Sports",
+        "entertainment": "Entertainment"
+      },
+      "errorFetchingData": "Error fetching data"
+    },
+    "library": {
+      "title": "Library",
+      "empty": "No chats found.",
+      "ago": "{time} Ago"
+    },
+    "settings": {
+      "title": "Settings",
+      "back": "Back",
+      "general": {
+        "title": "General",
+        "description": "Adjust common settings.",
+        "language": {
+          "title": "Language",
+          "description": "Choose the app language."
+        },
+        "theme": {
+          "title": "Theme",
+          "description": "Choose the app theme.",
+          "options": {
+            "dark": "Dark",
+            "light": "Light"
+          }
+        },
+        "systemInstructions": {
+          "title": "System Instructions",
+          "description": "Provide special instructions for the large language model (LLM) to customise its behaviour.",
+          "placeholder": "For example, 'Answer in a friendly, concise tone' or 'Use British English and format responses as bullet points'."
+        },
+        "measureUnit": {
+          "title": "Measurement Unit",
+          "description": "Choose the measurement unit for weather information.",
+          "options": {
+            "metric": "Metric (Celsius, Kilometres)",
+            "imperial": "Imperial (Fahrenheit, Miles)"
+          }
+        }
+      },
+      "models": {
+        "title": "Models",
+        "description": "Configure model settings.",
+        "select": {
+          "title": "Select Models",
+          "chat": {
+            "title": "Chat Model",
+            "description": "Select the model to use for chat."
+          },
+          "embedding": {
+            "title": "Embedding Model",
+            "description": "Select the model to use for embeddings."
+          }
+        },
+        "manage": {
+          "title": "Manage Model Providers",
+          "add": {
+            "title": "Add Provider",
+            "select": "Select model provider",
+            "name": {
+              "title": "Provider Name",
+              "placeholder": "Enter a custom name for this provider."
+            },
+            "apiKey": {
+              "title": "API Key",
+              "placeholder": "Enter the provider's API key."
+            },
+            "baseURL": {
+              "title": "Base URL",
+              "placeholder": "Enter the provider's custom Base URL."
+            },
+            "toast": {
+              "success": "Provider added successfully",
+              "error": "Error adding provider"
+            }
+          },
+          "update": {
+            "title": "Update Provider",
+            "name": {
+              "title": "Provider Name",
+              "placeholder": "Enter a custom name for this provider."
+            },
+            "toast": {
+              "success": "Provider updated successfully",
+              "error": "Error updating provider"
+            }
+          },
+          "delete": {
+            "title": "Delete Provider",
+            "confirm": "Are you sure you want to delete this model provider? This action cannot be undone.",
+            "cancel": "Cancel",
+            "toast": {
+              "success": "Provider deleted successfully",
+              "error": "Error deleting provider"
+            }
+          }
+        }
+      },
+      "search": {
+        "title": "Search Settings",
+        "description": "Configure search engine settings.",
+        "searxngURL": {
+          "title": "SearXNG",
+          "description": "SearXNG instance URL",
+          "placeholder": "http://localhost:4000"
+        }
+      }
+    }
+  },
+  "components": {
+    "common": {
+      "viewMore": "View {count} more"
+    },
+    "messageInput": {
+      "placeholder": "Ask a follow-up"
+    },
+    "messageBox": {
+      "sources": "Sources",
+      "answer": "Answer",
+      "related": "Related"
+    },
+    "copilot": {
+      "label": "Copilot"
+    },
+    "attach": {
+      "attachedFiles": "Attached files",
+      "add": "Add",
+      "clear": "Clear",
+      "attach": "Attach",
+      "uploading": "Uploading...",
+      "files": "{count} files"
+    },
+    "focus": {
+      "button": "Focus",
+      "modes": {
+        "webSearch": {
+          "title": "All",
+          "description": "Searches across all of the internet"
+        },
+        "academicSearch": {
+          "title": "Academic",
+          "description": "Search in published academic papers"
+        },
+        "writingAssistant": {
+          "title": "Writing",
+          "description": "Chat without searching the web"
+        },
+        "wolframAlphaSearch": {
+          "title": "Wolfram Alpha",
+          "description": "Computational knowledge engine"
+        },
+        "youtubeSearch": {
+          "title": "YouTube",
+          "description": "Search and watch videos"
+        },
+        "redditSearch": {
+          "title": "Reddit",
+          "description": "Search for discussions and opinions"
+        }
+      }
+    },
+    "optimization": {
+      "modes": {
+        "speed": {
+          "title": "Speed",
+          "description": "Prioritize speed and get the quickest possible answer."
+        },
+        "balanced": {
+          "title": "Balanced",
+          "description": "Find the right balance between speed and accuracy"
+        },
+        "quality": {
+          "title": "Quality (Soon)",
+          "description": "Get the most thorough and accurate answer"
+        }
+      }
+    },
+    "messageActions": {
+      "rewrite": "Rewrite"
+    },
+    "searchImages": {
+      "searchButton": "Search images"
+    },
+    "searchVideos": {
+      "searchButton": "Search videos",
+      "badge": "Video"
+    },
+    "weather": {
+      "humidity": "Humidity",
+      "now": "Now"
+    },
+    "newsArticleWidget": {
+      "error": "Could not load news."
+    },
+    "emptyChat": {
+      "title": "Research begins here."
+    },
+    "emptyChatMessageInput": {
+      "placeholder": "Ask anything..."
+    },
+    "deleteChat": {
+      "title": "Delete Confirmation",
+      "description": "Are you sure you want to delete this chat?",
+      "cancel": "Cancel",
+      "delete": "Delete"
+    },
+    "themeSwitcher": {
+      "options": {
+        "light": "Light",
+        "dark": "Dark"
+      }
+    }
+  }
+}

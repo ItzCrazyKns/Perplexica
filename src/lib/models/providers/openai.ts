@@ -92,21 +92,15 @@ const defaultEmbeddingModels: Model[] = [
 const providerConfigFields: UIConfigField[] = [
   {
     type: 'password',
-    name: 'API Key',
     key: 'apiKey',
-    description: 'Your OpenAI API key',
     required: true,
-    placeholder: 'OpenAI API Key',
     env: 'OPENAI_API_KEY',
     scope: 'server',
   },
   {
     type: 'string',
-    name: 'Base URL',
     key: 'baseURL',
-    description: 'The base URL for the OpenAI API',
     required: true,
-    placeholder: 'OpenAI Base URL',
     default: 'https://api.openai.com/v1',
     env: 'OPENAI_BASE_URL',
     scope: 'server',

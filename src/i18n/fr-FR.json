@@ -1,0 +1,296 @@
+{
+  "metadata": {
+    "title": "Perplexica - Discuter avec Internet",
+    "description": "Perplexica est un chatbot IA connecté à Internet."
+  },
+  "manifest": {
+    "name": "Perplexica - Discuter avec Internet",
+    "shortName": "Perplexica",
+    "description": "Perplexica est un chatbot IA connecté à Internet."
+  },
+  "navigation": {
+    "home": "Accueil",
+    "discover": "Découvrir",
+    "library": "Bibliothèque",
+    "settings": "Paramètres"
+  },
+  "common": {
+    "appName": "Perplexica",
+    "exportedOn": "Exporté le :",
+    "citations": "Citations :",
+    "user": "Utilisateur",
+    "assistant": "Assistant",
+    "errors": {
+      "noChatModelsAvailable": "Aucun modèle de chat disponible",
+      "chatProviderNotConfigured": "Aucun fournisseur de modèle de chat n'est configuré. Merci de le configurer depuis la page des paramètres ou le fichier de configuration.",
+      "noEmbeddingModelsAvailable": "Aucun modèle d'embedding disponible",
+      "cannotSendBeforeConfigReady": "Impossible d'envoyer un message avant la fin de la configuration",
+      "failedToDeleteChat": "Échec de la suppression du chat"
+    }
+  },
+  "navbar": {
+    "exportAsMarkdown": "Exporter en Markdown",
+    "exportAsPDF": "Exporter en PDF"
+  },
+  "export": {
+    "chatExportTitle": "Export de conversation : {title}"
+  },
+  "weather": {
+    "conditions": {
+      "clear": "Dégagé",
+      "mainlyClear": "Plutôt dégagé",
+      "partlyCloudy": "Partiellement nuageux",
+      "cloudy": "Nuageux",
+      "fog": "Brouillard",
+      "lightDrizzle": "Bruine faible",
+      "moderateDrizzle": "Bruine modérée",
+      "denseDrizzle": "Bruine forte",
+      "lightFreezingDrizzle": "Bruine verglaçante faible",
+      "denseFreezingDrizzle": "Bruine verglaçante forte",
+      "slightRain": "Pluie faible",
+      "moderateRain": "Pluie modérée",
+      "heavyRain": "Pluie forte",
+      "lightFreezingRain": "Pluie verglaçante faible",
+      "heavyFreezingRain": "Pluie verglaçante forte",
+      "slightSnowFall": "Neige faible",
+      "moderateSnowFall": "Neige modérée",
+      "heavySnowFall": "Fortes chutes de neige",
+      "snow": "Chute de neige",
+      "slightRainShowers": "Averses faibles",
+      "moderateRainShowers": "Averses",
+      "heavyRainShowers": "Fortes averses",
+      "slightSnowShowers": "Averses de neige faibles",
+      "moderateSnowShowers": "Averses de neige",
+      "heavySnowShowers": "Fortes averses de neige",
+      "thunderstorm": "Orage",
+      "thunderstormSlightHail": "Orage avec petites grêles",
+      "thunderstormHeavyHail": "Orage avec fortes grêles"
+    }
+  },
+  "pages": {
+    "home": {
+      "title": "Chat - Perplexica",
+      "description": "Discutez avec Internet, discutez avec Perplexica."
+    },
+    "discover": {
+      "title": "Découvrir",
+      "topics": {
+        "tech": "Tech et science",
+        "finance": "Finance",
+        "art": "Art et culture",
+        "sports": "Sports",
+        "entertainment": "Divertissement"
+      },
+      "errorFetchingData": "Erreur lors de la récupération des données"
+    },
+    "library": {
+      "title": "Bibliothèque",
+      "empty": "Aucune conversation trouvée.",
+      "ago": "Il y a {time}"
+    },
+    "settings": {
+      "title": "Paramètres",
+      "back": "Retour",
+      "general": {
+        "title": "Général",
+        "description": "Ajuster les paramètres communs.",
+        "language": {
+          "title": "Langue",
+          "description": "Choisir la langue de l'application."
+        },
+        "theme": {
+          "title": "Thème",
+          "description": "Choisir le thème de l'application.",
+          "options": {
+            "dark": "Sombre",
+            "light": "Clair"
+          }
+        },
+        "systemInstructions": {
+          "title": "Instructions système",
+          "description": "Fournir des instructions spéciales pour le grand modèle de langage (LLM) afin de personnaliser son comportement.",
+          "placeholder": "Par exemple, 'Répondre avec un ton amical et concis' ou 'Utiliser le français et formater les réponses sous forme de puces'."
+        },
+        "measureUnit": {
+          "title": "Unité de mesure",
+          "description": "Choisir l'unité de mesure pour les informations météorologiques.",
+          "options": {
+            "metric": "Métrique (Celsius, Kilomètres)",
+            "imperial": "Impérial (Fahrenheit, Miles)"
+          }
+        }
+      },
+      "models": {
+        "title": "Modèles",
+        "description": "Configurer les paramètres des modèles.",
+        "select": {
+          "title": "Sélectionner les modèles",
+          "chat": {
+            "title": "Modèle de chat",
+            "description": "Sélectionner le modèle à utiliser pour le chat."
+          },
+          "embedding": {
+            "title": "Modèle d'embedding",
+            "description": "Sélectionner le modèle à utiliser pour les embeddings."
+          }
+        },
+        "manage": {
+          "title": "Gérer les fournisseurs de modèles",
+          "add": {
+            "title": "Ajouter un fournisseur",
+            "select": "Sélectionner un fournisseur de modèle",
+            "name": {
+              "title": "Nom du fournisseur",
+              "placeholder": "Entrer un nom personnalisé pour ce fournisseur."
+            },
+            "apiKey": {
+              "title": "Clé API",
+              "placeholder": "Entrer la clé API du fournisseur."
+            },
+            "baseURL": {
+              "title": "URL de base",
+              "placeholder": "Entrer l'URL de base personnalisée du fournisseur."
+            },
+            "toast": {
+              "success": "Fournisseur ajouté avec succès",
+              "error": "Erreur lors de l'ajout du fournisseur"
+            }
+          },
+          "update": {
+            "title": "Mettre à jour le fournisseur",
+            "name": {
+              "title": "Nom du fournisseur",
+              "placeholder": "Entrer un nom personnalisé pour ce fournisseur."
+            },
+            "toast": {
+              "success": "Fournisseur mis à jour avec succès",
+              "error": "Erreur lors de la mise à jour du fournisseur"
+            }
+          },
+          "delete": {
+            "title": "Supprimer le fournisseur",
+            "confirm": "Êtes-vous sûr de vouloir supprimer ce fournisseur de modèle ? Cette action ne peut pas être annulée.",
+            "cancel": "Annuler",
+            "toast": {
+              "success": "Fournisseur supprimé avec succès",
+              "error": "Erreur lors de la suppression du fournisseur"
+            }
+          }
+        }
+      },
+      "search": {
+        "title": "Paramètres de recherche",
+        "description": "Configurer les paramètres du moteur de recherche.",
+        "searxngURL": {
+          "title": "SearXNG",
+          "description": "URL de l'instance SearXNG",
+          "placeholder": "http://localhost:4000"
+        }
+      }
+    }
+  },
+  "components": {
+    "common": {
+      "viewMore": "Voir {count} de plus"
+    },
+    "messageInput": {
+      "placeholder": "Poser une question de suivi"
+    },
+    "messageBox": {
+      "sources": "Sources",
+      "answer": "Réponse",
+      "related": "Connexe"
+    },
+    "copilot": {
+      "label": "Copilot"
+    },
+    "attach": {
+      "attachedFiles": "Fichiers joints",
+      "add": "Ajouter",
+      "clear": "Effacer",
+      "attach": "Joindre",
+      "uploading": "Téléversement...",
+      "files": "{count} fichiers"
+    },
+    "focus": {
+      "button": "Focus",
+      "modes": {
+        "webSearch": {
+          "title": "Tous",
+          "description": "Recherche sur tout Internet"
+        },
+        "academicSearch": {
+          "title": "Académique",
+          "description": "Recherche dans des articles académiques publiés"
+        },
+        "writingAssistant": {
+          "title": "Rédaction",
+          "description": "Discuter sans rechercher sur le web"
+        },
+        "wolframAlphaSearch": {
+          "title": "Wolfram Alpha",
+          "description": "Moteur de connaissance computationnelle"
+        },
+        "youtubeSearch": {
+          "title": "YouTube",
+          "description": "Rechercher et regarder des vidéos"
+        },
+        "redditSearch": {
+          "title": "Reddit",
+          "description": "Rechercher des discussions et des opinions"
+        }
+      }
+    },
+    "optimization": {
+      "modes": {
+        "speed": {
+          "title": "Vitesse",
+          "description": "Prioriser la vitesse pour obtenir la réponse la plus rapide"
+        },
+        "balanced": {
+          "title": "Équilibré",
+          "description": "Trouver un équilibre entre vitesse et précision"
+        },
+        "quality": {
+          "title": "Qualité (bientôt)",
+          "description": "Obtenir la réponse la plus complète et la plus précise"
+        }
+      }
+    },
+    "messageActions": {
+      "rewrite": "Réécrire"
+    },
+    "searchImages": {
+      "searchButton": "Rechercher des images"
+    },
+    "searchVideos": {
+      "searchButton": "Rechercher des vidéos",
+      "badge": "Vidéo"
+    },
+    "weather": {
+      "humidity": "Humidité",
+      "now": "Maintenant"
+    },
+    "newsArticleWidget": {
+      "error": "Impossible de charger les actualités."
+    },
+    "emptyChat": {
+      "title": "La recherche commence ici."
+    },
+    "emptyChatMessageInput": {
+      "placeholder": "Demandez-moi n'importe quoi..."
+    },
+    "deleteChat": {
+      "title": "Confirmation de suppression",
+      "description": "Êtes-vous sûr de vouloir supprimer cette conversation ?",
+      "cancel": "Annuler",
+      "delete": "Supprimer"
+    },
+    "themeSwitcher": {
+      "options": {
+        "light": "Clair",
+        "dark": "Sombre"
+      }
+    }
+  }
+}

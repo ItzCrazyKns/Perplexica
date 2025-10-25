@@ -15,28 +15,23 @@ import { cn } from '@/lib/utils';
 import Models from './Sections/Models/Section';
 import SearchSection from './Sections/Search';
 import Select from '@/components/ui/Select';
+import { useTranslations } from 'next-intl';
 
 const sections = [
   {
     key: 'general',
-    name: 'General',
-    description: 'Adjust common settings.',
     icon: Settings,
     component: General,
     dataAdd: 'general',
   },
   {
     key: 'models',
-    name: 'Models',
-    description: 'Configure model settings.',
     icon: BrainCog,
     component: Models,
     dataAdd: 'modelProviders',
   },
   {
     key: 'search',
-    name: 'Search',
-    description: 'Manage search settings.',
     icon: Search,
     component: SearchSection,
     dataAdd: 'search',
@@ -54,6 +49,7 @@ const SettingsDialogue = ({
   const [config, setConfig] = useState<any>(null);
   const [activeSection, setActiveSection] = useState<string>(sections[0].key);
   const [selectedSection, setSelectedSection] = useState(sections[0]);
+  const t = useTranslations('pages.settings');
 
   useEffect(() => {
     setSelectedSection(sections.find((s) => s.key === activeSection)!);
@@ -115,7 +111,7 @@ const SettingsDialogue = ({
                     className="text-black/50 dark:text-white/50 group-hover:text-black/70 group-hover:dark:text-white/70"
                   />
                   <p className="text-black/50 dark:text-white/50 group-hover:text-black/70 group-hover:dark:text-white/70 text-[14px]">
-                    Back
+                    {t('back')}
                   </p>
                 </button>
                 <div className="flex flex-col items-start space-y-1 mt-8">
@@ -131,7 +127,7 @@ const SettingsDialogue = ({
                       onClick={() => setActiveSection(section.key)}
                     >
                       <section.icon size={17} />
-                      <p>{section.name}</p>
+                      <p>{t(`${section.key}.title`)}</p>
                     </button>
                   ))}
                 </div>
@@ -152,7 +148,7 @@ const SettingsDialogue = ({
                       return {
                         value: section.key,
                         key: section.key,
-                        label: section.name,
+                        label: t(`${section.key}.title`),
                       };
                     })}
                     value={activeSection}
@@ -167,10 +163,10 @@ const SettingsDialogue = ({
                     <div className="border-b border-light-200/60 px-6 pb-6 lg:pt-6 dark:border-dark-200/60 flex-shrink-0">
                       <div className="flex flex-col">
                         <h4 className="font-medium text-black dark:text-white text-sm lg:text-base">
-                          {selectedSection.name}
+                          {t(`${selectedSection.key}.title`)}
                         </h4>
                         <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
-                          {selectedSection.description}
+                          {t(`${selectedSection.key}.description`)}
                         </p>
                       </div>
                     </div>

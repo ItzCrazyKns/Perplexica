@@ -3,6 +3,7 @@ import { ConfigModelProvider } from '@/lib/config/types';
 import { useChat } from '@/lib/hooks/useChat';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 const ModelSelect = ({
   providers,
@@ -18,6 +19,7 @@ const ModelSelect = ({
   );
   const [loading, setLoading] = useState(false);
   const { setChatModelProvider, setEmbeddingModelProvider } = useChat();
+  const t = useTranslations('pages.settings.models.select');
 
   const handleSave = async (newValue: string) => {
     setLoading(true);
@@ -60,12 +62,12 @@ const ModelSelect = ({
       <div className="space-y-3 lg:space-y-5">
         <div>
           <h4 className="text-sm lg:text-base text-black dark:text-white">
-            Select {type === 'chat' ? 'Chat Model' : 'Embedding Model'}
+            {type === 'chat' ? t('chat.title') : t('embedding.title')}
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
             {type === 'chat'
-              ? 'Select the model to use for chat responses'
-              : 'Select the model to use for embeddings'}
+              ? t('chat.description')
+              : t('embedding.description')}
           </p>
         </div>
         <Select

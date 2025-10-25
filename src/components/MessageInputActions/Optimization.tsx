@@ -7,25 +7,20 @@ import {
   Transition,
 } from '@headlessui/react';
 import { Fragment } from 'react';
+import { useTranslations } from 'next-intl';
 import { useChat } from '@/lib/hooks/useChat';
 
 const OptimizationModes = [
   {
     key: 'speed',
-    title: 'Speed',
-    description: 'Prioritize speed and get the quickest possible answer.',
     icon: <Zap size={16} className="text-[#FF9800]" />,
   },
   {
     key: 'balanced',
-    title: 'Balanced',
-    description: 'Find the right balance between speed and accuracy',
     icon: <Sliders size={16} className="text-[#4CAF50]" />,
   },
   {
     key: 'quality',
-    title: 'Quality (Soon)',
-    description: 'Get the most thorough and accurate answer',
     icon: (
       <Star
         size={16}
@@ -37,7 +32,7 @@ const OptimizationModes = [
 
 const Optimization = () => {
   const { optimizationMode, setOptimizationMode } = useChat();
-
+  const t = useTranslations('components.optimization');
   return (
     <Popover className="relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
       {({ open }) => (
@@ -86,10 +81,12 @@ const Optimization = () => {
                   >
                     <div className="flex flex-row items-center space-x-1 text-black dark:text-white">
                       {mode.icon}
-                      <p className="text-sm font-medium">{mode.title}</p>
+                      <p className="text-sm font-medium">
+                        {t(`modes.${mode.key}.title`)}
+                      </p>
                     </div>
                     <p className="text-black/70 dark:text-white/70 text-xs">
-                      {mode.description}
+                      {t(`modes.${mode.key}.description`)}
                     </p>
                   </PopoverButton>
                 ))}

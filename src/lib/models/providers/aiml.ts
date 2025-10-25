@@ -13,11 +13,8 @@ interface AimlConfig {
 const providerConfigFields: UIConfigField[] = [
   {
     type: 'password',
-    name: 'API Key',
     key: 'apiKey',
-    description: 'Your AI/ML API key',
     required: true,
-    placeholder: 'AI/ML API Key',
     env: 'AIML_API_KEY',
     scope: 'server',
   },

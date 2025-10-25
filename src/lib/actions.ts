@@ -1,6 +1,9 @@
 import { Message } from '@/components/ChatWindow';
 
-export const getSuggestions = async (chatHistory: Message[]) => {
+export const getSuggestions = async (
+  chatHistory: Message[],
+  locale?: string,
+) => {
   const chatModel = localStorage.getItem('chatModelKey');
   const chatModelProvider = localStorage.getItem('chatModelProviderId');
 
@@ -15,6 +18,7 @@ export const getSuggestions = async (chatHistory: Message[]) => {
         providerId: chatModelProvider,
         key: chatModel,
       },
+      locale,
     }),
   });
 

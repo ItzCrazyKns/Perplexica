@@ -1,10 +1,14 @@
 import ChatWindow from '@/components/ChatWindow';
 import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Chat - Perplexica',
-  description: 'Chat with the internet, chat with Perplexica.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('pages.home');
+  return {
+    title: t('title'),
+    description: t('description'),
+  };
+}
 
 const Home = () => {
   return <ChatWindow />;

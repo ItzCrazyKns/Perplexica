@@ -24,11 +24,8 @@ const defaultChatModels: Model[] = [
 const providerConfigFields: UIConfigField[] = [
   {
     type: 'password',
-    name: 'API Key',
     key: 'apiKey',
-    description: 'Your DeepSeek API key',
     required: true,
-    placeholder: 'DeepSeek API Key',
     env: 'DEEPSEEK_API_KEY',
     scope: 'server',
   },

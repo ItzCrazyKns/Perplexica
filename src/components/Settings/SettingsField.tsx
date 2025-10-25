@@ -9,20 +9,24 @@ import Select from '../ui/Select';
 import { toast } from 'sonner';
 import { useTheme } from 'next-themes';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 const SettingsSelect = ({
   field,
   value,
   setValue,
   dataAdd,
+  category,
 }: {
   field: SelectUIConfigField;
   value?: any;
   setValue: (value: any) => void;
   dataAdd: string;
+  category: string;
 }) => {
   const [loading, setLoading] = useState(false);
   const { setTheme } = useTheme();
+  const t = useTranslations(`pages.settings.${category}`);
 
   const handleSave = async (newValue: any) => {
     setLoading(true);
@@ -63,18 +67,18 @@ const SettingsSelect = ({
       <div className="space-y-3 lg:space-y-5">
         <div>
           <h4 className="text-sm lg:text-base text-black dark:text-white">
-            {field.name}
+            {t(`${field.key}.title`)}
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
-            {field.description}
+            {t(`${field.key}.description`)}
           </p>
         </div>
         <Select
           value={value}
           onChange={(event) => handleSave(event.target.value)}
-          options={field.options.map((option) => ({
-            value: option.value,
-            label: option.name,
+          options={field.options.map((key) => ({
+            value: `${key}`,
+            label: t(`${field.key}.options.${key}`),
           }))}
           className="!text-xs lg:!text-sm"
           loading={loading}
@@ -90,13 +94,16 @@ const SettingsInput = ({
   value,
   setValue,
   dataAdd,
+  category,
 }: {
   field: StringUIConfigField;
   value?: any;
   setValue: (value: any) => void;
   dataAdd: string;
+  category: string;
 }) => {
   const [loading, setLoading] = useState(false);
+  const t = useTranslations(`pages.settings.${category}`);
 
   const handleSave = async (newValue: any) => {
     setLoading(true);
@@ -134,10 +141,10 @@ const SettingsInput = ({
       <div className="space-y-3 lg:space-y-5">
         <div>
           <h4 className="text-sm lg:text-base text-black dark:text-white">
-            {field.name}
+            {t(`${field.key}.title`)}
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
-            {field.description}
+            {t(`${field.key}.description`)}
           </p>
         </div>
         <div className="relative">
@@ -146,7 +153,7 @@ const SettingsInput = ({
             onChange={(event) => setValue(event.target.value)}
             onBlur={(event) => handleSave(event.target.value)}
             className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-3 py-2 lg:px-4 lg:py-3 pr-10 !text-xs lg:!text-sm text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-            placeholder={field.placeholder}
+            placeholder={t(`${field.key}.placeholder`)}
             type="text"
             disabled={loading}
           />
@@ -166,13 +173,16 @@ const SettingsTextarea = ({
   value,
   setValue,
   dataAdd,
+  category,
 }: {
   field: TextareaUIConfigField;
   value?: any;
   setValue: (value: any) => void;
   dataAdd: string;
+  category: string;
 }) => {
   const [loading, setLoading] = useState(false);
+  const t = useTranslations(`pages.settings.${category}`);
 
   const handleSave = async (newValue: any) => {
     setLoading(true);
@@ -210,10 +220,10 @@ const SettingsTextarea = ({
       <div className="space-y-3 lg:space-y-5">
         <div>
           <h4 className="text-sm lg:text-base text-black dark:text-white">
-            {field.name}
+            {t(`${field.key}.title`)}
           </h4>
           <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
-            {field.description}
+            {t(`${field.key}.description`)}
           </p>
         </div>
         <div className="relative">
@@ -222,7 +232,7 @@ const SettingsTextarea = ({
             onChange={(event) => setValue(event.target.value)}
             onBlur={(event) => handleSave(event.target.value)}
             className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-3 py-2 lg:px-4 lg:py-3 pr-10 !text-xs lg:!text-sm text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-            placeholder={field.placeholder}
+            placeholder={t(`${field.key}.placeholder`)}
             rows={4}
             disabled={loading}
           />
@@ -256,6 +266,7 @@ const SettingsField = ({
           value={val}
           setValue={setVal}
           dataAdd={dataAdd}
+          category={dataAdd}
         />
       );
     case 'string':
@@ -265,6 +276,7 @@ const SettingsField = ({
           value={val}
           setValue={setVal}
           dataAdd={dataAdd}
+          category={dataAdd}
         />
       );
     case 'textarea':
@@ -274,6 +286,7 @@ const SettingsField = ({
           value={val}
           setValue={setVal}
           dataAdd={dataAdd}
+          category={dataAdd}
         />
       );
     default:

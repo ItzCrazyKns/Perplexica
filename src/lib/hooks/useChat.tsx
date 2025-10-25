@@ -4,8 +4,8 @@ import {
   AssistantMessage,
   ChatTurn,
   Message,
-  SourceMessage,
   SuggestionMessage,
+  SourceMessage,
   UserMessage,
 } from '@/components/ChatWindow';
 import {
@@ -19,6 +19,7 @@ import {
 import crypto from 'crypto';
 import { useParams, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { useLocale, useTranslations } from 'next-intl';
 import { getSuggestions } from '../actions';
 import { MinimalProvider } from '../models/types';
 
@@ -85,6 +86,7 @@ const checkConfig = async (
   setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void,
   setIsConfigReady: (ready: boolean) => void,
   setHasError: (hasError: boolean) => void,
+  t: (key: string) => string,
 ) => {
   try {
     let chatModelKey = localStorage.getItem('chatModelKey');
@@ -315,6 +317,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const messagesRef = useRef<Message[]>([]);
 
+  const t = useTranslations();
+  const locale = useLocale();
   const chatTurns = useMemo((): ChatTurn[] => {
     return messages.filter(
       (msg): msg is ChatTurn => msg.role === 'user' || msg.role === 'assistant',
@@ -442,6 +446,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       setEmbeddingModelProvider,
       setIsConfigReady,
       setHasError,
+      t,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -522,7 +527,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (isReady && initialMessage && isConfigReady) {
       if (!isConfigReady) {
-        toast.error('Cannot send message before the configuration is ready');
+        toast.error(t('common.errors.cannotSendBeforeConfigReady'));
         return;
       }
       sendMessage(initialMessage);
@@ -658,7 +663,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           sourceMessage.sources.length > 0 &&
           suggestionMessageIndex == -1
         ) {
-          const suggestions = await getSuggestions(messagesRef.current);
+          const suggestions = await getSuggestions(messagesRef.current, locale);
           setMessages((prev) => {
             return [
               ...prev,
@@ -705,6 +710,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           providerId: embeddingModelProvider.providerId,
         },
         systemInstructions: localStorage.getItem('systemInstructions'),
+        locale,
       }),
     });
 

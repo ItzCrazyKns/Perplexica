@@ -16,11 +16,8 @@ interface GeminiConfig {
 const providerConfigFields: UIConfigField[] = [
   {
     type: 'password',
-    name: 'API Key',
     key: 'apiKey',
-    description: 'Your Google Gemini API key',
     required: true,
-    placeholder: 'Google Gemini API Key',
     env: 'GEMINI_API_KEY',
     scope: 'server',
   },

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ConfigModelProvider } from '@/lib/config/types';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 const DeleteProvider = ({
   modelProvider,
@@ -14,6 +15,7 @@ const DeleteProvider = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const t = useTranslations('pages.settings.models.manage');
 
   const handleDelete = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,10 +36,10 @@ const DeleteProvider = ({
         return prev.filter((p) => p.id !== modelProvider.id);
       });
 
-      toast.success('Provider deleted successfully.');
+      toast.success(t('delete.toast.success'));
     } catch (error) {
       console.error('Error deleting provider:', error);
-      toast.error('Failed to delete provider.');
+      toast.error(t('delete.toast.error'));
     } finally {
       setLoading(false);
     }
@@ -76,14 +78,13 @@ const DeleteProvider = ({
               <DialogPanel className="w-full mx-4 lg:w-[600px] max-h-[85vh] flex flex-col border bg-light-primary dark:bg-dark-primary border-light-secondary dark:border-dark-secondary rounded-lg">
                 <div className="px-6 pt-6 pb-4">
                   <h3 className="text-black/90 dark:text-white/90 font-medium">
-                    Delete provider
+                    {t('delete.title')}
                   </h3>
                 </div>
                 <div className="border-t border-light-200 dark:border-dark-200" />
                 <div className="flex-1 overflow-y-auto px-6 py-4">
                   <p className="text-SM text-black/60 dark:text-white/60">
-                    Are you sure you want to delete the provider &quot;
-                    {modelProvider.name}&quot;? This action cannot be undone.
+                    {t('delete.confirm')} &quot;{modelProvider.name}&quot; ?
                   </p>
                 </div>
                 <div className="px-6 py-6 flex justify-end space-x-2">
@@ -92,7 +93,7 @@ const DeleteProvider = ({
                     onClick={() => setOpen(false)}
                     className="px-4 py-2 rounded-lg text-sm border border-light-200 dark:border-dark-200 text-black dark:text-white bg-light-secondary/50 dark:bg-dark-secondary/50 hover:bg-light-secondary hover:dark:bg-dark-secondary hover:border-light-300 hover:dark:border-dark-300 flex flex-row items-center space-x-1 active:scale-95 transition duration-200"
                   >
-                    Cancel
+                    {t('delete.cancel')}
                   </button>
                   <button
                     disabled={loading}
@@ -102,7 +103,7 @@ const DeleteProvider = ({
                     {loading ? (
                       <Loader2 className="animate-spin" size={16} />
                     ) : (
-                      'Delete'
+                      t('delete.title')
                     )}
                   </button>
                 </div>

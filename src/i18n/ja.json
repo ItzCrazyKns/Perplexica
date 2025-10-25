@@ -1,0 +1,296 @@
+{
+  "metadata": {
+    "title": "Perplexica - インターネットと会話",
+    "description": "Perplexica はインターネットに接続された AI チャットボットです。"
+  },
+  "manifest": {
+    "name": "Perplexica - インターネットと会話",
+    "shortName": "Perplexica",
+    "description": "Perplexica はインターネットに接続された AI チャットボットです。"
+  },
+  "navigation": {
+    "home": "ホーム",
+    "discover": "ディスカバー",
+    "library": "ライブラリ",
+    "settings": "設定"
+  },
+  "common": {
+    "appName": "Perplexica",
+    "exportedOn": "書き出し日：",
+    "citations": "参考文献：",
+    "user": "ユーザー",
+    "assistant": "アシスタント",
+    "errors": {
+      "noChatModelsAvailable": "利用可能なチャットモデルがありません",
+      "chatProviderNotConfigured": "チャットモデルのプロバイダーが設定されていません。設定ページまたは設定ファイルで設定してください。",
+      "noEmbeddingModelsAvailable": "利用可能な埋め込みモデルがありません",
+      "cannotSendBeforeConfigReady": "設定が完了するまでメッセージを送信できません",
+      "failedToDeleteChat": "チャットの削除に失敗しました"
+    }
+  },
+  "navbar": {
+    "exportAsMarkdown": "Markdown として書き出し",
+    "exportAsPDF": "PDF として書き出し"
+  },
+  "export": {
+    "chatExportTitle": "チャット書き出し：{title}"
+  },
+  "weather": {
+    "conditions": {
+      "clear": "快晴",
+      "mainlyClear": "晴れ時々薄曇り",
+      "partlyCloudy": "所により曇り",
+      "cloudy": "曇り",
+      "fog": "霧",
+      "lightDrizzle": "弱い霧雨",
+      "moderateDrizzle": "やや強い霧雨",
+      "denseDrizzle": "強い霧雨",
+      "lightFreezingDrizzle": "弱い着氷性霧雨",
+      "denseFreezingDrizzle": "強い着氷性霧雨",
+      "slightRain": "小雨",
+      "moderateRain": "雨",
+      "heavyRain": "大雨",
+      "lightFreezingRain": "弱い凍雨",
+      "heavyFreezingRain": "強い凍雨",
+      "slightSnowFall": "小雪",
+      "moderateSnowFall": "雪",
+      "heavySnowFall": "大雪",
+      "snow": "降雪",
+      "slightRainShowers": "にわか小雨",
+      "moderateRainShowers": "にわか雨",
+      "heavyRainShowers": "激しいにわか雨",
+      "slightSnowShowers": "にわか小雪",
+      "moderateSnowShowers": "にわか雪",
+      "heavySnowShowers": "激しいにわか雪",
+      "thunderstorm": "雷雨",
+      "thunderstormSlightHail": "雷雨（小さな雹）",
+      "thunderstormHeavyHail": "雷雨（大きな雹）"
+    }
+  },
+  "pages": {
+    "home": {
+      "title": "チャット - Perplexica",
+      "description": "インターネットと会話し、Perplexica と対話しましょう。"
+    },
+    "discover": {
+      "title": "ディスカバー",
+      "topics": {
+        "tech": "テック・サイエンス",
+        "finance": "ファイナンス",
+        "art": "アート・文化",
+        "sports": "スポーツ",
+        "entertainment": "エンタメ"
+      },
+      "errorFetchingData": "データの取得中にエラーが発生しました"
+    },
+    "library": {
+      "title": "ライブラリ",
+      "empty": "チャットが見つかりません。",
+      "ago": "{time} 前"
+    },
+    "settings": {
+      "title": "設定",
+      "back": "戻る",
+      "general": {
+        "title": "一般",
+        "description": "一般的な設定を調整します。",
+        "language": {
+          "title": "言語",
+          "description": "アプリの言語を選択します。"
+        },
+        "theme": {
+          "title": "テーマ",
+          "description": "アプリのテーマを選択します。",
+          "options": {
+            "dark": "ダーク",
+            "light": "ライト"
+          }
+        },
+        "systemInstructions": {
+          "title": "システム指示",
+          "description": "大規模言語モデル（LLM）の動作をカスタマイズするための特別な指示を提供します。",
+          "placeholder": "例：「親しみやすく簡潔な口調で回答」や「日本語を使用し、回答を箇条書きで整理」"
+        },
+        "measureUnit": {
+          "title": "測定単位",
+          "description": "天気情報の測定単位を選択します。",
+          "options": {
+            "metric": "メートル法（摂氏、キロメートル）",
+            "imperial": "ヤードポンド法（華氏、マイル）"
+          }
+        }
+      },
+      "models": {
+        "title": "モデル",
+        "description": "モデル設定を構成します。",
+        "select": {
+          "title": "モデルを選択",
+          "chat": {
+            "title": "チャットモデル",
+            "description": "チャット用のモデルを選択します。"
+          },
+          "embedding": {
+            "title": "埋め込みモデル",
+            "description": "埋め込み用のモデルを選択します。"
+          }
+        },
+        "manage": {
+          "title": "モデルプロバイダー管理",
+          "add": {
+            "title": "プロバイダー追加",
+            "select": "モデルプロバイダーを選択",
+            "name": {
+              "title": "プロバイダー名",
+              "placeholder": "このプロバイダーのカスタム名を入力してください。"
+            },
+            "apiKey": {
+              "title": "API キー",
+              "placeholder": "プロバイダーの API キーを入力してください。"
+            },
+            "baseURL": {
+              "title": "ベース URL",
+              "placeholder": "プロバイダーのカスタムベース URL を入力してください。"
+            },
+            "toast": {
+              "success": "プロバイダーが正常に追加されました",
+              "error": "プロバイダーの追加中にエラーが発生しました"
+            }
+          },
+          "update": {
+            "title": "プロバイダー更新",
+            "name": {
+              "title": "プロバイダー名",
+              "placeholder": "このプロバイダーのカスタム名を入力してください。"
+            },
+            "toast": {
+              "success": "プロバイダーが正常に更新されました",
+              "error": "プロバイダーの更新中にエラーが発生しました"
+            }
+          },
+          "delete": {
+            "title": "プロバイダー削除",
+            "confirm": "このモデルプロバイダーを削除してもよろしいですか？この操作は元に戻すことができません。",
+            "cancel": "キャンセル",
+            "toast": {
+              "success": "プロバイダーが正常に削除されました",
+              "error": "プロバイダーの削除中にエラーが発生しました"
+            }
+          }
+        }
+      },
+      "search": {
+        "title": "検索設定",
+        "description": "検索エンジンの設定を構成します。",
+        "searxngURL": {
+          "title": "SearXNG",
+          "description": "SearXNG インスタンス URL",
+          "placeholder": "http://localhost:4000"
+        }
+      }
+    }
+  },
+  "components": {
+    "common": {
+      "viewMore": "さらに {count} 件を表示"
+    },
+    "messageInput": {
+      "placeholder": "追質問する"
+    },
+    "messageBox": {
+      "sources": "出典",
+      "answer": "回答",
+      "related": "関連"
+    },
+    "copilot": {
+      "label": "Copilot"
+    },
+    "attach": {
+      "attachedFiles": "添付ファイル",
+      "add": "追加",
+      "clear": "クリア",
+      "attach": "添付",
+      "uploading": "アップロード中...",
+      "files": "{count} 件のファイル"
+    },
+    "focus": {
+      "button": "フォーカス",
+      "modes": {
+        "webSearch": {
+          "title": "すべて",
+          "description": "インターネット全体を検索"
+        },
+        "academicSearch": {
+          "title": "学術",
+          "description": "公開済みの学術論文を検索"
+        },
+        "writingAssistant": {
+          "title": "ライティング",
+          "description": "ウェブ検索をせずにチャット"
+        },
+        "wolframAlphaSearch": {
+          "title": "Wolfram Alpha",
+          "description": "計算知識エンジン"
+        },
+        "youtubeSearch": {
+          "title": "YouTube",
+          "description": "動画を検索・視聴"
+        },
+        "redditSearch": {
+          "title": "Reddit",
+          "description": "議論と意見を検索"
+        }
+      }
+    },
+    "optimization": {
+      "modes": {
+        "speed": {
+          "title": "スピード",
+          "description": "速度を優先し、最速で回答を取得"
+        },
+        "balanced": {
+          "title": "バランス",
+          "description": "速度と正確性のバランスを取る"
+        },
+        "quality": {
+          "title": "クオリティ（近日対応）",
+          "description": "最も丁寧で正確な回答を取得"
+        }
+      }
+    },
+    "messageActions": {
+      "rewrite": "書き直す"
+    },
+    "searchImages": {
+      "searchButton": "画像を検索"
+    },
+    "searchVideos": {
+      "searchButton": "動画を検索",
+      "badge": "動画"
+    },
+    "weather": {
+      "humidity": "湿度",
+      "now": "現在"
+    },
+    "newsArticleWidget": {
+      "error": "ニュースを読み込めませんでした。"
+    },
+    "emptyChat": {
+      "title": "ここからリサーチが始まる。"
+    },
+    "emptyChatMessageInput": {
+      "placeholder": "何でも聞いてください..."
+    },
+    "deleteChat": {
+      "title": "削除の確認",
+      "description": "このチャットを削除してよろしいですか？",
+      "cancel": "キャンセル",
+      "delete": "削除"
+    },
+    "themeSwitcher": {
+      "options": {
+        "light": "ライト",
+        "dark": "ダーク"
+      }
+    }
+  }
+}

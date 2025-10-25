@@ -1,0 +1,296 @@
+{
+  "metadata": {
+    "title": "Perplexica - 与网络对话",
+    "description": "Perplexica 是一个能连接互联网的 AI 聊天机器人。"
+  },
+  "manifest": {
+    "name": "Perplexica - 与网络对话",
+    "shortName": "Perplexica",
+    "description": "Perplexica 是一个能连接互联网的 AI 聊天机器人。"
+  },
+  "navigation": {
+    "home": "首页",
+    "discover": "探索",
+    "library": "资料库",
+    "settings": "设置"
+  },
+  "common": {
+    "appName": "Perplexica",
+    "exportedOn": "导出日期：",
+    "citations": "参考来源：",
+    "user": "使用者",
+    "assistant": "助理",
+    "errors": {
+      "noChatModelsAvailable": "没有可用的聊天模型",
+      "chatProviderNotConfigured": "看起来你还没有配置任何聊天模型供应商，请到设置页或配置文件进行设置。",
+      "noEmbeddingModelsAvailable": "没有可用的向量嵌入模型",
+      "cannotSendBeforeConfigReady": "在设置就绪前无法发送消息",
+      "failedToDeleteChat": "删除聊天失败"
+    }
+  },
+  "navbar": {
+    "exportAsMarkdown": "导出为 Markdown",
+    "exportAsPDF": "导出为 PDF"
+  },
+  "export": {
+    "chatExportTitle": "聊天导出：{title}"
+  },
+  "weather": {
+    "conditions": {
+      "clear": "晴朗",
+      "mainlyClear": "大致晴朗",
+      "partlyCloudy": "局部多云",
+      "cloudy": "多云",
+      "fog": "雾",
+      "lightDrizzle": "小毛毛雨",
+      "moderateDrizzle": "中等毛毛雨",
+      "denseDrizzle": "大毛毛雨",
+      "lightFreezingDrizzle": "轻微冰雾雨",
+      "denseFreezingDrizzle": "强冰雾雨",
+      "slightRain": "小雨",
+      "moderateRain": "中雨",
+      "heavyRain": "大雨",
+      "lightFreezingRain": "轻微冻雨",
+      "heavyFreezingRain": "强冻雨",
+      "slightSnowFall": "小雪",
+      "moderateSnowFall": "中雪",
+      "heavySnowFall": "大雪",
+      "snow": "降雪",
+      "slightRainShowers": "短暂小雨",
+      "moderateRainShowers": "短暂中雨",
+      "heavyRainShowers": "短暂大雨",
+      "slightSnowShowers": "短暂小雪",
+      "moderateSnowShowers": "短暂中雪",
+      "heavySnowShowers": "短暂大雪",
+      "thunderstorm": "雷雨",
+      "thunderstormSlightHail": "雷雨伴随小冰雹",
+      "thunderstormHeavyHail": "雷雨伴随大冰雹"
+    }
+  },
+  "pages": {
+    "home": {
+      "title": "聊天 - Perplexica",
+      "description": "连上互联网聊聊天，与 Perplexica 对话。"
+    },
+    "discover": {
+      "title": "探索",
+      "topics": {
+        "tech": "科技与科学",
+        "finance": "财经",
+        "art": "艺术与文化",
+        "sports": "运动",
+        "entertainment": "娱乐"
+      },
+      "errorFetchingData": "获取数据时发生错误"
+    },
+    "library": {
+      "title": "资料库",
+      "empty": "没有找到任何聊天记录。",
+      "ago": "{time} 前"
+    },
+    "settings": {
+      "title": "设置",
+      "back": "返回",
+      "general": {
+        "title": "通用设置",
+        "description": "调整常用设置。",
+        "language": {
+          "title": "语言",
+          "description": "选择应用程序语言。"
+        },
+        "theme": {
+          "title": "主题",
+          "description": "选择应用程序主题。",
+          "options": {
+            "dark": "深色模式",
+            "light": "浅色模式"
+          }
+        },
+        "systemInstructions": {
+          "title": "系统指令",
+          "description": "为大型语言模型 (LLM) 提供特别指示，以自定义其行为。",
+          "placeholder": "例如，「以友善简洁的语气回答」或「使用简体中文并将答案格式化为重点」。"
+        },
+        "measureUnit": {
+          "title": "度量单位",
+          "description": "选择用于天气信息的度量单位。",
+          "options": {
+            "metric": "公制（摄氏度、公里）",
+            "imperial": "英制（华氏度、英里）"
+          }
+        }
+      },
+      "models": {
+        "title": "模型设置",
+        "description": "配置模型设置。",
+        "select": {
+          "title": "选择模型",
+          "chat": {
+            "title": "聊天模型",
+            "description": "选择用于聊天的模型。"
+          },
+          "embedding": {
+            "title": "向量嵌入模型",
+            "description": "选择用于向量嵌入的模型。"
+          }
+        },
+        "manage": {
+          "title": "管理模型供应商",
+          "add": {
+            "title": "新增供应商",
+            "select": "选择模型供应商",
+            "name": {
+              "title": "供应商名称",
+              "placeholder": "为此供应商输入一个自定义名称。"
+            },
+            "apiKey": {
+              "title": "API 密钥",
+              "placeholder": "输入供应商的 API 密钥。"
+            },
+            "baseURL": {
+              "title": "Base URL",
+              "placeholder": "输入供应商的自定义 Base URL。"
+            },
+            "toast": {
+              "success": "供应商新增成功",
+              "error": "新增供应商时发生错误"
+            }
+          },
+          "update": {
+            "title": "更新供应商",
+            "name": {
+              "title": "供应商名称",
+              "placeholder": "为此供应商输入一个自定义名称。"
+            },
+            "toast": {
+              "success": "供应商更新成功",
+              "error": "更新供应商时发生错误"
+            }
+          },
+          "delete": {
+            "title": "删除供应商",
+            "confirm": "确定要删除此模型供应商吗？此操作无法撤销。",
+            "cancel": "取消",
+            "toast": {
+              "success": "供应商删除成功",
+              "error": "删除供应商时发生错误"
+            }
+          }
+        }
+      },
+      "search": {
+        "title": "搜索设置",
+        "description": "配置搜索引擎设置。",
+        "searxngURL": {
+          "title": "SearXNG",
+          "description": "SearXNG 实例 URL",
+          "placeholder": "http://localhost:4000"
+        }
+      }
+    }
+  },
+  "components": {
+    "common": {
+      "viewMore": "查看另外 {count} 项"
+    },
+    "messageInput": {
+      "placeholder": "提出追问"
+    },
+    "messageBox": {
+      "sources": "参考来源",
+      "answer": "回答",
+      "related": "相关内容"
+    },
+    "copilot": {
+      "label": "Copilot"
+    },
+    "attach": {
+      "attachedFiles": "已附加的文件",
+      "add": "新增",
+      "clear": "清除",
+      "attach": "附加",
+      "uploading": "上传中...",
+      "files": "{count} 个文件"
+    },
+    "focus": {
+      "button": "焦点",
+      "modes": {
+        "webSearch": {
+          "title": "全部",
+          "description": "在整个互联网搜索"
+        },
+        "academicSearch": {
+          "title": "学术",
+          "description": "搜索已发表的学术论文"
+        },
+        "writingAssistant": {
+          "title": "写作",
+          "description": "不搜索网络，直接聊天"
+        },
+        "wolframAlphaSearch": {
+          "title": "Wolfram Alpha",
+          "description": "计算型知识引擎"
+        },
+        "youtubeSearch": {
+          "title": "YouTube",
+          "description": "搜索和观看视频"
+        },
+        "redditSearch": {
+          "title": "Reddit",
+          "description": "搜索讨论与观点"
+        }
+      }
+    },
+    "optimization": {
+      "modes": {
+        "speed": {
+          "title": "速度",
+          "description": "优先速度，以最快的方式得到答案。"
+        },
+        "balanced": {
+          "title": "平衡",
+          "description": "在速度与准确度之间取得平衡"
+        },
+        "quality": {
+          "title": "品质（即将推出）",
+          "description": "取得最完整与最精确的回答"
+        }
+      }
+    },
+    "messageActions": {
+      "rewrite": "重写"
+    },
+    "searchImages": {
+      "searchButton": "搜索图片"
+    },
+    "searchVideos": {
+      "searchButton": "搜索视频",
+      "badge": "视频"
+    },
+    "weather": {
+      "humidity": "湿度",
+      "now": "现在"
+    },
+    "newsArticleWidget": {
+      "error": "无法载入新闻。"
+    },
+    "emptyChat": {
+      "title": "研究从这里开始。"
+    },
+    "emptyChatMessageInput": {
+      "placeholder": "问我任何事..."
+    },
+    "deleteChat": {
+      "title": "删除确认",
+      "description": "确定要删除此聊天吗？",
+      "cancel": "取消",
+      "delete": "删除"
+    },
+    "themeSwitcher": {
+      "options": {
+        "light": "浅色",
+        "dark": "深色"
+      }
+    }
+  }
+}

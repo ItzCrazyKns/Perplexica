@@ -18,12 +18,14 @@ import LineOutputParser from '../outputParsers/lineOutputParser';
 import { getDocumentsFromLinks } from '../utils/documents';
 import { Document } from '@langchain/core/documents';
 import { searchSearxng } from '../searxng';
+import { getLocale } from 'next-intl/server';
 import path from 'node:path';
 import fs from 'node:fs';
 import computeSimilarity from '../utils/computeSimilarity';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
 import { StreamEvent } from '@langchain/core/tracers/log_stream';
+import { getPromptLanguageName } from '@/i18n/locales';
 
 export interface MetaSearchAgentType {
   searchAndAnswer: (
@@ -34,6 +36,7 @@ export interface MetaSearchAgentType {
     optimizationMode: 'speed' | 'balanced' | 'quality',
     fileIds: string[],
     systemInstructions: string,
+    locale: string,
   ) => Promise<eventEmitter>;
 }
 
@@ -218,8 +221,10 @@ class MetaSearchAgent implements MetaSearchAgentType {
         } else {
           question = question.replace(/<think>.*?<\/think>/g, '');
 
+          const currentLocale = await getLocale();
+          const baseLang = (currentLocale?.split('-')[0] || 'en') as string;
           const res = await searchSearxng(question, {
-            language: 'en',
+            language: baseLang,
             engines: this.config.activeEngines,
           });
 
@@ -251,10 +256,12 @@ class MetaSearchAgent implements MetaSearchAgentType {
     embeddings: Embeddings,
     optimizationMode: 'speed' | 'balanced' | 'quality',
     systemInstructions: string,
+    language: string,
   ) {
     return RunnableSequence.from([
       RunnableMap.from({
         systemInstructions: () => systemInstructions,
+        language: () => language,
         query: (input: BasicChainInput) => input.query,
         chat_history: (input: BasicChainInput) => input.chat_history,
         date: () => new Date().toISOString(),
@@ -484,6 +491,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     optimizationMode: 'speed' | 'balanced' | 'quality',
     fileIds: string[],
     systemInstructions: string,
+    locale: string,
   ) {
     const emitter = new eventEmitter();
 
@@ -493,6 +501,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
       embeddings,
       optimizationMode,
       systemInstructions,
+      getPromptLanguageName(locale),
     );
 
     const stream = answeringChain.streamEvents(

@@ -1,7 +1,7 @@
-import { Clock, Edit, Share, Trash, FileText, FileDown } from 'lucide-react';
-import { Message } from './ChatWindow';
+import { Clock, Edit, Share, FileText, FileDown } from 'lucide-react';
 import { useEffect, useState, Fragment } from 'react';
-import { formatTimeDifference } from '@/lib/utils';
+import { formatRelativeTime } from '@/lib/utils';
+import { useLocale, useTranslations } from 'next-intl';
 import DeleteChat from './DeleteChat';
 import {
   Popover,
@@ -9,6 +9,15 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
+import { ensureNotoSansTC } from '@/lib/pdfFont';
+
+type ExportLabels = {
+  chatExportTitle: (p: { title: string }) => string;
+  exportedOn: string;
+  user: string;
+  assistant: string;
+  citations: string;
+};
 import jsPDF from 'jspdf';
 import { useChat, Section } from '@/lib/hooks/useChat';
 
@@ -26,17 +35,21 @@ const downloadFile = (filename: string, content: string, type: string) => {
   }, 0);
 };
 
-const exportAsMarkdown = (sections: Section[], title: string) => {
+const exportAsMarkdown = (
+  sections: Section[],
+  title: string,
+  labels: ExportLabels,
+) => {
   const date = new Date(
     sections[0]?.userMessage?.createdAt || Date.now(),
   ).toLocaleString();
-  let md = `# 💬 Chat Export: ${title}\n\n`;
-  md += `*Exported on: ${date}*\n\n---\n`;
+  let md = `# 💬 ${labels.chatExportTitle({ title })}\n\n`;
+  md += `*${labels.exportedOn} ${date}*\n\n---\n`;
 
   sections.forEach((section, idx) => {
     if (section.userMessage) {
       md += `\n---\n`;
-      md += `**🧑 User**  
+      md += `**🧑 ${labels.user}**  
 `;
       md += `*${new Date(section.userMessage.createdAt).toLocaleString()}*\n\n`;
       md += `> ${section.userMessage.content.replace(/\n/g, '\n> ')}\n`;
@@ -44,7 +57,7 @@ const exportAsMarkdown = (sections: Section[], title: string) => {
 
     if (section.assistantMessage) {
       md += `\n---\n`;
-      md += `**🤖 Assistant**  
+      md += `**🤖 ${labels.assistant}**  
 `;
       md += `*${new Date(section.assistantMessage.createdAt).toLocaleString()}*\n\n`;
       md += `> ${section.assistantMessage.content.replace(/\n/g, '\n> ')}\n`;
@@ -55,7 +68,7 @@ const exportAsMarkdown = (sections: Section[], title: string) => {
       section.sourceMessage.sources &&
       section.sourceMessage.sources.length > 0
     ) {
-      md += `\n**Citations:**\n`;
+      md += `\n**${labels.citations}**\n`;
       section.sourceMessage.sources.forEach((src: any, i: number) => {
         const url = src.metadata?.url || '';
         md += `- [${i + 1}] [${url}](${url})\n`;
@@ -66,19 +79,30 @@ const exportAsMarkdown = (sections: Section[], title: string) => {
   downloadFile(`${title || 'chat'}.md`, md, 'text/markdown');
 };
 
-const exportAsPDF = (sections: Section[], title: string) => {
+const exportAsPDF = async (
+  sections: Section[],
+  title: string,
+  labels: ExportLabels,
+) => {
   const doc = new jsPDF();
+  // Ensure CJK-capable font is available, then set fonts
+  try {
+    await ensureNotoSansTC(doc);
+    doc.setFont('NotoSansTC', 'normal');
+  } catch (e) {
+    // If network fails, fallback to default font (may garble CJK)
+  }
   const date = new Date(
     sections[0]?.userMessage?.createdAt || Date.now(),
   ).toLocaleString();
   let y = 15;
   const pageHeight = doc.internal.pageSize.height;
   doc.setFontSize(18);
-  doc.text(`Chat Export: ${title}`, 10, y);
+  doc.text(labels.chatExportTitle({ title }), 10, y);
   y += 8;
   doc.setFontSize(11);
   doc.setTextColor(100);
-  doc.text(`Exported on: ${date}`, 10, y);
+  doc.text(`${labels.exportedOn} ${date}`, 10, y);
   y += 8;
   doc.setDrawColor(200);
   doc.line(10, y, 200, y);
@@ -194,6 +218,10 @@ const exportAsPDF = (sections: Section[], title: string) => {
 const Navbar = () => {
   const [title, setTitle] = useState<string>('');
   const [timeAgo, setTimeAgo] = useState<string>('');
+  const tCommon = useTranslations('common');
+  const tNavbar = useTranslations('navbar');
+  const tExport = useTranslations('export');
+  const locale = useLocale();
 
   const { sections, chatId } = useChat();
 
@@ -204,9 +232,10 @@ const Navbar = () => {
           ? `${sections[0].userMessage.content.substring(0, 20).trim()}...`
           : sections[0].userMessage.content;
       setTitle(newTitle);
-      const newTimeAgo = formatTimeDifference(
+      const newTimeAgo = formatRelativeTime(
         new Date(),
         sections[0].userMessage.createdAt,
+        locale,
       );
       setTimeAgo(newTimeAgo);
     }
@@ -215,9 +244,10 @@ const Navbar = () => {
   useEffect(() => {
     const intervalId = setInterval(() => {
       if (sections.length > 0 && sections[0].userMessage) {
-        const newTimeAgo = formatTimeDifference(
+        const newTimeAgo = formatRelativeTime(
           new Date(),
           sections[0].userMessage.createdAt,
+          locale,
         );
         setTimeAgo(newTimeAgo);
       }
@@ -240,7 +270,7 @@ const Navbar = () => {
             </a>
             <div className="hidden lg:flex items-center gap-2 text-black/50 dark:text-white/50 min-w-0">
               <Clock size={14} />
-              <span className="text-xs whitespace-nowrap">{timeAgo} ago</span>
+              <span className="text-xs whitespace-nowrap">{timeAgo}</span>
             </div>
           </div>
 
@@ -274,12 +304,21 @@ const Navbar = () => {
                     <div className="space-y-1">
                       <button
                         className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200"
-                        onClick={() => exportAsMarkdown(sections, title || '')}
+                        onClick={() =>
+                          exportAsMarkdown(sections, title || '', {
+                            chatExportTitle: (p) =>
+                              tExport('chatExportTitle', p),
+                            exportedOn: tCommon('exportedOn'),
+                            user: tCommon('user'),
+                            assistant: tCommon('assistant'),
+                            citations: tCommon('citations'),
+                          })
+                        }
                       >
                         <FileText size={16} className="text-[#24A0ED]" />
                         <div>
                           <p className="text-sm font-medium text-black dark:text-white">
-                            Markdown
+                            {tNavbar('exportAsMarkdown')}
                           </p>
                           <p className="text-xs text-black/50 dark:text-white/50">
                             .md format
@@ -288,12 +327,21 @@ const Navbar = () => {
                       </button>
                       <button
                         className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200"
-                        onClick={() => exportAsPDF(sections, title || '')}
+                        onClick={() =>
+                          exportAsPDF(sections, title || '', {
+                            chatExportTitle: (p) =>
+                              tExport('chatExportTitle', p),
+                            exportedOn: tCommon('exportedOn'),
+                            user: tCommon('user'),
+                            assistant: tCommon('assistant'),
+                            citations: tCommon('citations'),
+                          })
+                        }
                       >
                         <FileDown size={16} className="text-[#24A0ED]" />
                         <div>
                           <p className="text-sm font-medium text-black dark:text-white">
-                            PDF
+                            {tNavbar('exportAsPDF')}
                           </p>
                           <p className="text-xs text-black/50 dark:text-white/50">
                             Document format

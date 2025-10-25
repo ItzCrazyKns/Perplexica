@@ -1,0 +1,296 @@
+{
+  "metadata": {
+    "title": "Perplexica - 與網路對話",
+    "description": "Perplexica 是一個能連上網路的 AI 聊天機器人。"
+  },
+  "manifest": {
+    "name": "Perplexica - 與網路對話",
+    "shortName": "Perplexica",
+    "description": "Perplexica 是一個能連上網路的 AI 聊天機器人。"
+  },
+  "navigation": {
+    "home": "首頁",
+    "discover": "探索",
+    "library": "資料庫",
+    "settings": "設定"
+  },
+  "common": {
+    "appName": "Perplexica",
+    "exportedOn": "匯出日期：",
+    "citations": "參考來源：",
+    "user": "使用者",
+    "assistant": "助理",
+    "errors": {
+      "noChatModelsAvailable": "沒有可用的聊天模型",
+      "chatProviderNotConfigured": "看起來你還沒有設定任何聊天模型供應商，請至設定頁或設定檔進行設定。",
+      "noEmbeddingModelsAvailable": "沒有可用的向量嵌入模型",
+      "cannotSendBeforeConfigReady": "在設定就緒前無法送出訊息",
+      "failedToDeleteChat": "刪除聊天失敗"
+    }
+  },
+  "navbar": {
+    "exportAsMarkdown": "匯出為 Markdown",
+    "exportAsPDF": "匯出為 PDF"
+  },
+  "export": {
+    "chatExportTitle": "聊天匯出：{title}"
+  },
+  "weather": {
+    "conditions": {
+      "clear": "晴朗",
+      "mainlyClear": "大致晴朗",
+      "partlyCloudy": "局部多雲",
+      "cloudy": "多雲",
+      "fog": "霧",
+      "lightDrizzle": "小毛毛雨",
+      "moderateDrizzle": "中等毛毛雨",
+      "denseDrizzle": "大毛毛雨",
+      "lightFreezingDrizzle": "輕微冰霧雨",
+      "denseFreezingDrizzle": "強冰霧雨",
+      "slightRain": "小雨",
+      "moderateRain": "中雨",
+      "heavyRain": "大雨",
+      "lightFreezingRain": "輕微凍雨",
+      "heavyFreezingRain": "強凍雨",
+      "slightSnowFall": "小雪",
+      "moderateSnowFall": "中雪",
+      "heavySnowFall": "大雪",
+      "snow": "降雪",
+      "slightRainShowers": "短暫小雨",
+      "moderateRainShowers": "短暫中雨",
+      "heavyRainShowers": "短暫大雨",
+      "slightSnowShowers": "短暫小雪",
+      "moderateSnowShowers": "短暫中雪",
+      "heavySnowShowers": "短暫大雪",
+      "thunderstorm": "雷雨",
+      "thunderstormSlightHail": "雷雨伴隨小冰雹",
+      "thunderstormHeavyHail": "雷雨伴隨大冰雹"
+    }
+  },
+  "pages": {
+    "home": {
+      "title": "聊天 - Perplexica",
+      "description": "連上網路聊聊天，和 Perplexica 對話。"
+    },
+    "discover": {
+      "title": "探索",
+      "topics": {
+        "tech": "科技與科學",
+        "finance": "財經",
+        "art": "藝術與文化",
+        "sports": "運動",
+        "entertainment": "娛樂"
+      },
+      "errorFetchingData": "取得資料時發生錯誤"
+    },
+    "library": {
+      "title": "資料庫",
+      "empty": "沒有找到任何聊天紀錄。",
+      "ago": "{time} 前"
+    },
+    "settings": {
+      "title": "設定",
+      "back": "返回",
+      "general": {
+        "title": "一般設定",
+        "description": "調整常用設定。",
+        "language": {
+          "title": "語言",
+          "description": "選擇應用程式語言。"
+        },
+        "theme": {
+          "title": "主題",
+          "description": "選擇應用程式主題。",
+          "options": {
+            "dark": "黑暗模式",
+            "light": "明亮模式"
+          }
+        },
+        "systemInstructions": {
+          "title": "系統指令",
+          "description": "為大型語言模型 (LLM) 提供特別指示，以自訂其行為。",
+          "placeholder": "例如，「以友善簡潔的語氣回答」或「使用英式英語並將答案格式化為重點」。"
+        },
+        "measureUnit": {
+          "title": "度量單位",
+          "description": "選擇用於天氣資訊的度量單位。",
+          "options": {
+            "metric": "公制（攝氏度、公里）",
+            "imperial": "英制（華氏度、英里）"
+          }
+        }
+      },
+      "models": {
+        "title": "模型設定",
+        "description": "配置模型設定。",
+        "select": {
+          "title": "選擇模型",
+          "chat": {
+            "title": "聊天模型",
+            "description": "選擇用於聊天的模型。"
+          },
+          "embedding": {
+            "title": "向量嵌入模型",
+            "description": "選擇用於向量嵌入的模型。"
+          }
+        },
+        "manage": {
+          "title": "管理模型供應商",
+          "add": {
+            "title": "新增供應商",
+            "select": "選擇模型供應商",
+            "name": {
+              "title": "供應商名稱",
+              "placeholder": "為此供應商輸入一個自訂名稱。"
+            },
+            "apiKey": {
+              "title": "API 金鑰",
+              "placeholder": "輸入供應商的 API 金鑰。"
+            },
+            "baseURL": {
+              "title": "Base URL",
+              "placeholder": "輸入供應商的自訂 Base URL。"
+            },
+            "toast": {
+              "success": "供應商新增成功",
+              "error": "新增供應商時發生錯誤"
+            }
+          },
+          "update": {
+            "title": "更新供應商",
+            "name": {
+              "title": "供應商名稱",
+              "placeholder": "為此供應商輸入一個自訂名稱。"
+            },
+            "toast": {
+              "success": "供應商更新成功",
+              "error": "更新供應商時發生錯誤"
+            }
+          },
+          "delete": {
+            "title": "刪除供應商",
+            "confirm": "確定要刪除此模型供應商嗎？此操作無法復原。",
+            "cancel": "取消",
+            "toast": {
+              "success": "供應商刪除成功",
+              "error": "刪除供應商時發生錯誤"
+            }
+          }
+        }
+      },
+      "search": {
+        "title": "搜尋設定",
+        "description": "配置搜尋引擎設定。",
+        "searxngURL": {
+          "title": "SearXNG",
+          "description": "SearXNG 實例 URL",
+          "placeholder": "http://localhost:4000"
+        }
+      }
+    }
+  },
+  "components": {
+    "common": {
+      "viewMore": "查看另外 {count} 項"
+    },
+    "messageInput": {
+      "placeholder": "提出追問"
+    },
+    "messageBox": {
+      "sources": "參考來源",
+      "answer": "回答",
+      "related": "相關內容"
+    },
+    "copilot": {
+      "label": "Copilot"
+    },
+    "attach": {
+      "attachedFiles": "已附加的檔案",
+      "add": "新增",
+      "clear": "清除",
+      "attach": "附加",
+      "uploading": "上傳中...",
+      "files": "{count} 個檔案"
+    },
+    "focus": {
+      "button": "焦點",
+      "modes": {
+        "webSearch": {
+          "title": "全部",
+          "description": "在整個網路上搜尋"
+        },
+        "academicSearch": {
+          "title": "學術",
+          "description": "搜尋已發表的學術論文"
+        },
+        "writingAssistant": {
+          "title": "寫作",
+          "description": "不搜尋網路，直接聊天"
+        },
+        "wolframAlphaSearch": {
+          "title": "Wolfram Alpha",
+          "description": "計算型知識引擎"
+        },
+        "youtubeSearch": {
+          "title": "YouTube",
+          "description": "搜尋與觀看影片"
+        },
+        "redditSearch": {
+          "title": "Reddit",
+          "description": "搜尋討論與觀點"
+        }
+      }
+    },
+    "optimization": {
+      "modes": {
+        "speed": {
+          "title": "速度",
+          "description": "優先速度，以最快的方式得到答案。"
+        },
+        "balanced": {
+          "title": "平衡",
+          "description": "在速度與準確度之間取得平衡"
+        },
+        "quality": {
+          "title": "品質（即將推出）",
+          "description": "取得最完整與最精確的回答"
+        }
+      }
+    },
+    "messageActions": {
+      "rewrite": "重寫"
+    },
+    "searchImages": {
+      "searchButton": "搜尋圖片"
+    },
+    "searchVideos": {
+      "searchButton": "搜尋影片",
+      "badge": "影片"
+    },
+    "weather": {
+      "humidity": "濕度",
+      "now": "現在"
+    },
+    "newsArticleWidget": {
+      "error": "無法載入新聞。"
+    },
+    "emptyChat": {
+      "title": "研究從這裡開始。"
+    },
+    "emptyChatMessageInput": {
+      "placeholder": "問我任何事..."
+    },
+    "deleteChat": {
+      "title": "刪除確認",
+      "description": "確定要刪除此聊天嗎？",
+      "cancel": "取消",
+      "delete": "刪除"
+    },
+    "themeSwitcher": {
+      "options": {
+        "light": "淺色",
+        "dark": "深色"
+      }
+    }
+  }
+}

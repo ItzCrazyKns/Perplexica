@@ -5,21 +5,14 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
-import {
-  CopyPlus,
-  File,
-  Link,
-  LoaderCircle,
-  Paperclip,
-  Plus,
-  Trash,
-} from 'lucide-react';
+import { File, LoaderCircle, Paperclip, Plus, Trash } from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
 import { useChat } from '@/lib/hooks/useChat';
+import { useTranslations } from 'next-intl';
 
 const Attach = () => {
   const { files, setFiles, setFileIds, fileIds } = useChat();
-
+  const t = useTranslations('components.attach');
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<any>();
 
@@ -76,7 +69,7 @@ const Attach = () => {
           <div className="bg-light-primary dark:bg-dark-primary border rounded-md border-light-200 dark:border-dark-200 w-full max-h-[200px] md:max-h-none overflow-y-auto flex flex-col">
             <div className="flex flex-row items-center justify-between px-3 py-2">
               <h4 className="text-black dark:text-white font-medium text-sm">
-                Attached files
+                {t('attachedFiles')}
               </h4>
               <div className="flex flex-row items-center space-x-4">
                 <button
@@ -93,7 +86,7 @@ const Attach = () => {
                     hidden
                   />
                   <Plus size={16} />
-                  <p className="text-xs">Add</p>
+                  <p className="text-xs">{t('add')}</p>
                 </button>
                 <button
                   onClick={() => {
@@ -103,7 +96,7 @@ const Attach = () => {
                   className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black hover:dark:text-white transition duration-200 focus:outline-none"
                 >
                   <Trash size={14} />
-                  <p className="text-xs">Clear</p>
+                  <p className="text-xs">{t('clear')}</p>
                 </button>
               </div>
             </div>

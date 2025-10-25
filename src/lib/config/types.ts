@@ -1,10 +1,8 @@
 import { Model } from '../models/types';
 
 type BaseUIConfigField = {
-  name: string;
   key: string;
   required: boolean;
-  description: string;
   scope: 'client' | 'server';
   env?: string;
 };
@@ -15,15 +13,12 @@ type StringUIConfigField = BaseUIConfigField & {
   default?: string;
 };
 
-type SelectUIConfigFieldOptions = {
-  name: string;
-  value: string;
-};
+type SelectUIConfigFieldOptions = string[];
 
 type SelectUIConfigField = BaseUIConfigField & {
   type: 'select';
   default?: string;
-  options: SelectUIConfigFieldOptions[];
+  options: SelectUIConfigFieldOptions;
 };
 
 type PasswordUIConfigField = BaseUIConfigField & {

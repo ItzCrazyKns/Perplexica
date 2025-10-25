@@ -9,6 +9,7 @@ import { searchHandlers } from '@/lib/search';
 import { z } from 'zod';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
+import { DEFAULT_LOCALE } from '@/i18n/locales';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -67,6 +68,7 @@ const bodySchema = z.object({
   chatModel: chatModelSchema,
   embeddingModel: embeddingModelSchema,
   systemInstructions: z.string().nullable().optional().default(''),
+  locale: z.string().optional(),
 });
 
 type Message = z.infer<typeof messageSchema>;
@@ -299,6 +301,7 @@ export const POST = async (req: Request) => {
       body.optimizationMode,
       body.files,
       body.systemInstructions as string,
+      body.locale || DEFAULT_LOCALE,
     );
 
     const responseStream = new TransformStream();

@@ -1,7 +1,11 @@
-import { Cloud, Sun, CloudRain, CloudSnow, Wind } from 'lucide-react';
+import { Wind } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useLocale, useTranslations } from 'next-intl';
 
 const WeatherWidget = () => {
+  const t = useTranslations('components');
+  const locale = useLocale();
   const [data, setData] = useState({
     temperature: 0,
     condition: '',
@@ -41,7 +45,7 @@ const WeatherWidget = () => {
       if (result.state === 'granted') {
         navigator.geolocation.getCurrentPosition(async (position) => {
           const res = await fetch(
-            `https://api-bdc.io/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=en`,
+            `https://api-bdc.io/data/reverse-geocode-client?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&localityLanguage=${locale}`,
             {
               method: 'GET',
               headers: {
@@ -76,7 +80,7 @@ const WeatherWidget = () => {
         body: JSON.stringify({
           lat: location.latitude,
           lng: location.longitude,
-          measureUnit: localStorage.getItem('measureUnit') ?? 'Metric',
+          measureUnit: localStorage.getItem('measureUnit') ?? 'metric',
         }),
       });
 
@@ -106,7 +110,7 @@ const WeatherWidget = () => {
     updateWeather();
     const intervalId = setInterval(updateWeather, 30 * 1000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [locale]);
 
   return (
     <div className="bg-light-secondary dark:bg-dark-secondary rounded-2xl border border-light-200 dark:border-dark-200 shadow-sm shadow-light-200/10 dark:shadow-black/25 flex flex-row items-center w-full h-24 min-h-[96px] max-h-[96px] px-3 py-2 gap-3">
@@ -131,9 +135,11 @@ const WeatherWidget = () => {
       ) : (
         <>
           <div className="flex flex-col items-center justify-center w-16 min-w-16 max-w-16 h-full">
-            <img
+            <Image
               src={`/weather-ico/${data.icon}.svg`}
               alt={data.condition}
+              width={40}
+              height={40}
               className="h-10 w-auto"
             />
             <span className="text-base font-semibold text-black dark:text-white">
@@ -154,9 +160,11 @@ const WeatherWidget = () => {
               {data.condition}
             </span>
             <div className="flex flex-row justify-between w-full mt-auto pt-2 border-t border-light-200/50 dark:border-dark-200/50 text-xs text-black/50 dark:text-white/50 font-medium">
-              <span>Humidity {data.humidity}%</span>
+              <span>
+                {t('weather.humidity')}: {data.humidity}%
+              </span>
               <span className="font-semibold text-black/70 dark:text-white/70">
-                Now
+                {t('weather.now')}
               </span>
             </div>
           </div>
