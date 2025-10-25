@@ -5,12 +5,12 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
-import { CopyPlus, File, LoaderCircle, Plus, Trash } from 'lucide-react';
+import { File, LoaderCircle, Paperclip, Plus, Trash } from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
 import { useChat } from '@/lib/hooks/useChat';
 import { useTranslations } from 'next-intl';
 
-const Attach = ({ showText }: { showText?: boolean }) => {
+const Attach = () => {
   const { files, setFiles, setFileIds, fileIds } = useChat();
   const t = useTranslations('components.attach');
   const [loading, setLoading] = useState(false);
@@ -25,12 +25,12 @@ const Attach = ({ showText }: { showText?: boolean }) => {
     }
 
     const embeddingModelProvider = localStorage.getItem(
-      'embeddingModelProvider',
+      'embeddingModelProviderId',
     );
-    const embeddingModel = localStorage.getItem('embeddingModel');
+    const embeddingModel = localStorage.getItem('embeddingModelKey');
 
-    data.append('embedding_model_provider', embeddingModelProvider!);
-    data.append('embedding_model', embeddingModel!);
+    data.append('embedding_model_provider_id', embeddingModelProvider!);
+    data.append('embedding_model_key', embeddingModel!);
 
     const res = await fetch(`/api/uploads`, {
       method: 'POST',
@@ -45,42 +45,16 @@ const Attach = ({ showText }: { showText?: boolean }) => {
   };
 
   return loading ? (
-    <div className="flex flex-row items-center justify-between space-x-1">
-      <LoaderCircle size={18} className="text-sky-400 animate-spin" />
-      <p className="text-sky-400 inline whitespace-nowrap text-xs font-medium">
-        {t('uploading')}
-      </p>
+    <div className="active:border-none hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg focus:outline-none text-black/50 dark:text-white/50 transition duration-200">
+      <LoaderCircle size={16} className="text-sky-400 animate-spin" />
     </div>
   ) : files.length > 0 ? (
     <Popover className="relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
       <PopoverButton
         type="button"
-        className={cn(
-          'flex flex-row items-center justify-between space-x-1 p-2 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white',
-          files.length > 0 ? '-ml-2 lg:-ml-3' : '',
-        )}
+        className="active:border-none hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg focus:outline-none headless-open:text-black dark:headless-open:text-white text-black/50 dark:text-white/50 active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
       >
-        {files.length > 1 && (
-          <>
-            <File size={19} className="text-sky-400" />
-            <p className="text-sky-400 inline whitespace-nowrap text-xs font-medium">
-              {files.length} files
-            </p>
-          </>
-        )}
-
-        {files.length === 1 && (
-          <>
-            <File size={18} className="text-sky-400" />
-            <p className="text-sky-400 text-xs font-medium">
-              {files[0].fileName.length > 10
-                ? files[0].fileName.replace(/\.\w+$/, '').substring(0, 3) +
-                  '...' +
-                  files[0].fileExtension
-                : files[0].fileName}
-            </p>
-          </>
-        )}
+        <File size={16} className="text-sky-400" />
       </PopoverButton>
       <Transition
         as={Fragment}
@@ -101,7 +75,7 @@ const Attach = ({ showText }: { showText?: boolean }) => {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current.click()}
-                  className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black hover:dark:text-white transition duration-200"
+                  className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black hover:dark:text-white transition duration-200 focus:outline-none"
                 >
                   <input
                     type="file"
@@ -111,7 +85,7 @@ const Attach = ({ showText }: { showText?: boolean }) => {
                     multiple
                     hidden
                   />
-                  <Plus size={18} />
+                  <Plus size={16} />
                   <p className="text-xs">{t('add')}</p>
                 </button>
                 <button
@@ -119,7 +93,7 @@ const Attach = ({ showText }: { showText?: boolean }) => {
                     setFiles([]);
                     setFileIds([]);
                   }}
-                  className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black hover:dark:text-white transition duration-200"
+                  className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black hover:dark:text-white transition duration-200 focus:outline-none"
                 >
                   <Trash size={14} />
                   <p className="text-xs">{t('clear')}</p>
@@ -134,7 +108,10 @@ const Attach = ({ showText }: { showText?: boolean }) => {
                   className="flex flex-row items-center justify-start w-full space-x-3 p-3"
                 >
                   <div className="bg-light-100 dark:bg-dark-100 flex items-center justify-center w-10 h-10 rounded-md">
-                    <File size={16} className="text-black/70 dark:text-white/70" />
+                    <File
+                      size={16}
+                      className="text-black/70 dark:text-white/70"
+                    />
                   </div>
                   <p className="text-black/70 dark:text-white/70 text-sm">
                     {file.fileName.length > 25
@@ -155,8 +132,7 @@ const Attach = ({ showText }: { showText?: boolean }) => {
       type="button"
       onClick={() => fileInputRef.current.click()}
       className={cn(
-        'flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white',
-        showText ? '' : 'p-2',
+        'flex items-center justify-center active:border-none hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg focus:outline-none headless-open:text-black dark:headless-open:text-white text-black/50 dark:text-white/50 active:scale-95 transition duration-200 hover:text-black dark:hover:text-white',
       )}
     >
       <input
@@ -167,10 +143,7 @@ const Attach = ({ showText }: { showText?: boolean }) => {
         multiple
         hidden
       />
-      <CopyPlus size={showText ? 18 : undefined} />
-      {showText && (
-        <p className="text-xs font-medium pl-[1px] w-max">{t('attach')}</p>
-      )}
+      <Paperclip size={16} />
     </button>
   );
 };

@@ -1,16 +1,42 @@
 'use client';
 
-import { Message } from '@/components/ChatWindow';
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import {
+  AssistantMessage,
+  ChatTurn,
+  Message,
+  SuggestionMessage,
+  SourceMessage,
+  UserMessage,
+} from '@/components/ChatWindow';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import crypto from 'crypto';
-import { useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { Document } from '@langchain/core/documents';
 import { useLocale, useTranslations } from 'next-intl';
 import { getSuggestions } from '../actions';
+import { MinimalProvider } from '../models/types';
+
+export type Section = {
+  userMessage: UserMessage;
+  assistantMessage: AssistantMessage | undefined;
+  parsedAssistantMessage: string | undefined;
+  speechMessage: string | undefined;
+  sourceMessage: SourceMessage | undefined;
+  thinkingEnded: boolean;
+  suggestions?: string[];
+};
 
 type ChatContext = {
   messages: Message[];
+  chatTurns: ChatTurn[];
+  sections: Section[];
   chatHistory: [string, string][];
   files: File[];
   fileIds: string[];
@@ -23,6 +49,8 @@ type ChatContext = {
   messageAppeared: boolean;
   isReady: boolean;
   hasError: boolean;
+  chatModelProvider: ChatModelProvider;
+  embeddingModelProvider: EmbeddingModelProvider;
   setOptimizationMode: (mode: string) => void;
   setFocusMode: (mode: string) => void;
   setFiles: (files: File[]) => void;
@@ -33,6 +61,8 @@ type ChatContext = {
     rewrite?: boolean,
   ) => Promise<void>;
   rewrite: (messageId: string) => void;
+  setChatModelProvider: (provider: ChatModelProvider) => void;
+  setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void;
 };
 
 export interface File {
@@ -42,13 +72,13 @@ export interface File {
 }
 
 interface ChatModelProvider {
-  name: string;
-  provider: string;
+  key: string;
+  providerId: string;
 }
 
 interface EmbeddingModelProvider {
-  name: string;
-  provider: string;
+  key: string;
+  providerId: string;
 }
 
 const checkConfig = async (
@@ -59,10 +89,12 @@ const checkConfig = async (
   t: (key: string) => string,
 ) => {
   try {
-    let chatModel = localStorage.getItem('chatModel');
-    let chatModelProvider = localStorage.getItem('chatModelProvider');
-    let embeddingModel = localStorage.getItem('embeddingModel');
-    let embeddingModelProvider = localStorage.getItem('embeddingModelProvider');
+    let chatModelKey = localStorage.getItem('chatModelKey');
+    let chatModelProviderId = localStorage.getItem('chatModelProviderId');
+    let embeddingModelKey = localStorage.getItem('embeddingModelKey');
+    let embeddingModelProviderId = localStorage.getItem(
+      'embeddingModelProviderId',
+    );
 
     const autoImageSearch = localStorage.getItem('autoImageSearch');
     const autoVideoSearch = localStorage.getItem('autoVideoSearch');
@@ -75,141 +107,81 @@ const checkConfig = async (
       localStorage.setItem('autoVideoSearch', 'false');
     }
 
-    const providers = await fetch(`/api/models`, {
+    const res = await fetch(`/api/providers`, {
       headers: {
         'Content-Type': 'application/json',
       },
-    }).then(async (res) => {
-      if (!res.ok)
-        throw new Error(
-          `Failed to fetch models: ${res.status} ${res.statusText}`,
-        );
-      return res.json();
     });
 
-    if (
-      !chatModel ||
-      !chatModelProvider ||
-      !embeddingModel ||
-      !embeddingModelProvider
-    ) {
-      if (!chatModel || !chatModelProvider) {
-        const chatModelProviders = providers.chatModelProviders;
-        const chatModelProvidersKeys = Object.keys(chatModelProviders);
-
-        if (!chatModelProviders || chatModelProvidersKeys.length === 0) {
-          return toast.error(t('common.errors.noChatModelsAvailable'));
-        } else {
-          chatModelProvider =
-            chatModelProvidersKeys.find(
-              (provider) =>
-                Object.keys(chatModelProviders[provider]).length > 0,
-            ) || chatModelProvidersKeys[0];
-        }
-
-        if (
-          chatModelProvider === 'custom_openai' &&
-          Object.keys(chatModelProviders[chatModelProvider]).length === 0
-        ) {
-          toast.error(t('common.errors.chatProviderNotConfigured'));
-          return setHasError(true);
-        }
-
-        chatModel = Object.keys(chatModelProviders[chatModelProvider])[0];
-      }
-
-      if (!embeddingModel || !embeddingModelProvider) {
-        const embeddingModelProviders = providers.embeddingModelProviders;
-
-        if (
-          !embeddingModelProviders ||
-          Object.keys(embeddingModelProviders).length === 0
-        )
-          return toast.error(t('common.errors.noEmbeddingModelsAvailable'));
-
-        embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
-        embeddingModel = Object.keys(
-          embeddingModelProviders[embeddingModelProvider],
-        )[0];
-      }
-
-      localStorage.setItem('chatModel', chatModel!);
-      localStorage.setItem('chatModelProvider', chatModelProvider);
-      localStorage.setItem('embeddingModel', embeddingModel!);
-      localStorage.setItem('embeddingModelProvider', embeddingModelProvider);
-    } else {
-      const chatModelProviders = providers.chatModelProviders;
-      const embeddingModelProviders = providers.embeddingModelProviders;
-
-      if (
-        Object.keys(chatModelProviders).length > 0 &&
-        (!chatModelProviders[chatModelProvider] ||
-          Object.keys(chatModelProviders[chatModelProvider]).length === 0)
-      ) {
-        const chatModelProvidersKeys = Object.keys(chatModelProviders);
-        chatModelProvider =
-          chatModelProvidersKeys.find(
-            (key) => Object.keys(chatModelProviders[key]).length > 0,
-          ) || chatModelProvidersKeys[0];
-
-        localStorage.setItem('chatModelProvider', chatModelProvider);
-      }
-
-      if (
-        chatModelProvider &&
-        !chatModelProviders[chatModelProvider][chatModel]
-      ) {
-        if (
-          chatModelProvider === 'custom_openai' &&
-          Object.keys(chatModelProviders[chatModelProvider]).length === 0
-        ) {
-          toast.error(t('common.errors.chatProviderNotConfigured'));
-          return setHasError(true);
-        }
-
-        chatModel = Object.keys(
-          chatModelProviders[
-            Object.keys(chatModelProviders[chatModelProvider]).length > 0
-              ? chatModelProvider
-              : Object.keys(chatModelProviders)[0]
-          ],
-        )[0];
-
-        localStorage.setItem('chatModel', chatModel);
-      }
-
-      if (
-        Object.keys(embeddingModelProviders).length > 0 &&
-        !embeddingModelProviders[embeddingModelProvider]
-      ) {
-        embeddingModelProvider = Object.keys(embeddingModelProviders)[0];
-        localStorage.setItem('embeddingModelProvider', embeddingModelProvider);
-      }
-
-      if (
-        embeddingModelProvider &&
-        !embeddingModelProviders[embeddingModelProvider][embeddingModel]
-      ) {
-        embeddingModel = Object.keys(
-          embeddingModelProviders[embeddingModelProvider],
-        )[0];
-        localStorage.setItem('embeddingModel', embeddingModel);
-      }
+    if (!res.ok) {
+      throw new Error(
+        `Provider fetching failed with status code ${res.status}`,
+      );
     }
 
+    const data = await res.json();
+    const providers: MinimalProvider[] = data.providers;
+
+    if (providers.length === 0) {
+      throw new Error(
+        'No chat model providers found, please configure them in the settings page.',
+      );
+    }
+
+    const chatModelProvider =
+      providers.find((p) => p.id === chatModelProviderId) ??
+      providers.find((p) => p.chatModels.length > 0);
+
+    if (!chatModelProvider) {
+      throw new Error(
+        'No chat models found, pleae configure them in the settings page.',
+      );
+    }
+
+    chatModelProviderId = chatModelProvider.id;
+
+    const chatModel =
+      chatModelProvider.chatModels.find((m) => m.key === chatModelKey) ??
+      chatModelProvider.chatModels[0];
+    chatModelKey = chatModel.key;
+
+    const embeddingModelProvider =
+      providers.find((p) => p.id === embeddingModelProviderId) ??
+      providers.find((p) => p.embeddingModels.length > 0);
+
+    if (!embeddingModelProvider) {
+      throw new Error(
+        'No embedding models found, pleae configure them in the settings page.',
+      );
+    }
+
+    embeddingModelProviderId = embeddingModelProvider.id;
+
+    const embeddingModel =
+      embeddingModelProvider.embeddingModels.find(
+        (m) => m.key === embeddingModelKey,
+      ) ?? embeddingModelProvider.embeddingModels[0];
+    embeddingModelKey = embeddingModel.key;
+
+    localStorage.setItem('chatModelKey', chatModelKey);
+    localStorage.setItem('chatModelProviderId', chatModelProviderId);
+    localStorage.setItem('embeddingModelKey', embeddingModelKey);
+    localStorage.setItem('embeddingModelProviderId', embeddingModelProviderId);
+
     setChatModelProvider({
-      name: chatModel!,
-      provider: chatModelProvider,
+      key: chatModelKey,
+      providerId: chatModelProviderId,
     });
 
     setEmbeddingModelProvider({
-      name: embeddingModel!,
-      provider: embeddingModelProvider,
+      key: embeddingModelKey,
+      providerId: embeddingModelProviderId,
     });
 
     setIsConfigReady(true);
-  } catch (err) {
+  } catch (err: any) {
     console.error('An error occurred while checking the configuration:', err);
+    toast.error(err.message);
     setIsConfigReady(false);
     setHasError(true);
   }
@@ -240,22 +212,23 @@ const loadMessages = async (
 
   const data = await res.json();
 
-  const messages = data.messages.map((msg: any) => {
-    return {
-      ...msg,
-      ...JSON.parse(msg.metadata),
-    };
-  }) as Message[];
+  const messages = data.messages as Message[];
 
   setMessages(messages);
 
-  const history = messages.map((msg) => {
+  const chatTurns = messages.filter(
+    (msg): msg is ChatTurn => msg.role === 'user' || msg.role === 'assistant',
+  );
+
+  const history = chatTurns.map((msg) => {
     return [msg.role, msg.content];
   }) as [string, string][];
 
   console.debug(new Date(), 'app:messages_loaded');
 
-  document.title = messages[0].content;
+  if (chatTurns.length > 0) {
+    document.title = chatTurns[0].content;
+  }
 
   const files = data.chat.files.map((file: any) => {
     return {
@@ -285,27 +258,28 @@ export const chatContext = createContext<ChatContext>({
   loading: false,
   messageAppeared: false,
   messages: [],
+  chatTurns: [],
+  sections: [],
   notFound: false,
   optimizationMode: '',
+  chatModelProvider: { key: '', providerId: '' },
+  embeddingModelProvider: { key: '', providerId: '' },
   rewrite: () => {},
   sendMessage: async () => {},
   setFileIds: () => {},
   setFiles: () => {},
   setFocusMode: () => {},
   setOptimizationMode: () => {},
+  setChatModelProvider: () => {},
+  setEmbeddingModelProvider: () => {},
 });
 
-export const ChatProvider = ({
-  children,
-  id,
-}: {
-  children: React.ReactNode;
-  id?: string;
-}) => {
+export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
+  const params: { chatId: string } = useParams();
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
 
-  const [chatId, setChatId] = useState<string | undefined>(id);
+  const [chatId, setChatId] = useState<string | undefined>(params.chatId);
   const [newChatCreated, setNewChatCreated] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -326,15 +300,15 @@ export const ChatProvider = ({
 
   const [chatModelProvider, setChatModelProvider] = useState<ChatModelProvider>(
     {
-      name: '',
-      provider: '',
+      key: '',
+      providerId: '',
     },
   );
 
   const [embeddingModelProvider, setEmbeddingModelProvider] =
     useState<EmbeddingModelProvider>({
-      name: '',
-      provider: '',
+      key: '',
+      providerId: '',
     });
 
   const [isConfigReady, setIsConfigReady] = useState(false);
@@ -345,6 +319,126 @@ export const ChatProvider = ({
 
   const t = useTranslations();
   const locale = useLocale();
+  const chatTurns = useMemo((): ChatTurn[] => {
+    return messages.filter(
+      (msg): msg is ChatTurn => msg.role === 'user' || msg.role === 'assistant',
+    );
+  }, [messages]);
+
+  const sections = useMemo<Section[]>(() => {
+    const sections: Section[] = [];
+
+    messages.forEach((msg, i) => {
+      if (msg.role === 'user') {
+        const nextUserMessageIndex = messages.findIndex(
+          (m, j) => j > i && m.role === 'user',
+        );
+
+        const aiMessage = messages.find(
+          (m, j) =>
+            j > i &&
+            m.role === 'assistant' &&
+            (nextUserMessageIndex === -1 || j < nextUserMessageIndex),
+        ) as AssistantMessage | undefined;
+
+        const sourceMessage = messages.find(
+          (m, j) =>
+            j > i &&
+            m.role === 'source' &&
+            m.sources &&
+            (nextUserMessageIndex === -1 || j < nextUserMessageIndex),
+        ) as SourceMessage | undefined;
+
+        let thinkingEnded = false;
+        let processedMessage = aiMessage?.content ?? '';
+        let speechMessage = aiMessage?.content ?? '';
+        let suggestions: string[] = [];
+
+        if (aiMessage) {
+          const citationRegex = /\[([^\]]+)\]/g;
+          const regex = /\[(\d+)\]/g;
+
+          if (processedMessage.includes('<think>')) {
+            const openThinkTag =
+              processedMessage.match(/<think>/g)?.length || 0;
+            const closeThinkTag =
+              processedMessage.match(/<\/think>/g)?.length || 0;
+
+            if (openThinkTag && !closeThinkTag) {
+              processedMessage += '</think> <a> </a>';
+            }
+          }
+
+          if (aiMessage.content.includes('</think>')) {
+            thinkingEnded = true;
+          }
+
+          if (
+            sourceMessage &&
+            sourceMessage.sources &&
+            sourceMessage.sources.length > 0
+          ) {
+            processedMessage = processedMessage.replace(
+              citationRegex,
+              (_, capturedContent: string) => {
+                const numbers = capturedContent
+                  .split(',')
+                  .map((numStr) => numStr.trim());
+
+                const linksHtml = numbers
+                  .map((numStr) => {
+                    const number = parseInt(numStr);
+
+                    if (isNaN(number) || number <= 0) {
+                      return `[${numStr}]`;
+                    }
+
+                    const source = sourceMessage.sources?.[number - 1];
+                    const url = source?.metadata?.url;
+
+                    if (url) {
+                      return `<citation href="${url}">${numStr}</citation>`;
+                    } else {
+                      return ``;
+                    }
+                  })
+                  .join('');
+
+                return linksHtml;
+              },
+            );
+            speechMessage = aiMessage.content.replace(regex, '');
+          } else {
+            processedMessage = processedMessage.replace(regex, '');
+            speechMessage = aiMessage.content.replace(regex, '');
+          }
+
+          const suggestionMessage = messages.find(
+            (m, j) =>
+              j > i &&
+              m.role === 'suggestion' &&
+              (nextUserMessageIndex === -1 || j < nextUserMessageIndex),
+          ) as SuggestionMessage | undefined;
+
+          if (suggestionMessage && suggestionMessage.suggestions.length > 0) {
+            suggestions = suggestionMessage.suggestions;
+          }
+        }
+
+        sections.push({
+          userMessage: msg,
+          assistantMessage: aiMessage,
+          sourceMessage: sourceMessage,
+          parsedAssistantMessage: processedMessage,
+          speechMessage,
+          thinkingEnded,
+          suggestions: suggestions,
+        });
+      }
+    });
+
+    return sections;
+  }, [messages]);
 
   useEffect(() => {
     checkConfig(
@@ -356,6 +450,19 @@ export const ChatProvider = ({
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (params.chatId && params.chatId !== chatId) {
+      setChatId(params.chatId);
+      setMessages([]);
+      setChatHistory([]);
+      setFiles([]);
+      setFileIds([]);
+      setIsMessagesLoaded(false);
+      setNotFound(false);
+      setNewChatCreated(false);
+    }
+  }, [params.chatId, chatId]);
 
   useEffect(() => {
     if (
@@ -380,7 +487,7 @@ export const ChatProvider = ({
       setChatId(crypto.randomBytes(20).toString('hex'));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [chatId, isMessagesLoaded, newChatCreated, messages.length]);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -397,16 +504,21 @@ export const ChatProvider = ({
 
   const rewrite = (messageId: string) => {
     const index = messages.findIndex((msg) => msg.messageId === messageId);
+    const chatTurnsIndex = chatTurns.findIndex(
+      (msg) => msg.messageId === messageId,
+    );
 
     if (index === -1) return;
 
-    const message = messages[index - 1];
+    const message = chatTurns[chatTurnsIndex - 1];
 
     setMessages((prev) => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
+      return [
+        ...prev.slice(0, messages.length > 2 ? messages.indexOf(message) : 0),
+      ];
     });
     setChatHistory((prev) => {
-      return [...prev.slice(0, messages.length > 2 ? index - 1 : 0)];
+      return [...prev.slice(0, chatTurns.length > 2 ? chatTurnsIndex - 1 : 0)];
     });
 
     sendMessage(message.content, message.messageId, true);
@@ -428,11 +540,14 @@ export const ChatProvider = ({
     messageId,
     rewrite = false,
   ) => {
-    if (loading) return;
+    if (loading || !message) return;
     setLoading(true);
     setMessageAppeared(false);
 
-    let sources: Document[] | undefined = undefined;
+    if (messages.length <= 1) {
+      window.history.replaceState(null, '', `/c/${chatId}`);
+    }
+
     let recievedMessage = '';
     let added = false;
 
@@ -457,22 +572,19 @@ export const ChatProvider = ({
       }
 
       if (data.type === 'sources') {
-        sources = data.data;
-        if (!added) {
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            {
-              content: '',
-              messageId: data.messageId,
-              chatId: chatId!,
-              role: 'assistant',
-              sources: sources,
-              createdAt: new Date(),
-            },
-          ]);
-          added = true;
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            messageId: data.messageId,
+            chatId: chatId!,
+            role: 'source',
+            sources: data.data,
+            createdAt: new Date(),
+          },
+        ]);
+        if (data.data.length > 0) {
+          setMessageAppeared(true);
         }
-        setMessageAppeared(true);
       }
 
       if (data.type === 'message') {
@@ -484,25 +596,26 @@ export const ChatProvider = ({
               messageId: data.messageId,
               chatId: chatId!,
               role: 'assistant',
-              sources: sources,
               createdAt: new Date(),
             },
           ]);
           added = true;
+          setMessageAppeared(true);
+        } else {
+          setMessages((prev) =>
+            prev.map((message) => {
+              if (
+                message.messageId === data.messageId &&
+                message.role === 'assistant'
+              ) {
+                return { ...message, content: message.content + data.data };
+              }
+
+              return message;
+            }),
+          );
         }
-
-        setMessages((prev) =>
-          prev.map((message) => {
-            if (message.messageId === data.messageId) {
-              return { ...message, content: message.content + data.data };
-            }
-
-            return message;
-          }),
-        );
-
         recievedMessage += data.data;
-        setMessageAppeared(true);
       }
 
       if (data.type === 'messageEnd') {
@@ -531,21 +644,38 @@ export const ChatProvider = ({
             ?.click();
         }
 
+        /* Check if there are sources after message id's index and no suggestions */
+
+        const userMessageIndex = messagesRef.current.findIndex(
+          (msg) => msg.messageId === messageId && msg.role === 'user',
+        );
+
+        const sourceMessage = messagesRef.current.find(
+          (msg, i) => i > userMessageIndex && msg.role === 'source',
+        ) as SourceMessage | undefined;
+
+        const suggestionMessageIndex = messagesRef.current.findIndex(
+          (msg, i) => i > userMessageIndex && msg.role === 'suggestion',
+        );
+
         if (
-          lastMsg.role === 'assistant' &&
-          lastMsg.sources &&
-          lastMsg.sources.length > 0 &&
-          !lastMsg.suggestions
+          sourceMessage &&
+          sourceMessage.sources.length > 0 &&
+          suggestionMessageIndex == -1
         ) {
           const suggestions = await getSuggestions(messagesRef.current, locale);
-          setMessages((prev) =>
-            prev.map((msg) => {
-              if (msg.messageId === lastMsg.messageId) {
-                return { ...msg, suggestions: suggestions };
-              }
-              return msg;
-            }),
-          );
+          setMessages((prev) => {
+            return [
+              ...prev,
+              {
+                role: 'suggestion',
+                suggestions: suggestions,
+                chatId: chatId!,
+                createdAt: new Date(),
+                messageId: crypto.randomBytes(7).toString('hex'),
+              },
+            ];
+          });
         }
       }
     };
@@ -572,12 +702,12 @@ export const ChatProvider = ({
           ? chatHistory.slice(0, messageIndex === -1 ? undefined : messageIndex)
           : chatHistory,
         chatModel: {
-          name: chatModelProvider.name,
-          provider: chatModelProvider.provider,
+          key: chatModelProvider.key,
+          providerId: chatModelProvider.providerId,
         },
         embeddingModel: {
-          name: embeddingModelProvider.name,
-          provider: embeddingModelProvider.provider,
+          key: embeddingModelProvider.key,
+          providerId: embeddingModelProvider.providerId,
         },
         systemInstructions: localStorage.getItem('systemInstructions'),
         locale,
@@ -615,6 +745,8 @@ export const ChatProvider = ({
     <chatContext.Provider
       value={{
         messages,
+        chatTurns,
+        sections,
         chatHistory,
         files,
         fileIds,
@@ -633,6 +765,10 @@ export const ChatProvider = ({
         setOptimizationMode,
         rewrite,
         sendMessage,
+        setChatModelProvider,
+        chatModelProvider,
+        embeddingModelProvider,
+        setEmbeddingModelProvider,
       }}
     >
       {children}

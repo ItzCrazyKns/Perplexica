@@ -1,63 +1,106 @@
 import crypto from 'crypto';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 import { EventEmitter } from 'stream';
-import {
-  getAvailableChatModelProviders,
-  getAvailableEmbeddingModelProviders,
-} from '@/lib/providers';
 import db from '@/lib/db';
 import { chats, messages as messagesSchema } from '@/lib/db/schema';
 import { and, eq, gt } from 'drizzle-orm';
 import { getFileDetails } from '@/lib/utils/files';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { ChatOpenAI } from '@langchain/openai';
-import {
-  getCustomOpenaiApiKey,
-  getCustomOpenaiApiUrl,
-  getCustomOpenaiModelName,
-} from '@/lib/config';
 import { searchHandlers } from '@/lib/search';
+import { z } from 'zod';
+import ModelRegistry from '@/lib/models/registry';
+import { ModelWithProvider } from '@/lib/models/types';
+import { DEFAULT_LOCALE } from '@/i18n/locales';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-type Message = {
-  messageId: string;
-  chatId: string;
-  content: string;
-};
+const messageSchema = z.object({
+  messageId: z.string().min(1, 'Message ID is required'),
+  chatId: z.string().min(1, 'Chat ID is required'),
+  content: z.string().min(1, 'Message content is required'),
+});
 
-type ChatModel = {
-  provider: string;
-  name: string;
-};
+const chatModelSchema: z.ZodType<ModelWithProvider> = z.object({
+  providerId: z.string({
+    errorMap: () => ({
+      message: 'Chat model provider id must be provided',
+    }),
+  }),
+  key: z.string({
+    errorMap: () => ({
+      message: 'Chat model key must be provided',
+    }),
+  }),
+});
 
-type EmbeddingModel = {
-  provider: string;
-  name: string;
-};
+const embeddingModelSchema: z.ZodType<ModelWithProvider> = z.object({
+  providerId: z.string({
+    errorMap: () => ({
+      message: 'Embedding model provider id must be provided',
+    }),
+  }),
+  key: z.string({
+    errorMap: () => ({
+      message: 'Embedding model key must be provided',
+    }),
+  }),
+});
 
-type Body = {
-  message: Message;
-  optimizationMode: 'speed' | 'balanced' | 'quality';
-  focusMode: string;
-  history: Array<[string, string]>;
-  files: Array<string>;
-  chatModel: ChatModel;
-  embeddingModel: EmbeddingModel;
-  systemInstructions: string;
-  locale: string;
+const bodySchema = z.object({
+  message: messageSchema,
+  optimizationMode: z.enum(['speed', 'balanced', 'quality'], {
+    errorMap: () => ({
+      message: 'Optimization mode must be one of: speed, balanced, quality',
+    }),
+  }),
+  focusMode: z.string().min(1, 'Focus mode is required'),
+  history: z
+    .array(
+      z.tuple([z.string(), z.string()], {
+        errorMap: () => ({
+          message: 'History items must be tuples of two strings',
+        }),
+      }),
+    )
+    .optional()
+    .default([]),
+  files: z.array(z.string()).optional().default([]),
+  chatModel: chatModelSchema,
+  embeddingModel: embeddingModelSchema,
+  systemInstructions: z.string().nullable().optional().default(''),
+  locale: z.string().optional(),
+});
+
+type Message = z.infer<typeof messageSchema>;
+type Body = z.infer<typeof bodySchema>;
+
+const safeValidateBody = (data: unknown) => {
+  const result = bodySchema.safeParse(data);
+
+  if (!result.success) {
+    return {
+      success: false,
+      error: result.error.errors.map((e) => ({
+        path: e.path.join('.'),
+        message: e.message,
+      })),
+    };
+  }
+
+  return {
+    success: true,
+    data: result.data,
+  };
 };
 
 const handleEmitterEvents = async (
   stream: EventEmitter,
   writer: WritableStreamDefaultWriter,
   encoder: TextEncoder,
-  aiMessageId: string,
   chatId: string,
 ) => {
-  let recievedMessage = '';
-  let sources: any[] = [];
+  let receivedMessage = '';
+  const aiMessageId = crypto.randomBytes(7).toString('hex');
 
   stream.on('data', (data) => {
     const parsedData = JSON.parse(data);
@@ -72,7 +115,7 @@ const handleEmitterEvents = async (
         ),
       );
 
-      recievedMessage += parsedData.data;
+      receivedMessage += parsedData.data;
     } else if (parsedData.type === 'sources') {
       writer.write(
         encoder.encode(
@@ -84,7 +127,17 @@ const handleEmitterEvents = async (
         ),
       );
 
-      sources = parsedData.data;
+      const sourceMessageId = crypto.randomBytes(7).toString('hex');
+
+      db.insert(messagesSchema)
+        .values({
+          chatId: chatId,
+          messageId: sourceMessageId,
+          role: 'source',
+          sources: parsedData.data,
+          createdAt: new Date().toString(),
+        })
+        .execute();
     }
   });
   stream.on('end', () => {
@@ -92,7 +145,6 @@ const handleEmitterEvents = async (
       encoder.encode(
         JSON.stringify({
           type: 'messageEnd',
-          messageId: aiMessageId,
         }) + '\n',
       ),
     );
@@ -100,14 +152,11 @@ const handleEmitterEvents = async (
 
     db.insert(messagesSchema)
       .values({
-        content: recievedMessage,
+        content: receivedMessage,
         chatId: chatId,
         messageId: aiMessageId,
         role: 'assistant',
-        metadata: JSON.stringify({
-          createdAt: new Date(),
-          ...(sources && sources.length > 0 && { sources }),
-        }),
+        createdAt: new Date().toString(),
       })
       .execute();
   });
@@ -168,9 +217,7 @@ const handleHistorySave = async (
         chatId: message.chatId,
         messageId: humanMessageId,
         role: 'user',
-        metadata: JSON.stringify({
-          createdAt: new Date(),
-        }),
+        createdAt: new Date().toString(),
       })
       .execute();
   } else {
@@ -188,7 +235,17 @@ const handleHistorySave = async (
 
 export const POST = async (req: Request) => {
   try {
-    const body = (await req.json()) as Body;
+    const reqBody = (await req.json()) as Body;
+
+    const parseBody = safeValidateBody(reqBody);
+    if (!parseBody.success) {
+      return Response.json(
+        { message: 'Invalid request body', error: parseBody.error },
+        { status: 400 },
+      );
+    }
+
+    const body = parseBody.data as Body;
     const { message } = body;
 
     if (message.content === '') {
@@ -200,59 +257,18 @@ export const POST = async (req: Request) => {
       );
     }
 
-    const [chatModelProviders, embeddingModelProviders] = await Promise.all([
-      getAvailableChatModelProviders(),
-      getAvailableEmbeddingModelProviders(),
+    const registry = new ModelRegistry();
+
+    const [llm, embedding] = await Promise.all([
+      registry.loadChatModel(body.chatModel.providerId, body.chatModel.key),
+      registry.loadEmbeddingModel(
+        body.embeddingModel.providerId,
+        body.embeddingModel.key,
+      ),
     ]);
-
-    const chatModelProvider =
-      chatModelProviders[
-        body.chatModel?.provider || Object.keys(chatModelProviders)[0]
-      ];
-    const chatModel =
-      chatModelProvider[
-        body.chatModel?.name || Object.keys(chatModelProvider)[0]
-      ];
-
-    const embeddingProvider =
-      embeddingModelProviders[
-        body.embeddingModel?.provider || Object.keys(embeddingModelProviders)[0]
-      ];
-    const embeddingModel =
-      embeddingProvider[
-        body.embeddingModel?.name || Object.keys(embeddingProvider)[0]
-      ];
-
-    let llm: BaseChatModel | undefined;
-    let embedding = embeddingModel.model;
-
-    if (body.chatModel?.provider === 'custom_openai') {
-      llm = new ChatOpenAI({
-        apiKey: getCustomOpenaiApiKey(),
-        modelName: getCustomOpenaiModelName(),
-        temperature: 0.7,
-        configuration: {
-          baseURL: getCustomOpenaiApiUrl(),
-        },
-      }) as unknown as BaseChatModel;
-    } else if (chatModelProvider && chatModel) {
-      llm = chatModel.model;
-    }
-
-    if (!llm) {
-      return Response.json({ error: 'Invalid chat model' }, { status: 400 });
-    }
-
-    if (!embedding) {
-      return Response.json(
-        { error: 'Invalid embedding model' },
-        { status: 400 },
-      );
-    }
 
     const humanMessageId =
       message.messageId ?? crypto.randomBytes(7).toString('hex');
-    const aiMessageId = crypto.randomBytes(7).toString('hex');
 
     const history: BaseMessage[] = body.history.map((msg) => {
       if (msg[0] === 'human') {
@@ -284,15 +300,15 @@ export const POST = async (req: Request) => {
       embedding,
       body.optimizationMode,
       body.files,
-      body.systemInstructions,
-      body.locale,
+      body.systemInstructions as string,
+      body.locale || DEFAULT_LOCALE,
     );
 
     const responseStream = new TransformStream();
     const writer = responseStream.writable.getWriter();
     const encoder = new TextEncoder();
 
-    handleEmitterEvents(stream, writer, encoder, aiMessageId, message.chatId);
+    handleEmitterEvents(stream, writer, encoder, message.chatId);
     handleHistorySave(message, humanMessageId, body.focusMode, body.files);
 
     return new Response(responseStream.readable, {

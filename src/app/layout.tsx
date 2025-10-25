@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from 'next';
 import { Montserrat } from 'next/font/google';
 import './globals.css';
@@ -7,8 +9,11 @@ import { Toaster } from 'sonner';
 import ThemeProvider from '@/components/theme/Provider';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getTranslations } from 'next-intl/server';
-import LocaleBootstrap from '@/components/LocaleBootstrap';
 import { LOCALES, DEFAULT_LOCALE, type AppLocale } from '@/i18n/locales';
+import LocaleBootstrap from '@/components/LocaleBootstrap';
+import configManager from '@/lib/config';
+import SetupWizard from '@/components/Setup/SetupWizard';
+import { ChatProvider } from '@/lib/hooks/useChat';
 
 const montserrat = Montserrat({
   weight: ['300', '400', '500', '700'],
@@ -36,22 +41,32 @@ export default async function RootLayout({
   )
     ? (locale as AppLocale)
     : DEFAULT_LOCALE;
+
+  const setupComplete = configManager.isSetupComplete();
+  const configSections = configManager.getUIConfigSections();
+
   return (
     <html className="h-full" lang={locale} suppressHydrationWarning>
       <body className={cn('h-full', montserrat.className)}>
         <LocaleBootstrap initialLocale={appLocale} />
         <NextIntlClientProvider>
           <ThemeProvider>
-            <Sidebar>{children}</Sidebar>
-            <Toaster
-              toastOptions={{
-                unstyled: true,
-                classNames: {
-                  toast:
-                    'bg-light-primary dark:bg-dark-secondary dark:text-white/70 text-black-70 rounded-lg p-4 flex flex-row items-center space-x-2',
-                },
-              }}
-            />
+            {setupComplete ? (
+              <ChatProvider>
+                <Sidebar>{children}</Sidebar>
+                <Toaster
+                  toastOptions={{
+                    unstyled: true,
+                    classNames: {
+                      toast:
+                        'bg-light-secondary dark:bg-dark-secondary dark:text-white/70 text-black-70 rounded-lg p-4 flex flex-row items-center space-x-2',
+                    },
+                  }}
+                />
+              </ChatProvider>
+            ) : (
+              <SetupWizard configSections={configSections} />
+            )}
           </ThemeProvider>
         </NextIntlClientProvider>
       </body>

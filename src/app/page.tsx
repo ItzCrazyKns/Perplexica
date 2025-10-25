@@ -1,7 +1,5 @@
 import ChatWindow from '@/components/ChatWindow';
-import { ChatProvider } from '@/lib/hooks/useChat';
 import { Metadata } from 'next';
-import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -13,15 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const Home = () => {
-  return (
-    <div>
-      <Suspense>
-        <ChatProvider>
-          <ChatWindow />
-        </ChatProvider>
-      </Suspense>
-    </div>
-  );
+  return <ChatWindow />;
 };
 
 export default Home;

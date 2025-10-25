@@ -1,15 +1,23 @@
 import { sql } from 'drizzle-orm';
 import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
+import { Document } from '@langchain/core/documents';
 
 export const messages = sqliteTable('messages', {
   id: integer('id').primaryKey(),
-  content: text('content').notNull(),
+  role: text('type', { enum: ['assistant', 'user', 'source'] }).notNull(),
   chatId: text('chatId').notNull(),
+  createdAt: text('createdAt')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
   messageId: text('messageId').notNull(),
-  role: text('type', { enum: ['assistant', 'user'] }),
-  metadata: text('metadata', {
+
+  content: text('content'),
+
+  sources: text('sources', {
     mode: 'json',
-  }),
+  })
+    .$type<Document[]>()
+    .default(sql`'[]'`),
 });
 
 interface File {

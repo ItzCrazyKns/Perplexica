@@ -2,15 +2,17 @@ import type { Config } from 'tailwindcss';
 import type { DefaultColors } from 'tailwindcss/types/generated/colors';
 
 const themeDark = (colors: DefaultColors) => ({
-  50: '#0a0a0a',
-  100: '#111111',
-  200: '#1c1c1c',
+  50: '#0d1117',
+  100: '#161b22',
+  200: '#21262d',
+  300: '#30363d',
 });
 
 const themeLight = (colors: DefaultColors) => ({
-  50: '#fcfcf9',
-  100: '#f3f3ee',
-  200: '#e8e8e3',
+  50: '#ffffff',
+  100: '#f6f8fa',
+  200: '#e8edf1',
+  300: '#d0d7de',
 });
 
 const config: Config = {
@@ -47,6 +49,9 @@ const config: Config = {
       },
     },
   },
-  plugins: [require('@tailwindcss/typography')],
+  plugins: [
+    require('@tailwindcss/typography'),
+    require('@headlessui/tailwindcss')({ prefix: 'headless' }),
+  ],
 };
 export default config;
