@@ -80,7 +80,7 @@ const WeatherWidget = () => {
         body: JSON.stringify({
           lat: location.latitude,
           lng: location.longitude,
-          measureUnit: localStorage.getItem('measureUnit') ?? 'Metric',
+          measureUnit: localStorage.getItem('measureUnit') ?? 'metric',
         }),
       });
 

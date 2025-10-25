@@ -13,11 +13,8 @@ interface GroqConfig {
 const providerConfigFields: UIConfigField[] = [
   {
     type: 'password',
-    name: 'API Key',
     key: 'apiKey',
-    description: 'Your Groq API key',
     required: true,
-    placeholder: 'Groq API Key',
     env: 'GROQ_API_KEY',
     scope: 'server',
   },

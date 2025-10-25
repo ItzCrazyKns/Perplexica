@@ -14,21 +14,16 @@ interface LemonadeConfig {
 const providerConfigFields: UIConfigField[] = [
   {
     type: 'string',
-    name: 'Base URL',
     key: 'baseURL',
-    description: 'The base URL for Lemonade API',
     required: true,
-    placeholder: 'https://api.lemonade.ai/v1',
     env: 'LEMONADE_BASE_URL',
     scope: 'server',
+    default: 'https://api.lemonade.ai/v1',
   },
   {
     type: 'password',
-    name: 'API Key',
     key: 'apiKey',
-    description: 'Your Lemonade API key (optional)',
     required: false,
-    placeholder: 'Lemonade API Key',
     env: 'LEMONADE_API_KEY',
     scope: 'server',
   },

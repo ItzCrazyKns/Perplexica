@@ -1,5 +1,6 @@
 'use client';
 
+import { cn } from '@/lib/utils';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
@@ -46,9 +47,10 @@ export default function LocaleSwitcher({
         onChange?.(next);
         router.refresh();
       }}
-      className={
-        'bg-light-secondary dark:bg-dark-secondary px-3 py-2 flex items-center overflow-hidden border border-light-200 dark:border-dark-200 dark:text-white rounded-lg text-sm'
-      }
+      className={cn(
+        'bg-light-secondary dark:bg-dark-secondary px-3 py-2 flex items-center overflow-hidden border border-light-200 dark:border-dark-200 dark:text-white rounded-lg appearance-none w-full pr-10 text-xs lg:text-sm',
+        '!text-xs lg:!text-sm',
+      )}
       aria-label="Language"
     >
       {LOCALES.map((loc) => (
