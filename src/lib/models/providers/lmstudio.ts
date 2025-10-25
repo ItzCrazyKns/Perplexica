@@ -13,9 +13,7 @@ interface LMStudioConfig {
 const providerConfigFields: UIConfigField[] = [
   {
     type: 'string',
-    name: 'Base URL',
     key: 'baseURL',
-    description: 'The base URL for LM Studio server',
     required: true,
     placeholder: 'http://localhost:1234',
     env: 'LM_STUDIO_BASE_URL',

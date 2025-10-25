@@ -18,7 +18,6 @@ const providerConfigFields: UIConfigField[] = [
     required: true,
     env: 'LEMONADE_BASE_URL',
     scope: 'server',
-    default: 'https://api.lemonade.ai/v1',
   },
   {
     type: 'password',
