@@ -16,6 +16,7 @@ const MajorNewsCard = ({
     {isLeft ? (
       <>
         <div className="relative w-80 h-full overflow-hidden rounded-2xl flex-shrink-0">
+          {/* TODO: Consider using next/image for automatic optimization, lazy loading, and improved performance */}
           <img
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
             src={
@@ -52,6 +53,7 @@ const MajorNewsCard = ({
           </p>
         </div>
         <div className="relative w-80 h-full overflow-hidden rounded-2xl flex-shrink-0">
+          {/* TODO: Consider using next/image for automatic optimization, lazy loading, and improved performance */}
           <img
             className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
             src={

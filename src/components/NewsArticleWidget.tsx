@@ -44,6 +44,7 @@ const NewsArticleWidget = () => {
           className="flex flex-row items-stretch w-full h-full relative overflow-hidden group"
         >
           <div className="relative w-24 min-w-24 max-w-24 h-full overflow-hidden">
+            {/* TODO: Consider using next/image for automatic optimization, lazy loading, and improved performance */}
             <img
               className="object-cover w-full h-full bg-light-200 dark:bg-dark-200 group-hover:scale-110 transition-transform duration-300"
               src={

@@ -5,9 +5,11 @@ import {
 } from './webSearch';
 import { writingAssistantPrompt } from './writingAssistant';
 
-export default {
+const prompts = {
   webSearchResponsePrompt,
   webSearchRetrieverPrompt,
   webSearchRetrieverFewShots,
   writingAssistantPrompt,
 };
+
+export default prompts;
