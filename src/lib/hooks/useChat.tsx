@@ -643,7 +643,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         if (
           sourceMessage &&
           sourceMessage.sources.length > 0 &&
-          suggestionMessageIndex == -1
+          suggestionMessageIndex === -1
         ) {
           const suggestions = await getSuggestions(messagesRef.current);
           setMessages((prev) => {
