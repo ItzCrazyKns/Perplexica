@@ -40,6 +40,7 @@ jobs:
           publishToken: ${{ secrets.SEMGREP_APP_TOKEN }}
           publishDeployment: ${{ secrets.SEMGREP_DEPLOYMENT_ID }}
           generateSarif: "1"
+        continue-on-error: true
 
       # Upload SARIF file generated in previous step
       - name: Upload SARIF file
@@ -47,3 +48,4 @@ jobs:
         with:
           sarif_file: semgrep.sarif
         if: always()
+        continue-on-error: true

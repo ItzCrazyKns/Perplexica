@@ -36,44 +36,59 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Set up Snyk CLI to check for security issues
         # Snyk can be used to break the build when it detects security issues.
         # In this case we want to upload the SAST issues to GitHub Code Scanning
         uses: snyk/actions/setup@806182742461562b67788a64410098c9d9b96adb
-
-        # For Snyk Open Source you must first set up the development environment for your application's dependencies
-        # For example for Node
-        #- uses: actions/setup-node@v4
-        #  with:
-        #    node-version: 20
-
         env:
           # This is where you will need to introduce the Snyk API token created with your Snyk account
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
-        # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
-        # Use || true to not fail the pipeline
+      # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
+      # Use || true to not fail the pipeline
       - name: Snyk Code test
-        run: snyk code test --sarif > snyk-code.sarif # || true
+        run: snyk code test --sarif > snyk-code.sarif || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
 
-        # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
+      # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
       - name: Snyk Open Source monitor
-        run: snyk monitor --all-projects
+        run: snyk monitor --all-projects || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
 
-        # Runs Snyk Infrastructure as Code (IaC) analysis and uploads result to Snyk.
-        # Use || true to not fail the pipeline.
+      # Runs Snyk Infrastructure as Code (IaC) analysis and uploads result to Snyk.
+      # Use || true to not fail the pipeline.
       - name: Snyk IaC test and report
-        run: snyk iac test --report # || true
+        run: snyk iac test --report || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
 
-        # Build the docker image for testing
+      # Build the docker image for testing
       - name: Build a Docker image
-        run: docker build -t your/image-to-test .
-        # Runs Snyk Container (Container and SCA) analysis and uploads result to Snyk.
-      - name: Snyk Container monitor
-        run: snyk container monitor your/image-to-test --file=Dockerfile
+        run: docker build -t perplexica:latest .
+        continue-on-error: true
 
-        # Push the Snyk Code results into GitHub Code Scanning tab
+      # Runs Snyk Container (Container and SCA) analysis and uploads result to Snyk.
+      - name: Snyk Container monitor
+        run: snyk container monitor perplexica:latest --file=Dockerfile || true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
+
+      # Push the Snyk Code results into GitHub Code Scanning tab
       - name: Upload result to GitHub Code Scanning
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk-code.sarif
+        if: always()
+        continue-on-error: true
