@@ -8,7 +8,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format:write": "prettier . --write"
+    "format:write": "prettier . --write",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --maxWorkers=2",
+    "db:migrate": "node -r esbuild-register src/lib/db/migrate.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
@@ -51,20 +56,30 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/better-sqlite3": "^7.6.12",
     "@types/html-to-text": "^9.0.4",
+    "@types/jest": "^30.0.0",
     "@types/jspdf": "^2.0.0",
     "@types/node": "^24.8.1",
     "@types/pdf-parse": "^1.1.4",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/supertest": "^6.0.3",
     "autoprefixer": "^10.0.1",
     "drizzle-kit": "^0.30.5",
     "eslint": "^8",
     "eslint-config-next": "14.1.4",
+    "jest": "^30.2.0",
+    "jest-environment-jsdom": "^30.2.0",
+    "node-mocks-http": "^1.17.2",
     "postcss": "^8",
     "prettier": "^3.2.5",
+    "supertest": "^7.1.4",
     "tailwindcss": "^3.3.0",
+    "ts-jest": "^29.4.5",
     "typescript": "^5.9.3"
   }
 }
