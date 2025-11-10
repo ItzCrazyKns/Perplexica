@@ -4,12 +4,12 @@ import {
   RunnableLambda,
 } from '@langchain/core/runnables';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
-import formatChatHistoryAsString from '../utils/formatHistory';
+import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { StringOutputParser } from '@langchain/core/output_parsers';
-import { searchSearxng } from '../searxng';
+import { searchSearxng } from '@/lib/searxng';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import LineOutputParser from '../outputParsers/lineOutputParser';
+import LineOutputParser from '@/lib/outputParsers/lineOutputParser';
 
 const videoSearchChainPrompt = `
 You will be given a conversation below and a follow up question. You need to rephrase the follow-up question so it is a standalone question that can be used by the LLM to search Youtube for videos.

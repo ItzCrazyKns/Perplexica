@@ -1,4 +1,4 @@
-import handleImageSearch from '@/lib/chains/imageSearchAgent';
+import handleImageSearch from '@/lib/agents/media/image';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';

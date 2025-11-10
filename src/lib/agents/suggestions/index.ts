@@ -1,7 +1,7 @@
 import { RunnableSequence, RunnableMap } from '@langchain/core/runnables';
-import ListLineOutputParser from '../outputParsers/listLineOutputParser';
+import ListLineOutputParser from '@/lib/outputParsers/listLineOutputParser';
 import { PromptTemplate } from '@langchain/core/prompts';
-import formatChatHistoryAsString from '../utils/formatHistory';
+import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 import { BaseMessage } from '@langchain/core/messages';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatOpenAI } from '@langchain/openai';

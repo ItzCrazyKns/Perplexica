@@ -1,4 +1,4 @@
-import generateSuggestions from '@/lib/chains/suggestionGeneratorAgent';
+import generateSuggestions from '@/lib/agents/suggestions';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';

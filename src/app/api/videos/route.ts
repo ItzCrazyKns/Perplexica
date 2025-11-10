@@ -1,4 +1,4 @@
-import handleVideoSearch from '@/lib/chains/videoSearchAgent';
+import handleVideoSearch from '@/lib/agents/media/video';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
