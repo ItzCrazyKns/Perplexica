@@ -43,7 +43,12 @@ export const searchSearxng = async (
     );
   }
 
-  const url = new URL('/search', baseUrl);
+  const normalizedBase = new URL(baseUrl.toString());
+  if (!normalizedBase.pathname.endsWith('/')) {
+    normalizedBase.pathname = `${normalizedBase.pathname}/`;
+  }
+
+  const url = new URL('search', normalizedBase);
   url.searchParams.append('format', 'json');
   url.searchParams.append('q', query);
 
