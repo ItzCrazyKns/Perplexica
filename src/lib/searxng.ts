@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { getSearxngURL } from './config/serverRegistry';
 
 interface SearxngSearchOptions {
@@ -23,9 +22,29 @@ export const searchSearxng = async (
   query: string,
   opts?: SearxngSearchOptions,
 ) => {
-  const searxngURL = getSearxngURL();
+  const searxngURL = getSearxngURL().trim();
 
-  const url = new URL(`${searxngURL}/search?format=json`);
+  if (!searxngURL) {
+    console.warn(
+      '[searchSearxng] SearXNG URL is not configured. Returning empty results.',
+    );
+    return {
+      results: [] as SearxngSearchResult[],
+      suggestions: [] as string[],
+    };
+  }
+
+  let baseUrl: URL;
+  try {
+    baseUrl = new URL(searxngURL);
+  } catch {
+    throw new Error(
+      `[searchSearxng] Invalid SearXNG URL configured: "${searxngURL}".`,
+    );
+  }
+
+  const url = new URL('/search', baseUrl);
+  url.searchParams.append('format', 'json');
   url.searchParams.append('q', query);
 
   if (opts) {
@@ -40,7 +59,30 @@ export const searchSearxng = async (
   }
 
   const res = await fetch(url);
-  const data = await res.json();
+
+  let body: string | null = null;
+  if (!res.ok || !res.headers.get('content-type')?.includes('application/json')) {
+    body = await res.text();
+  }
+
+  if (!res.ok) {
+    console.error(
+      `[searchSearxng] Request failed with status ${res.status}: ${(body ?? '').slice(0, 200)}`,
+    );
+    throw new Error(`SearXNG request failed with status ${res.status}`);
+  }
+
+  let data: any;
+  try {
+    data = body ? JSON.parse(body) : await res.json();
+  } catch (jsonErr) {
+    console.error(
+      '[searchSearxng] Failed to parse JSON response:', jsonErr,
+      'Response snippet:', (body ?? '').slice(0, 200),
+    );
+    throw new Error('SearXNG response was not valid JSON.');
+  }
+
 
   const results: SearxngSearchResult[] = data.results;
   const suggestions: string[] = data.suggestions;

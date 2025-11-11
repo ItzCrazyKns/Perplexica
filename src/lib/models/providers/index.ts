@@ -10,6 +10,7 @@ import DeepSeekProvider from './deepseek';
 import LMStudioProvider from './lmstudio';
 import LemonadeProvider from './lemonade';
 import AimlProvider from '@/lib/models/providers/aiml';
+import AzureOpenAIProvider from './azureOpenAI';
 
 export const providers: Record<string, ProviderConstructor<any>> = {
   openai: OpenAIProvider,
@@ -22,6 +23,7 @@ export const providers: Record<string, ProviderConstructor<any>> = {
   aiml: AimlProvider,
   lmstudio: LMStudioProvider,
   lemonade: LemonadeProvider,
+  'azure-openai': AzureOpenAIProvider,
 };
 
 export const getModelProvidersUIConfigSection =
