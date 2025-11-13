@@ -1,4 +1,4 @@
-import handleImageSearch from '@/lib/agents/media/image';
+import searchImages from '@/lib/agents/media/image';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
 import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
@@ -13,6 +13,13 @@ export const POST = async (req: Request) => {
   try {
     const body: ImageSearchBody = await req.json();
 
+    const registry = new ModelRegistry();
+
+    const llm = await registry.loadChatModel(
+      body.chatModel.providerId,
+      body.chatModel.key,
+    );
+
     const chatHistory = body.chatHistory
       .map((msg: any) => {
         if (msg.role === 'user') {
@@ -23,16 +30,9 @@ export const POST = async (req: Request) => {
       })
       .filter((msg) => msg !== undefined) as BaseMessage[];
 
-    const registry = new ModelRegistry();
-
-    const llm = await registry.loadChatModel(
-      body.chatModel.providerId,
-      body.chatModel.key,
-    );
-
-    const images = await handleImageSearch(
+    const images = await searchImages(
       {
-        chat_history: chatHistory,
+        chatHistory: chatHistory,
         query: body.query,
       },
       llm,
