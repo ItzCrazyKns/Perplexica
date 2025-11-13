@@ -205,11 +205,11 @@ const MessageBox = ({
           <div className="lg:sticky lg:top-20 flex flex-col items-center space-y-3 w-full lg:w-3/12 z-30 h-full pb-4">
             <SearchImages
               query={section.userMessage.content}
-              chatHistory={chatTurns.slice(0, sectionIndex * 2)}
+              chatHistory={chatTurns}
               messageId={section.assistantMessage.messageId}
             />
             <SearchVideos
-              chatHistory={chatTurns.slice(0, sectionIndex * 2)}
+              chatHistory={chatTurns}
               query={section.userMessage.content}
               messageId={section.assistantMessage.messageId}
             />
