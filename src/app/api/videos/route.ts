@@ -13,6 +13,13 @@ export const POST = async (req: Request) => {
   try {
     const body: VideoSearchBody = await req.json();
 
+    const registry = new ModelRegistry();
+
+    const llm = await registry.loadChatModel(
+      body.chatModel.providerId,
+      body.chatModel.key,
+    );
+
     const chatHistory = body.chatHistory
       .map((msg: any) => {
         if (msg.role === 'user') {
@@ -23,16 +30,9 @@ export const POST = async (req: Request) => {
       })
       .filter((msg) => msg !== undefined) as BaseMessage[];
 
-    const registry = new ModelRegistry();
-
-    const llm = await registry.loadChatModel(
-      body.chatModel.providerId,
-      body.chatModel.key,
-    );
-
     const videos = await handleVideoSearch(
       {
-        chat_history: chatHistory,
+        chatHistory: chatHistory,
         query: body.query,
       },
       llm,
