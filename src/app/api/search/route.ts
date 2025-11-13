@@ -30,12 +30,6 @@ export const POST = async (req: Request) => {
     body.optimizationMode = body.optimizationMode || 'balanced';
     body.stream = body.stream || false;
 
-    const history: BaseMessage[] = body.history.map((msg) => {
-      return msg[0] === 'human'
-        ? new HumanMessage({ content: msg[1] })
-        : new AIMessage({ content: msg[1] });
-    });
-
     const registry = new ModelRegistry();
 
     const [llm, embeddings] = await Promise.all([
@@ -45,6 +39,12 @@ export const POST = async (req: Request) => {
         body.embeddingModel.key,
       ),
     ]);
+
+    const history: BaseMessage[] = body.history.map((msg) => {
+      return msg[0] === 'human'
+        ? new HumanMessage({ content: msg[1] })
+        : new AIMessage({ content: msg[1] });
+    });
 
     const searchHandler: MetaSearchAgentType = searchHandlers[body.focusMode];
 
@@ -128,7 +128,7 @@ export const POST = async (req: Request) => {
 
           try {
             controller.close();
-          } catch (error) {}
+          } catch (error) { }
         });
 
         emitter.on('data', (data: string) => {
