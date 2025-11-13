@@ -38,11 +38,17 @@ type TextareaUIConfigField = BaseUIConfigField & {
   default?: string;
 };
 
+type SwitchUIConfigField = BaseUIConfigField & {
+  type: 'switch';
+  default?: boolean;
+};
+
 type UIConfigField =
   | StringUIConfigField
   | SelectUIConfigField
   | PasswordUIConfigField
-  | TextareaUIConfigField;
+  | TextareaUIConfigField
+  | SwitchUIConfigField;
 
 type ConfigModelProvider = {
   id: string;
@@ -57,7 +63,10 @@ type ConfigModelProvider = {
 type Config = {
   version: number;
   setupComplete: boolean;
-  general: {
+  preferences: {
+    [key: string]: any;
+  };
+  personalization: {
     [key: string]: any;
   };
   modelProviders: ConfigModelProvider[];
@@ -80,7 +89,8 @@ type ModelProviderUISection = {
 };
 
 type UIConfigSections = {
-  general: UIConfigField[];
+  preferences: UIConfigField[];
+  personalization: UIConfigField[];
   modelProviders: ModelProviderUISection[];
   search: UIConfigField[];
 };
@@ -95,4 +105,5 @@ export type {
   ModelProviderUISection,
   ConfigModelProvider,
   TextareaUIConfigField,
+  SwitchUIConfigField,
 };

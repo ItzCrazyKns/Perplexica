@@ -67,10 +67,10 @@ const UpdateProvider = ({
         });
       });
 
-      toast.success('Provider updated successfully.');
+      toast.success('Connection updated successfully.');
     } catch (error) {
       console.error('Error updating provider:', error);
-      toast.error('Failed to update provider.');
+      toast.error('Failed to update connection.');
     } finally {
       setLoading(false);
       setOpen(false);
@@ -109,8 +109,8 @@ const UpdateProvider = ({
               <DialogPanel className="w-full mx-4 lg:w-[600px] max-h-[85vh] flex flex-col border bg-light-primary dark:bg-dark-primary border-light-secondary dark:border-dark-secondary rounded-lg">
                 <form onSubmit={handleSubmit} className="flex flex-col flex-1">
                   <div className="px-6 pt-6 pb-4">
-                    <h3 className="text-black/90 dark:text-white/90 font-medium">
-                      Update provider
+                    <h3 className="text-black/90 dark:text-white/90 font-medium text-sm">
+                      Update connection
                     </h3>
                   </div>
                   <div className="border-t border-light-200 dark:border-dark-200" />
@@ -121,13 +121,13 @@ const UpdateProvider = ({
                         className="flex flex-col items-start space-y-2"
                       >
                         <label className="text-xs text-black/70 dark:text-white/70">
-                          Name*
+                          Connection Name*
                         </label>
                         <input
                           value={name}
                           onChange={(event) => setName(event.target.value)}
                           className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-4 py-3 pr-10 text-sm text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-                          placeholder={'Provider Name'}
+                          placeholder={'Connection Name'}
                           type="text"
                           required={true}
                         />
@@ -150,7 +150,7 @@ const UpdateProvider = ({
                                 [field.key]: event.target.value,
                               }))
                             }
-                            className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-4 py-3 pr-10 text-sm text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                            className="w-full rounded-lg border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary px-4 py-3 pr-10 text-[13px] text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus-visible:outline-none focus-visible:border-light-300 dark:focus-visible:border-dark-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                             placeholder={
                               (field as StringUIConfigField).placeholder
                             }
@@ -166,12 +166,12 @@ const UpdateProvider = ({
                     <button
                       type="submit"
                       disabled={loading}
-                      className="px-4 py-2 rounded-lg text-sm bg-sky-500 text-white font-medium disabled:opacity-85 hover:opacity-85 active:scale-95 transition duration-200"
+                      className="px-4 py-2 rounded-lg text-[13px] bg-sky-500 text-white font-medium disabled:opacity-85 hover:opacity-85 active:scale-95 transition duration-200"
                     >
                       {loading ? (
                         <Loader2 className="animate-spin" size={16} />
                       ) : (
-                        'Update Provider'
+                        'Update Connection'
                       )}
                     </button>
                   </div>

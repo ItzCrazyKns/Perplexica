@@ -4,9 +4,10 @@ import {
   BrainCog,
   ChevronLeft,
   Search,
-  Settings,
+  Sliders,
+  ToggleRight,
 } from 'lucide-react';
-import General from './Sections/General';
+import Preferences from './Sections/Preferences';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -15,20 +16,29 @@ import { cn } from '@/lib/utils';
 import Models from './Sections/Models/Section';
 import SearchSection from './Sections/Search';
 import Select from '@/components/ui/Select';
+import Personalization from './Sections/Personalization';
 
 const sections = [
   {
-    key: 'general',
-    name: 'General',
-    description: 'Adjust common settings.',
-    icon: Settings,
-    component: General,
-    dataAdd: 'general',
+    key: 'preferences',
+    name: 'Preferences',
+    description: 'Customize your application preferences.',
+    icon: Sliders,
+    component: Preferences,
+    dataAdd: 'preferences',
+  },
+  {
+    key: 'personalization',
+    name: 'Personalization',
+    description: 'Customize the behavior and tone of the model.',
+    icon: ToggleRight,
+    component: Personalization,
+    dataAdd: 'personalization',
   },
   {
     key: 'models',
     name: 'Models',
-    description: 'Configure model settings.',
+    description: 'Connect to AI services and manage connections.',
     icon: BrainCog,
     component: Models,
     dataAdd: 'modelProviders',
@@ -166,7 +176,7 @@ const SettingsDialogue = ({
                   <div className="flex flex-1 flex-col overflow-hidden">
                     <div className="border-b border-light-200/60 px-6 pb-6 lg:pt-6 dark:border-dark-200/60 flex-shrink-0">
                       <div className="flex flex-col">
-                        <h4 className="font-medium text-black dark:text-white text-sm lg:text-base">
+                        <h4 className="font-medium text-black dark:text-white text-sm lg:text-sm">
                           {selectedSection.name}
                         </h4>
                         <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
