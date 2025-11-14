@@ -49,9 +49,28 @@ Perplexica's development is powered by the generous support of our sponsors. The
   <img alt="Warp Terminal" src=".assets/sponsers/warp.png" width="100%">
 </a>
 
-**[Warp](https://www.warp.dev/perplexica)** - The AI-powered terminal revolutionizing development workflows
+### **✨ [Try Warp - The AI-Powered Terminal →](https://www.warp.dev/perplexica)**
+
+Warp is revolutionizing development workflows with AI-powered features, modern UX, and blazing-fast performance. Used by developers at top companies worldwide.
 
 </div>
+
+---
+
+We'd also like to thank the following partners for their generous support:
+
+<table>
+  <tr>
+    <td>
+      <a href="https://dashboard.exa.ai" target="_blank">
+        <img src=".assets/sponsers/exa.png" alt="Exa" style="max-width: 8rem; max-height: 8rem; border-radius: .75rem;" />
+      </a>
+    </td>
+    <td>
+      <a href="https://dashboard.exa.ai">Exa</a> • The Perfect Web Search API for LLMs - web search, crawling, deep research, and answer APIs
+    </td>
+  </tr>
+</table>
 
 ## Installation
 
