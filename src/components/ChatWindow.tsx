@@ -8,7 +8,6 @@ import { Settings } from 'lucide-react';
 import Link from 'next/link';
 import NextError from 'next/error';
 import { useChat } from '@/lib/hooks/useChat';
-import Loader from './ui/Loader';
 import SettingsButtonMobile from './Settings/SettingsButtonMobile';
 
 export interface BaseMessage {
@@ -52,7 +51,7 @@ export interface File {
 }
 
 const ChatWindow = () => {
-  const { hasError, isReady, notFound, messages } = useChat();
+  const { hasError, notFound, messages } = useChat();
   if (hasError) {
     return (
       <div className="relative">
@@ -68,24 +67,18 @@ const ChatWindow = () => {
     );
   }
 
-  return isReady ? (
-    notFound ? (
-      <NextError statusCode={404} />
-    ) : (
-      <div>
-        {messages.length > 0 ? (
-          <>
-            <Navbar />
-            <Chat />
-          </>
-        ) : (
-          <EmptyChat />
-        )}
-      </div>
-    )
+  return notFound ? (
+    <NextError statusCode={404} />
   ) : (
-    <div className="flex flex-row items-center justify-center min-h-screen">
-      <Loader />
+    <div>
+      {messages.length > 0 ? (
+        <>
+          <Navbar />
+          <Chat />
+        </>
+      ) : (
+        <EmptyChat />
+      )}
     </div>
   );
 };
