@@ -1,15 +1,40 @@
 services:
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    restart: unless-stopped
+    ports:
+      - '8888:8080'
+    environment:
+      - SEARXNG_PUBLIC_INSTANCE=false
+      - SEARXNG_BASE_URL=${SEARXNG_BASE_URL:-}
+    volumes:
+      - ./searxng:/etc/searxng:ro
+
   perplexica:
     image: itzcrazykns1337/perplexica:latest
+    container_name: perplexica
+    depends_on:
+      - searxng
+    restart: unless-stopped
     ports:
       - '3000:3000'
+    environment:
+      AZURE_OPENAI_API_KEY: ${AZURE_OPENAI_API_KEY}
+      AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
+      AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION}
+      AZURE_OPENAI_DEPLOYMENT: ${AZURE_OPENAI_DEPLOYMENT}
+      AZURE_OPENAI_API_EMBEDDING_KEY: ${AZURE_OPENAI_API_EMBEDDING_KEY:-}
+      AZURE_OPENAI_EMBEDDINGS_ENDPOINT: ${AZURE_OPENAI_EMBEDDINGS_ENDPOINT:-}
+      AZURE_OPENAI_API_EMBEDDINGS_VERSION: ${AZURE_OPENAI_API_EMBEDDINGS_VERSION:-}
+      AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT: ${AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT:-}
+      SEARXNG_API_URL: http://searxng:8080
     volumes:
       - data:/home/perplexica/data
       - uploads:/home/perplexica/uploads
-    restart: unless-stopped
 
 volumes:
   data:
-    name: 'perplexica-data'
+    name: perplexica-data
   uploads:
-    name: 'perplexica-uploads'
+    name: perplexica-uploads

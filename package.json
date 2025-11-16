@@ -47,6 +47,7 @@
     "sonner": "^1.4.41",
     "tailwind-merge": "^2.2.2",
     "winston": "^3.17.0",
+    "youtube-transcript": "^1.0.7",
     "yet-another-react-lightbox": "^3.17.2",
     "zod": "^3.22.4"
   },
