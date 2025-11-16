@@ -2,11 +2,11 @@ import { cn } from '@/lib/utils';
 import { ArrowUp } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
-import Attach from './MessageInputActions/Attach';
 import CopilotToggle from './MessageInputActions/Copilot';
 import { File } from './ChatWindow';
 import AttachSmall from './MessageInputActions/AttachSmall';
 import { useChat } from '@/lib/hooks/useChat';
+import SummarizeVideo from './MessageInputActions/SummarizeVideo';
 
 const MessageInput = () => {
   const { loading, sendMessage } = useChat();
@@ -68,7 +68,12 @@ const MessageInput = () => {
         mode === 'multi' ? 'flex-col rounded-2xl' : 'flex-row rounded-full',
       )}
     >
-      {mode === 'single' && <AttachSmall />}
+      {mode === 'single' && (
+        <>
+          <AttachSmall />
+          <SummarizeVideo />
+        </>
+      )}
       <TextareaAutosize
         ref={inputRef}
         value={message}
@@ -95,7 +100,10 @@ const MessageInput = () => {
       )}
       {mode === 'multi' && (
         <div className="flex flex-row items-center justify-between w-full pt-2">
-          <AttachSmall />
+          <div className="flex flex-row items-center space-x-2">
+            <AttachSmall />
+            <SummarizeVideo />
+          </div>
           <div className="flex flex-row items-center space-x-4">
             <CopilotToggle
               copilotEnabled={copilotEnabled}

@@ -61,6 +61,7 @@ type ChatContext = {
     rewrite?: boolean,
   ) => Promise<void>;
   rewrite: (messageId: string) => void;
+  summarizeYoutubeVideo: (url: string) => Promise<boolean>;
   setChatModelProvider: (provider: ChatModelProvider) => void;
   setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void;
 };
@@ -260,6 +261,7 @@ export const chatContext = createContext<ChatContext>({
   setOptimizationMode: () => {},
   setChatModelProvider: () => {},
   setEmbeddingModelProvider: () => {},
+  summarizeYoutubeVideo: async () => false,
 });
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
@@ -509,6 +511,146 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     sendMessage(message.content, message.messageId, true);
   };
 
+  const summarizeYoutubeVideo: ChatContext['summarizeYoutubeVideo'] = async (
+    url,
+  ) => {
+    const trimmed = url.trim();
+
+    if (!trimmed) {
+      toast.error('Please provide a YouTube URL to summarise.');
+      return false;
+    }
+
+    if (!chatModelProvider.key || !chatModelProvider.providerId) {
+      toast.error('Select a chat model in settings before summarising videos.');
+      return false;
+    }
+
+    if (!chatId) {
+      toast.error('Chat session is not ready yet. Please try again.');
+      return false;
+    }
+
+    const userMessageId = crypto.randomBytes(7).toString('hex');
+    const assistantMessageId = crypto.randomBytes(7).toString('hex');
+
+    const userContent = `Summarise this YouTube video: ${trimmed}`;
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: 'user',
+        content: userContent,
+        messageId: userMessageId,
+        chatId,
+        createdAt: new Date(),
+      },
+    ]);
+
+    setChatHistory((prev) => [...prev, ['human', userContent]]);
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/youtube/summary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          url: trimmed,
+          chatModel: {
+            key: chatModelProvider.key,
+            providerId: chatModelProvider.providerId,
+          },
+        }),
+      });
+
+      if (!res.ok) {
+        let message = `Failed to summarise video (${res.status})`;
+        try {
+          const errorData = await res.json();
+          if (errorData?.message) {
+            message = errorData.message;
+          }
+        } catch {
+          /* ignore */
+        }
+        throw new Error(message);
+      }
+
+      const data = await res.json();
+
+      const segments: string[] = [];
+      if (data?.video?.title) {
+        segments.push(
+          `${data.video.title}${
+            data.video.channel ? ` • ${data.video.channel}` : ''
+          }`,
+        );
+      }
+      if (typeof data?.summary === 'string' && data.summary.trim().length > 0) {
+        segments.push(data.summary.trim());
+      }
+      if (Array.isArray(data?.bulletPoints) && data.bulletPoints.length > 0) {
+        segments.push(
+          `Key points:\n${data.bulletPoints
+            .map((point: string) => `• ${point}`)
+            .join('\n')}`,
+        );
+      }
+      if (Array.isArray(data?.nextSteps) && data.nextSteps.length > 0) {
+        segments.push(
+          `Next steps:\n${data.nextSteps
+            .map((step: string) => `• ${step}`)
+            .join('\n')}`,
+        );
+      }
+      if (data?.truncated) {
+        segments.push(
+          'Note: Only the first portion of the transcript was analysed due to length.',
+        );
+      }
+
+      const assistantContent =
+        segments.length > 0
+          ? segments.join('\n\n')
+          : 'The video transcript was processed, but no summary could be generated.';
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: assistantContent,
+          messageId: assistantMessageId,
+          chatId,
+          createdAt: new Date(),
+        },
+      ]);
+
+      setChatHistory((prev) => [
+        ...prev,
+        ['assistant', assistantContent],
+      ]);
+      setMessageAppeared(true);
+
+      return true;
+    } catch (error: any) {
+      console.error('Failed to summarise YouTube video:', error);
+      toast.error(
+        error?.message ?? 'Failed to summarise the YouTube video. Please try again.',
+      );
+
+      setMessages((prev) =>
+        prev.filter((message) => message.messageId !== userMessageId),
+      );
+      setChatHistory((prev) => prev.slice(0, -1));
+
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isReady && initialMessage && isConfigReady) {
       if (!isConfigReady) {
@@ -750,6 +892,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         chatModelProvider,
         embeddingModelProvider,
         setEmbeddingModelProvider,
+        summarizeYoutubeVideo,
       }}
     >
       {children}
