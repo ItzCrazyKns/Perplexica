@@ -80,12 +80,8 @@ export const POST = async (req: Request) => {
                 sources = parsedData.data;
               }
             } catch (error) {
-              reject(
-                Response.json(
-                  { message: 'Error parsing data' },
-                  { status: 500 },
-                ),
-              );
+              console.error('Error parsing search stream data:', error);
+              return;
             }
           });
 
@@ -158,7 +154,8 @@ export const POST = async (req: Request) => {
               );
             }
           } catch (error) {
-            controller.error(error);
+            console.error('Error parsing search stream data:', error);
+            return;
           }
         });
 

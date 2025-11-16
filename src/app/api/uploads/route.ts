@@ -30,6 +30,14 @@ export async function POST(req: Request) {
     const formData = await req.formData();
 
     const files = formData.getAll('files') as File[];
+
+    if (!files || files.length === 0) {
+      return NextResponse.json(
+        { message: 'No files provided' },
+        { status: 400 },
+      );
+    }
+
     const embedding_model = formData.get('embedding_model_key') as string;
     const embedding_model_provider = formData.get('embedding_model_provider_id') as string;
 
@@ -44,18 +52,23 @@ export async function POST(req: Request) {
 
     const model = await registry.loadEmbeddingModel(embedding_model_provider, embedding_model);
 
+    // Validate all files first before processing
+    for (const file of files) {
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      if (!fileExtension || !['pdf', 'docx', 'txt'].includes(fileExtension)) {
+        return NextResponse.json(
+          { message: `File type not supported: ${file.name}` },
+          { status: 400 },
+        );
+      }
+    }
+
     const processedFiles: FileRes[] = [];
 
+    // Process all valid files
     await Promise.all(
       files.map(async (file: any) => {
         const fileExtension = file.name.split('.').pop();
-        if (!['pdf', 'docx', 'txt'].includes(fileExtension!)) {
-          return NextResponse.json(
-            { message: 'File type not supported' },
-            { status: 400 },
-          );
-        }
-
         const uniqueFileName = `${crypto.randomBytes(16).toString('hex')}.${fileExtension}`;
         const filePath = path.join(uploadDir, uniqueFileName);
 

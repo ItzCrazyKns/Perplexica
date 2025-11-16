@@ -70,8 +70,17 @@ fs.readdirSync(migrationsFolder)
                 `);
 
         messages.forEach((msg: any) => {
-          while (typeof msg.metadata === 'string') {
+          let parseAttempts = 0;
+          const MAX_PARSE_ATTEMPTS = 10;
+
+          while (typeof msg.metadata === 'string' && parseAttempts < MAX_PARSE_ATTEMPTS) {
             msg.metadata = JSON.parse(msg.metadata || '{}');
+            parseAttempts++;
+          }
+
+          if (parseAttempts >= MAX_PARSE_ATTEMPTS) {
+            console.error('Failed to parse metadata after maximum attempts');
+            msg.metadata = {};
           }
           if (msg.type === 'user') {
             insertMessage.run(

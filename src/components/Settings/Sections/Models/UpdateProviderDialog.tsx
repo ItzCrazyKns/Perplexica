@@ -34,7 +34,7 @@ const UpdateProvider = ({
     });
 
     setConfig(config);
-  }, [fields]);
+  }, [fields, modelProvider.config, modelProvider.name]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
