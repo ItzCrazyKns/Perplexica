@@ -1,8 +1,9 @@
 services:
   perplexica:
     image: itzcrazykns1337/perplexica:latest
-    ports:
-      - '3000:3000'
+    network_mode: host
+    environment:
+      - HOSTNAME=0.0.0.0
     volumes:
       - data:/home/perplexica/data
       - uploads:/home/perplexica/uploads
