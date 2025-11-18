@@ -1,10 +1,11 @@
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { Model, ModelList, ProviderMetadata } from '../types';
-import BaseModelProvider from './baseProvider';
-import { ChatOllama, OllamaEmbeddings } from '@langchain/ollama';
-import { Embeddings } from '@langchain/core/embeddings';
 import { UIConfigField } from '@/lib/config/types';
 import { getConfiguredModelProviderById } from '@/lib/config/serverRegistry';
+import BaseModelProvider from '../../base/provider';
+import { Model, ModelList, ProviderMetadata } from '../../types';
+import BaseLLM from '../../base/llm';
+import BaseEmbedding from '../../base/embedding';
+import OllamaLLM from './ollamaLLM';
+import OllamaEmbedding from './ollamaEmbedding';
 
 interface OllamaConfig {
   baseURL: string;
@@ -76,7 +77,7 @@ class OllamaProvider extends BaseModelProvider<OllamaConfig> {
     };
   }
 
-  async loadChatModel(key: string): Promise<BaseChatModel> {
+  async loadChatModel(key: string): Promise<BaseLLM<any>> {
     const modelList = await this.getModelList();
 
     const exists = modelList.chat.find((m) => m.key === key);
@@ -87,14 +88,13 @@ class OllamaProvider extends BaseModelProvider<OllamaConfig> {
       );
     }
 
-    return new ChatOllama({
-      temperature: 0.7,
+    return new OllamaLLM({
+      baseURL: this.config.baseURL,
       model: key,
-      baseUrl: this.config.baseURL,
     });
   }
 
-  async loadEmbeddingModel(key: string): Promise<Embeddings> {
+  async loadEmbeddingModel(key: string): Promise<BaseEmbedding<any>> {
     const modelList = await this.getModelList();
     const exists = modelList.embedding.find((m) => m.key === key);
 
@@ -104,9 +104,9 @@ class OllamaProvider extends BaseModelProvider<OllamaConfig> {
       );
     }
 
-    return new OllamaEmbeddings({
+    return new OllamaEmbedding({
       model: key,
-      baseUrl: this.config.baseURL,
+      baseURL: this.config.baseURL,
     });
   }
 

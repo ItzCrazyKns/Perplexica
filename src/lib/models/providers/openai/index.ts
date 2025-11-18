@@ -1,10 +1,13 @@
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { Model, ModelList, ProviderMetadata } from '../types';
-import BaseModelProvider from './baseProvider';
-import { ChatOpenAI, OpenAIEmbeddings } from '@langchain/openai';
 import { Embeddings } from '@langchain/core/embeddings';
 import { UIConfigField } from '@/lib/config/types';
 import { getConfiguredModelProviderById } from '@/lib/config/serverRegistry';
+import { Model, ModelList, ProviderMetadata } from '../../types';
+import OpenAIEmbedding from './openaiEmbedding';
+import BaseEmbedding from '../../base/embedding';
+import BaseModelProvider from '../../base/provider';
+import BaseLLM from '../../base/llm';
+import OpenAILLM from './openaiLLM';
 
 interface OpenAIConfig {
   apiKey: string;
@@ -145,7 +148,7 @@ class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
     };
   }
 
-  async loadChatModel(key: string): Promise<BaseChatModel> {
+  async loadChatModel(key: string): Promise<BaseLLM<any>> {
     const modelList = await this.getModelList();
 
     const exists = modelList.chat.find((m) => m.key === key);
@@ -156,17 +159,14 @@ class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
       );
     }
 
-    return new ChatOpenAI({
+    return new OpenAILLM({
       apiKey: this.config.apiKey,
-      temperature: 0.7,
       model: key,
-      configuration: {
-        baseURL: this.config.baseURL,
-      },
+      baseURL: this.config.baseURL,
     });
   }
 
-  async loadEmbeddingModel(key: string): Promise<Embeddings> {
+  async loadEmbeddingModel(key: string): Promise<BaseEmbedding<any>> {
     const modelList = await this.getModelList();
     const exists = modelList.embedding.find((m) => m.key === key);
 
@@ -176,12 +176,10 @@ class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
       );
     }
 
-    return new OpenAIEmbeddings({
+    return new OpenAIEmbedding({
       apiKey: this.config.apiKey,
       model: key,
-      configuration: {
-        baseURL: this.config.baseURL,
-      },
+      baseURL: this.config.baseURL,
     });
   }
 
