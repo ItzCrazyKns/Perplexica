@@ -1,9 +1,9 @@
 type Message = {
-    role: 'user' | 'assistant' | 'system';
-    content: string;
-}
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+};
 
 type Chunk = {
-    content: string;
-    metadata: Record<string, any>;
-}
+  content: string;
+  metadata: Record<string, any>;
+};
