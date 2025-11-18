@@ -10,6 +10,7 @@ import {
   StopCircle,
   Layers3,
   Plus,
+  CornerDownRight,
 } from 'lucide-react';
 import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
 import Copy from './MessageActions/Copy';
@@ -122,14 +123,14 @@ const MessageBox = ({
                 </Markdown>
 
                 {loading && isLast ? null : (
-                  <div className="flex flex-row items-center justify-between w-full text-black dark:text-white py-4 -mx-2">
-                    <div className="flex flex-row items-center space-x-1">
+                  <div className="flex flex-row items-center justify-between w-full text-black dark:text-white py-4">
+                    <div className="flex flex-row items-center -ml-2">
                       <Rewrite
                         rewrite={rewrite}
                         messageId={section.assistantMessage.messageId}
                       />
                     </div>
-                    <div className="flex flex-row items-center space-x-1">
+                    <div className="flex flex-row items-center -mr-2">
                       <Copy
                         initialMessage={section.assistantMessage.content}
                         section={section}
@@ -142,12 +143,12 @@ const MessageBox = ({
                             start();
                           }
                         }}
-                        className="p-2 text-black/70 dark:text-white/70 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white"
+                        className="p-2 text-black/70 dark:text-white/70 rounded-full hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white"
                       >
                         {speechStatus === 'started' ? (
-                          <StopCircle size={18} />
+                          <StopCircle size={16} />
                         ) : (
-                          <Volume2 size={18} />
+                          <Volume2 size={16} />
                         )}
                       </button>
                     </div>
@@ -159,7 +160,7 @@ const MessageBox = ({
                   section.suggestions.length > 0 &&
                   section.assistantMessage &&
                   !loading && (
-                    <div className="mt-8 pt-6 border-t border-light-200/50 dark:border-dark-200/50">
+                    <div className="mt-6">
                       <div className="flex flex-row items-center space-x-2 mb-4">
                         <Layers3
                           className="text-black dark:text-white"
@@ -173,20 +174,24 @@ const MessageBox = ({
                         {section.suggestions.map(
                           (suggestion: string, i: number) => (
                             <div key={i}>
-                              {i > 0 && (
-                                <div className="h-px bg-light-200/40 dark:bg-dark-200/40 mx-3" />
-                              )}
+                              <div className="h-px bg-light-200/40 dark:bg-dark-200/40" />
                               <button
                                 onClick={() => sendMessage(suggestion)}
-                                className="group w-full px-3 py-4 text-left transition-colors duration-200"
+                                className="group w-full py-4 text-left transition-colors duration-200"
                               >
                                 <div className="flex items-center justify-between gap-3">
-                                  <p className="text-sm text-black/70 dark:text-white/70 group-hover:text-[#24A0ED] transition-colors duration-200 leading-relaxed">
-                                    {suggestion}
-                                  </p>
+                                  <div className="flex flex-row space-x-3 items-center ">
+                                    <CornerDownRight
+                                      size={17}
+                                      className="group-hover:text-sky-400 transition-colors duration-200"
+                                    />
+                                    <p className="text-sm text-black/70 dark:text-white/70 group-hover:text-sky-400 transition-colors duration-200 leading-relaxed">
+                                      {suggestion}
+                                    </p>
+                                  </div>
                                   <Plus
                                     size={16}
-                                    className="text-black/40 dark:text-white/40 group-hover:text-[#24A0ED] transition-colors duration-200 flex-shrink-0"
+                                    className="text-black/40 dark:text-white/40 group-hover:text-sky-400 transition-colors duration-200 flex-shrink-0"
                                   />
                                 </div>
                               </button>
