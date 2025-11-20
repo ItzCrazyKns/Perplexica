@@ -96,9 +96,10 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       model: this.config.model,
       messages: input.messages,
       format: z.toJSONSchema(input.schema),
+      think: false,
       options: {
         top_p: this.config.options?.topP,
-        temperature: this.config.options?.temperature,
+        temperature: 0,
         num_predict: this.config.options?.maxTokens,
         frequency_penalty: this.config.options?.frequencyPenalty,
         presence_penalty: this.config.options?.presencePenalty,
@@ -123,6 +124,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       messages: input.messages,
       format: z.toJSONSchema(input.schema),
       stream: true,
+      think: false,
       options: {
         top_p: this.config.options?.topP,
         temperature: this.config.options?.temperature,
