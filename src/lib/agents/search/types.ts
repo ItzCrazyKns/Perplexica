@@ -53,6 +53,7 @@ export type ClassifierInput = {
 
 export type ClassifierOutput = {
   skipSearch: boolean;
+  standaloneFollowUp: string;
   intents: string[];
   widgets: WidgetConfig[];
 };
