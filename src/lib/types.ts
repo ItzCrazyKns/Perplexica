@@ -7,3 +7,9 @@ type Chunk = {
   content: string;
   metadata: Record<string, any>;
 };
+
+type Artifact = {
+  id: string;
+  type: string;
+  data: any;
+};
