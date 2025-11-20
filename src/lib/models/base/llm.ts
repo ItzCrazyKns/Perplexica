@@ -1,10 +1,8 @@
 import {
   GenerateObjectInput,
-  GenerateObjectOutput,
   GenerateOptions,
   GenerateTextInput,
   GenerateTextOutput,
-  StreamObjectOutput,
   StreamTextOutput,
 } from '../types';
 
@@ -15,12 +13,10 @@ abstract class BaseLLM<CONFIG> {
   abstract streamText(
     input: GenerateTextInput,
   ): AsyncGenerator<StreamTextOutput>;
-  abstract generateObject<T>(
-    input: GenerateObjectInput,
-  ): Promise<GenerateObjectOutput<T>>;
+  abstract generateObject<T>(input: GenerateObjectInput): Promise<T>;
   abstract streamObject<T>(
     input: GenerateObjectInput,
-  ): AsyncGenerator<StreamObjectOutput<T>>;
+  ): AsyncGenerator<Partial<T>>;
 }
 
 export default BaseLLM;
