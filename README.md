@@ -1,5 +1,7 @@
 # Perplexica 🔍
 
+**Important Note:** *This repository has been modified to connect to a multi-layered security agent which can detect phishing links.*
+
 [![GitHub Repo stars](https://img.shields.io/github/stars/ItzCrazyKns/Perplexica?style=social)](https://github.com/ItzCrazyKns/Perplexica/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/ItzCrazyKns/Perplexica?style=social)](https://github.com/ItzCrazyKns/Perplexica/network/members)
 [![GitHub watchers](https://img.shields.io/github/watchers/ItzCrazyKns/Perplexica?style=social)](https://github.com/ItzCrazyKns/Perplexica/watchers)
