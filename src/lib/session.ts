@@ -1,13 +1,20 @@
 import { EventEmitter } from 'stream';
-/* todo implement history saving and better artifact typing and handling */
+import { applyPatch } from 'rfc6902';
+
 class SessionManager {
   private static sessions = new Map<string, SessionManager>();
   readonly id: string;
-  private artifacts = new Map<string, Artifact>();
+  private blocks = new Map<string, Block>();
+  private events: { event: string; data: any }[] = [];
   private emitter = new EventEmitter();
+  private TTL_MS = 30 * 60 * 1000;
 
-  constructor() {
-    this.id = crypto.randomUUID();
+  constructor(id?: string) {
+    this.id = id ?? crypto.randomUUID();
+
+    setTimeout(() => {
+      SessionManager.sessions.delete(this.id);
+    }, this.TTL_MS);
   }
 
   static getSession(id: string): SessionManager | undefined {
@@ -18,26 +25,55 @@ class SessionManager {
     return Array.from(this.sessions.values());
   }
 
+  static createSession(): SessionManager {
+    const session = new SessionManager();
+    this.sessions.set(session.id, session);
+    return session;
+  }
+
+  removeAllListeners() {
+    this.emitter.removeAllListeners();
+  }
+
   emit(event: string, data: any) {
     this.emitter.emit(event, data);
+    this.events.push({ event, data });
   }
 
-  emitArtifact(artifact: Artifact) {
-    this.artifacts.set(artifact.id, artifact);
-    this.emitter.emit('addArtifact', artifact);
+  emitBlock(block: Block) {
+    this.blocks.set(block.id, block);
+    this.emit('data', {
+      type: 'block',
+      block: block,
+    });
   }
 
-  appendToArtifact(artifactId: string, data: any) {
-    const artifact = this.artifacts.get(artifactId);
-    if (artifact) {
-      if (typeof artifact.data === 'string') {
-        artifact.data += data;
-      } else if (Array.isArray(artifact.data)) {
-        artifact.data.push(data);
-      } else if (typeof artifact.data === 'object') {
-        Object.assign(artifact.data, data);
-      }
-      this.emitter.emit('updateArtifact', artifact);
+  getBlock(blockId: string): Block | undefined {
+    return this.blocks.get(blockId);
+  }
+
+  updateBlock(blockId: string, patch: any[]) {
+    const block = this.blocks.get(blockId);
+
+    if (block) {
+      applyPatch(block, patch);
+      this.blocks.set(blockId, block);
+      this.emit('data', {
+        type: 'updateBlock',
+        blockId: blockId,
+        patch: patch,
+      });
+    }
+  }
+
+  addListener(event: string, listener: (data: any) => void) {
+    this.emitter.addListener(event, listener);
+  }
+
+  replay() {
+    for (const { event, data } of this.events) {
+      /* Using emitter directly to avoid infinite loop */
+      this.emitter.emit(event, data);
     }
   }
 }
