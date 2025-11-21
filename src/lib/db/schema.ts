@@ -1,26 +1,22 @@
 import { sql } from 'drizzle-orm';
 import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
-import { Document } from '@langchain/core/documents';
 
 export const messages = sqliteTable('messages', {
   id: integer('id').primaryKey(),
-  role: text('type', { enum: ['assistant', 'user', 'source'] }).notNull(),
-  chatId: text('chatId').notNull(),
-  createdAt: text('createdAt')
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
   messageId: text('messageId').notNull(),
-
-  content: text('content'),
-
-  sources: text('sources', {
-    mode: 'json',
-  })
-    .$type<Document[]>()
+  chatId: text('chatId').notNull(),
+  backendId: text('backendId').notNull(),
+  query: text('query').notNull(),
+  createdAt: text('createdAt').notNull(),
+  responseBlocks: text('responseBlocks', { mode: 'json' })
+    .$type<Block[]>()
     .default(sql`'[]'`),
+  status: text({ enum: ['answering', 'completed', 'error'] }).default(
+    'answering',
+  ),
 });
 
-interface File {
+interface DBFile {
   name: string;
   fileId: string;
 }
@@ -31,6 +27,6 @@ export const chats = sqliteTable('chats', {
   createdAt: text('createdAt').notNull(),
   focusMode: text('focusMode').notNull(),
   files: text('files', { mode: 'json' })
-    .$type<File[]>()
+    .$type<DBFile[]>()
     .default(sql`'[]'`),
 });
