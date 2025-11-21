@@ -18,12 +18,18 @@ db.exec(`
 `);
 
 function sanitizeSql(content: string) {
-  return content
-    .split(/\r?\n/)
-    .filter(
-      (l) => !l.trim().startsWith('-->') && !l.includes('statement-breakpoint'),
+  const statements = content
+    .split(/--> statement-breakpoint/g)
+    .map((stmt) =>
+      stmt
+        .split(/\r?\n/)
+        .filter((l) => !l.trim().startsWith('-->'))
+        .join('\n')
+        .trim(),
     )
-    .join('\n');
+    .filter((stmt) => stmt.length > 0);
+
+  return statements;
 }
 
 fs.readdirSync(migrationsFolder)
@@ -32,7 +38,7 @@ fs.readdirSync(migrationsFolder)
   .forEach((file) => {
     const filePath = path.join(migrationsFolder, file);
     let content = fs.readFileSync(filePath, 'utf-8');
-    content = sanitizeSql(content);
+    const statements = sanitizeSql(content);
 
     const migrationName = file.split('_')[0] || file;
 
@@ -108,7 +114,12 @@ fs.readdirSync(migrationsFolder)
         db.exec('DROP TABLE messages;');
         db.exec('ALTER TABLE messages_with_sources RENAME TO messages;');
       } else {
-        db.exec(content);
+        // Execute each statement separately
+        statements.forEach((stmt) => {
+          if (stmt.trim()) {
+            db.exec(stmt);
+          }
+        });
       }
 
       db.prepare('INSERT OR IGNORE INTO ran_migrations (name) VALUES (?)').run(
