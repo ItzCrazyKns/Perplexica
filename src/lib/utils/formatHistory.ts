@@ -1,10 +1,8 @@
-import { BaseMessage, isAIMessage } from '@langchain/core/messages';
-
-const formatChatHistoryAsString = (history: BaseMessage[]) => {
+const formatChatHistoryAsString = (history: Message[]) => {
   return history
     .map(
       (message) =>
-        `${isAIMessage(message) ? 'AI' : 'User'}: ${message.content}`,
+        `${message.role === 'assistant' ? 'AI' : 'User'}: ${message.content}`,
     )
     .join('\n');
 };
