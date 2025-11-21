@@ -1,7 +1,7 @@
-import { EventEmitter } from 'stream';
 import z from 'zod';
 import BaseLLM from '../../models/base/llm';
 import BaseEmbedding from '@/lib/models/base/embedding';
+import SessionManager from '@/lib/session';
 
 export type SearchSources = 'web' | 'discussions' | 'academic';
 
@@ -9,10 +9,11 @@ export type SearchAgentConfig = {
   sources: SearchSources[];
   llm: BaseLLM<any>;
   embedding: BaseEmbedding<any>;
+  mode: 'fast' | 'balanced' | 'deep_research';
 };
 
 export type SearchAgentInput = {
-  chatHistory: Message[];
+  chatHistory: ChatTurnMessage[];
   followUp: string;
   config: SearchAgentConfig;
 };
@@ -48,7 +49,7 @@ export type ClassifierInput = {
   llm: BaseLLM<any>;
   enabledSources: SearchSources[];
   query: string;
-  chatHistory: Message[];
+  chatHistory: ChatTurnMessage[];
 };
 
 export type ClassifierOutput = {
@@ -60,6 +61,46 @@ export type ClassifierOutput = {
 
 export type AdditionalConfig = {
   llm: BaseLLM<any>;
-  embedding: BaseLLM<any>;
-  emitter: EventEmitter;
+  embedding: BaseEmbedding<any>;
+  session: SessionManager;
+};
+
+export type ResearcherInput = {
+  chatHistory: ChatTurnMessage[];
+  followUp: string;
+  classification: ClassifierOutput;
+  config: SearchAgentConfig;
+};
+
+export type ResearcherOutput = {
+  findings: ActionOutput[];
+};
+
+export type SearchActionOutput = {
+  type: 'search_results';
+  results: Chunk[];
+};
+
+export type DoneActionOutput = {
+  type: 'done';
+};
+
+export type ActionOutput = SearchActionOutput | DoneActionOutput;
+
+export interface ResearchAction<
+  TSchema extends z.ZodObject<any> = z.ZodObject<any>,
+> {
+  name: string;
+  description: string;
+  schema: z.ZodObject<any>;
+  enabled: (config: { classification: ClassifierOutput }) => boolean;
+  execute: (
+    params: z.infer<TSchema>,
+    additionalConfig: AdditionalConfig,
+  ) => Promise<ActionOutput>;
+}
+
+export type ActionConfig = {
+  type: string;
+  params: Record<string, any>;
 };
