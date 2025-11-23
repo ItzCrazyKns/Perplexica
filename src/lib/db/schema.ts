@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
+import { Block } from '../types';
 
 export const messages = sqliteTable('messages', {
   id: integer('id').primaryKey(),

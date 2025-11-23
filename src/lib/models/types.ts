@@ -1,4 +1,5 @@
 import z from 'zod';
+import { ChatTurnMessage } from '../types';
 
 type Model = {
   name: string;
@@ -37,7 +38,7 @@ type GenerateOptions = {
 };
 
 type GenerateTextInput = {
-  messages: Message[];
+  messages: ChatTurnMessage[];
   options?: GenerateOptions;
 };
 
@@ -54,7 +55,7 @@ type StreamTextOutput = {
 
 type GenerateObjectInput = {
   schema: z.ZodTypeAny;
-  messages: Message[];
+  messages: ChatTurnMessage[];
   options?: GenerateOptions;
 };
 

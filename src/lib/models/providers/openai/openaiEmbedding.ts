@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import BaseEmbedding from '../../base/embedding';
+import { Chunk } from '@/lib/types';
 
 type OpenAIConfig = {
   apiKey: string;

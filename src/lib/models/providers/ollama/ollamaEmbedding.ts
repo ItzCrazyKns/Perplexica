@@ -1,5 +1,6 @@
 import { Ollama } from 'ollama';
 import BaseEmbedding from '../../base/embedding';
+import { Chunk } from '@/lib/types';
 
 type OllamaConfig = {
   model: string;

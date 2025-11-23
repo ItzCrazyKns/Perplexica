@@ -1,6 +1,7 @@
 import z from 'zod';
 import { ResearchAction } from '../../types';
 import { searchSearxng } from '@/lib/searxng';
+import { Chunk } from '@/lib/types';
 
 const actionSchema = z.object({
   type: z.literal('web_search'),

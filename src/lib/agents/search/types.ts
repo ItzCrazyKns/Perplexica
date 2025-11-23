@@ -2,6 +2,7 @@ import z from 'zod';
 import BaseLLM from '../../models/base/llm';
 import BaseEmbedding from '@/lib/models/base/embedding';
 import SessionManager from '@/lib/session';
+import { ChatTurnMessage, Chunk } from '@/lib/types';
 
 export type SearchSources = 'web' | 'discussions' | 'academic';
 
