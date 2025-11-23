@@ -1,21 +1,17 @@
 /* I don't think can be classified as agents but to keep the structure consistent i guess ill keep it here */
 
-import {
-  RunnableSequence,
-  RunnableMap,
-  RunnableLambda,
-} from '@langchain/core/runnables';
-import { ChatPromptTemplate } from '@langchain/core/prompts';
-import formatChatHistoryAsString from '@/lib/utils/formatHistory';
-import { BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
-import { StringOutputParser } from '@langchain/core/output_parsers';
 import { searchSearxng } from '@/lib/searxng';
-import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import LineOutputParser from '@/lib/outputParsers/lineOutputParser';
-import { imageSearchFewShots, imageSearchPrompt } from '@/lib/prompts/media/image';
+import {
+  imageSearchFewShots,
+  imageSearchPrompt,
+} from '@/lib/prompts/media/image';
+import BaseLLM from '@/lib/models/base/llm';
+import z from 'zod';
+import { ChatTurnMessage } from '@/lib/types';
+import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 
 type ImageSearchChainInput = {
-  chatHistory: BaseMessage[];
+  chatHistory: ChatTurnMessage[];
   query: string;
 };
 
@@ -23,27 +19,32 @@ type ImageSearchResult = {
   img_src: string;
   url: string;
   title: string;
-}
-
-const outputParser = new LineOutputParser({
-  key: 'query',
-})
+};
 
 const searchImages = async (
   input: ImageSearchChainInput,
-  llm: BaseChatModel,
+  llm: BaseLLM<any>,
 ) => {
-  const chatPrompt = await ChatPromptTemplate.fromMessages([
-    new SystemMessage(imageSearchPrompt),
-    ...imageSearchFewShots,
-    new HumanMessage(`<conversation>\n${formatChatHistoryAsString(input.chatHistory)}\n</conversation>\n<follow_up>\n${input.query}\n</follow_up>`)
-  ]).formatMessages({})
+  const schema = z.object({
+    query: z.string().describe('The image search query.'),
+  });
 
-  const res = await llm.invoke(chatPrompt)
+  const res = await llm.generateObject<z.infer<typeof schema>>({
+    messages: [
+      {
+        role: 'system',
+        content: imageSearchPrompt,
+      },
+      ...imageSearchFewShots,
+      {
+        role: 'user',
+        content: `<conversation>\n${formatChatHistoryAsString(input.chatHistory)}\n</conversation>\n<follow_up>\n${input.query}\n</follow_up>`,
+      },
+    ],
+    schema: schema,
+  });
 
-  const query = await outputParser.invoke(res)
-
-  const searchRes = await searchSearxng(query!, {
+  const searchRes = await searchSearxng(res.query, {
     engines: ['bing images', 'google images'],
   });
 

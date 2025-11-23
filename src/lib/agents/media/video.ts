@@ -1,13 +1,15 @@
-import { ChatPromptTemplate } from '@langchain/core/prompts';
 import formatChatHistoryAsString from '@/lib/utils/formatHistory';
-import { BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { searchSearxng } from '@/lib/searxng';
-import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import LineOutputParser from '@/lib/outputParsers/lineOutputParser';
-import { videoSearchFewShots, videoSearchPrompt } from '@/lib/prompts/media/videos';
+import {
+  videoSearchFewShots,
+  videoSearchPrompt,
+} from '@/lib/prompts/media/videos';
+import { ChatTurnMessage } from '@/lib/types';
+import BaseLLM from '@/lib/models/base/llm';
+import z from 'zod';
 
 type VideoSearchChainInput = {
-  chatHistory: BaseMessage[];
+  chatHistory: ChatTurnMessage[];
   query: string;
 };
 
@@ -16,39 +18,39 @@ type VideoSearchResult = {
   url: string;
   title: string;
   iframe_src: string;
-}
-
-const outputParser = new LineOutputParser({
-  key: 'query',
-});
+};
 
 const searchVideos = async (
   input: VideoSearchChainInput,
-  llm: BaseChatModel,
+  llm: BaseLLM<any>,
 ) => {
-  const chatPrompt = await ChatPromptTemplate.fromMessages([
-    new SystemMessage(videoSearchPrompt),
-    ...videoSearchFewShots,
-    new HumanMessage(`<conversation>${formatChatHistoryAsString(input.chatHistory)}\n</conversation>\n<follow_up>\n${input.query}\n</follow_up>`)
-  ]).formatMessages({})
+  const schema = z.object({
+    query: z.string().describe('The video search query.'),
+  });
 
-  const res = await llm.invoke(chatPrompt)
+  const res = await llm.generateObject<z.infer<typeof schema>>({
+    messages: [
+      {
+        role: 'system',
+        content: videoSearchPrompt,
+      },
+      ...videoSearchFewShots,
+      {
+        role: 'user',
+        content: `<conversation>\n${formatChatHistoryAsString(input.chatHistory)}\n</conversation>\n<follow_up>\n${input.query}\n</follow_up>`,
+      },
+    ],
+    schema: schema,
+  });
 
-  const query = await outputParser.invoke(res)
-
-  const searchRes = await searchSearxng(query!, {
+  const searchRes = await searchSearxng(res.query, {
     engines: ['youtube'],
   });
 
   const videos: VideoSearchResult[] = [];
 
   searchRes.results.forEach((result) => {
-    if (
-      result.thumbnail &&
-      result.url &&
-      result.title &&
-      result.iframe_src
-    ) {
+    if (result.thumbnail && result.url && result.title && result.iframe_src) {
       videos.push({
         img_src: result.thumbnail,
         url: result.url,
@@ -59,7 +61,6 @@ const searchVideos = async (
   });
 
   return videos.slice(0, 10);
-
 };
 
 export default searchVideos;
