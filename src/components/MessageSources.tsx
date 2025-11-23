@@ -6,11 +6,11 @@ import {
   Transition,
   TransitionChild,
 } from '@headlessui/react';
-import { Document } from '@langchain/core/documents';
 import { File } from 'lucide-react';
 import { Fragment, useState } from 'react';
+import { Chunk } from '@/lib/types';
 
-const MessageSources = ({ sources }: { sources: Document[] }) => {
+const MessageSources = ({ sources }: { sources: Chunk[] }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const closeModal = () => {

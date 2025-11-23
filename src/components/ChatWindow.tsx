@@ -1,19 +1,29 @@
 'use client';
 
-import { Document } from '@langchain/core/documents';
 import Navbar from './Navbar';
 import Chat from './Chat';
 import EmptyChat from './EmptyChat';
-import { Settings } from 'lucide-react';
-import Link from 'next/link';
 import NextError from 'next/error';
 import { useChat } from '@/lib/hooks/useChat';
 import SettingsButtonMobile from './Settings/SettingsButtonMobile';
+import { Block, Chunk } from '@/lib/types';
 
 export interface BaseMessage {
   chatId: string;
   messageId: string;
   createdAt: Date;
+}
+
+export interface Message extends BaseMessage {
+  backendId: string;
+  query: string;
+  responseBlocks: Block[];
+  status: 'answering' | 'completed' | 'error';
+}
+
+export interface UserMessage extends BaseMessage {
+  role: 'user';
+  content: string;
 }
 
 export interface AssistantMessage extends BaseMessage {
@@ -22,14 +32,9 @@ export interface AssistantMessage extends BaseMessage {
   suggestions?: string[];
 }
 
-export interface UserMessage extends BaseMessage {
-  role: 'user';
-  content: string;
-}
-
 export interface SourceMessage extends BaseMessage {
   role: 'source';
-  sources: Document[];
+  sources: Chunk[];
 }
 
 export interface SuggestionMessage extends BaseMessage {
@@ -37,17 +42,23 @@ export interface SuggestionMessage extends BaseMessage {
   suggestions: string[];
 }
 
-export type Message =
+export type LegacyMessage =
   | AssistantMessage
   | UserMessage
   | SourceMessage
   | SuggestionMessage;
+
 export type ChatTurn = UserMessage | AssistantMessage;
 
 export interface File {
   fileName: string;
   fileExtension: string;
   fileId: string;
+}
+
+export interface Widget {
+  widgetType: string;
+  params: Record<string, any>;
 }
 
 const ChatWindow = () => {

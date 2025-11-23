@@ -10,6 +10,7 @@ class Classifier {
     const availableIntents = IntentRegistry.getAvailableIntents({
       sources: input.enabledSources,
     });
+
     const availableWidgets = WidgetRegistry.getAll();
 
     const classificationSchema = z.object({
@@ -21,12 +22,12 @@ class Classifier {
       standaloneFollowUp: z
         .string()
         .describe(
-          'A self-contained, context-independent reformulation of the user\'s question. Must include all necessary context from chat history, replace pronouns with specific nouns, and be clear enough to answer without seeing the conversation. Keep the same complexity as the original question.',
+          "A self-contained, context-independent reformulation of the user's question. Must include all necessary context from chat history, replace pronouns with specific nouns, and be clear enough to answer without seeing the conversation. Keep the same complexity as the original question.",
         ),
       intents: z
         .array(z.enum(availableIntents.map((i) => i.name)))
         .describe(
-          'The intent(s) that best describe how to fulfill the user\'s query. Can include multiple intents (e.g., [\'web_search\', \'widget_response\'] for \'weather in NYC and recent news\'). Always include at least one intent when applicable.',
+          "The intent(s) that best describe how to fulfill the user's query. Can include multiple intents (e.g., ['web_search', 'widget_response'] for 'weather in NYC and recent news'). Always include at least one intent when applicable.",
         ),
       widgets: z
         .array(z.union(availableWidgets.map((w) => w.schema)))

@@ -1,13 +1,7 @@
 'use client';
 
-import {
-  AssistantMessage,
-  ChatTurn,
-  Message,
-  SourceMessage,
-  SuggestionMessage,
-  UserMessage,
-} from '@/components/ChatWindow';
+import { Message } from '@/components/ChatWindow';
+import { Block } from '@/lib/types';
 import {
   createContext,
   useContext,
@@ -22,20 +16,20 @@ import { toast } from 'sonner';
 import { getSuggestions } from '../actions';
 import { MinimalProvider } from '../models/types';
 import { getAutoMediaSearch } from '../config/clientRegistry';
+import { applyPatch } from 'rfc6902';
+import { Widget } from '@/components/ChatWindow';
 
 export type Section = {
-  userMessage: UserMessage;
-  assistantMessage: AssistantMessage | undefined;
-  parsedAssistantMessage: string | undefined;
-  speechMessage: string | undefined;
-  sourceMessage: SourceMessage | undefined;
+  message: Message;
+  widgets: Widget[];
+  parsedTextBlocks: string[];
+  speechMessage: string;
   thinkingEnded: boolean;
   suggestions?: string[];
 };
 
 type ChatContext = {
   messages: Message[];
-  chatTurns: ChatTurn[];
   sections: Section[];
   chatHistory: [string, string][];
   files: File[];
@@ -51,6 +45,8 @@ type ChatContext = {
   hasError: boolean;
   chatModelProvider: ChatModelProvider;
   embeddingModelProvider: EmbeddingModelProvider;
+  researchEnded: boolean;
+  setResearchEnded: (ended: boolean) => void;
   setOptimizationMode: (mode: string) => void;
   setFocusMode: (mode: string) => void;
   setFiles: (files: File[]) => void;
@@ -204,18 +200,26 @@ const loadMessages = async (
 
   setMessages(messages);
 
-  const chatTurns = messages.filter(
-    (msg): msg is ChatTurn => msg.role === 'user' || msg.role === 'assistant',
-  );
+  const history: [string, string][] = [];
+  messages.forEach((msg) => {
+    history.push(['human', msg.query]);
 
-  const history = chatTurns.map((msg) => {
-    return [msg.role, msg.content];
-  }) as [string, string][];
+    const textBlocks = msg.responseBlocks
+      .filter(
+        (block): block is Block & { type: 'text' } => block.type === 'text',
+      )
+      .map((block) => block.data)
+      .join('\n');
+
+    if (textBlocks) {
+      history.push(['assistant', textBlocks]);
+    }
+  });
 
   console.debug(new Date(), 'app:messages_loaded');
 
-  if (chatTurns.length > 0) {
-    document.title = chatTurns[0].content;
+  if (messages.length > 0) {
+    document.title = messages[0].query;
   }
 
   const files = data.chat.files.map((file: any) => {
@@ -246,12 +250,12 @@ export const chatContext = createContext<ChatContext>({
   loading: false,
   messageAppeared: false,
   messages: [],
-  chatTurns: [],
   sections: [],
   notFound: false,
   optimizationMode: '',
   chatModelProvider: { key: '', providerId: '' },
   embeddingModelProvider: { key: '', providerId: '' },
+  researchEnded: false,
   rewrite: () => {},
   sendMessage: async () => {},
   setFileIds: () => {},
@@ -260,6 +264,7 @@ export const chatContext = createContext<ChatContext>({
   setOptimizationMode: () => {},
   setChatModelProvider: () => {},
   setEmbeddingModelProvider: () => {},
+  setResearchEnded: () => {},
 });
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
@@ -272,6 +277,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [loading, setLoading] = useState(false);
   const [messageAppeared, setMessageAppeared] = useState(false);
+
+  const [researchEnded, setResearchEnded] = useState(false);
 
   const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -305,66 +312,44 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const messagesRef = useRef<Message[]>([]);
 
-  const chatTurns = useMemo((): ChatTurn[] => {
-    return messages.filter(
-      (msg): msg is ChatTurn => msg.role === 'user' || msg.role === 'assistant',
-    );
-  }, [messages]);
-
   const sections = useMemo<Section[]>(() => {
-    const sections: Section[] = [];
+    return messages.map((msg) => {
+      const textBlocks: string[] = [];
+      let speechMessage = '';
+      let thinkingEnded = false;
+      let suggestions: string[] = [];
 
-    messages.forEach((msg, i) => {
-      if (msg.role === 'user') {
-        const nextUserMessageIndex = messages.findIndex(
-          (m, j) => j > i && m.role === 'user',
-        );
+      const sourceBlocks = msg.responseBlocks.filter(
+        (block): block is Block & { type: 'source' } => block.type === 'source',
+      );
+      const sources = sourceBlocks.flatMap((block) => block.data);
 
-        const aiMessage = messages.find(
-          (m, j) =>
-            j > i &&
-            m.role === 'assistant' &&
-            (nextUserMessageIndex === -1 || j < nextUserMessageIndex),
-        ) as AssistantMessage | undefined;
+      const widgetBlocks = msg.responseBlocks
+        .filter((b) => b.type === 'widget')
+        .map((b) => b.data) as Widget[];
 
-        const sourceMessage = messages.find(
-          (m, j) =>
-            j > i &&
-            m.role === 'source' &&
-            m.sources &&
-            (nextUserMessageIndex === -1 || j < nextUserMessageIndex),
-        ) as SourceMessage | undefined;
-
-        let thinkingEnded = false;
-        let processedMessage = aiMessage?.content ?? '';
-        let speechMessage = aiMessage?.content ?? '';
-        let suggestions: string[] = [];
-
-        if (aiMessage) {
+      msg.responseBlocks.forEach((block) => {
+        if (block.type === 'text') {
+          let processedText = block.data;
           const citationRegex = /\[([^\]]+)\]/g;
           const regex = /\[(\d+)\]/g;
 
-          if (processedMessage.includes('<think>')) {
-            const openThinkTag =
-              processedMessage.match(/<think>/g)?.length || 0;
+          if (processedText.includes('<think>')) {
+            const openThinkTag = processedText.match(/<think>/g)?.length || 0;
             const closeThinkTag =
-              processedMessage.match(/<\/think>/g)?.length || 0;
+              processedText.match(/<\/think>/g)?.length || 0;
 
             if (openThinkTag && !closeThinkTag) {
-              processedMessage += '</think> <a> </a>';
+              processedText += '</think> <a> </a>';
             }
           }
 
-          if (aiMessage.content.includes('</think>')) {
+          if (block.data.includes('</think>')) {
             thinkingEnded = true;
           }
 
-          if (
-            sourceMessage &&
-            sourceMessage.sources &&
-            sourceMessage.sources.length > 0
-          ) {
-            processedMessage = processedMessage.replace(
+          if (sources.length > 0) {
+            processedText = processedText.replace(
               citationRegex,
               (_, capturedContent: string) => {
                 const numbers = capturedContent
@@ -379,7 +364,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
                       return `[${numStr}]`;
                     }
 
-                    const source = sourceMessage.sources?.[number - 1];
+                    const source = sources[number - 1];
                     const url = source?.metadata?.url;
 
                     if (url) {
@@ -393,37 +378,27 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
                 return linksHtml;
               },
             );
-            speechMessage = aiMessage.content.replace(regex, '');
+            speechMessage += block.data.replace(regex, '');
           } else {
-            processedMessage = processedMessage.replace(regex, '');
-            speechMessage = aiMessage.content.replace(regex, '');
+            processedText = processedText.replace(regex, '');
+            speechMessage += block.data.replace(regex, '');
           }
 
-          const suggestionMessage = messages.find(
-            (m, j) =>
-              j > i &&
-              m.role === 'suggestion' &&
-              (nextUserMessageIndex === -1 || j < nextUserMessageIndex),
-          ) as SuggestionMessage | undefined;
-
-          if (suggestionMessage && suggestionMessage.suggestions.length > 0) {
-            suggestions = suggestionMessage.suggestions;
-          }
+          textBlocks.push(processedText);
+        } else if (block.type === 'suggestion') {
+          suggestions = block.data;
         }
+      });
 
-        sections.push({
-          userMessage: msg,
-          assistantMessage: aiMessage,
-          sourceMessage: sourceMessage,
-          parsedAssistantMessage: processedMessage,
-          speechMessage,
-          thinkingEnded,
-          suggestions: suggestions,
-        });
-      }
+      return {
+        message: msg,
+        parsedTextBlocks: textBlocks,
+        speechMessage,
+        thinkingEnded,
+        suggestions,
+        widgets: widgetBlocks,
+      };
     });
-
-    return sections;
   }, [messages]);
 
   useEffect(() => {
@@ -489,24 +464,17 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const rewrite = (messageId: string) => {
     const index = messages.findIndex((msg) => msg.messageId === messageId);
-    const chatTurnsIndex = chatTurns.findIndex(
-      (msg) => msg.messageId === messageId,
-    );
 
     if (index === -1) return;
 
-    const message = chatTurns[chatTurnsIndex - 1];
+    setMessages((prev) => prev.slice(0, index));
 
-    setMessages((prev) => {
-      return [
-        ...prev.slice(0, messages.length > 2 ? messages.indexOf(message) : 0),
-      ];
-    });
     setChatHistory((prev) => {
-      return [...prev.slice(0, chatTurns.length > 2 ? chatTurnsIndex - 1 : 0)];
+      return prev.slice(0, index * 2);
     });
 
-    sendMessage(message.content, message.messageId, true);
+    const messageToRewrite = messages[index];
+    sendMessage(messageToRewrite.query, messageToRewrite.messageId, true);
   };
 
   useEffect(() => {
@@ -527,88 +495,165 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   ) => {
     if (loading || !message) return;
     setLoading(true);
+    setResearchEnded(false);
     setMessageAppeared(false);
 
     if (messages.length <= 1) {
       window.history.replaceState(null, '', `/c/${chatId}`);
     }
 
-    let recievedMessage = '';
-    let added = false;
-
     messageId = messageId ?? crypto.randomBytes(7).toString('hex');
+    const backendId = crypto.randomBytes(20).toString('hex');
 
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      {
-        content: message,
-        messageId: messageId,
-        chatId: chatId!,
-        role: 'user',
-        createdAt: new Date(),
-      },
-    ]);
+    const newMessage: Message = {
+      messageId,
+      chatId: chatId!,
+      backendId,
+      query: message,
+      responseBlocks: [],
+      status: 'answering',
+      createdAt: new Date(),
+    };
+
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
+
+    const receivedTextRef = { current: '' };
 
     const messageHandler = async (data: any) => {
       if (data.type === 'error') {
         toast.error(data.data);
         setLoading(false);
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.messageId === messageId
+              ? { ...msg, status: 'error' as const }
+              : msg,
+          ),
+        );
         return;
       }
 
+      if (data.type === 'researchComplete') {
+        setResearchEnded(true);
+        if (
+          newMessage.responseBlocks.find(
+            (b) => b.type === 'source' && b.data.length > 0,
+          )
+        ) {
+          setMessageAppeared(true);
+        }
+      }
+
+      if (data.type === 'block') {
+        setMessages((prev) =>
+          prev.map((msg) => {
+            if (msg.messageId === messageId) {
+              return {
+                ...msg,
+                responseBlocks: [...msg.responseBlocks, data.block],
+              };
+            }
+            return msg;
+          }),
+        );
+      }
+
+      if (data.type === 'updateBlock') {
+        setMessages((prev) =>
+          prev.map((msg) => {
+            if (msg.messageId === messageId) {
+              const updatedBlocks = msg.responseBlocks.map((block) => {
+                if (block.id === data.blockId) {
+                  const updatedBlock = { ...block };
+                  applyPatch(updatedBlock, data.patch);
+                  return updatedBlock;
+                }
+                return block;
+              });
+              return { ...msg, responseBlocks: updatedBlocks };
+            }
+            return msg;
+          }),
+        );
+      }
+
       if (data.type === 'sources') {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            messageId: data.messageId,
-            chatId: chatId!,
-            role: 'source',
-            sources: data.data,
-            createdAt: new Date(),
-          },
-        ]);
+        const sourceBlock: Block = {
+          id: crypto.randomBytes(7).toString('hex'),
+          type: 'source',
+          data: data.data,
+        };
+
+        setMessages((prev) =>
+          prev.map((msg) => {
+            if (msg.messageId === messageId) {
+              return {
+                ...msg,
+                responseBlocks: [...msg.responseBlocks, sourceBlock],
+              };
+            }
+            return msg;
+          }),
+        );
         if (data.data.length > 0) {
           setMessageAppeared(true);
         }
       }
 
       if (data.type === 'message') {
-        if (!added) {
-          setMessages((prevMessages) => [
-            ...prevMessages,
-            {
-              content: data.data,
-              messageId: data.messageId,
-              chatId: chatId!,
-              role: 'assistant',
-              createdAt: new Date(),
-            },
-          ]);
-          added = true;
-          setMessageAppeared(true);
-        } else {
-          setMessages((prev) =>
-            prev.map((message) => {
-              if (
-                message.messageId === data.messageId &&
-                message.role === 'assistant'
-              ) {
-                return { ...message, content: message.content + data.data };
-              }
+        receivedTextRef.current += data.data;
 
-              return message;
-            }),
-          );
-        }
-        recievedMessage += data.data;
+        setMessages((prev) =>
+          prev.map((msg) => {
+            if (msg.messageId === messageId) {
+              const existingTextBlockIndex = msg.responseBlocks.findIndex(
+                (b) => b.type === 'text',
+              );
+
+              if (existingTextBlockIndex >= 0) {
+                const updatedBlocks = [...msg.responseBlocks];
+                const existingBlock = updatedBlocks[
+                  existingTextBlockIndex
+                ] as Block & { type: 'text' };
+                updatedBlocks[existingTextBlockIndex] = {
+                  ...existingBlock,
+                  data: existingBlock.data + data.data,
+                };
+                return { ...msg, responseBlocks: updatedBlocks };
+              } else {
+                const textBlock: Block = {
+                  id: crypto.randomBytes(7).toString('hex'),
+                  type: 'text',
+                  data: data.data,
+                };
+                return {
+                  ...msg,
+                  responseBlocks: [...msg.responseBlocks, textBlock],
+                };
+              }
+            }
+            return msg;
+          }),
+        );
+        setMessageAppeared(true);
       }
 
       if (data.type === 'messageEnd') {
-        setChatHistory((prevHistory) => [
-          ...prevHistory,
+        const newHistory: [string, string][] = [
+          ...chatHistory,
           ['human', message],
-          ['assistant', recievedMessage],
-        ]);
+          ['assistant', receivedTextRef.current],
+        ];
+
+        setChatHistory(newHistory);
+
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.messageId === messageId
+              ? { ...msg, status: 'completed' as const }
+              : msg,
+          ),
+        );
 
         setLoading(false);
 
@@ -626,38 +671,37 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
             ?.click();
         }
 
-        /* Check if there are sources after message id's index and no suggestions */
-
-        const userMessageIndex = messagesRef.current.findIndex(
-          (msg) => msg.messageId === messageId && msg.role === 'user',
+        // Check if there are sources and no suggestions
+        const currentMsg = messagesRef.current.find(
+          (msg) => msg.messageId === messageId,
         );
 
-        const sourceMessage = messagesRef.current.find(
-          (msg, i) => i > userMessageIndex && msg.role === 'source',
-        ) as SourceMessage | undefined;
-
-        const suggestionMessageIndex = messagesRef.current.findIndex(
-          (msg, i) => i > userMessageIndex && msg.role === 'suggestion',
+        const hasSourceBlocks = currentMsg?.responseBlocks.some(
+          (block) => block.type === 'source' && block.data.length > 0,
+        );
+        const hasSuggestions = currentMsg?.responseBlocks.some(
+          (block) => block.type === 'suggestion',
         );
 
-        if (
-          sourceMessage &&
-          sourceMessage.sources.length > 0 &&
-          suggestionMessageIndex == -1
-        ) {
-          const suggestions = await getSuggestions(messagesRef.current);
-          setMessages((prev) => {
-            return [
-              ...prev,
-              {
-                role: 'suggestion',
-                suggestions: suggestions,
-                chatId: chatId!,
-                createdAt: new Date(),
-                messageId: crypto.randomBytes(7).toString('hex'),
-              },
-            ];
-          });
+        if (hasSourceBlocks && !hasSuggestions) {
+          const suggestions = await getSuggestions(newHistory);
+          const suggestionBlock: Block = {
+            id: crypto.randomBytes(7).toString('hex'),
+            type: 'suggestion',
+            data: suggestions,
+          };
+
+          setMessages((prev) =>
+            prev.map((msg) => {
+              if (msg.messageId === messageId) {
+                return {
+                  ...msg,
+                  responseBlocks: [...msg.responseBlocks, suggestionBlock],
+                };
+              }
+              return msg;
+            }),
+          );
         }
       }
     };
@@ -726,7 +770,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     <chatContext.Provider
       value={{
         messages,
-        chatTurns,
         sections,
         chatHistory,
         files,
@@ -750,6 +793,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         chatModelProvider,
         embeddingModelProvider,
         setEmbeddingModelProvider,
+        researchEnded,
+        setResearchEnded,
       }}
     >
       {children}

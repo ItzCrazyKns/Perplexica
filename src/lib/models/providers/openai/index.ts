@@ -1,5 +1,3 @@
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
-import { Embeddings } from '@langchain/core/embeddings';
 import { UIConfigField } from '@/lib/config/types';
 import { getConfiguredModelProviderById } from '@/lib/config/serverRegistry';
 import { Model, ModelList, ProviderMetadata } from '../../types';
