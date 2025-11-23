@@ -19,19 +19,9 @@ export const POST = async (req: Request) => {
       body.chatModel.key,
     );
 
-    const chatHistory = body.chatHistory
-      .map((msg: any) => {
-        if (msg.role === 'user') {
-          return new HumanMessage(msg.content);
-        } else if (msg.role === 'assistant') {
-          return new AIMessage(msg.content);
-        }
-      })
-      .filter((msg) => msg !== undefined) as BaseMessage[];
-
     const suggestions = await generateSuggestions(
       {
-        chatHistory,
+        chatHistory: body.chatHistory,
       },
       llm,
     );
