@@ -1,5 +1,6 @@
 import { EventEmitter } from 'stream';
 import { applyPatch } from 'rfc6902';
+import { Block } from './types';
 
 class SessionManager {
   private static sessions = new Map<string, SessionManager>();

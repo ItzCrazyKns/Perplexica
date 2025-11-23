@@ -1,32 +1,32 @@
-type ChatTurnMessage = {
+export type ChatTurnMessage = {
   role: 'user' | 'assistant' | 'system';
   content: string;
 };
 
-type Chunk = {
+export type Chunk = {
   content: string;
   metadata: Record<string, any>;
 };
 
-type TextBlock = {
+export type TextBlock = {
   id: string;
   type: 'text';
   data: string;
 };
 
-type SourceBlock = {
+export type SourceBlock = {
   id: string;
   type: 'source';
   data: Chunk[];
 };
 
-type SuggestionBlock = {
+export type SuggestionBlock = {
   id: string;
   type: 'suggestion';
   data: string[];
 };
 
-type WidgetBlock = {
+export type WidgetBlock = {
   id: string;
   type: 'widget';
   data: {
@@ -35,27 +35,30 @@ type WidgetBlock = {
   };
 };
 
-type ReasoningResearchBlock = {
+export type ReasoningResearchBlock = {
   id: string;
+  type: 'reasoning';
   reasoning: string;
 };
 
-type SearchingResearchBlock = {
+export type SearchingResearchBlock = {
   id: string;
+  type: 'searching';
   searching: string[];
 };
 
-type ReadingResearchBlock = {
+export type ReadingResearchBlock = {
   id: string;
+  type: 'reading';
   reading: Chunk[];
 };
 
-type ResearchBlockSubStep =
+export type ResearchBlockSubStep =
   | ReasoningResearchBlock
   | SearchingResearchBlock
   | ReadingResearchBlock;
 
-type ResearchBlock = {
+export type ResearchBlock = {
   id: string;
   type: 'research';
   data: {
@@ -63,7 +66,7 @@ type ResearchBlock = {
   };
 };
 
-type Block =
+export type Block =
   | TextBlock
   | SourceBlock
   | SuggestionBlock

@@ -1,4 +1,6 @@
-const formatChatHistoryAsString = (history: Message[]) => {
+import { ChatTurnMessage } from '../types';
+
+const formatChatHistoryAsString = (history: ChatTurnMessage[]) => {
   return history
     .map(
       (message) =>
