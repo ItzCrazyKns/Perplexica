@@ -18,10 +18,12 @@ class IntentRegistry {
   }
 
   static getDescriptions(config: { sources: SearchSources[] }): string {
-    const availableintnets = this.getAvailableIntents(config);
+    const availableintents = this.getAvailableIntents(config);
 
-    return availableintnets
-      .map((intent) => `${intent.name}: ${intent.description}`)
+    return availableintents
+      .map(
+        (intent) => `-------\n\n###${intent.name}: ${intent.description}\n\n`,
+      )
       .join('\n\n');
   }
 }

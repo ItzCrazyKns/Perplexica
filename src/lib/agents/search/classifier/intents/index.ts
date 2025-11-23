@@ -1,5 +1,6 @@
 import academicSearchIntent from './academicSearch';
 import discussionSearchIntent from './discussionSearch';
+import privateSearchIntent from './privateSearch';
 import IntentRegistry from './registry';
 import webSearchIntent from './webSearch';
 import widgetResponseIntent from './widgetResponse';
@@ -10,5 +11,6 @@ IntentRegistry.register(academicSearchIntent);
 IntentRegistry.register(discussionSearchIntent);
 IntentRegistry.register(widgetResponseIntent);
 IntentRegistry.register(writingTaskIntent);
+IntentRegistry.register(privateSearchIntent);
 
 export { IntentRegistry };
