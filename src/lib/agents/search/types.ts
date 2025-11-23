@@ -10,7 +10,7 @@ export type SearchAgentConfig = {
   sources: SearchSources[];
   llm: BaseLLM<any>;
   embedding: BaseEmbedding<any>;
-  mode: 'fast' | 'balanced' | 'deep_research';
+  mode: 'speed' | 'balanced' | 'quality';
 };
 
 export type SearchAgentInput = {
