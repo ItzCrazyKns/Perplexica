@@ -1,8 +1,8 @@
-import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
-import { MetaSearchAgentType } from '@/lib/search/metaSearchAgent';
-import { searchHandlers } from '@/lib/search';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
+import SessionManager from '@/lib/session';
+import SearchAgent from '@/lib/agents/search';
+import { ChatTurnMessage } from '@/lib/types';
 
 interface ChatRequestBody {
   optimizationMode: 'speed' | 'balanced';
@@ -40,27 +40,26 @@ export const POST = async (req: Request) => {
       ),
     ]);
 
-    const history: BaseMessage[] = body.history.map((msg) => {
+    const history: ChatTurnMessage[] = body.history.map((msg) => {
       return msg[0] === 'human'
-        ? new HumanMessage({ content: msg[1] })
-        : new AIMessage({ content: msg[1] });
+        ? { role: 'user', content: msg[1] }
+        : { role: 'assistant', content: msg[1] };
     });
 
-    const searchHandler: MetaSearchAgentType = searchHandlers[body.focusMode];
+    const session = SessionManager.createSession();
 
-    if (!searchHandler) {
-      return Response.json({ message: 'Invalid focus mode' }, { status: 400 });
-    }
+    const agent = new SearchAgent();
 
-    const emitter = await searchHandler.searchAndAnswer(
-      body.query,
-      history,
-      llm,
-      embeddings,
-      body.optimizationMode,
-      [],
-      body.systemInstructions || '',
-    );
+    agent.searchAsync(session, {
+      chatHistory: history,
+      config: {
+        embedding: embeddings,
+        llm: llm,
+        sources: ['web', 'discussions', 'academic'],
+        mode: 'balanced',
+      },
+      followUp: body.query,
+    });
 
     if (!body.stream) {
       return new Promise(
@@ -71,7 +70,7 @@ export const POST = async (req: Request) => {
           let message = '';
           let sources: any[] = [];
 
-          emitter.on('data', (data: string) => {
+          session.addListener('data', (data: string) => {
             try {
               const parsedData = JSON.parse(data);
               if (parsedData.type === 'response') {
@@ -89,11 +88,11 @@ export const POST = async (req: Request) => {
             }
           });
 
-          emitter.on('end', () => {
+          session.addListener('end', () => {
             resolve(Response.json({ message, sources }, { status: 200 }));
           });
 
-          emitter.on('error', (error: any) => {
+          session.addListener('error', (error: any) => {
             reject(
               Response.json(
                 { message: 'Search error', error },
@@ -124,14 +123,14 @@ export const POST = async (req: Request) => {
         );
 
         signal.addEventListener('abort', () => {
-          emitter.removeAllListeners();
+          session.removeAllListeners();
 
           try {
             controller.close();
-          } catch (error) { }
+          } catch (error) {}
         });
 
-        emitter.on('data', (data: string) => {
+        session.addListener('data', (data: string) => {
           if (signal.aborted) return;
 
           try {
@@ -162,7 +161,7 @@ export const POST = async (req: Request) => {
           }
         });
 
-        emitter.on('end', () => {
+        session.addListener('end', () => {
           if (signal.aborted) return;
 
           controller.enqueue(
@@ -175,7 +174,7 @@ export const POST = async (req: Request) => {
           controller.close();
         });
 
-        emitter.on('error', (error: any) => {
+        session.addListener('error', (error: any) => {
           if (signal.aborted) return;
 
           controller.error(error);

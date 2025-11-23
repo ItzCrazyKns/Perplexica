@@ -1,7 +1,6 @@
 import handleVideoSearch from '@/lib/agents/media/video';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
-import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 
 interface VideoSearchBody {
   query: string;
@@ -20,19 +19,9 @@ export const POST = async (req: Request) => {
       body.chatModel.key,
     );
 
-    const chatHistory = body.chatHistory
-      .map((msg: any) => {
-        if (msg.role === 'user') {
-          return new HumanMessage(msg.content);
-        } else if (msg.role === 'assistant') {
-          return new AIMessage(msg.content);
-        }
-      })
-      .filter((msg) => msg !== undefined) as BaseMessage[];
-
     const videos = await handleVideoSearch(
       {
-        chatHistory: chatHistory,
+        chatHistory: body.chatHistory,
         query: body.query,
       },
       llm,

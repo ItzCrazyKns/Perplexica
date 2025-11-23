@@ -7,6 +7,7 @@ import { DocxLoader } from '@langchain/community/document_loaders/fs/docx';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { Document } from '@langchain/core/documents';
 import ModelRegistry from '@/lib/models/registry';
+import { Chunk } from '@/lib/types';
 
 interface FileRes {
   fileName: string;
@@ -87,9 +88,17 @@ export async function POST(req: Request) {
           }),
         );
 
-        const embeddings = await model.embedDocuments(
-          splitted.map((doc) => doc.pageContent),
+        const chunks: Chunk[] = splitted.map((doc) => {
+          return {
+            content: doc.pageContent,
+            metadata: doc.metadata,
+          }
+        });
+
+        const embeddings = await model.embedChunks(
+          chunks
         );
+        
         const embeddingsDataPath = filePath.replace(
           /\.\w+$/,
           '-embeddings.json',

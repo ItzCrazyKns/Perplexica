@@ -1,7 +1,6 @@
 import searchImages from '@/lib/agents/media/image';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
-import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 
 interface ImageSearchBody {
   query: string;
@@ -20,19 +19,9 @@ export const POST = async (req: Request) => {
       body.chatModel.key,
     );
 
-    const chatHistory = body.chatHistory
-      .map((msg: any) => {
-        if (msg.role === 'user') {
-          return new HumanMessage(msg.content);
-        } else if (msg.role === 'assistant') {
-          return new AIMessage(msg.content);
-        }
-      })
-      .filter((msg) => msg !== undefined) as BaseMessage[];
-
     const images = await searchImages(
       {
-        chatHistory: chatHistory,
+        chatHistory: body.chatHistory,
         query: body.query,
       },
       llm,
