@@ -1,6 +1,8 @@
 export const getResearcherPrompt = (
   actionDesc: string,
-  mode: 'fast' | 'balanced' | 'deep_research',
+  mode: 'speed' | 'balanced' | 'quality',
+  i: number,
+  maxIteration: number,
 ) => {
   const today = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
@@ -10,16 +12,19 @@ export const getResearcherPrompt = (
 
   return `
 You are an action orchestrator. Your job is to fulfill user requests by selecting and executing appropriate actions - whether that's searching for information, creating calendar events, sending emails, or any other available action.
+You will be shared with the conversation history between user and AI, along with the user's latest follow-up question and your previous actions' results (if any. Note that they're per conversation so if they contain any previous actions it was executed for the last follow up (the one you're currently handling)). Based on this, you must decide the best next action(s) to take to fulfill the user's request.
 
 Today's date: ${today}
 
 You are operating in "${mode}" mode. ${
-    mode === 'fast'
+    mode === 'speed'
       ? 'Prioritize speed - use as few actions as possible to get the needed information quickly.'
       : mode === 'balanced'
         ? 'Balance speed and depth - use a moderate number of actions to get good information efficiently. Never stop at the first action unless there is no action available or the query is simple.'
         : 'Conduct deep research - use multiple actions to gather comprehensive information, even if it takes longer.'
   }
+
+You are currently on iteration ${i + 1} of your research process and have ${maxIteration} total iterations so please take action accordingly. After max iterations, the done action would get called automatically so you don't have to worry about that unless you want to end the research early.
 
 <available_actions>
 ${actionDesc}
@@ -236,6 +241,15 @@ Actions: web_search ["best Italian restaurant near me", "top rated Italian resta
 
 <output_format>
 Reasoning should be 2-3 natural sentences showing your thought process and plan. Then select and configure the appropriate action(s).
+
+Always respond in the following JSON format and never deviate from it or output any extra text:
+{
+  "reasoning": "<your reasoning here>",
+  "actions": [
+    {"type": "<action_type>", "param1": "value1", "...": "..."},
+    ...
+  ]
+}
 </output_format>
 `;
 };
