@@ -45,6 +45,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
         top_p: this.config.options?.topP,
         temperature: this.config.options?.temperature,
         num_predict: this.config.options?.maxTokens,
+        num_ctx: 32000,
         frequency_penalty: this.config.options?.frequencyPenalty,
         presence_penalty: this.config.options?.presencePenalty,
         stop: this.config.options?.stopSequences,
@@ -71,6 +72,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       options: {
         top_p: this.config.options?.topP,
         temperature: this.config.options?.temperature,
+        num_ctx: 32000,
         num_predict: this.config.options?.maxTokens,
         frequency_penalty: this.config.options?.frequencyPenalty,
         presence_penalty: this.config.options?.presencePenalty,
@@ -99,7 +101,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       think: false,
       options: {
         top_p: this.config.options?.topP,
-        temperature: 0,
+        temperature: 0.7,
         num_predict: this.config.options?.maxTokens,
         frequency_penalty: this.config.options?.frequencyPenalty,
         presence_penalty: this.config.options?.presencePenalty,
@@ -127,7 +129,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       think: false,
       options: {
         top_p: this.config.options?.topP,
-        temperature: this.config.options?.temperature,
+        temperature: 0.7,
         num_predict: this.config.options?.maxTokens,
         frequency_penalty: this.config.options?.frequencyPenalty,
         presence_penalty: this.config.options?.presencePenalty,
