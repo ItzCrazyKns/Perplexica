@@ -8,6 +8,8 @@ import {
 import { ActionRegistry } from './actions';
 import { getResearcherPrompt } from '@/lib/prompts/search/researcher';
 import SessionManager from '@/lib/session';
+import { ReasoningResearchBlock } from '@/lib/types';
+import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 
 class Researcher {
   async research(
@@ -17,7 +19,7 @@ class Researcher {
     let findings: string = '';
     let actionOutput: ActionOutput[] = [];
     let maxIteration =
-      input.config.mode === 'fast'
+      input.config.mode === 'speed'
         ? 1
         : input.config.mode === 'balanced'
           ? 3
@@ -41,45 +43,130 @@ class Researcher {
         classification: input.classification,
       });
 
-    for (let i = 0; i < maxIteration; i++) {
-      const researcherPrompt = getResearcherPrompt(availableActionsDescription);
+    const researchBlockId = crypto.randomUUID();
 
-      const res = await input.config.llm.generateObject<z.infer<typeof schema>>(
-        {
-          messages: [
-            {
-              role: 'system',
-              content: researcherPrompt,
-            },
-            {
-              role: 'user',
-              content: `
-                    <research_query>
-                    ${input.classification.standaloneFollowUp}
-                    </research_query>
+    session.emitBlock({
+      id: researchBlockId,
+      type: 'research',
+      data: {
+        subSteps: [],
+      },
+    });
+
+    for (let i = 0; i < maxIteration; i++) {
+      const researcherPrompt = getResearcherPrompt(
+        availableActionsDescription,
+        input.config.mode,
+        i,
+        maxIteration,
+      );
+
+      const actionStream = input.config.llm.streamObject<
+        z.infer<typeof schema>
+      >({
+        messages: [
+          {
+            role: 'system',
+            content: researcherPrompt,
+          },
+          {
+            role: 'user',
+            content: `
+                    <conversation>
+                    ${formatChatHistoryAsString(input.chatHistory.slice(-10))}
+                    User: ${input.followUp} (Standalone question: ${input.classification.standaloneFollowUp})
+                    </conversation>
 
                     <previous_actions>
                     ${findings}
                     </previous_actions>
                     `,
-            },
-          ],
-          schema,
-        },
-      );
+          },
+        ],
+        schema,
+      });
 
+      const block = session.getBlock(researchBlockId);
 
-      if (res.action.type === 'done') {
-        console.log('Research complete - "done" action selected');
+      let reasoningEmitted = false;
+      let reasoningId = crypto.randomUUID();
+
+      let finalActionRes: any;
+
+      for await (const partialRes of actionStream) {
+        try {
+          if (
+            partialRes.reasoning &&
+            !reasoningEmitted &&
+            block &&
+            block.type === 'research'
+          ) {
+            reasoningEmitted = true;
+            block.data.subSteps.push({
+              id: reasoningId,
+              type: 'reasoning',
+              reasoning: partialRes.reasoning,
+            });
+            session.updateBlock(researchBlockId, [
+              {
+                op: 'replace',
+                path: '/data/subSteps',
+                value: block.data.subSteps,
+              },
+            ]);
+          } else if (
+            partialRes.reasoning &&
+            reasoningEmitted &&
+            block &&
+            block.type === 'research'
+          ) {
+            const subStepIndex = block.data.subSteps.findIndex(
+              (step: any) => step.id === reasoningId,
+            );
+            if (subStepIndex !== -1) {
+              const subStep = block.data.subSteps[
+                subStepIndex
+              ] as ReasoningResearchBlock;
+              subStep.reasoning = partialRes.reasoning;
+              session.updateBlock(researchBlockId, [
+                {
+                  op: 'replace',
+                  path: '/data/subSteps',
+                  value: block.data.subSteps,
+                },
+              ]);
+            }
+          }
+
+          finalActionRes = partialRes;
+        } catch (e) {
+          // nothing
+        }
+      }
+
+      if (finalActionRes.action.type === 'done') {
         break;
       }
 
       const actionConfig: ActionConfig = {
-        type: res.action.type as string,
-        params: res.action,
+        type: finalActionRes.action.type as string,
+        params: finalActionRes.action,
       };
 
-      findings += 'Reasoning: ' + res.reasoning + '\n';
+      const queries = actionConfig.params.queries || [];
+      if (block && block.type === 'research') {
+        block.data.subSteps.push({
+          id: crypto.randomUUID(),
+          type: 'searching',
+          searching: queries,
+        });
+        session.updateBlock(researchBlockId, [
+          { op: 'replace', path: '/data/subSteps', value: block.data.subSteps },
+        ]);
+      }
+
+      findings += `\n---\nIteration ${i + 1}:\n`;
+      findings += 'Reasoning: ' + finalActionRes.reasoning + '\n';
       findings += `Executing Action: ${actionConfig.type} with params ${JSON.stringify(actionConfig.params)}\n`;
 
       const actionResult = await ActionRegistry.execute(
@@ -95,6 +182,21 @@ class Researcher {
       actionOutput.push(actionResult);
 
       if (actionResult.type === 'search_results') {
+        if (block && block.type === 'research') {
+          block.data.subSteps.push({
+            id: crypto.randomUUID(),
+            type: 'reading',
+            reading: actionResult.results,
+          });
+          session.updateBlock(researchBlockId, [
+            {
+              op: 'replace',
+              path: '/data/subSteps',
+              value: block.data.subSteps,
+            },
+          ]);
+        }
+
         findings += actionResult.results
           .map(
             (r) =>
@@ -102,7 +204,23 @@ class Researcher {
           )
           .join('\n');
       }
+
+      findings += '\n---------\n';
     }
+
+    const searchResults = actionOutput.filter(
+      (a) => a.type === 'search_results',
+    );
+
+    session.emit('data', {
+      type: 'sources',
+      data: searchResults
+        .flatMap((a) => a.results)
+        .map((r) => ({
+          content: r.content,
+          metadata: r.metadata,
+        })),
+    });
 
     return {
       findings: actionOutput,
