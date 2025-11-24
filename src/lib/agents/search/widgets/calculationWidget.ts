@@ -45,6 +45,7 @@ const calculationWidget: Widget<typeof schema> = {
 
       return {
         type: 'calculation_result',
+        llmContext: `The result of the expression "${params.expression}" is ${result}.`,
         data: {
           expression: params.expression,
           result: result,
@@ -53,6 +54,7 @@ const calculationWidget: Widget<typeof schema> = {
     } catch (error) {
       return {
         type: 'calculation_result',
+        llmContext: 'Failed to evaluate mathematical expression.',
         data: {
           expression: params.expression,
           result: `Error evaluating expression: ${error}`,

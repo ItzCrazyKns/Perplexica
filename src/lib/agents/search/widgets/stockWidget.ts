@@ -286,120 +286,129 @@ You can set skipSearch to true if the stock widget can fully answer the user's q
         chartData: {
           '1D': chart1D
             ? {
-                timestamps: chart1D.quotes.map((q: any) => q.date.getTime()),
-                prices: chart1D.quotes.map((q: any) => q.close),
-              }
+              timestamps: chart1D.quotes.map((q: any) => q.date.getTime()),
+              prices: chart1D.quotes.map((q: any) => q.close),
+            }
             : null,
           '5D': chart5D
             ? {
-                timestamps: chart5D.quotes.map((q: any) => q.date.getTime()),
-                prices: chart5D.quotes.map((q: any) => q.close),
-              }
+              timestamps: chart5D.quotes.map((q: any) => q.date.getTime()),
+              prices: chart5D.quotes.map((q: any) => q.close),
+            }
             : null,
           '1M': chart1M
             ? {
-                timestamps: chart1M.quotes.map((q: any) => q.date.getTime()),
-                prices: chart1M.quotes.map((q: any) => q.close),
-              }
+              timestamps: chart1M.quotes.map((q: any) => q.date.getTime()),
+              prices: chart1M.quotes.map((q: any) => q.close),
+            }
             : null,
           '3M': chart3M
             ? {
-                timestamps: chart3M.quotes.map((q: any) => q.date.getTime()),
-                prices: chart3M.quotes.map((q: any) => q.close),
-              }
+              timestamps: chart3M.quotes.map((q: any) => q.date.getTime()),
+              prices: chart3M.quotes.map((q: any) => q.close),
+            }
             : null,
           '6M': chart6M
             ? {
-                timestamps: chart6M.quotes.map((q: any) => q.date.getTime()),
-                prices: chart6M.quotes.map((q: any) => q.close),
-              }
+              timestamps: chart6M.quotes.map((q: any) => q.date.getTime()),
+              prices: chart6M.quotes.map((q: any) => q.close),
+            }
             : null,
           '1Y': chart1Y
             ? {
-                timestamps: chart1Y.quotes.map((q: any) => q.date.getTime()),
-                prices: chart1Y.quotes.map((q: any) => q.close),
-              }
+              timestamps: chart1Y.quotes.map((q: any) => q.date.getTime()),
+              prices: chart1Y.quotes.map((q: any) => q.close),
+            }
             : null,
           MAX: chartMAX
             ? {
-                timestamps: chartMAX.quotes.map((q: any) => q.date.getTime()),
-                prices: chartMAX.quotes.map((q: any) => q.close),
-              }
+              timestamps: chartMAX.quotes.map((q: any) => q.date.getTime()),
+              prices: chartMAX.quotes.map((q: any) => q.close),
+            }
             : null,
         },
         comparisonData: comparisonData
           ? comparisonData.map((comp: any) => ({
-              ticker: comp.ticker,
-              name: comp.name,
-              chartData: {
-                '1D': comp.charts[0]
-                  ? {
-                      timestamps: comp.charts[0].quotes.map((q: any) =>
-                        q.date.getTime(),
-                      ),
-                      prices: comp.charts[0].quotes.map((q: any) => q.close),
-                    }
-                  : null,
-                '5D': comp.charts[1]
-                  ? {
-                      timestamps: comp.charts[1].quotes.map((q: any) =>
-                        q.date.getTime(),
-                      ),
-                      prices: comp.charts[1].quotes.map((q: any) => q.close),
-                    }
-                  : null,
-                '1M': comp.charts[2]
-                  ? {
-                      timestamps: comp.charts[2].quotes.map((q: any) =>
-                        q.date.getTime(),
-                      ),
-                      prices: comp.charts[2].quotes.map((q: any) => q.close),
-                    }
-                  : null,
-                '3M': comp.charts[3]
-                  ? {
-                      timestamps: comp.charts[3].quotes.map((q: any) =>
-                        q.date.getTime(),
-                      ),
-                      prices: comp.charts[3].quotes.map((q: any) => q.close),
-                    }
-                  : null,
-                '6M': comp.charts[4]
-                  ? {
-                      timestamps: comp.charts[4].quotes.map((q: any) =>
-                        q.date.getTime(),
-                      ),
-                      prices: comp.charts[4].quotes.map((q: any) => q.close),
-                    }
-                  : null,
-                '1Y': comp.charts[5]
-                  ? {
-                      timestamps: comp.charts[5].quotes.map((q: any) =>
-                        q.date.getTime(),
-                      ),
-                      prices: comp.charts[5].quotes.map((q: any) => q.close),
-                    }
-                  : null,
-                MAX: comp.charts[6]
-                  ? {
-                      timestamps: comp.charts[6].quotes.map((q: any) =>
-                        q.date.getTime(),
-                      ),
-                      prices: comp.charts[6].quotes.map((q: any) => q.close),
-                    }
-                  : null,
-              },
-            }))
+            ticker: comp.ticker,
+            name: comp.name,
+            chartData: {
+              '1D': comp.charts[0]
+                ? {
+                  timestamps: comp.charts[0].quotes.map((q: any) =>
+                    q.date.getTime(),
+                  ),
+                  prices: comp.charts[0].quotes.map((q: any) => q.close),
+                }
+                : null,
+              '5D': comp.charts[1]
+                ? {
+                  timestamps: comp.charts[1].quotes.map((q: any) =>
+                    q.date.getTime(),
+                  ),
+                  prices: comp.charts[1].quotes.map((q: any) => q.close),
+                }
+                : null,
+              '1M': comp.charts[2]
+                ? {
+                  timestamps: comp.charts[2].quotes.map((q: any) =>
+                    q.date.getTime(),
+                  ),
+                  prices: comp.charts[2].quotes.map((q: any) => q.close),
+                }
+                : null,
+              '3M': comp.charts[3]
+                ? {
+                  timestamps: comp.charts[3].quotes.map((q: any) =>
+                    q.date.getTime(),
+                  ),
+                  prices: comp.charts[3].quotes.map((q: any) => q.close),
+                }
+                : null,
+              '6M': comp.charts[4]
+                ? {
+                  timestamps: comp.charts[4].quotes.map((q: any) =>
+                    q.date.getTime(),
+                  ),
+                  prices: comp.charts[4].quotes.map((q: any) => q.close),
+                }
+                : null,
+              '1Y': comp.charts[5]
+                ? {
+                  timestamps: comp.charts[5].quotes.map((q: any) =>
+                    q.date.getTime(),
+                  ),
+                  prices: comp.charts[5].quotes.map((q: any) => q.close),
+                }
+                : null,
+              MAX: comp.charts[6]
+                ? {
+                  timestamps: comp.charts[6].quotes.map((q: any) =>
+                    q.date.getTime(),
+                  ),
+                  prices: comp.charts[6].quotes.map((q: any) => q.close),
+                }
+                : null,
+            },
+          }))
           : null,
       };
 
       return {
         type: 'stock',
+        llmContext: `Current price of ${stockData.shortName} (${stockData.symbol}) is ${stockData.regularMarketPrice} ${stockData.currency}. Other details: ${JSON.stringify({
+          marketState: stockData.marketState,
+          regularMarketChange: stockData.regularMarketChange,
+          regularMarketChangePercent: stockData.regularMarketChangePercent,
+          marketCap: stockData.marketCap,
+          peRatio: stockData.trailingPE,
+          dividendYield: stockData.dividendYield,
+        })}`,
         data: stockData,
       };
     } catch (error: any) {
       return {
         type: 'stock',
+        llmContext: 'Failed to fetch stock data.',
         data: {
           error: `Error fetching stock data: ${error.message || error}`,
           ticker: params.ticker,

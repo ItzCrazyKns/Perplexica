@@ -65,14 +65,13 @@ class SearchAgent {
 
     const widgetContext = widgetOutputs
       .map((o) => {
-        return `${o.type}: ${JSON.stringify(o.data)}`;
+        return `${o.type}: ${o.llmContext}`;
       })
       .join('\n-------------\n');
 
     const finalContextWithWidgets = `<search_results note="These are the search results and you can cite these">${finalContext}</search_results>\n<widgets_result noteForAssistant="Its output is already showed to the user, you can use this information to answer the query but do not CITE this as a souce">${widgetContext}</widgets_result>`;
 
     const writerPrompt = getWriterPrompt(finalContextWithWidgets);
-
     const answerStream = input.config.llm.streamText({
       messages: [
         {

@@ -43,6 +43,7 @@ export type WidgetConfig = {
 
 export type WidgetOutput = {
   type: string;
+  llmContext: string;
   data: any;
 };
 
