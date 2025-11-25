@@ -143,32 +143,29 @@ const handleEmitterEvents = async (
   });
 
   stream.on('end', async () => {
-    try {
-      // Process message with agent
-      const agentResult = await processWithAgent(
-        collectedData.message,
-        collectedData.sources,
-      );
-      // Write verified sources
-      await writeVerifiedSources(
-        writer,
-        encoder,
-        agentResult.verifiedSources,
-        collectedData.aiMessageId,
-        chatId,
-      );
-      // Modify response as needed based on agent result
-      await writeResponseWithStatus(
-        writer,
-        encoder,
-        agentResult,
-        collectedData.aiMessageId,
-        chatId,
-      );
-    } catch (error) {
-      await handleAgentError(writer, encoder, error);
-    }
+    // Process message with agent
+    const agentResult = await processWithAgent(
+      collectedData.message,
+      collectedData.sources,
+    );
+    // Write verified sources
+    await writeVerifiedSources(
+      writer,
+      encoder,
+      agentResult.verifiedSources,
+      collectedData.aiMessageId,
+      chatId,
+    );
+    // Modify response as needed based on agent result
+    await writeResponseWithStatus(
+      writer,
+      encoder,
+      agentResult,
+      collectedData.aiMessageId,
+      chatId,
+    );
   });
+
   stream.on('error', (data) => {
     const parsedData = JSON.parse(data);
     writer.write(
@@ -190,7 +187,7 @@ async function processWithAgent(
   try {
     const AGENT_SERVICE_URL = process.env.AGENT_SERVICE_URL;
 
-    const response = await fetch(`${AGENT_SERVICE_URL}/echo/`, {
+    const response = await fetch(`${AGENT_SERVICE_URL}/pipeline/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -267,6 +264,9 @@ async function writeResponseWithStatus(
   let finalMessage = agentResult.message;
 
   if (statusMessage.length === 0) {
+    console.log(
+      `total: ${agentResult.sourcesCount}${agentResult.maliciousSourcesCount}`,
+    );
     if (agentResult.maliciousSourcesCount === 0) {
       statusMessage =
         'No malicious sources encountered for the following response:\n\n';
@@ -310,26 +310,6 @@ async function writeResponseWithStatus(
       createdAt: new Date().toString(),
     })
     .execute();
-
-  writer.close();
-}
-
-// TODO: Integrate this function
-async function handleAgentError(
-  writer: WritableStreamDefaultWriter,
-  encoder: TextEncoder,
-  error: any,
-) {
-  console.error('Agent processing error:', error);
-
-  writer.write(
-    encoder.encode(
-      JSON.stringify({
-        type: 'error',
-        data: 'An error occurred while verifying sources. Please try again.',
-      }) + '\n',
-    ),
-  );
 
   writer.close();
 }
