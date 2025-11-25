@@ -104,9 +104,13 @@ interface CollectedData {
 }
 
 interface AgentResult {
-  originalMessage: string;
-  totalSources: number;
-  removedSources: number;
+  message: string;
+  status: string;
+  messageURLsCount: number;
+  maliciousMessageURLsCount: number;
+  sourcesCount: number;
+  maliciousSourcesCount: number;
+  maliciousMessageURLs: string[];
   verifiedSources: SourceMessage[];
   maliciousSources: SourceMessage[];
 }
@@ -204,16 +208,18 @@ async function processWithAgent(
     const agentResult: AgentResult = await response.json();
     return agentResult;
   } catch (error) {
-    // TODO
     console.error('Error calling agent service: ', error);
     const errorStatus =
       'The agent failed to verify the sources for this response:\n\n';
-    const errorMessage = errorStatus + message;
 
     return {
-      originalMessage: errorMessage,
-      totalSources: sources.length,
-      removedSources: 0,
+      message: message,
+      status: errorStatus,
+      messageURLsCount: 0,
+      maliciousMessageURLsCount: 0,
+      sourcesCount: 0,
+      maliciousSourcesCount: 0,
+      maliciousMessageURLs: [],
       verifiedSources: sources,
       maliciousSources: [],
     };
@@ -257,19 +263,21 @@ async function writeResponseWithStatus(
   messageId: string,
   chatId: string,
 ) {
-  let statusMessage = '';
-  let finalMessage = agentResult.originalMessage;
+  let statusMessage = agentResult.status;
+  let finalMessage = agentResult.message;
 
-  if (agentResult.removedSources === 0) {
-    statusMessage =
-      'No malicious sources encountered for the following message:\n\n';
-  } else if (agentResult.removedSources < agentResult.totalSources) {
-    statusMessage = `Some malicious sources were removed from this message (${agentResult.removedSources}/${agentResult.totalSources} removed):\n\n`;
-    // TODO: request rewrite from model with verified sources only
-  } else {
-    statusMessage =
-      'Non-malicious online sources were not available for this query.\n\n';
-    // TODO: request rewrite without sources
+  if (statusMessage.length === 0) {
+    if (agentResult.maliciousSourcesCount === 0) {
+      statusMessage =
+        'No malicious sources encountered for the following response:\n\n';
+    } else if (agentResult.maliciousSourcesCount < agentResult.sourcesCount) {
+      statusMessage = `Some malicious sources were removed from this response (${agentResult.maliciousSourcesCount}/${agentResult.sourcesCount} removed):\n\n`;
+      // TODO: request rewrite from model with verified sources only
+    } else {
+      statusMessage =
+        'Non-malicious online sources were not available for this query. No external sources were used to generate this response:\n\n';
+      // TODO: request rewrite without sources
+    }
   }
 
   const fullResponse = statusMessage + finalMessage;
@@ -306,6 +314,7 @@ async function writeResponseWithStatus(
   writer.close();
 }
 
+// TODO: Integrate this function
 async function handleAgentError(
   writer: WritableStreamDefaultWriter,
   encoder: TextEncoder,
