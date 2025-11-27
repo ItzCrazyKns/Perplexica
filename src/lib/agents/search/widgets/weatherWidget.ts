@@ -94,7 +94,7 @@ You can set skipSearch to true if the weather widget can fully answer the user's
 
         return {
           type: 'weather',
-          llmContext: `Weather in ${params.location} is ${weatherData.current}`,
+          llmContext: `Weather in ${params.location} is ${JSON.stringify(weatherData.current)}`,
           data: {
             location: params.location,
             latitude: location.lat,
@@ -139,7 +139,7 @@ You can set skipSearch to true if the weather widget can fully answer the user's
 
         return {
           type: 'weather',
-          llmContext: `Weather in ${locationData.display_name} is ${weatherData.current}`,
+          llmContext: `Weather in ${locationData.display_name} is ${JSON.stringify(weatherData.current)}`,
           data: {
             location: locationData.display_name,
             latitude: params.lat,
