@@ -116,15 +116,18 @@ const AddProvider = ({
               transition={{ duration: 0.1 }}
               className="fixed inset-0 flex w-screen items-center justify-center p-4 bg-black/30 backdrop-blur-sm"
             >
-              <DialogPanel className="w-full mx-4 lg:w-[600px] max-h-[85vh] flex flex-col border bg-light-primary dark:bg-dark-primary border-light-secondary dark:border-dark-secondary rounded-lg">
-                <form onSubmit={handleSubmit} className="flex flex-col flex-1">
+              <DialogPanel className="w-full mx-4 lg:w-[600px] max-h-[85vh] flex flex-col min-h-0 overflow-hidden border bg-light-primary dark:bg-dark-primary border-light-secondary dark:border-dark-secondary rounded-lg">
+                <form
+                  onSubmit={handleSubmit}
+                  className="flex flex-col flex-1 min-h-0"
+                >
                   <div className="px-6 pt-6 pb-4">
                     <h3 className="text-black/90 dark:text-white/90 font-medium text-sm">
                       Add new connection
                     </h3>
                   </div>
                   <div className="border-t border-light-200 dark:border-dark-200" />
-                  <div className="flex-1 overflow-y-auto px-6 py-4">
+                  <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
                     <div className="flex flex-col space-y-4">
                       <div className="flex flex-col items-start space-y-2">
                         <label className="text-xs text-black/70 dark:text-white/70">

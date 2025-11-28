@@ -88,7 +88,7 @@ const AttachSmall = () => {
                     type="file"
                     onChange={handleChange}
                     ref={fileInputRef}
-                    accept=".pdf,.docx,.txt"
+                    accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.gif,.bmp,.webp,image/*"
                     multiple
                     hidden
                   />
@@ -144,7 +144,7 @@ const AttachSmall = () => {
         type="file"
         onChange={handleChange}
         ref={fileInputRef}
-        accept=".pdf,.docx,.txt"
+        accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.gif,.bmp,.webp,image/*"
         multiple
         hidden
       />

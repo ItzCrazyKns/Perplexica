@@ -324,20 +324,60 @@ class MetaSearchAgent implements MetaSearchAgentType {
         const contentPath = filePath + '-extracted.json';
         const embeddingsPath = filePath + '-embeddings.json';
 
-        const content = JSON.parse(fs.readFileSync(contentPath, 'utf8'));
-        const embeddings = JSON.parse(fs.readFileSync(embeddingsPath, 'utf8'));
+        if (
+          !fs.existsSync(contentPath) ||
+          !fs.existsSync(embeddingsPath)
+        ) {
+          console.warn(
+            `[metaSearchAgent] Skipping file "${file}" – missing extracted or embedding data.`,
+          );
+          return [];
+        }
 
-        const fileSimilaritySearchObject = content.contents.map(
-          (c: string, i: number) => {
-            return {
-              fileName: content.title,
+        try {
+          const contentData = JSON.parse(fs.readFileSync(contentPath, 'utf8'));
+          const embeddingDataRaw = JSON.parse(
+            fs.readFileSync(embeddingsPath, 'utf8'),
+          );
+
+          if (!Array.isArray(contentData.contents)) {
+            console.warn(
+              `[metaSearchAgent] Invalid extracted content format for file "${file}".`,
+            );
+            return [];
+          }
+
+          const embeddingsArray = Array.isArray(embeddingDataRaw.embeddings)
+            ? embeddingDataRaw.embeddings
+            : [];
+
+          const fileSimilaritySearchObject: {
+            fileName: string;
+            content: string;
+            embeddings: number[];
+          }[] = [];
+
+          contentData.contents.forEach((c: string, i: number) => {
+            const vector = embeddingsArray[i];
+            if (!vector || !Array.isArray(vector)) {
+              return;
+            }
+
+            fileSimilaritySearchObject.push({
+              fileName: contentData.title,
               content: c,
-              embeddings: embeddings.embeddings[i],
-            };
-          },
-        );
+              embeddings: vector,
+            });
+          });
 
-        return fileSimilaritySearchObject;
+          return fileSimilaritySearchObject;
+        } catch (error) {
+          console.error(
+            `[metaSearchAgent] Failed to load vector data for file "${file}".`,
+            error,
+          );
+          return [];
+        }
       })
       .flat();
 
