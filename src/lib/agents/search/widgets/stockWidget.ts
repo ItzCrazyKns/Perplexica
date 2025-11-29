@@ -8,16 +8,16 @@ const yf = new YahooFinance({
 
 const schema = z.object({
   type: z.literal('stock'),
-  ticker: z
+  name: z
     .string()
     .describe(
-      "The stock ticker symbol in uppercase (e.g., 'AAPL' for Apple Inc., 'TSLA' for Tesla, 'GOOGL' for Google). Use the primary exchange ticker.",
+      "The stock name for example Nvidia, Google, Apple, Microsoft etc. You can also return ticker if you're aware of it otherwise just use the name.",
     ),
-  comparisonTickers: z
+  comparisonNames: z
     .array(z.string())
     .max(3)
     .describe(
-      "Optional array of up to 3 ticker symbols to compare against the base ticker (e.g., ['MSFT', 'GOOGL', 'META']). Charts will show percentage change comparison.",
+      "Optional array of up to 3 stock names to compare against the base name (e.g., ['Microsoft', 'GOOGL', 'Meta']). Charts will show percentage change comparison.",
     ),
 });
 
@@ -50,31 +50,38 @@ You can set skipSearch to true if the stock widget can fully answer the user's q
 **Example calls:**
 {
   "type": "stock",
-  "ticker": "AAPL"
+  "name": "AAPL"
 }
 
 {
   "type": "stock",
-  "ticker": "TSLA",
-  "comparisonTickers": ["RIVN", "LCID"]
+  "name": "TSLA",
+  "comparisonNames": ["RIVN", "LCID"]
 }
 
 {
   "type": "stock",
-  "ticker": "GOOGL",
-  "comparisonTickers": ["MSFT", "META", "AMZN"]
+  "name": "Google",
+  "comparisonNames": ["Microsoft", "Meta", "Amazon"]
 }
 
 **Important:** 
-- Use the correct ticker symbol (uppercase preferred: AAPL not aapl)
-- For companies with multiple share classes, use the most common one (e.g., GOOGL for Google Class A shares)
+- You can use both tickers and names (prefer name when you're not aware of the ticker).
+- For companies with multiple share classes, use the most common one.
 - The widget works for stocks listed on major exchanges (NYSE, NASDAQ, etc.)
 - Returns comprehensive data; the UI will display relevant metrics based on availability
 - Market data may be delayed by 15-20 minutes for free data sources during trading hours`,
   schema: schema,
   execute: async (params, _) => {
     try {
-      const ticker = params.ticker.toUpperCase();
+      const name = params.name;
+
+      const findings = await yf.search(name);
+
+      if (findings.quotes.length === 0)
+        throw new Error(`Failed to find quote for name/symbol: ${name}`);
+
+      const ticker = findings.quotes[0].symbol as string;
 
       const quote: any = await yf.quote(ticker);
 
@@ -143,11 +150,16 @@ You can set skipSearch to true if the stock widget can fully answer the user's q
       }
 
       let comparisonData: any = null;
-      if (params.comparisonTickers.length > 0) {
-        const comparisonPromises = params.comparisonTickers
+      if (params.comparisonNames.length > 0) {
+        const comparisonPromises = params.comparisonNames
           .slice(0, 3)
-          .map(async (compTicker) => {
+          .map(async (compName) => {
             try {
+              const compFindings = await yf.search(compName);
+
+              if (compFindings.quotes.length === 0) return null;
+
+              const compTicker = compFindings.quotes[0].symbol as string;
               const compQuote = await yf.quote(compTicker);
               const compCharts = await Promise.all([
                 yf
@@ -204,7 +216,7 @@ You can set skipSearch to true if the stock widget can fully answer the user's q
               };
             } catch (error) {
               console.error(
-                `Failed to fetch comparison ticker ${compTicker}:`,
+                `Failed to fetch comparison ticker ${compName}:`,
                 error,
               );
               return null;
@@ -286,123 +298,125 @@ You can set skipSearch to true if the stock widget can fully answer the user's q
         chartData: {
           '1D': chart1D
             ? {
-              timestamps: chart1D.quotes.map((q: any) => q.date.getTime()),
-              prices: chart1D.quotes.map((q: any) => q.close),
-            }
+                timestamps: chart1D.quotes.map((q: any) => q.date.getTime()),
+                prices: chart1D.quotes.map((q: any) => q.close),
+              }
             : null,
           '5D': chart5D
             ? {
-              timestamps: chart5D.quotes.map((q: any) => q.date.getTime()),
-              prices: chart5D.quotes.map((q: any) => q.close),
-            }
+                timestamps: chart5D.quotes.map((q: any) => q.date.getTime()),
+                prices: chart5D.quotes.map((q: any) => q.close),
+              }
             : null,
           '1M': chart1M
             ? {
-              timestamps: chart1M.quotes.map((q: any) => q.date.getTime()),
-              prices: chart1M.quotes.map((q: any) => q.close),
-            }
+                timestamps: chart1M.quotes.map((q: any) => q.date.getTime()),
+                prices: chart1M.quotes.map((q: any) => q.close),
+              }
             : null,
           '3M': chart3M
             ? {
-              timestamps: chart3M.quotes.map((q: any) => q.date.getTime()),
-              prices: chart3M.quotes.map((q: any) => q.close),
-            }
+                timestamps: chart3M.quotes.map((q: any) => q.date.getTime()),
+                prices: chart3M.quotes.map((q: any) => q.close),
+              }
             : null,
           '6M': chart6M
             ? {
-              timestamps: chart6M.quotes.map((q: any) => q.date.getTime()),
-              prices: chart6M.quotes.map((q: any) => q.close),
-            }
+                timestamps: chart6M.quotes.map((q: any) => q.date.getTime()),
+                prices: chart6M.quotes.map((q: any) => q.close),
+              }
             : null,
           '1Y': chart1Y
             ? {
-              timestamps: chart1Y.quotes.map((q: any) => q.date.getTime()),
-              prices: chart1Y.quotes.map((q: any) => q.close),
-            }
+                timestamps: chart1Y.quotes.map((q: any) => q.date.getTime()),
+                prices: chart1Y.quotes.map((q: any) => q.close),
+              }
             : null,
           MAX: chartMAX
             ? {
-              timestamps: chartMAX.quotes.map((q: any) => q.date.getTime()),
-              prices: chartMAX.quotes.map((q: any) => q.close),
-            }
+                timestamps: chartMAX.quotes.map((q: any) => q.date.getTime()),
+                prices: chartMAX.quotes.map((q: any) => q.close),
+              }
             : null,
         },
         comparisonData: comparisonData
           ? comparisonData.map((comp: any) => ({
-            ticker: comp.ticker,
-            name: comp.name,
-            chartData: {
-              '1D': comp.charts[0]
-                ? {
-                  timestamps: comp.charts[0].quotes.map((q: any) =>
-                    q.date.getTime(),
-                  ),
-                  prices: comp.charts[0].quotes.map((q: any) => q.close),
-                }
-                : null,
-              '5D': comp.charts[1]
-                ? {
-                  timestamps: comp.charts[1].quotes.map((q: any) =>
-                    q.date.getTime(),
-                  ),
-                  prices: comp.charts[1].quotes.map((q: any) => q.close),
-                }
-                : null,
-              '1M': comp.charts[2]
-                ? {
-                  timestamps: comp.charts[2].quotes.map((q: any) =>
-                    q.date.getTime(),
-                  ),
-                  prices: comp.charts[2].quotes.map((q: any) => q.close),
-                }
-                : null,
-              '3M': comp.charts[3]
-                ? {
-                  timestamps: comp.charts[3].quotes.map((q: any) =>
-                    q.date.getTime(),
-                  ),
-                  prices: comp.charts[3].quotes.map((q: any) => q.close),
-                }
-                : null,
-              '6M': comp.charts[4]
-                ? {
-                  timestamps: comp.charts[4].quotes.map((q: any) =>
-                    q.date.getTime(),
-                  ),
-                  prices: comp.charts[4].quotes.map((q: any) => q.close),
-                }
-                : null,
-              '1Y': comp.charts[5]
-                ? {
-                  timestamps: comp.charts[5].quotes.map((q: any) =>
-                    q.date.getTime(),
-                  ),
-                  prices: comp.charts[5].quotes.map((q: any) => q.close),
-                }
-                : null,
-              MAX: comp.charts[6]
-                ? {
-                  timestamps: comp.charts[6].quotes.map((q: any) =>
-                    q.date.getTime(),
-                  ),
-                  prices: comp.charts[6].quotes.map((q: any) => q.close),
-                }
-                : null,
-            },
-          }))
+              ticker: comp.ticker,
+              name: comp.name,
+              chartData: {
+                '1D': comp.charts[0]
+                  ? {
+                      timestamps: comp.charts[0].quotes.map((q: any) =>
+                        q.date.getTime(),
+                      ),
+                      prices: comp.charts[0].quotes.map((q: any) => q.close),
+                    }
+                  : null,
+                '5D': comp.charts[1]
+                  ? {
+                      timestamps: comp.charts[1].quotes.map((q: any) =>
+                        q.date.getTime(),
+                      ),
+                      prices: comp.charts[1].quotes.map((q: any) => q.close),
+                    }
+                  : null,
+                '1M': comp.charts[2]
+                  ? {
+                      timestamps: comp.charts[2].quotes.map((q: any) =>
+                        q.date.getTime(),
+                      ),
+                      prices: comp.charts[2].quotes.map((q: any) => q.close),
+                    }
+                  : null,
+                '3M': comp.charts[3]
+                  ? {
+                      timestamps: comp.charts[3].quotes.map((q: any) =>
+                        q.date.getTime(),
+                      ),
+                      prices: comp.charts[3].quotes.map((q: any) => q.close),
+                    }
+                  : null,
+                '6M': comp.charts[4]
+                  ? {
+                      timestamps: comp.charts[4].quotes.map((q: any) =>
+                        q.date.getTime(),
+                      ),
+                      prices: comp.charts[4].quotes.map((q: any) => q.close),
+                    }
+                  : null,
+                '1Y': comp.charts[5]
+                  ? {
+                      timestamps: comp.charts[5].quotes.map((q: any) =>
+                        q.date.getTime(),
+                      ),
+                      prices: comp.charts[5].quotes.map((q: any) => q.close),
+                    }
+                  : null,
+                MAX: comp.charts[6]
+                  ? {
+                      timestamps: comp.charts[6].quotes.map((q: any) =>
+                        q.date.getTime(),
+                      ),
+                      prices: comp.charts[6].quotes.map((q: any) => q.close),
+                    }
+                  : null,
+              },
+            }))
           : null,
       };
 
       return {
         type: 'stock',
-        llmContext: `Current price of ${stockData.shortName} (${stockData.symbol}) is ${stockData.regularMarketPrice} ${stockData.currency}. Other details: ${JSON.stringify({
-          marketState: stockData.marketState,
-          regularMarketChange: stockData.regularMarketChange,
-          regularMarketChangePercent: stockData.regularMarketChangePercent,
-          marketCap: stockData.marketCap,
-          peRatio: stockData.trailingPE,
-          dividendYield: stockData.dividendYield,
-        })}`,
+        llmContext: `Current price of ${stockData.shortName} (${stockData.symbol}) is ${stockData.regularMarketPrice} ${stockData.currency}. Other details: ${JSON.stringify(
+          {
+            marketState: stockData.marketState,
+            regularMarketChange: stockData.regularMarketChange,
+            regularMarketChangePercent: stockData.regularMarketChangePercent,
+            marketCap: stockData.marketCap,
+            peRatio: stockData.trailingPE,
+            dividendYield: stockData.dividendYield,
+          },
+        )}`,
         data: stockData,
       };
     } catch (error: any) {
@@ -411,7 +425,7 @@ You can set skipSearch to true if the stock widget can fully answer the user's q
         llmContext: 'Failed to fetch stock data.',
         data: {
           error: `Error fetching stock data: ${error.message || error}`,
-          ticker: params.ticker,
+          ticker: params.name,
         },
       };
     }
