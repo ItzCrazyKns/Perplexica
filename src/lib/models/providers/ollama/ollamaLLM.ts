@@ -16,6 +16,14 @@ type OllamaConfig = {
   options?: GenerateOptions;
 };
 
+const reasoningModels = [
+  'gpt-oss',
+  'deepseek-r1',
+  'qwen3',
+  'deepseek-v3.1',
+  'magistral',
+];
+
 class OllamaLLM extends BaseLLM<OllamaConfig> {
   ollamaClient: Ollama;
 
@@ -98,6 +106,9 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       model: this.config.model,
       messages: input.messages,
       format: z.toJSONSchema(input.schema),
+      ...(reasoningModels.find((m) => this.config.model.includes(m))
+        ? { think: false }
+        : {}),
       options: {
         top_p: this.config.options?.topP,
         temperature: 0.7,
@@ -125,6 +136,9 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       messages: input.messages,
       format: z.toJSONSchema(input.schema),
       stream: true,
+      ...(reasoningModels.find((m) => this.config.model.includes(m))
+        ? { think: false }
+        : {}),
       options: {
         top_p: this.config.options?.topP,
         temperature: 0.7,
