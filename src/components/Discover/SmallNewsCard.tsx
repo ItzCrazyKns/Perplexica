@@ -8,6 +8,7 @@ const SmallNewsCard = ({ item }: { item: Discover }) => (
     target="_blank"
   >
     <div className="relative aspect-video overflow-hidden">
+      {/* TODO: Consider using next/image for automatic optimization, lazy loading, and improved performance */}
       <img
         className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
         src={
