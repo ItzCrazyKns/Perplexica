@@ -91,81 +91,73 @@ const safeValidateBody = (data: unknown) => {
   };
 };
 
-interface SourceMessage {
-  id: string;
-  data: any;
-  date: string;
-}
-
-interface CollectedData {
-  message: string;
-  sources: SourceMessage[];
-  aiMessageId: string;
-}
-
-interface AgentResult {
-  message: string;
-  status: string;
-  messageURLsCount: number;
-  maliciousMessageURLsCount: number;
-  sourcesCount: number;
-  maliciousSourcesCount: number;
-  maliciousMessageURLs: string[];
-  verifiedSources: SourceMessage[];
-  maliciousSources: SourceMessage[];
-}
-
 const handleEmitterEvents = async (
   stream: EventEmitter,
   writer: WritableStreamDefaultWriter,
   encoder: TextEncoder,
   chatId: string,
 ) => {
-  const collectedData: CollectedData = {
-    message: '',
-    sources: [],
-    aiMessageId: crypto.randomBytes(7).toString('hex'),
-  };
+  let receivedMessage = '';
+  const aiMessageId = crypto.randomBytes(7).toString('hex');
 
   stream.on('data', (data) => {
     const parsedData = JSON.parse(data);
-
     if (parsedData.type === 'response') {
-      collectedData.message += parsedData.data;
+      writer.write(
+        encoder.encode(
+          JSON.stringify({
+            type: 'message',
+            data: parsedData.data,
+            messageId: aiMessageId,
+          }) + '\n',
+        ),
+      );
+
+      receivedMessage += parsedData.data;
     } else if (parsedData.type === 'sources') {
-      const sourceMessage: SourceMessage = {
-        id: crypto.randomBytes(7).toString('hex'),
-        data: parsedData.data,
-        date: new Date().toString(),
-      };
-      collectedData.sources.push(sourceMessage);
+      writer.write(
+        encoder.encode(
+          JSON.stringify({
+            type: 'sources',
+            data: parsedData.data,
+            messageId: aiMessageId,
+          }) + '\n',
+        ),
+      );
+
+      const sourceMessageId = crypto.randomBytes(7).toString('hex');
+
+      db.insert(messagesSchema)
+        .values({
+          chatId: chatId,
+          messageId: sourceMessageId,
+          role: 'source',
+          sources: parsedData.data,
+          createdAt: new Date().toString(),
+        })
+        .execute();
     }
   });
+  stream.on('end', () => {
+    writer.write(
+      encoder.encode(
+        JSON.stringify({
+          type: 'messageEnd',
+        }) + '\n',
+      ),
+    );
+    writer.close();
 
-  stream.on('end', async () => {
-    // Process message with agent
-    const agentResult = await processWithAgent(
-      collectedData.message,
-      collectedData.sources,
-    );
-    // Write verified sources
-    await writeVerifiedSources(
-      writer,
-      encoder,
-      agentResult.verifiedSources,
-      collectedData.aiMessageId,
-      chatId,
-    );
-    // Modify response as needed based on agent result
-    await writeResponseWithStatus(
-      writer,
-      encoder,
-      agentResult,
-      collectedData.aiMessageId,
-      chatId,
-    );
+    db.insert(messagesSchema)
+      .values({
+        content: receivedMessage,
+        chatId: chatId,
+        messageId: aiMessageId,
+        role: 'assistant',
+        createdAt: new Date().toString(),
+      })
+      .execute();
   });
-
   stream.on('error', (data) => {
     const parsedData = JSON.parse(data);
     writer.write(
@@ -179,140 +171,6 @@ const handleEmitterEvents = async (
     writer.close();
   });
 };
-
-async function processWithAgent(
-  message: string,
-  sources: SourceMessage[],
-): Promise<AgentResult> {
-  try {
-    const AGENT_SERVICE_URL = process.env.AGENT_SERVICE_URL;
-
-    const response = await fetch(`${AGENT_SERVICE_URL}/pipeline/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: message,
-        sources: sources,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Agent service returned ${response.status}`);
-    }
-
-    const agentResult: AgentResult = await response.json();
-    return agentResult;
-  } catch (error) {
-    console.error('Error calling agent service: ', error);
-    const errorStatus =
-      'The agent failed to verify the sources for this response:\n\n';
-
-    return {
-      message: message,
-      status: errorStatus,
-      messageURLsCount: 0,
-      maliciousMessageURLsCount: 0,
-      sourcesCount: 0,
-      maliciousSourcesCount: 0,
-      maliciousMessageURLs: [],
-      verifiedSources: sources,
-      maliciousSources: [],
-    };
-  }
-}
-
-async function writeVerifiedSources(
-  writer: WritableStreamDefaultWriter,
-  encoder: TextEncoder,
-  sources: SourceMessage[],
-  messageId: string,
-  chatId: string,
-) {
-  for (const source of sources) {
-    writer.write(
-      encoder.encode(
-        JSON.stringify({
-          type: 'sources',
-          data: source.data,
-          messageId: messageId,
-        }) + '\n',
-      ),
-    );
-
-    db.insert(messagesSchema)
-      .values({
-        chatId: chatId,
-        messageId: source.id,
-        role: 'source',
-        sources: source.data,
-        createdAt: source.date,
-      })
-      .execute();
-  }
-}
-
-async function writeResponseWithStatus(
-  writer: WritableStreamDefaultWriter,
-  encoder: TextEncoder,
-  agentResult: AgentResult,
-  messageId: string,
-  chatId: string,
-) {
-  let statusMessage = agentResult.status;
-  let finalMessage = agentResult.message;
-
-  if (statusMessage.length === 0) {
-    console.log(
-      `total: ${agentResult.sourcesCount}${agentResult.maliciousSourcesCount}`,
-    );
-    if (agentResult.maliciousSourcesCount === 0) {
-      statusMessage =
-        'No malicious sources encountered for the following response:\n\n';
-    } else if (agentResult.maliciousSourcesCount < agentResult.sourcesCount) {
-      statusMessage = `Some malicious sources were removed from this response (${agentResult.maliciousSourcesCount}/${agentResult.sourcesCount} removed):\n\n`;
-      // TODO: request rewrite from model with verified sources only
-    } else {
-      statusMessage =
-        'Non-malicious online sources were not available for this query. No external sources were used to generate this response:\n\n';
-      // TODO: request rewrite without sources
-    }
-  }
-
-  const fullResponse = statusMessage + finalMessage;
-
-  writer.write(
-    encoder.encode(
-      JSON.stringify({
-        type: 'message',
-        data: fullResponse,
-        messageId: messageId,
-      }) + '\n',
-    ),
-  );
-
-  writer.write(
-    encoder.encode(
-      JSON.stringify({
-        type: 'messageEnd',
-        messageId: messageId,
-      }) + '\n',
-    ),
-  );
-
-  db.insert(messagesSchema)
-    .values({
-      content: fullResponse,
-      chatId: chatId,
-      messageId: messageId,
-      role: 'assistant',
-      createdAt: new Date().toString(),
-    })
-    .execute();
-
-  writer.close();
-}
 
 const handleHistorySave = async (
   message: Message,
@@ -380,13 +238,8 @@ export const POST = async (req: Request) => {
     const parseBody = safeValidateBody(reqBody);
     if (!parseBody.success) {
       return Response.json(
-        {
-          message: 'Invalid request body',
-          error: parseBody.error,
-        },
-        {
-          status: 400,
-        },
+        { message: 'Invalid request body', error: parseBody.error },
+        { status: 400 },
       );
     }
 
@@ -398,9 +251,7 @@ export const POST = async (req: Request) => {
         {
           message: 'Please provide a message to process',
         },
-        {
-          status: 400,
-        },
+        { status: 400 },
       );
     }
 
@@ -436,9 +287,7 @@ export const POST = async (req: Request) => {
         {
           message: 'Invalid focus mode',
         },
-        {
-          status: 400,
-        },
+        { status: 400 },
       );
     }
 
@@ -469,12 +318,8 @@ export const POST = async (req: Request) => {
   } catch (err) {
     console.error('An error occurred while processing chat request:', err);
     return Response.json(
-      {
-        message: 'An error occurred while processing chat request',
-      },
-      {
-        status: 500,
-      },
+      { message: 'An error occurred while processing chat request' },
+      { status: 500 },
     );
   }
 };

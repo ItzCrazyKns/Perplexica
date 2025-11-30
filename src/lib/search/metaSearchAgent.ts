@@ -37,6 +37,13 @@ export interface MetaSearchAgentType {
   ) => Promise<eventEmitter>;
 }
 
+interface AgentValidationResult {
+  verifiedSources: Document[];
+  status: string;
+  sourcesCount: number;
+  maliciousSourcesCount: number;
+}
+
 interface Config {
   searchWeb: boolean;
   rerank: boolean;
@@ -55,6 +62,7 @@ type BasicChainInput = {
 class MetaSearchAgent implements MetaSearchAgentType {
   private config: Config;
   private strParser = new StringOutputParser();
+  private validationMetadata: AgentValidationResult | null = null;
 
   constructor(config: Config) {
     this.config = config;
@@ -279,9 +287,15 @@ class MetaSearchAgent implements MetaSearchAgentType {
             docs = searchRetrieverResult.docs;
           }
 
+          // Validate Sources
+          this.validationMetadata = await this.validateDocsWithAgent(
+            docs ?? [],
+          );
+          const validatedDocs = this.validationMetadata.verifiedSources;
+
           const sortedDocs = await this.rerankDocs(
             query,
-            docs ?? [],
+            validatedDocs ?? [],
             fileIds,
             embeddings,
             optimizationMode,
@@ -304,6 +318,55 @@ class MetaSearchAgent implements MetaSearchAgentType {
     ]).withConfig({
       runName: 'FinalResponseGenerator',
     });
+  }
+
+  private async validateDocsWithAgent(
+    docs: Document[],
+  ): Promise<AgentValidationResult> {
+    if (docs.length === 0) {
+      return {
+        verifiedSources: docs,
+        status: '',
+        sourcesCount: 0,
+        maliciousSourcesCount: 0,
+      };
+    }
+
+    try {
+      const AGENT_SERVICE_URL = process.env.AGENT_SERVICE_URL;
+
+      const response = await fetch(`${AGENT_SERVICE_URL}/pipeline/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sources: docs,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Agent service returned ${response.status}`);
+      }
+
+      const agentResult: AgentValidationResult = await response.json();
+      return {
+        verifiedSources: agentResult.verifiedSources,
+        status: agentResult.status,
+        sourcesCount: agentResult.sourcesCount,
+        maliciousSourcesCount: agentResult.maliciousSourcesCount,
+      };
+    } catch (error) {
+      console.error('Error calling agent service: ', error);
+
+      return {
+        verifiedSources: [],
+        status:
+          'The security agent failed to verify the sources for this response, so all external sources were blocked.\n\n',
+        sourcesCount: docs.length,
+        maliciousSourcesCount: docs.length,
+      };
+    }
   }
 
   private async rerankDocs(
@@ -448,6 +511,8 @@ class MetaSearchAgent implements MetaSearchAgentType {
     stream: AsyncGenerator<StreamEvent, any, any>,
     emitter: eventEmitter,
   ) {
+    let firstResponseChunk = true;
+
     for await (const event of stream) {
       if (
         event.event === 'on_chain_end' &&
@@ -462,6 +527,20 @@ class MetaSearchAgent implements MetaSearchAgentType {
         event.event === 'on_chain_stream' &&
         event.name === 'FinalResponseGenerator'
       ) {
+        if (
+          firstResponseChunk &&
+          this.validationMetadata &&
+          this.validationMetadata.status
+        ) {
+          emitter.emit(
+            'data',
+            JSON.stringify({
+              type: 'response',
+              data: this.validationMetadata.status,
+            }),
+          );
+          firstResponseChunk = false;
+        }
         emitter.emit(
           'data',
           JSON.stringify({ type: 'response', data: event.data.chunk }),
@@ -486,6 +565,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     systemInstructions: string,
   ) {
     const emitter = new eventEmitter();
+    this.validationMetadata = null;
 
     const answeringChain = await this.createAnsweringChain(
       llm,
