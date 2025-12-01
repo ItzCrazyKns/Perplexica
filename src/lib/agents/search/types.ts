@@ -55,10 +55,15 @@ export type ClassifierInput = {
 };
 
 export type ClassifierOutput = {
-  skipSearch: boolean;
+  classification: {
+    skipSearch: boolean;
+    personalSearch: boolean;
+    academicSearch: boolean;
+    discussionSearch: boolean;
+    showWeatherWidget: boolean;
+    showStockWidget: boolean;
+  };
   standaloneFollowUp: string;
-  intents: string[];
-  widgets: WidgetConfig[];
 };
 
 export type AdditionalConfig = {
