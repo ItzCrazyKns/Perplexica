@@ -1,3 +1,4 @@
+import z from 'zod';
 import {
   GenerateObjectInput,
   GenerateOptions,
@@ -12,10 +13,10 @@ abstract class BaseLLM<CONFIG> {
   abstract streamText(
     input: GenerateTextInput,
   ): AsyncGenerator<StreamTextOutput>;
-  abstract generateObject<T>(input: GenerateObjectInput): Promise<T>;
+  abstract generateObject<T>(input: GenerateObjectInput): Promise<z.infer<T>>;
   abstract streamObject<T>(
     input: GenerateObjectInput,
-  ): AsyncGenerator<Partial<T>>;
+  ): AsyncGenerator<Partial<z.infer<T>>>;
 }
 
 export default BaseLLM;
