@@ -29,27 +29,21 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     });
   }
 
-  withOptions(options: GenerateOptions) {
-    this.config.options = {
-      ...this.config.options,
-      ...options,
-    };
-
-    return this;
-  }
-
   async generateText(input: GenerateTextInput): Promise<GenerateTextOutput> {
-    this.withOptions(input.options || {});
-
     const response = await this.openAIClient.chat.completions.create({
       model: this.config.model,
       messages: input.messages,
-      temperature: this.config.options?.temperature || 1.0,
-      top_p: this.config.options?.topP,
-      max_completion_tokens: this.config.options?.maxTokens,
-      stop: this.config.options?.stopSequences,
-      frequency_penalty: this.config.options?.frequencyPenalty,
-      presence_penalty: this.config.options?.presencePenalty,
+      temperature:
+        input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
+      top_p: input.options?.topP ?? this.config.options?.topP,
+      max_completion_tokens:
+        input.options?.maxTokens ?? this.config.options?.maxTokens,
+      stop: input.options?.stopSequences ?? this.config.options?.stopSequences,
+      frequency_penalty:
+        input.options?.frequencyPenalty ??
+        this.config.options?.frequencyPenalty,
+      presence_penalty:
+        input.options?.presencePenalty ?? this.config.options?.presencePenalty,
     });
 
     if (response.choices && response.choices.length > 0) {
@@ -67,17 +61,20 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   async *streamText(
     input: GenerateTextInput,
   ): AsyncGenerator<StreamTextOutput> {
-    this.withOptions(input.options || {});
-
     const stream = await this.openAIClient.chat.completions.create({
       model: this.config.model,
       messages: input.messages,
-      temperature: this.config.options?.temperature || 1.0,
-      top_p: this.config.options?.topP,
-      max_completion_tokens: this.config.options?.maxTokens,
-      stop: this.config.options?.stopSequences,
-      frequency_penalty: this.config.options?.frequencyPenalty,
-      presence_penalty: this.config.options?.presencePenalty,
+      temperature:
+        input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
+      top_p: input.options?.topP ?? this.config.options?.topP,
+      max_completion_tokens:
+        input.options?.maxTokens ?? this.config.options?.maxTokens,
+      stop: input.options?.stopSequences ?? this.config.options?.stopSequences,
+      frequency_penalty:
+        input.options?.frequencyPenalty ??
+        this.config.options?.frequencyPenalty,
+      presence_penalty:
+        input.options?.presencePenalty ?? this.config.options?.presencePenalty,
       stream: true,
     });
 
@@ -95,17 +92,20 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   }
 
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
-    this.withOptions(input.options || {});
-
     const response = await this.openAIClient.chat.completions.parse({
       messages: input.messages,
       model: this.config.model,
-      temperature: this.config.options?.temperature || 1.0,
-      top_p: this.config.options?.topP,
-      max_completion_tokens: this.config.options?.maxTokens,
-      stop: this.config.options?.stopSequences,
-      frequency_penalty: this.config.options?.frequencyPenalty,
-      presence_penalty: this.config.options?.presencePenalty,
+      temperature:
+        input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
+      top_p: input.options?.topP ?? this.config.options?.topP,
+      max_completion_tokens:
+        input.options?.maxTokens ?? this.config.options?.maxTokens,
+      stop: input.options?.stopSequences ?? this.config.options?.stopSequences,
+      frequency_penalty:
+        input.options?.frequencyPenalty ??
+        this.config.options?.frequencyPenalty,
+      presence_penalty:
+        input.options?.presencePenalty ?? this.config.options?.presencePenalty,
       response_format: zodResponseFormat(input.schema, 'object'),
     });
 
@@ -123,17 +123,20 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   async *streamObject<T>(input: GenerateObjectInput): AsyncGenerator<T> {
     let recievedObj: string = '';
 
-    this.withOptions(input.options || {});
-
     const stream = this.openAIClient.responses.stream({
       model: this.config.model,
       input: input.messages,
-      temperature: this.config.options?.temperature || 1.0,
-      top_p: this.config.options?.topP,
-      max_completion_tokens: this.config.options?.maxTokens,
-      stop: this.config.options?.stopSequences,
-      frequency_penalty: this.config.options?.frequencyPenalty,
-      presence_penalty: this.config.options?.presencePenalty,
+      temperature:
+        input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
+      top_p: input.options?.topP ?? this.config.options?.topP,
+      max_completion_tokens:
+        input.options?.maxTokens ?? this.config.options?.maxTokens,
+      stop: input.options?.stopSequences ?? this.config.options?.stopSequences,
+      frequency_penalty:
+        input.options?.frequencyPenalty ??
+        this.config.options?.frequencyPenalty,
+      presence_penalty:
+        input.options?.presencePenalty ?? this.config.options?.presencePenalty,
       text: {
         format: zodTextFormat(input.schema, 'object'),
       },

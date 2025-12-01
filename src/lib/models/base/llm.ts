@@ -8,7 +8,6 @@ import {
 
 abstract class BaseLLM<CONFIG> {
   constructor(protected config: CONFIG) {}
-  abstract withOptions(options: GenerateOptions): this;
   abstract generateText(input: GenerateTextInput): Promise<GenerateTextOutput>;
   abstract streamText(
     input: GenerateTextInput,

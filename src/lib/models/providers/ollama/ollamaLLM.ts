@@ -35,28 +35,24 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
     });
   }
 
-  withOptions(options: GenerateOptions) {
-    this.config.options = {
-      ...this.config.options,
-      ...options,
-    };
-    return this;
-  }
-
   async generateText(input: GenerateTextInput): Promise<GenerateTextOutput> {
-    this.withOptions(input.options || {});
-
     const res = await this.ollamaClient.chat({
       model: this.config.model,
       messages: input.messages,
       options: {
-        top_p: this.config.options?.topP,
-        temperature: this.config.options?.temperature,
-        num_predict: this.config.options?.maxTokens,
+        top_p: input.options?.topP ?? this.config.options?.topP,
+        temperature:
+          input.options?.temperature ?? this.config.options?.temperature ?? 0.7,
+        num_predict: input.options?.maxTokens ?? this.config.options?.maxTokens,
         num_ctx: 32000,
-        frequency_penalty: this.config.options?.frequencyPenalty,
-        presence_penalty: this.config.options?.presencePenalty,
-        stop: this.config.options?.stopSequences,
+        frequency_penalty:
+          input.options?.frequencyPenalty ??
+          this.config.options?.frequencyPenalty,
+        presence_penalty:
+          input.options?.presencePenalty ??
+          this.config.options?.presencePenalty,
+        stop:
+          input.options?.stopSequences ?? this.config.options?.stopSequences,
       },
     });
 
@@ -71,20 +67,24 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
   async *streamText(
     input: GenerateTextInput,
   ): AsyncGenerator<StreamTextOutput> {
-    this.withOptions(input.options || {});
-
     const stream = await this.ollamaClient.chat({
       model: this.config.model,
       messages: input.messages,
       stream: true,
       options: {
-        top_p: this.config.options?.topP,
-        temperature: this.config.options?.temperature,
+        top_p: input.options?.topP ?? this.config.options?.topP,
+        temperature:
+          input.options?.temperature ?? this.config.options?.temperature ?? 0.7,
         num_ctx: 32000,
-        num_predict: this.config.options?.maxTokens,
-        frequency_penalty: this.config.options?.frequencyPenalty,
-        presence_penalty: this.config.options?.presencePenalty,
-        stop: this.config.options?.stopSequences,
+        num_predict: input.options?.maxTokens ?? this.config.options?.maxTokens,
+        frequency_penalty:
+          input.options?.frequencyPenalty ??
+          this.config.options?.frequencyPenalty,
+        presence_penalty:
+          input.options?.presencePenalty ??
+          this.config.options?.presencePenalty,
+        stop:
+          input.options?.stopSequences ?? this.config.options?.stopSequences,
       },
     });
 
@@ -100,8 +100,6 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
   }
 
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
-    this.withOptions(input.options || {});
-
     const response = await this.ollamaClient.chat({
       model: this.config.model,
       messages: input.messages,
@@ -110,12 +108,18 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
         ? { think: false }
         : {}),
       options: {
-        top_p: this.config.options?.topP,
-        temperature: 0.7,
-        num_predict: this.config.options?.maxTokens,
-        frequency_penalty: this.config.options?.frequencyPenalty,
-        presence_penalty: this.config.options?.presencePenalty,
-        stop: this.config.options?.stopSequences,
+        top_p: input.options?.topP ?? this.config.options?.topP,
+        temperature:
+          input.options?.temperature ?? this.config.options?.temperature ?? 0.7,
+        num_predict: input.options?.maxTokens ?? this.config.options?.maxTokens,
+        frequency_penalty:
+          input.options?.frequencyPenalty ??
+          this.config.options?.frequencyPenalty,
+        presence_penalty:
+          input.options?.presencePenalty ??
+          this.config.options?.presencePenalty,
+        stop:
+          input.options?.stopSequences ?? this.config.options?.stopSequences,
       },
     });
 
@@ -129,8 +133,6 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
   async *streamObject<T>(input: GenerateObjectInput): AsyncGenerator<T> {
     let recievedObj: string = '';
 
-    this.withOptions(input.options || {});
-
     const stream = await this.ollamaClient.chat({
       model: this.config.model,
       messages: input.messages,
@@ -140,12 +142,18 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
         ? { think: false }
         : {}),
       options: {
-        top_p: this.config.options?.topP,
-        temperature: 0.7,
-        num_predict: this.config.options?.maxTokens,
-        frequency_penalty: this.config.options?.frequencyPenalty,
-        presence_penalty: this.config.options?.presencePenalty,
-        stop: this.config.options?.stopSequences,
+        top_p: input.options?.topP ?? this.config.options?.topP,
+        temperature:
+          input.options?.temperature ?? this.config.options?.temperature ?? 0.7,
+        num_predict: input.options?.maxTokens ?? this.config.options?.maxTokens,
+        frequency_penalty:
+          input.options?.frequencyPenalty ??
+          this.config.options?.frequencyPenalty,
+        presence_penalty:
+          input.options?.presencePenalty ??
+          this.config.options?.presencePenalty,
+        stop:
+          input.options?.stopSequences ?? this.config.options?.stopSequences,
       },
     });
 
