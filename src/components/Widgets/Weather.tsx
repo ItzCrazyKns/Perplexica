@@ -305,7 +305,7 @@ const Weather = ({
             <div>
               <div className="flex items-baseline gap-1">
                 <span className="text-4xl font-bold drop-shadow-md">
-                  {Math.round(current.temperature_2m)}°
+                  {current.temperature_2m}°
                 </span>
                 <span className="text-lg">F C</span>
               </div>
@@ -316,8 +316,7 @@ const Weather = ({
           </div>
           <div className="text-right">
             <p className="text-xs font-medium opacity-90">
-              {Math.round(daily.temperature_2m_max[0])}°{' '}
-              {Math.round(daily.temperature_2m_min[0])}°
+              {daily.temperature_2m_max[0]}° {daily.temperature_2m_min[0]}°
             </p>
           </div>
         </div>
