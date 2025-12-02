@@ -31,6 +31,10 @@ NOTE: BY GENERAL KNOWLEDGE WE MEAN INFORMATION THAT IS OBVIOUS, WIDELY KNOWN, OR
    - Set it to true if the user's query is specifically about current stock prices or stock related information for particular companies. Never use it for a market analysis or news about stock market.
    - Set it to true for queries like "What's the stock price of [Company]?" or "How is the [Stock] performing today?" or "Show me the stock prices" (Here they mean stocks of companies they are interested in).
    - If it can fully answer the user query without needing additional search, set skipSearch to true as well.
+7. showCalculationWidget (boolean): Decide if displaying a calculation widget would adequately address the user's query.
+   - Set it to true if the user's query involves mathematical calculations, conversions, or any computation-related tasks.
+   - Set it to true for queries like "What is 25% of 80?" or "Convert 100 USD to EUR" or "Calculate the square root of 256" or "What is 2 * 3 + 5?" or other mathematical expressions.
+   - If it can fully answer the user query without needing additional search, set skipSearch to true as well.
 </labels>
 
 <standalone_followup>
