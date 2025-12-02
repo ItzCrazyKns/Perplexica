@@ -1,66 +1,66 @@
 import z from 'zod';
 import { Widget } from '../types';
-import { evaluate as mathEval } from 'mathjs';
+import formatChatHistoryAsString from '@/lib/utils/formatHistory';
+import { exp, evaluate as mathEval } from 'mathjs';
 
 const schema = z.object({
-  type: z.literal('calculation'),
   expression: z
     .string()
-    .describe(
-      "A valid mathematical expression to be evaluated (e.g., '2 + 2', '3 * (4 + 5)').",
-    ),
+    .describe('Mathematical expression to calculate or evaluate.'),
+  notPresent: z
+    .boolean()
+    .describe('Whether there is any need for the calculation widget.'),
 });
 
-const calculationWidget: Widget<typeof schema> = {
-  name: 'calculation',
-  description: `Performs mathematical calculations and evaluates mathematical expressions. Supports arithmetic operations, algebraic equations, functions, and complex mathematical computations.
+const system = `
+<role>
+Assistant is a calculation expression extractor. You will recieve a user follow up and a conversation history.
+Your task is to determine if there is a mathematical expression that needs to be calculated or evaluated. If there is, extract the expression and return it. If there is no need for any calculation, set notPresent to true.
+</role>
 
-**What it provides:**
-- Evaluates mathematical expressions and returns computed results
-- Handles basic arithmetic (+, -, *, /)
-- Supports functions (sqrt, sin, cos, log, etc.)
-- Can process complex expressions with parentheses and order of operations
+<instructions>
+Make sure that the extracted expression is valid and can be used to calculate the result with Math JS library (https://mathjs.org/). If the expression is not valid, set notPresent to true.
+If you feel like you cannot extract a valid expression, set notPresent to true.
+</instructions>
 
-**When to use:**
-- User asks to calculate, compute, or evaluate a mathematical expression
-- Questions like "what is X", "calculate Y", "how much is Z" where X/Y/Z are math expressions
-- Any request involving numbers and mathematical operations
-
-**Example call:**
+<output_format>
+You must respond in the following JSON format without any extra text, explanations or filler sentences:
 {
-  "type": "calculation",
-  "expression": "25% of 480"
+  "expression": string,
+  "notPresent": boolean
 }
+</output_format>
+`;
 
-{
-  "type": "calculation", 
-  "expression": "sqrt(144) + 5 * 2"
-}
-
-**Important:** The expression must be valid mathematical syntax that can be evaluated by mathjs. Format percentages as "0.25 * 480" or "25% of 480". Do not include currency symbols, units, or non-mathematical text in the expression.`,
-  schema: schema,
-  execute: async (params, _) => {
-    try {
-      const result = mathEval(params.expression);
-
-      return {
-        type: 'calculation_result',
-        llmContext: `The result of the expression "${params.expression}" is ${result}.`,
-        data: {
-          expression: params.expression,
-          result: result,
+const calculationWidget: Widget = {
+  type: 'calculationWidget',
+  shouldExecute: (classification) =>
+    classification.classification.showCalculationWidget,
+  execute: async (input) => {
+    const output = await input.llm.generateObject<typeof schema>({
+      messages: [
+        {
+          role: 'system',
+          content: system,
         },
-      };
-    } catch (error) {
-      return {
-        type: 'calculation_result',
-        llmContext: 'Failed to evaluate mathematical expression.',
-        data: {
-          expression: params.expression,
-          result: `Error evaluating expression: ${error}`,
+        {
+          role: 'user',
+          content: `<conversation_history>\n${formatChatHistoryAsString(input.chatHistory)}\n</conversation_history>\n<user_follow_up>\n${input.followUp}\n</user_follow_up>`,
         },
-      };
-    }
+      ],
+      schema,
+    });
+
+    const result = mathEval(output.expression);
+
+    return {
+      type: 'calculation_result',
+      llmContext: `The result of the calculation for the expression "${output.expression}" is: ${result}`,
+      data: {
+        expression: output.expression,
+        result,
+      },
+    };
   },
 };
 

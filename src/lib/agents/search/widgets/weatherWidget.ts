@@ -1,8 +1,8 @@
 import z from 'zod';
 import { Widget } from '../types';
+import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 
-const WeatherWidgetSchema = z.object({
-  type: z.literal('weather'),
+const schema = z.object({
   location: z
     .string()
     .describe(
@@ -18,38 +18,63 @@ const WeatherWidgetSchema = z.object({
     .describe(
       'Longitude coordinate in decimal degrees (e.g., -74.0060). Only use when location name is empty.',
     ),
+  notPresent: z
+    .boolean()
+    .describe('Whether there is no need for the weather widget.'),
 });
 
-const weatherWidget: Widget<typeof WeatherWidgetSchema> = {
-  name: 'weather',
-  description: `Provides comprehensive current weather information and forecasts for any location worldwide. Returns real-time weather data including temperature, conditions, humidity, wind, and multi-day forecasts.
+const systemPrompt = `
+<role>
+You are a location extractor for weather queries. You will receive a user follow up and a conversation history.
+Your task is to determine if the user is asking about weather and extract the location they want weather for.
+</role>
 
-You can set skipSearch to true if the weather widget can fully answer the user's query without needing additional web search.
+<instructions>
+- If the user is asking about weather, extract the location name OR coordinates (never both).
+- If using location name, set lat and lon to 0.
+- If using coordinates, set location to empty string.
+- If you cannot determine a valid location or the query is not weather-related, set notPresent to true.
+- Location should be specific (city, state/region, country) for best results.
+- You have to give the location so that it can be used to fetch weather data, it cannot be left empty unless notPresent is true.
+- Make sure to infer short forms of location names (e.g., "NYC" -> "New York City", "LA" -> "Los Angeles").
+</instructions>
 
-**What it provides:**
-- Current weather conditions (temperature, feels-like, humidity, precipitation)
-- Wind speed, direction, and gusts
-- Weather codes/conditions (clear, cloudy, rainy, etc.)
-- Hourly forecast for next 24 hours
-- Daily forecast for next 7 days (high/low temps, precipitation probability)
-- Timezone information
-
-**When to use:**
-- User asks about weather in a location ("weather in X", "is it raining in Y")
-- Questions about temperature, conditions, or forecast
-- Any weather-related query for a specific place
-
-**Example call:**
+<output_format>
+You must respond in the following JSON format without any extra text, explanations or filler sentences:
 {
-  "type": "weather",
-  "location": "San Francisco, CA, USA",
-  "lat": 0,
-  "lon": 0
+  "location": string,
+  "lat": number,
+  "lon": number,
+  "notPresent": boolean
 }
+</output_format>
+`;
 
-**Important:** Provide EITHER a location name OR latitude/longitude coordinates, never both. If using location name, set lat/lon to 0. Location should be specific (city, state/region, country) for best results.`,
-  schema: WeatherWidgetSchema,
-  execute: async (params, _) => {
+const weatherWidget: Widget = {
+  type: 'weatherWidget',
+  shouldExecute: (classification) =>
+    classification.classification.showWeatherWidget,
+  execute: async (input) => {
+    const output = await input.llm.generateObject<typeof schema>({
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt,
+        },
+        {
+          role: 'user',
+          content: `<conversation_history>\n${formatChatHistoryAsString(input.chatHistory)}\n</conversation_history>\n<user_follow_up>\n${input.followUp}\n</user_follow_up>`,
+        },
+      ],
+      schema,
+    });
+
+    if (output.notPresent) {
+      return;
+    }
+
+    const params = output;
+
     try {
       if (
         params.location === '' &&

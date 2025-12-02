@@ -19,26 +19,17 @@ export type SearchAgentInput = {
   config: SearchAgentConfig;
 };
 
-export interface Intent {
-  name: string;
-  description: string;
-  requiresSearch: boolean;
-  enabled: (config: { sources: SearchSources[] }) => boolean;
-}
-
-export type Widget<TSchema extends z.ZodObject<any> = z.ZodObject<any>> = {
-  name: string;
-  description: string;
-  schema: TSchema;
-  execute: (
-    params: z.infer<TSchema>,
-    additionalConfig: AdditionalConfig,
-  ) => Promise<WidgetOutput>;
+export type WidgetInput = {
+  chatHistory: ChatTurnMessage[];
+  followUp: string;
+  classification: ClassifierOutput;
+  llm: BaseLLM<any>;
 };
 
-export type WidgetConfig = {
+export type Widget = {
   type: string;
-  params: Record<string, any>;
+  shouldExecute: (classification: ClassifierOutput) => boolean;
+  execute: (input: WidgetInput) => Promise<WidgetOutput | void>;
 };
 
 export type WidgetOutput = {

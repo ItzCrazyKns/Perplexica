@@ -1,26 +1,24 @@
 import { ResearcherOutput, SearchAgentInput } from './types';
 import SessionManager from '@/lib/session';
-import Classifier from './classifier';
-import { WidgetRegistry } from './widgets';
+import { classify } from './classifier';
 import Researcher from './researcher';
 import { getWriterPrompt } from '@/lib/prompts/search/writer';
-import fs from 'fs';
+import { WidgetExecutor } from './widgets';
 
 class SearchAgent {
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
-    const classifier = new Classifier();
-
-    const classification = await classifier.classify({
+    const classification = await classify({
       chatHistory: input.chatHistory,
       enabledSources: input.config.sources,
       query: input.followUp,
       llm: input.config.llm,
     });
 
-    const widgetPromise = WidgetRegistry.executeAll(classification.widgets, {
+    const widgetPromise = WidgetExecutor.executeAll({
+      classification,
+      chatHistory: input.chatHistory,
+      followUp: input.followUp,
       llm: input.config.llm,
-      embedding: input.config.embedding,
-      session: session,
     }).then((widgetOutputs) => {
       widgetOutputs.forEach((o) => {
         session.emitBlock({
@@ -37,7 +35,7 @@ class SearchAgent {
 
     let searchPromise: Promise<ResearcherOutput> | null = null;
 
-    if (!classification.skipSearch) {
+    if (!classification.classification.skipSearch) {
       const researcher = new Researcher();
       searchPromise = researcher.research(session, {
         chatHistory: input.chatHistory,

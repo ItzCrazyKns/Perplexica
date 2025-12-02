@@ -61,9 +61,7 @@ class Researcher {
         maxIteration,
       );
 
-      const actionStream = input.config.llm.streamObject<
-        z.infer<typeof schema>
-      >({
+      const actionStream = input.config.llm.streamObject<typeof schema>({
         messages: [
           {
             role: 'system',

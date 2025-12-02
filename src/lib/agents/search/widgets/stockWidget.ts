@@ -1,13 +1,13 @@
 import z from 'zod';
 import { Widget } from '../types';
 import YahooFinance from 'yahoo-finance2';
+import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 
 const yf = new YahooFinance({
   suppressNotices: ['yahooSurvey'],
 });
 
 const schema = z.object({
-  type: z.literal('stock'),
   name: z
     .string()
     .describe(
@@ -19,60 +19,59 @@ const schema = z.object({
     .describe(
       "Optional array of up to 3 stock names to compare against the base name (e.g., ['Microsoft', 'GOOGL', 'Meta']). Charts will show percentage change comparison.",
     ),
+  notPresent: z
+    .boolean()
+    .describe('Whether there is no need for the stock widget.'),
 });
 
-const stockWidget: Widget<typeof schema> = {
-  name: 'stock',
-  description: `Provides comprehensive real-time stock market data and financial information for any publicly traded company. Returns detailed quote data, market status, trading metrics, and company fundamentals.
+const systemPrompt = `
+<role>
+You are a stock ticker/name extractor. You will receive a user follow up and a conversation history.
+Your task is to determine if the user is asking about stock information and extract the stock name(s) they want data for.
+</role>
 
-You can set skipSearch to true if the stock widget can fully answer the user's query without needing additional web search.
+<instructions>
+- If the user is asking about a stock, extract the primary stock name or ticker.
+- If the user wants to compare stocks, extract up to 3 comparison stock names in comparisonNames.
+- You can use either stock names (e.g., "Nvidia", "Apple") or tickers (e.g., "NVDA", "AAPL").
+- If you cannot determine a valid stock or the query is not stock-related, set notPresent to true.
+- If no comparison is needed, set comparisonNames to an empty array.
+</instructions>
 
-**What it provides:**
-- **Real-time Price Data**: Current price, previous close, open price, day's range (high/low)
-- **Market Status**: Whether market is currently open or closed, trading sessions
-- **Trading Metrics**: Volume, average volume, bid/ask prices and sizes
-- **Performance**: Price changes (absolute and percentage), 52-week high/low range
-- **Valuation**: Market capitalization, P/E ratio, earnings per share (EPS)
-- **Dividends**: Dividend rate, dividend yield, ex-dividend date
-- **Company Info**: Full company name, exchange, currency, sector/industry (when available)
-- **Advanced Metrics**: Beta, trailing/forward P/E, book value, price-to-book ratio
-- **Charts Data**: Historical price movements for visualization
-- **Comparison**: Compare up to 3 stocks side-by-side with percentage-based performance visualization
-
-**When to use:**
-- User asks about a stock price ("What's AAPL stock price?", "How is Tesla doing?")
-- Questions about company market performance ("Is Microsoft up or down today?")
-- Requests for stock market data, trading info, or company valuation
-- Queries about dividends, P/E ratio, market cap, or other financial metrics
-- Any stock/equity-related question for a specific company
-- Stock comparisons ("Compare AAPL vs MSFT", "How is TSLA doing vs RIVN and LCID?")
-
-**Example calls:**
+<output_format>
+You must respond in the following JSON format without any extra text, explanations or filler sentences:
 {
-  "type": "stock",
-  "name": "AAPL"
+  "name": string,
+  "comparisonNames": string[],
+  "notPresent": boolean
 }
+</output_format>
+`;
 
-{
-  "type": "stock",
-  "name": "TSLA",
-  "comparisonNames": ["RIVN", "LCID"]
-}
+const stockWidget: Widget = {
+  type: 'stockWidget',
+  shouldExecute: (classification) =>
+    classification.classification.showStockWidget,
+  execute: async (input) => {
+    const output = await input.llm.generateObject<typeof schema>({
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt,
+        },
+        {
+          role: 'user',
+          content: `<conversation_history>\n${formatChatHistoryAsString(input.chatHistory)}\n</conversation_history>\n<user_follow_up>\n${input.followUp}\n</user_follow_up>`,
+        },
+      ],
+      schema,
+    });
 
-{
-  "type": "stock",
-  "name": "Google",
-  "comparisonNames": ["Microsoft", "Meta", "Amazon"]
-}
+    if (output.notPresent) {
+      return;
+    }
 
-**Important:** 
-- You can use both tickers and names (prefer name when you're not aware of the ticker).
-- For companies with multiple share classes, use the most common one.
-- The widget works for stocks listed on major exchanges (NYSE, NASDAQ, etc.)
-- Returns comprehensive data; the UI will display relevant metrics based on availability
-- Market data may be delayed by 15-20 minutes for free data sources during trading hours`,
-  schema: schema,
-  execute: async (params, _) => {
+    const params = output;
     try {
       const name = params.name;
 

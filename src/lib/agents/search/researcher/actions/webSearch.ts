@@ -26,7 +26,7 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
   name: 'web_search',
   description: actionDescription,
   schema: actionSchema,
-  enabled: (config) => config.classification.intents.includes('web_search'),
+  enabled: (config) => true,
   execute: async (input, _) => {
     let results: Chunk[] = [];
 

@@ -1,10 +1,10 @@
 import calculationWidget from './calculationWidget';
-import WidgetRegistry from './registry';
+import WidgetExecutor from './executor';
 import weatherWidget from './weatherWidget';
 import stockWidget from './stockWidget';
 
-WidgetRegistry.register(weatherWidget);
-WidgetRegistry.register(calculationWidget);
-WidgetRegistry.register(stockWidget);
+WidgetExecutor.register(weatherWidget);
+WidgetExecutor.register(calculationWidget);
+WidgetExecutor.register(stockWidget);
 
-export { WidgetRegistry };
+export { WidgetExecutor };
