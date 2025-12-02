@@ -23,6 +23,9 @@ const schema = z.object({
     showStockWidget: z
       .boolean()
       .describe('Indicates whether to show the stock widget.'),
+    showCalculationWidget: z
+      .boolean()
+      .describe('Indicates whether to show the calculation widget.'),
   }),
   standaloneFollowUp: z
     .string()
