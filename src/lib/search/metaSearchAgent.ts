@@ -24,6 +24,7 @@ import computeSimilarity from '../utils/computeSimilarity';
 import formatChatHistoryAsString from '../utils/formatHistory';
 import eventEmitter from 'events';
 import { StreamEvent } from '@langchain/core/tracers/log_stream';
+import { searchLocalCorpus } from '../local_corpus';
 
 export interface MetaSearchAgentType {
   searchAndAnswer: (
@@ -226,7 +227,12 @@ class MetaSearchAgent implements MetaSearchAgentType {
         } else {
           question = question.replace(/<think>.*?<\/think>/g, '');
 
-          const res = await searchSearxng(question, {
+          // const res = await searchSearxng(question, {
+          //   language: 'en',
+          //   engines: this.config.activeEngines,
+          // });
+
+          const res = await searchLocalCorpus(question, {
             language: 'en',
             engines: this.config.activeEngines,
           });
