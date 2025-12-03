@@ -295,6 +295,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
 
           // Validate Sources
           this.validationMetadata = await this.validateDocsWithAgent(
+            query,
             docs ?? [],
           );
           const validatedDocs = this.validationMetadata.verifiedSources;
@@ -327,6 +328,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
   }
 
   private async validateDocsWithAgent(
+    query: string,
     docs: Document[],
   ): Promise<AgentValidationResult> {
     if (docs.length === 0) {
@@ -347,6 +349,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          query: query,
           sources: docs,
         }),
       });
