@@ -29,7 +29,6 @@
     "axios": "^1.8.3",
     "better-sqlite3": "^11.9.1",
     "clsx": "^2.1.0",
-    "compute-cosine-similarity": "^1.1.0",
     "drizzle-orm": "^0.40.1",
     "framer-motion": "^12.23.24",
     "html-to-text": "^9.0.5",
