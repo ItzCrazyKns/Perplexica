@@ -3,6 +3,15 @@ export type ChatTurnMessage = {
   content: string;
 };
 
+export type ToolMessage = {
+  role: 'tool';
+  id: string;
+  name: string;
+  content: string;
+};
+
+export type Message = ChatTurnMessage | ToolMessage;
+
 export type Chunk = {
   content: string;
   metadata: Record<string, any>;
