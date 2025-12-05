@@ -1,6 +1,11 @@
 # Perplexica 🔍
 
-**Important Note:** *This repository has been modified to connect to a multi-layered security agent which can detect phishing links.*
+## Modifications
+**Important Note:** *This repository has been modified to connect to a multi-layered security agent which can detect phishing links and to search on a local knowledge corpus.*
+
+Changes to this repository include adding the agent processing entry point in `src/lib/search/metaSearchAgent.ts` (adding the function `validateDocsWithAgent()`--which acts as the entry point to the agent processing pipeline--and a call to `searchLocalCorpus()` in `createSearchRetrieverChain()`) and modifying `src/lib/searxng.ts` to export the interfaces `SearxngSearchOptions` and `SearxngSearchResults` for use in the newly created file: `src/lib/local_corpus.ts` which contains the call to the local corpus.
+
+## Introduction
 
 [![GitHub Repo stars](https://img.shields.io/github/stars/ItzCrazyKns/Perplexica?style=social)](https://github.com/ItzCrazyKns/Perplexica/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/ItzCrazyKns/Perplexica?style=social)](https://github.com/ItzCrazyKns/Perplexica/network/members)
