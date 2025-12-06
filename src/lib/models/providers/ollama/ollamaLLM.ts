@@ -7,8 +7,10 @@ import {
   GenerateTextOutput,
   StreamTextOutput,
 } from '../../types';
-import { Ollama, Tool as OllamaTool } from 'ollama';
+import { Ollama, Tool as OllamaTool, Message as OllamaMessage } from 'ollama';
 import { parse } from 'partial-json';
+import crypto from 'crypto';
+import { Message } from '@/lib/types';
 
 type OllamaConfig = {
   baseURL: string;
@@ -35,6 +37,33 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
     });
   }
 
+  convertToOllamaMessages(messages: Message[]): OllamaMessage[] {
+    return messages.map((msg) => {
+      if (msg.role === 'tool') {
+        return {
+          role: 'tool',
+          tool_name: msg.name,
+          content: msg.content,
+        } as OllamaMessage;
+      } else if (msg.role === 'assistant') {
+        return {
+          role: 'assistant',
+          content: msg.content,
+          tool_calls:
+            msg.tool_calls?.map((tc, i) => ({
+              function: {
+                index: i,
+                name: tc.name,
+                arguments: tc.arguments,
+              },
+            })) || [],
+        };
+      }
+
+      return msg;
+    });
+  }
+
   async generateText(input: GenerateTextInput): Promise<GenerateTextOutput> {
     const ollamaTools: OllamaTool[] = [];
 
@@ -51,8 +80,11 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
 
     const res = await this.ollamaClient.chat({
       model: this.config.model,
-      messages: input.messages,
+      messages: this.convertToOllamaMessages(input.messages),
       tools: ollamaTools.length > 0 ? ollamaTools : undefined,
+      ...(reasoningModels.find((m) => this.config.model.includes(m))
+        ? { think: false }
+        : {}),
       options: {
         top_p: input.options?.topP ?? this.config.options?.topP,
         temperature:
@@ -74,6 +106,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       content: res.message.content,
       toolCalls:
         res.message.tool_calls?.map((tc) => ({
+          id: crypto.randomUUID(),
           name: tc.function.name,
           arguments: tc.function.arguments,
         })) || [],
@@ -101,8 +134,11 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
 
     const stream = await this.ollamaClient.chat({
       model: this.config.model,
-      messages: input.messages,
+      messages: this.convertToOllamaMessages(input.messages),
       stream: true,
+      ...(reasoningModels.find((m) => this.config.model.includes(m))
+        ? { think: false }
+        : {}),
       tools: ollamaTools.length > 0 ? ollamaTools : undefined,
       options: {
         top_p: input.options?.topP ?? this.config.options?.topP,
@@ -126,6 +162,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
         contentChunk: chunk.message.content,
         toolCallChunk:
           chunk.message.tool_calls?.map((tc) => ({
+            id: crypto.randomUUID(),
             name: tc.function.name,
             arguments: tc.function.arguments,
           })) || [],
@@ -140,7 +177,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
     const response = await this.ollamaClient.chat({
       model: this.config.model,
-      messages: input.messages,
+      messages: this.convertToOllamaMessages(input.messages),
       format: z.toJSONSchema(input.schema),
       ...(reasoningModels.find((m) => this.config.model.includes(m))
         ? { think: false }
@@ -173,7 +210,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
 
     const stream = await this.ollamaClient.chat({
       model: this.config.model,
-      messages: input.messages,
+      messages: this.convertToOllamaMessages(input.messages),
       format: z.toJSONSchema(input.schema),
       stream: true,
       ...(reasoningModels.find((m) => this.config.model.includes(m))
