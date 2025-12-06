@@ -1,5 +1,5 @@
 import z from 'zod';
-import { ChatTurnMessage } from '../types';
+import { Message } from '../types';
 
 type Model = {
   name: string;
@@ -44,13 +44,13 @@ type Tool = {
 };
 
 type ToolCall = {
-  id?: string;
+  id: string;
   name: string;
   arguments: Record<string, any>;
 };
 
 type GenerateTextInput = {
-  messages: ChatTurnMessage[];
+  messages: Message[];
   tools?: Tool[];
   options?: GenerateOptions;
 };
@@ -63,14 +63,14 @@ type GenerateTextOutput = {
 
 type StreamTextOutput = {
   contentChunk: string;
-  toolCallChunk: Partial<ToolCall>[];
+  toolCallChunk: ToolCall[];
   additionalInfo?: Record<string, any>;
   done?: boolean;
 };
 
 type GenerateObjectInput = {
   schema: z.ZodTypeAny;
-  messages: ChatTurnMessage[];
+  messages: Message[];
   options?: GenerateOptions;
 };
 
