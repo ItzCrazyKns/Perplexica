@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   BrainCog,
   ChevronLeft,
+  ExternalLink,
   Search,
   Sliders,
   ToggleRight,
@@ -115,35 +116,52 @@ const SettingsDialogue = ({
             </div>
           ) : (
             <div className="flex flex-1 inset-0 h-full overflow-hidden">
-              <div className="hidden lg:flex flex-col w-[240px] border-r border-white-200 dark:border-dark-200 h-full px-3 pt-3 overflow-y-auto">
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="group flex flex-row items-center hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg"
-                >
-                  <ChevronLeft
-                    size={18}
-                    className="text-black/50 dark:text-white/50 group-hover:text-black/70 group-hover:dark:text-white/70"
-                  />
-                  <p className="text-black/50 dark:text-white/50 group-hover:text-black/70 group-hover:dark:text-white/70 text-[14px]">
-                    Back
+              <div className="hidden lg:flex flex-col justify-between w-[240px] border-r border-white-200 dark:border-dark-200 h-full px-3 pt-3 overflow-y-auto">
+                <div className="flex flex-col">
+                  <button
+                    onClick={() => setIsOpen(false)}
+                    className="group flex flex-row items-center hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg"
+                  >
+                    <ChevronLeft
+                      size={18}
+                      className="text-black/50 dark:text-white/50 group-hover:text-black/70 group-hover:dark:text-white/70"
+                    />
+                    <p className="text-black/50 dark:text-white/50 group-hover:text-black/70 group-hover:dark:text-white/70 text-[14px]">
+                      Back
+                    </p>
+                  </button>
+
+                  <div className="flex flex-col items-start space-y-1 mt-8">
+                    {sections.map((section) => (
+                      <button
+                        key={section.dataAdd}
+                        className={cn(
+                          `flex flex-row items-center space-x-2 px-2 py-1.5 rounded-lg w-full text-sm hover:bg-light-200 hover:dark:bg-dark-200 transition duration-200 active:scale-95`,
+                          activeSection === section.key
+                            ? 'bg-light-200 dark:bg-dark-200 text-black/90 dark:text-white/90'
+                            : ' text-black/70 dark:text-white/70',
+                        )}
+                        onClick={() => setActiveSection(section.key)}
+                      >
+                        <section.icon size={17} />
+                        <p>{section.name}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex flex-col space-y-1 py-[18px] px-2">
+                  <p className="text-xs text-black/70 dark:text-white/70">
+                    Version: {process.env.NEXT_PUBLIC_VERSION}
                   </p>
-                </button>
-                <div className="flex flex-col items-start space-y-1 mt-8">
-                  {sections.map((section) => (
-                    <button
-                      key={section.dataAdd}
-                      className={cn(
-                        `flex flex-row items-center space-x-2 px-2 py-1.5 rounded-lg w-full text-sm hover:bg-light-200 hover:dark:bg-dark-200 transition duration-200 active:scale-95`,
-                        activeSection === section.key
-                          ? 'bg-light-200 dark:bg-dark-200 text-black/90 dark:text-white/90'
-                          : ' text-black/70 dark:text-white/70',
-                      )}
-                      onClick={() => setActiveSection(section.key)}
-                    >
-                      <section.icon size={17} />
-                      <p>{section.name}</p>
-                    </button>
-                  ))}
+                  <a
+                    href="https://github.com/itzcrazykns/perplexica"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-black/70 dark:text-white/70 flex flex-row space-x-1 items-center transition duration-200 hover:text-black/90 hover:dark:text-white/90"
+                  >
+                    <span>GitHub</span>
+                    <ExternalLink size={12} />
+                  </a>
                 </div>
               </div>
               <div className="w-full flex flex-col overflow-hidden">
