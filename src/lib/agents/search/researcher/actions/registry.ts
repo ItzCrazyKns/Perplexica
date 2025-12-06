@@ -1,5 +1,5 @@
+import { Tool, ToolCall } from '@/lib/models/types';
 import {
-  ActionConfig,
   ActionOutput,
   AdditionalConfig,
   ClassifierOutput,
@@ -23,6 +23,18 @@ class ActionRegistry {
     return Array.from(
       this.actions.values().filter((action) => action.enabled(config)),
     );
+  }
+
+  static getAvailableActionTools(config: {
+    classification: ClassifierOutput;
+  }): Tool[] {
+    const availableActions = this.getAvailableActions(config);
+
+    return availableActions.map((action) => ({
+      name: action.name,
+      description: action.description,
+      schema: action.schema,
+    }));
   }
 
   static getAvailableActionsDescriptions(config: {
@@ -50,7 +62,7 @@ class ActionRegistry {
   }
 
   static async executeAll(
-    actions: ActionConfig[],
+    actions: ToolCall[],
     additionalConfig: AdditionalConfig,
   ): Promise<ActionOutput[]> {
     const results: ActionOutput[] = [];
@@ -58,8 +70,8 @@ class ActionRegistry {
     await Promise.all(
       actions.map(async (actionConfig) => {
         const output = await this.execute(
-          actionConfig.type,
-          actionConfig.params,
+          actionConfig.name,
+          actionConfig.arguments,
           additionalConfig,
         );
         results.push(output);
