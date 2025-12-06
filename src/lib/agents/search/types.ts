@@ -84,7 +84,15 @@ export type DoneActionOutput = {
   type: 'done';
 };
 
-export type ActionOutput = SearchActionOutput | DoneActionOutput;
+export type ReasoningResearchAction = {
+  type: 'reasoning';
+  reasoning: string;
+};
+
+export type ActionOutput =
+  | SearchActionOutput
+  | DoneActionOutput
+  | ReasoningResearchAction;
 
 export interface ResearchAction<
   TSchema extends z.ZodObject<any> = z.ZodObject<any>,
@@ -98,8 +106,3 @@ export interface ResearchAction<
     additionalConfig: AdditionalConfig,
   ) => Promise<ActionOutput>;
 }
-
-export type ActionConfig = {
-  type: string;
-  params: Record<string, any>;
-};
