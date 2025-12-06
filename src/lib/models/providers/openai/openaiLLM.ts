@@ -12,6 +12,7 @@ import {
 import { parse } from 'partial-json';
 import z from 'zod';
 import {
+  ChatCompletionAssistantMessageParam,
   ChatCompletionMessageParam,
   ChatCompletionTool,
   ChatCompletionToolMessageParam,
@@ -45,6 +46,22 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
           tool_call_id: msg.id,
           content: msg.content,
         } as ChatCompletionToolMessageParam;
+      } else if (msg.role === 'assistant') {
+        return {
+          role: 'assistant',
+          content: msg.content,
+          ...(msg.tool_calls &&
+            msg.tool_calls.length > 0 && {
+              tool_calls: msg.tool_calls?.map((tc) => ({
+                id: tc.id,
+                type: 'function',
+                function: {
+                  name: tc.name,
+                  arguments: JSON.stringify(tc.arguments),
+                },
+              })),
+            }),
+        } as ChatCompletionAssistantMessageParam;
       }
 
       return msg;
@@ -178,7 +195,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
 
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
     const response = await this.openAIClient.chat.completions.parse({
-      messages: input.messages,
+      messages: this.convertToOpenAIMessages(input.messages),
       model: this.config.model,
       temperature:
         input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
