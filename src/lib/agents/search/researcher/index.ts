@@ -1,41 +1,26 @@
-import z from 'zod';
-import {
-  ActionConfig,
-  ActionOutput,
-  ResearcherInput,
-  ResearcherOutput,
-} from '../types';
+import { ActionOutput, ResearcherInput, ResearcherOutput } from '../types';
 import { ActionRegistry } from './actions';
 import { getResearcherPrompt } from '@/lib/prompts/search/researcher';
 import SessionManager from '@/lib/session';
-import { ReasoningResearchBlock } from '@/lib/types';
+import { Message, ReasoningResearchBlock } from '@/lib/types';
 import formatChatHistoryAsString from '@/lib/utils/formatHistory';
+import { ToolCall } from '@/lib/models/types';
 
 class Researcher {
   async research(
     session: SessionManager,
     input: ResearcherInput,
   ): Promise<ResearcherOutput> {
-    let findings: string = '';
     let actionOutput: ActionOutput[] = [];
     let maxIteration =
       input.config.mode === 'speed'
-        ? 1
+        ? 2
         : input.config.mode === 'balanced'
-          ? 3
+          ? 6
           : 25;
 
-    const availableActions = ActionRegistry.getAvailableActions({
+    const availableTools = ActionRegistry.getAvailableActionTools({
       classification: input.classification,
-    });
-
-    const schema = z.object({
-      reasoning: z
-        .string()
-        .describe('The reasoning behind choosing the next action.'),
-      action: z
-        .union(availableActions.map((a) => a.schema))
-        .describe('The action to be performed next.'),
     });
 
     const availableActionsDescription =
@@ -53,6 +38,18 @@ class Researcher {
       },
     });
 
+    const agentMessageHistory: Message[] = [
+      {
+        role: 'user',
+        content: `
+          <conversation>
+          ${formatChatHistoryAsString(input.chatHistory.slice(-10))}
+           User: ${input.followUp} (Standalone question: ${input.classification.standaloneFollowUp})
+           </conversation>
+        `,
+      },
+    ];
+
     for (let i = 0; i < maxIteration; i++) {
       const researcherPrompt = getResearcherPrompt(
         availableActionsDescription,
@@ -61,27 +58,15 @@ class Researcher {
         maxIteration,
       );
 
-      const actionStream = input.config.llm.streamObject<typeof schema>({
+      const actionStream = input.config.llm.streamText({
         messages: [
           {
             role: 'system',
             content: researcherPrompt,
           },
-          {
-            role: 'user',
-            content: `
-                    <conversation>
-                    ${formatChatHistoryAsString(input.chatHistory.slice(-10))}
-                    User: ${input.followUp} (Standalone question: ${input.classification.standaloneFollowUp})
-                    </conversation>
-
-                    <previous_actions>
-                    ${findings}
-                    </previous_actions>
-                    `,
-          },
+          ...agentMessageHistory,
         ],
-        schema,
+        tools: availableTools,
       });
 
       const block = session.getBlock(researchBlockId);
@@ -89,43 +74,26 @@ class Researcher {
       let reasoningEmitted = false;
       let reasoningId = crypto.randomUUID();
 
-      let finalActionRes: any;
+      let finalToolCalls: ToolCall[] = [];
 
       for await (const partialRes of actionStream) {
-        try {
-          if (
-            partialRes.reasoning &&
-            !reasoningEmitted &&
-            block &&
-            block.type === 'research'
-          ) {
-            reasoningEmitted = true;
-            block.data.subSteps.push({
-              id: reasoningId,
-              type: 'reasoning',
-              reasoning: partialRes.reasoning,
-            });
-            session.updateBlock(researchBlockId, [
-              {
-                op: 'replace',
-                path: '/data/subSteps',
-                value: block.data.subSteps,
-              },
-            ]);
-          } else if (
-            partialRes.reasoning &&
-            reasoningEmitted &&
-            block &&
-            block.type === 'research'
-          ) {
-            const subStepIndex = block.data.subSteps.findIndex(
-              (step: any) => step.id === reasoningId,
-            );
-            if (subStepIndex !== -1) {
-              const subStep = block.data.subSteps[
-                subStepIndex
-              ] as ReasoningResearchBlock;
-              subStep.reasoning = partialRes.reasoning;
+        if (partialRes.toolCallChunk.length > 0) {
+          partialRes.toolCallChunk.forEach((tc) => {
+            if (
+              tc.name === '___plan' &&
+              tc.arguments['plan'] &&
+              !reasoningEmitted &&
+              block &&
+              block.type === 'research'
+            ) {
+              reasoningEmitted = true;
+
+              block.data.subSteps.push({
+                id: reasoningId,
+                type: 'reasoning',
+                reasoning: tc.arguments['plan'],
+              });
+
               session.updateBlock(researchBlockId, [
                 {
                   op: 'replace',
@@ -133,77 +101,118 @@ class Researcher {
                   value: block.data.subSteps,
                 },
               ]);
-            }
-          }
+            } else if (
+              tc.name === '___plan' &&
+              tc.arguments['plan'] &&
+              reasoningEmitted &&
+              block &&
+              block.type === 'research'
+            ) {
+              const subStepIndex = block.data.subSteps.findIndex(
+                (step: any) => step.id === reasoningId,
+              );
 
-          finalActionRes = partialRes;
-        } catch (e) {
-          // nothing
+              if (subStepIndex !== -1) {
+                const subStep = block.data.subSteps[
+                  subStepIndex
+                ] as ReasoningResearchBlock;
+                subStep.reasoning = tc.arguments['plan'];
+                session.updateBlock(researchBlockId, [
+                  {
+                    op: 'replace',
+                    path: '/data/subSteps',
+                    value: block.data.subSteps,
+                  },
+                ]);
+              }
+            }
+
+            const existingIndex = finalToolCalls.findIndex(
+              (ftc) => ftc.id === tc.id,
+            );
+
+            if (existingIndex !== -1) {
+              finalToolCalls[existingIndex].arguments = tc.arguments;
+            } else {
+              finalToolCalls.push(tc);
+            }
+          });
         }
       }
 
-      if (finalActionRes.action.type === 'done') {
+      if (finalToolCalls.length === 0) {
         break;
       }
 
-      const actionConfig: ActionConfig = {
-        type: finalActionRes.action.type as string,
-        params: finalActionRes.action,
-      };
+      if (finalToolCalls[finalToolCalls.length - 1].name === 'done') {
+        break;
+      }
 
-      const queries = actionConfig.params.queries || [];
-      if (block && block.type === 'research') {
+      agentMessageHistory.push({
+        role: 'assistant',
+        content: '',
+        tool_calls: finalToolCalls,
+      });
+
+      const searchCalls = finalToolCalls.filter(
+        (tc) =>
+          tc.name === 'web_search' ||
+          tc.name === 'academic_search' ||
+          tc.name === 'discussion_search',
+      );
+
+      if (searchCalls.length > 0 && block && block.type === 'research') {
         block.data.subSteps.push({
           id: crypto.randomUUID(),
           type: 'searching',
-          searching: queries,
+          searching: searchCalls.map((sc) => sc.arguments.queries).flat(),
         });
+
         session.updateBlock(researchBlockId, [
-          { op: 'replace', path: '/data/subSteps', value: block.data.subSteps },
+          {
+            op: 'replace',
+            path: '/data/subSteps',
+            value: block.data.subSteps,
+          },
         ]);
       }
 
-      findings += `\n---\nIteration ${i + 1}:\n`;
-      findings += 'Reasoning: ' + finalActionRes.reasoning + '\n';
-      findings += `Executing Action: ${actionConfig.type} with params ${JSON.stringify(actionConfig.params)}\n`;
+      const actionResults = await ActionRegistry.executeAll(finalToolCalls, {
+        llm: input.config.llm,
+        embedding: input.config.embedding,
+        session: session,
+      });
 
-      const actionResult = await ActionRegistry.execute(
-        actionConfig.type,
-        actionConfig.params,
-        {
-          llm: input.config.llm,
-          embedding: input.config.embedding,
-          session: session,
-        },
+      actionOutput.push(...actionResults);
+
+      actionResults.forEach((action, i) => {
+        agentMessageHistory.push({
+          role: 'tool',
+          id: finalToolCalls[i].id,
+          name: finalToolCalls[i].name,
+          content: JSON.stringify(action),
+        });
+      });
+
+      const searchResults = actionResults.filter(
+        (a) => a.type === 'search_results',
       );
 
-      actionOutput.push(actionResult);
+      if (searchResults.length > 0 && block && block.type === 'research') {
+        block.data.subSteps.push({
+          id: crypto.randomUUID(),
+          type: 'reading',
+          reading: searchResults.flatMap((a) => a.results),
+        });
 
-      if (actionResult.type === 'search_results') {
-        if (block && block.type === 'research') {
-          block.data.subSteps.push({
-            id: crypto.randomUUID(),
-            type: 'reading',
-            reading: actionResult.results,
-          });
-          session.updateBlock(researchBlockId, [
-            {
-              op: 'replace',
-              path: '/data/subSteps',
-              value: block.data.subSteps,
-            },
-          ]);
-        }
-
-        findings += actionResult.results
-          .map(
-            (r) =>
-              `Title: ${r.metadata.title}\nURL: ${r.metadata.url}\nContent: ${r.content}\n`,
-          )
-          .join('\n');
+        session.updateBlock(researchBlockId, [
+          {
+            op: 'replace',
+            path: '/data/subSteps',
+            value: block.data.subSteps,
+          },
+        ]);
       }
-
-      findings += '\n---------\n';
     }
 
     const searchResults = actionOutput.filter(
@@ -212,12 +221,7 @@ class Researcher {
 
     session.emit('data', {
       type: 'sources',
-      data: searchResults
-        .flatMap((a) => a.results)
-        .map((r) => ({
-          content: r.content,
-          metadata: r.metadata,
-        })),
+      data: searchResults.flatMap((a) => a.results),
     });
 
     return {
