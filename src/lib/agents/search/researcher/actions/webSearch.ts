@@ -11,22 +11,20 @@ const actionSchema = z.object({
 });
 
 const actionDescription = `
-You have to use this action aggressively to find relevant information from the web to answer user queries. You can combine this action with other actions to gather comprehensive data. Always ensure that you provide accurate and up-to-date information by leveraging web search results.
-When this action is present, you must use it to obtain current information from the web. 
+Use immediately after the ___plan call when you need information. Default to using this unless you already have everything needed to finish. Provide 1-3 short, SEO-friendly queries (keywords, not sentences) that cover the user ask. Always prefer current/contextual queries (e.g., include year for news).
 
-### How to use:
-1. For speed search mode, you can use this action once. Make sure to cover all aspects of the user's query in that single search.
-2. If you're on quality mode, you'll get to use this action up to two times. Use the first search to gather general information, and the second search to fill in any gaps or get more specific details based on the initial findings.
-3. If you're set on quality mode, then you will get to use this action multiple times to gather more information. Use your judgment to decide when additional searches are necessary to provide a thorough and accurate response.
+For fast mode, you can only use this tool once so make sure to get all needed information in one go.
+For balanced and quality modes, you can use this tool multiple times as needed. 
 
-Input: An array of search queries. Make sure the queries are relevant to the user's request and cover different aspects if necessary. You can include a maximum of 3 queries. Make sure the queries are SEO friendly and not sentences rather keywords which can be used to search a search engine like Google, Bing, etc.
+In quality and balanced mode, first try to gather upper level information with broad queries, then use more specific queries based on what you find to find all information needed.
 `;
 
 const webSearchAction: ResearchAction<typeof actionSchema> = {
   name: 'web_search',
   description: actionDescription,
   schema: actionSchema,
-  enabled: (config) => true,
+  enabled: (config) =>
+    config.classification.classification.skipSearch === false,
   execute: async (input, _) => {
     let results: Chunk[] = [];
 
