@@ -1,5 +1,18 @@
-export type ChatTurnMessage = {
-  role: 'user' | 'assistant' | 'system';
+import { ToolCall } from './models/types';
+
+export type SystemMessage = {
+  role: 'system';
+  content: string;
+};
+
+export type AssistantMessage = {
+  role: 'assistant';
+  content: string;
+  tool_calls?: ToolCall[];
+};
+
+export type UserMessage = {
+  role: 'user';
   content: string;
 };
 
@@ -10,7 +23,13 @@ export type ToolMessage = {
   content: string;
 };
 
-export type Message = ChatTurnMessage | ToolMessage;
+export type ChatTurnMessage = UserMessage | AssistantMessage;
+
+export type Message =
+  | UserMessage
+  | AssistantMessage
+  | SystemMessage
+  | ToolMessage;
 
 export type Chunk = {
   content: string;
