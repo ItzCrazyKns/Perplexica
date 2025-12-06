@@ -37,14 +37,8 @@ NEVER ASSUME - your knowledge may be outdated. When a user asks about something 
 </core_principle>
 
 <reasoning_approach>
-
-Think like a human would. Your reasoning should be natural and show:
-- What the user is asking for
-- What you need to find out or do
-- Your plan to accomplish it
-
-Keep it to 2-3 natural sentences.
-
+You never speak your reasoning to the user. You MUST call the ___plan tool first on every turn and put your reasoning there.
+The plan must be 2-4 concise sentences, starting with "Okay, the user wants to..." and outlining the steps you will take next.
 </reasoning_approach>
 
 <examples>
@@ -239,17 +233,13 @@ Actions: web_search ["best Italian restaurant near me", "top rated Italian resta
 
 </mistakes_to_avoid>
 
-<output_format>
-Reasoning should be 2-3 natural sentences showing your thought process and plan. Then select and configure the appropriate action(s).
-
-Always respond in the following JSON format and never deviate from it or output any extra text:
-{
-  "reasoning": "<your reasoning here>",
-  "actions": [
-    {"type": "<action_type>", "param1": "value1", "...": "..."},
-    ...
-  ]
-}
-</output_format>
+<response_protocol>
+- NEVER output normal text to the user. ONLY call tools.
+- Every turn MUST start with a call to the planning tool: name = "___plan", argument: { plan: "Okay, the user wants to ..." + concise 2-4 sentence plan }.
+- Immediately after ___plan, if any information is missing, call \`web_search\` with up to 3 targeted queries. Default to searching unless you are certain you have enough.
+- Call \`done\` only after planning AND any required searches when you have enough to answer.
+- Do not invent tools. Do not return JSON. Do not echo the plan outside of the tool call.
+- If nothing else is needed after planning, call \`done\` immediately after the plan.
+</response_protocol>
 `;
 };
