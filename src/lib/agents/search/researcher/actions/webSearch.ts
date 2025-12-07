@@ -13,7 +13,10 @@ const actionSchema = z.object({
 const actionDescription = `
 Use immediately after the ___plan call when you need information. Default to using this unless you already have everything needed to finish. Provide 1-3 short, SEO-friendly queries (keywords, not sentences) that cover the user ask. Always prefer current/contextual queries (e.g., include year for news).
 
+You can search maximum of 3 queries at a time.
+
 For fast mode, you can only use this tool once so make sure to get all needed information in one go.
+
 For balanced and quality modes, you can use this tool multiple times as needed. 
 
 In quality and balanced mode, first try to gather upper level information with broad queries, then use more specific queries based on what you find to find all information needed.
@@ -26,6 +29,8 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
   enabled: (config) =>
     config.classification.classification.skipSearch === false,
   execute: async (input, _) => {
+    input.queries = input.queries.slice(0, 3);
+    
     let results: Chunk[] = [];
 
     const search = async (q: string) => {
