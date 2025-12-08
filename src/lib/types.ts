@@ -75,6 +75,12 @@ export type SearchingResearchBlock = {
   searching: string[];
 };
 
+export type SearchResultsResearchBlock = {
+  id: string;
+  type: 'search_results';
+  reading: Chunk[];
+};
+
 export type ReadingResearchBlock = {
   id: string;
   type: 'reading';
@@ -84,6 +90,7 @@ export type ReadingResearchBlock = {
 export type ResearchBlockSubStep =
   | ReasoningResearchBlock
   | SearchingResearchBlock
+  | SearchResultsResearchBlock
   | ReadingResearchBlock;
 
 export type ResearchBlock = {
