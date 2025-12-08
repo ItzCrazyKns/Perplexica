@@ -154,33 +154,11 @@ class Researcher {
         tool_calls: finalToolCalls,
       });
 
-      const searchCalls = finalToolCalls.filter(
-        (tc) =>
-          tc.name === 'web_search' ||
-          tc.name === 'academic_search' ||
-          tc.name === 'discussion_search',
-      );
-
-      if (searchCalls.length > 0 && block && block.type === 'research') {
-        block.data.subSteps.push({
-          id: crypto.randomUUID(),
-          type: 'searching',
-          searching: searchCalls.map((sc) => sc.arguments.queries).flat(),
-        });
-
-        session.updateBlock(researchBlockId, [
-          {
-            op: 'replace',
-            path: '/data/subSteps',
-            value: block.data.subSteps,
-          },
-        ]);
-      }
-
       const actionResults = await ActionRegistry.executeAll(finalToolCalls, {
         llm: input.config.llm,
         embedding: input.config.embedding,
         session: session,
+        researchBlockId: researchBlockId,
       });
 
       actionOutput.push(...actionResults);
@@ -193,39 +171,41 @@ class Researcher {
           content: JSON.stringify(action),
         });
       });
-
-      const searchResults = actionResults.filter(
-        (a) => a.type === 'search_results',
-      );
-
-      if (searchResults.length > 0 && block && block.type === 'research') {
-        block.data.subSteps.push({
-          id: crypto.randomUUID(),
-          type: 'reading',
-          reading: searchResults.flatMap((a) => a.results),
-        });
-
-        session.updateBlock(researchBlockId, [
-          {
-            op: 'replace',
-            path: '/data/subSteps',
-            value: block.data.subSteps,
-          },
-        ]);
-      }
     }
 
-    const searchResults = actionOutput.filter(
-      (a) => a.type === 'search_results',
-    );
+    const searchResults = actionOutput
+      .filter((a) => a.type === 'search_results')
+      .flatMap((a) => a.results);
+
+    const seenUrls = new Map<string, number>();
+
+    const filteredSearchResults = searchResults
+      .map((result, index) => {
+        if (result.metadata.url && !seenUrls.has(result.metadata.url)) {
+          seenUrls.set(result.metadata.url, index);
+          return result;
+        } else if (result.metadata.url && seenUrls.has(result.metadata.url)) {
+          const existingIndex = seenUrls.get(result.metadata.url)!;
+
+          const existingResult = searchResults[existingIndex];
+
+          existingResult.content += `\n\n${result.content}`;
+
+          return undefined;
+        }
+
+        return result;
+      })
+      .filter((r) => r !== undefined);
 
     session.emit('data', {
       type: 'sources',
-      data: searchResults.flatMap((a) => a.results),
+      data: filteredSearchResults,
     });
 
     return {
       findings: actionOutput,
+      searchFindings: filteredSearchResults,
     };
   }
 }

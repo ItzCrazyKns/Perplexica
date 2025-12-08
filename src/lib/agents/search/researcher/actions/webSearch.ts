@@ -1,7 +1,7 @@
 import z from 'zod';
 import { ResearchAction } from '../../types';
 import { searchSearxng } from '@/lib/searxng';
-import { Chunk } from '@/lib/types';
+import { Chunk, SearchResultsResearchBlock } from '@/lib/types';
 
 const actionSchema = z.object({
   type: z.literal('web_search'),
@@ -28,23 +28,90 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
   schema: actionSchema,
   enabled: (config) =>
     config.classification.classification.skipSearch === false,
-  execute: async (input, _) => {
+  execute: async (input, additionalConfig) => {
     input.queries = input.queries.slice(0, 3);
-    
+
+    const researchBlock = additionalConfig.session.getBlock(
+      additionalConfig.researchBlockId,
+    );
+
+    if (researchBlock && researchBlock.type === 'research') {
+      researchBlock.data.subSteps.push({
+        id: crypto.randomUUID(),
+        type: 'searching',
+        searching: input.queries,
+      });
+
+      additionalConfig.session.updateBlock(additionalConfig.researchBlockId, [
+        {
+          op: 'replace',
+          path: '/data/subSteps',
+          value: researchBlock.data.subSteps,
+        },
+      ]);
+    }
+
+    const searchResultsBlockId = crypto.randomUUID();
+    let searchResultsEmitted = false;
+
     let results: Chunk[] = [];
 
     const search = async (q: string) => {
       const res = await searchSearxng(q);
 
-      res.results.forEach((r) => {
-        results.push({
-          content: r.content || r.title,
-          metadata: {
-            title: r.title,
-            url: r.url,
-          },
+      const resultChunks: Chunk[] = res.results.map((r) => ({
+        content: r.content || r.title,
+        metadata: {
+          title: r.title,
+          url: r.url,
+        },
+      }));
+
+      results.push(...resultChunks);
+
+      if (
+        !searchResultsEmitted &&
+        researchBlock &&
+        researchBlock.type === 'research'
+      ) {
+        searchResultsEmitted = true;
+
+        researchBlock.data.subSteps.push({
+          id: searchResultsBlockId,
+          type: 'search_results',
+          reading: resultChunks,
         });
-      });
+
+        additionalConfig.session.updateBlock(additionalConfig.researchBlockId, [
+          {
+            op: 'replace',
+            path: '/data/subSteps',
+            value: researchBlock.data.subSteps,
+          },
+        ]);
+      } else if (
+        searchResultsEmitted &&
+        researchBlock &&
+        researchBlock.type === 'research'
+      ) {
+        const subStepIndex = researchBlock.data.subSteps.findIndex(
+          (step) => step.id === searchResultsBlockId,
+        );
+
+        const subStep = researchBlock.data.subSteps[
+          subStepIndex
+        ] as SearchResultsResearchBlock;
+
+        subStep.reading.push(...resultChunks);
+
+        additionalConfig.session.updateBlock(additionalConfig.researchBlockId, [
+          {
+            op: 'replace',
+            path: '/data/subSteps',
+            value: researchBlock.data.subSteps,
+          },
+        ]);
+      }
     };
 
     await Promise.all(input.queries.map(search));

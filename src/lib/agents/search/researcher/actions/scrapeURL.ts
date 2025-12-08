@@ -1,7 +1,8 @@
 import z from 'zod';
 import { ResearchAction } from '../../types';
-import { Chunk } from '@/lib/types';
+import { Chunk, ReadingResearchBlock } from '@/lib/types';
 import TurnDown from 'turndown';
+import path from 'path';
 
 const turndownService = new TurnDown();
 
@@ -12,11 +13,18 @@ const schema = z.object({
 const scrapeURLAction: ResearchAction<typeof schema> = {
   name: 'scrape_url',
   description:
-    'Use after __plan to scrape and extract content from the provided URLs. This is useful when you need detailed information from specific web pages or if the user asks you to summarize or analyze content from certain links. You can scrape maximum of 3 URLs.',
+    'Use this tool to scrape and extract content from the provided URLs. This is useful when you the user has asked you to extract or summarize information from specific web pages. You can provide up to 3 URLs at a time. NEVER CALL THIS TOOL EXPLICITLY YOURSELF UNLESS INSTRUCTED TO DO SO BY THE USER.',
   schema: schema,
   enabled: (_) => true,
   execute: async (params, additionalConfig) => {
     params.urls = params.urls.slice(0, 3);
+
+    let readingBlockId = crypto.randomUUID();
+    let readingEmitted = false;
+
+    const researchBlock = additionalConfig.session.getBlock(
+      additionalConfig.researchBlockId,
+    );
 
     const results: Chunk[] = [];
 
@@ -28,6 +36,70 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
 
           const title =
             text.match(/<title>(.*?)<\/title>/i)?.[1] || `Content from ${url}`;
+
+          if (
+            !readingEmitted &&
+            researchBlock &&
+            researchBlock.type === 'research'
+          ) {
+            readingEmitted = true;
+            researchBlock.data.subSteps.push({
+              id: readingBlockId,
+              type: 'reading',
+              reading: [
+                {
+                  content: '',
+                  metadata: {
+                    url,
+                    title: title,
+                  },
+                },
+              ],
+            });
+
+            additionalConfig.session.updateBlock(
+              additionalConfig.researchBlockId,
+              [
+                {
+                  op: 'replace',
+                  path: '/data/subSteps',
+                  value: researchBlock.data.subSteps,
+                },
+              ],
+            );
+          } else if (
+            readingEmitted &&
+            researchBlock &&
+            researchBlock.type === 'research'
+          ) {
+            const subStepIndex = researchBlock.data.subSteps.findIndex(
+              (step: any) => step.id === readingBlockId,
+            );
+
+            const subStep = researchBlock.data.subSteps[
+              subStepIndex
+            ] as ReadingResearchBlock;
+
+            subStep.reading.push({
+              content: '',
+              metadata: {
+                url,
+                title: title,
+              },
+            });
+
+            additionalConfig.session.updateBlock(
+              additionalConfig.researchBlockId,
+              [
+                {
+                  op: 'replace',
+                  path: '/data/subSteps',
+                  value: researchBlock.data.subSteps,
+                },
+              ],
+            );
+          }
+
           const markdown = turndownService.turndown(text);
 
           results.push({
