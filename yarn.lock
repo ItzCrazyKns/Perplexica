@@ -2830,10 +2830,10 @@ fraction.js@^5.2.1:
   resolved "https://registry.yarnpkg.com/fraction.js/-/fraction.js-5.3.4.tgz#8c0fcc6a9908262df4ed197427bdeef563e0699a"
   integrity sha512-1X1NTtiJphryn/uLQz3whtY6jK3fTqoE3ohKs0tT+Ujr1W59oopxmoEh7Lu5p6vBaPbgoM0bzveAW4Qi5RyWDQ==
 
-framer-motion@^12.23.24:
-  version "12.23.24"
-  resolved "https://registry.yarnpkg.com/framer-motion/-/framer-motion-12.23.24.tgz#4895b67e880bd2b1089e61fbaa32ae802fc24b8c"
-  integrity sha512-HMi5HRoRCTou+3fb3h9oTLyJGBxHfW+HnNE25tAXOvVx/IvwMHK0cx7IR4a2ZU6sh3IX1Z+4ts32PcYBOqka8w==
+framer-motion@^12.23.25:
+  version "12.23.25"
+  resolved "https://registry.yarnpkg.com/framer-motion/-/framer-motion-12.23.25.tgz#32d717f8b172c2673f573c0805ecc37d017441b2"
+  integrity sha512-gUHGl2e4VG66jOcH0JHhuJQr6ZNwrET9g31ZG0xdXzT0CznP7fHX4P8Bcvuc4MiUB90ysNnWX2ukHRIggkl6hQ==
   dependencies:
     motion-dom "^12.23.23"
     motion-utils "^12.23.6"
@@ -3750,10 +3750,10 @@ lru-cache@^6.0.0:
   dependencies:
     yallist "^4.0.0"
 
-lucide-react@^0.363.0:
-  version "0.363.0"
-  resolved "https://registry.yarnpkg.com/lucide-react/-/lucide-react-0.363.0.tgz#2bb1f9d09b830dda86f5118fcd097f87247fe0e3"
-  integrity sha512-AlsfPCsXQyQx7wwsIgzcKOL9LwC498LIMAo+c0Es5PkHJa33xwmYAkkSoKoJWWWSYQEStqu58/jT4tL2gi32uQ==
+lucide-react@^0.556.0:
+  version "0.556.0"
+  resolved "https://registry.yarnpkg.com/lucide-react/-/lucide-react-0.556.0.tgz#aad61a065737aef30322695a11fd21c7542c71aa"
+  integrity sha512-iOb8dRk7kLaYBZhR2VlV1CeJGxChBgUthpSP8wom9jfj79qovgG6qcSdiy6vkoREKPnbUYzJsCn4o4PtG3Iy+A==
 
 mammoth@^1.9.1:
   version "1.9.1"
