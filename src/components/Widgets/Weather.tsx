@@ -1,5 +1,6 @@
 'use client';
 
+import { getMeasurementUnit } from '@/lib/config/clientRegistry';
 import { Wind, Droplets, Gauge } from 'lucide-react';
 import { useMemo, useEffect, useState } from 'react';
 
@@ -226,6 +227,20 @@ const Weather = ({
   timezone,
 }: WeatherWidgetProps) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const unit = getMeasurementUnit();
+  const isImperial = unit === 'imperial';
+  const tempUnitLabel = isImperial ? '°F' : '°C';
+  const windUnitLabel = isImperial ? 'mph' : 'km/h';
+
+  const formatTemp = (celsius: number) => {
+    if (!Number.isFinite(celsius)) return 0;
+    return Math.round(isImperial ? (celsius * 9) / 5 + 32 : celsius);
+  };
+
+  const formatWind = (speedKmh: number) => {
+    if (!Number.isFinite(speedKmh)) return 0;
+    return Math.round(isImperial ? speedKmh * 0.621371 : speedKmh);
+  };
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -266,14 +281,12 @@ const Weather = ({
       return {
         day: dayName,
         icon: info.icon,
-        high: Math.round(daily.temperature_2m_max[idx + 1]),
-        low: Math.round(daily.temperature_2m_min[idx + 1]),
-        highF: Math.round((daily.temperature_2m_max[idx + 1] * 9) / 5 + 32),
-        lowF: Math.round((daily.temperature_2m_min[idx + 1] * 9) / 5 + 32),
+        high: formatTemp(daily.temperature_2m_max[idx + 1]),
+        low: formatTemp(daily.temperature_2m_min[idx + 1]),
         precipitation: daily.precipitation_probability_max[idx + 1] || 0,
       };
     });
-  }, [daily, isDarkMode]);
+  }, [daily, isDarkMode, isImperial]);
 
   if (!current || !daily || !daily.time || daily.time.length === 0) {
     return (
@@ -305,9 +318,9 @@ const Weather = ({
             <div>
               <div className="flex items-baseline gap-1">
                 <span className="text-4xl font-bold drop-shadow-md">
-                  {current.temperature_2m}°
+                  {formatTemp(current.temperature_2m)}°
                 </span>
-                <span className="text-lg">F C</span>
+                <span className="text-lg">{tempUnitLabel}</span>
               </div>
               <p className="text-sm font-medium drop-shadow mt-0.5">
                 {weatherInfo.description}
@@ -316,7 +329,8 @@ const Weather = ({
           </div>
           <div className="text-right">
             <p className="text-xs font-medium opacity-90">
-              {daily.temperature_2m_max[0]}° {daily.temperature_2m_min[0]}°
+              {formatTemp(daily.temperature_2m_max[0])}°{' '}
+              {formatTemp(daily.temperature_2m_min[0])}°
             </p>
           </div>
         </div>
@@ -370,7 +384,7 @@ const Weather = ({
                 Wind
               </p>
               <p className="font-semibold">
-                {Math.round(current.wind_speed_10m)} km/h
+                {formatWind(current.wind_speed_10m)} {windUnitLabel}
               </p>
             </div>
           </div>
@@ -394,7 +408,8 @@ const Weather = ({
                 Feels Like
               </p>
               <p className="font-semibold">
-                {Math.round(current.apparent_temperature)}°C
+                {formatTemp(current.apparent_temperature)}
+                {tempUnitLabel}
               </p>
             </div>
           </div>
