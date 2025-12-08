@@ -1,6 +1,13 @@
 'use client';
 
-import { Brain, Search, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Brain,
+  Search,
+  FileText,
+  ChevronDown,
+  ChevronUp,
+  BookSearch,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { ResearchBlock, ResearchBlockSubStep } from '@/lib/types';
@@ -11,9 +18,12 @@ const getStepIcon = (step: ResearchBlockSubStep) => {
     return <Brain className="w-4 h-4" />;
   } else if (step.type === 'searching') {
     return <Search className="w-4 h-4" />;
-  } else if (step.type === 'reading') {
+  } else if (step.type === 'search_results') {
     return <FileText className="w-4 h-4" />;
+  } else if (step.type === 'reading') {
+    return <BookSearch className="w-4 h-4" />;
   }
+
   return null;
 };
 
@@ -25,9 +35,12 @@ const getStepTitle = (
     return isStreaming && !step.reasoning ? 'Thinking...' : 'Thinking';
   } else if (step.type === 'searching') {
     return `Searching ${step.searching.length} ${step.searching.length === 1 ? 'query' : 'queries'}`;
-  } else if (step.type === 'reading') {
+  } else if (step.type === 'search_results') {
     return `Found ${step.reading.length} ${step.reading.length === 1 ? 'result' : 'results'}`;
+  } else if (step.type === 'reading') {
+    return `Reading ${step.reading.length} ${step.reading.length === 1 ? 'source' : 'sources'}`;
   }
+
   return 'Processing';
 };
 
@@ -91,10 +104,9 @@ const AssistantSteps = ({
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.2, delay: 0 }}
-                    className="flex gap-3"
+                    className="flex gap-2"
                   >
-                    {/* Timeline connector */}
-                    <div className="flex flex-col items-center pt-0.5">
+                    <div className="flex flex-col items-center -mt-0.5">
                       <div
                         className={`rounded-full p-1.5 bg-light-100 dark:bg-dark-100 text-black/70 dark:text-white/70 ${isStreaming ? 'animate-pulse' : ''}`}
                       >
@@ -105,7 +117,6 @@ const AssistantSteps = ({
                       )}
                     </div>
 
-                    {/* Step content */}
                     <div className="flex-1 pb-1">
                       <span className="text-sm font-medium text-black dark:text-white">
                         {getStepTitle(step, isStreaming)}
@@ -151,37 +162,39 @@ const AssistantSteps = ({
                           </div>
                         )}
 
-                      {step.type === 'reading' && step.reading.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-1.5">
-                          {step.reading.slice(0, 4).map((result, idx) => {
-                            const url = result.metadata.url || '';
-                            const title = result.metadata.title || 'Untitled';
-                            const domain = url ? new URL(url).hostname : '';
-                            const faviconUrl = domain
-                              ? `https://s2.googleusercontent.com/s2/favicons?domain=${domain}&sz=128`
-                              : '';
+                      {(step.type === 'search_results' ||
+                        step.type === 'reading') &&
+                        step.reading.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-1.5">
+                            {step.reading.slice(0, 4).map((result, idx) => {
+                              const url = result.metadata.url || '';
+                              const title = result.metadata.title || 'Untitled';
+                              const domain = url ? new URL(url).hostname : '';
+                              const faviconUrl = domain
+                                ? `https://s2.googleusercontent.com/s2/favicons?domain=${domain}&sz=128`
+                                : '';
 
-                            return (
-                              <span
-                                key={idx}
-                                className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-light-100 dark:bg-dark-100 text-black/70 dark:text-white/70 border border-light-200 dark:border-dark-200"
-                              >
-                                {faviconUrl && (
-                                  <img
-                                    src={faviconUrl}
-                                    alt=""
-                                    className="w-3 h-3 rounded-sm flex-shrink-0"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = 'none';
-                                    }}
-                                  />
-                                )}
-                                <span className="line-clamp-1">{title}</span>
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
+                              return (
+                                <span
+                                  key={idx}
+                                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-light-100 dark:bg-dark-100 text-black/70 dark:text-white/70 border border-light-200 dark:border-dark-200"
+                                >
+                                  {faviconUrl && (
+                                    <img
+                                      src={faviconUrl}
+                                      alt=""
+                                      className="w-3 h-3 rounded-sm flex-shrink-0"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                      }}
+                                    />
+                                  )}
+                                  <span className="line-clamp-1">{title}</span>
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
                     </div>
                   </motion.div>
                 );
