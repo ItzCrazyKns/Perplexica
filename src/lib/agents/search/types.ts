@@ -73,6 +73,7 @@ export type ResearcherInput = {
 
 export type ResearcherOutput = {
   findings: ActionOutput[];
+  searchFindings: Chunk[];
 };
 
 export type SearchActionOutput = {
@@ -103,6 +104,8 @@ export interface ResearchAction<
   enabled: (config: { classification: ClassifierOutput }) => boolean;
   execute: (
     params: z.infer<TSchema>,
-    additionalConfig: AdditionalConfig,
+    additionalConfig: AdditionalConfig & {
+      researchBlockId: string;
+    },
   ) => Promise<ActionOutput>;
 }

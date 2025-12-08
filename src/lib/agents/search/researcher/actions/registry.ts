@@ -50,7 +50,7 @@ class ActionRegistry {
   static async execute(
     name: string,
     params: any,
-    additionalConfig: AdditionalConfig,
+    additionalConfig: AdditionalConfig & { researchBlockId: string },
   ) {
     const action = this.actions.get(name);
 
@@ -63,7 +63,7 @@ class ActionRegistry {
 
   static async executeAll(
     actions: ToolCall[],
-    additionalConfig: AdditionalConfig,
+    additionalConfig: AdditionalConfig & { researchBlockId: string },
   ): Promise<ActionOutput[]> {
     const results: ActionOutput[] = [];
 
