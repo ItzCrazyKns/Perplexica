@@ -55,19 +55,20 @@ class SearchAgent {
     });
 
     const finalContext =
-      searchResults?.findings
-        .filter((f) => f.type === 'search_results')
-        .flatMap((f) => f.results)
-        .map((f) => `${f.metadata.title}: ${f.content}`)
+      searchResults?.searchFindings
+        .map(
+          (f, index) =>
+            `<result index=${index} title=${f.metadata.title}>${f.content}</result>`,
+        )
         .join('\n') || '';
 
     const widgetContext = widgetOutputs
       .map((o) => {
-        return `${o.type}: ${o.llmContext}`;
+        return `<result>${o.llmContext}</result>`;
       })
       .join('\n-------------\n');
 
-    const finalContextWithWidgets = `<search_results note="These are the search results and you can cite these">${finalContext}</search_results>\n<widgets_result noteForAssistant="Its output is already showed to the user, you can use this information to answer the query but do not CITE this as a souce">${widgetContext}</widgets_result>`;
+    const finalContextWithWidgets = `<search_results note="These are the search results and assistant can cite these">\n${finalContext}\n</search_results>\n<widgets_result noteForAssistant="Its output is already showed to the user, assistant can use this information to answer the query but do not CITE this as a souce">\n${widgetContext}\n</widgets_result>`;
 
     const writerPrompt = getWriterPrompt(finalContextWithWidgets);
     const answerStream = input.config.llm.streamText({
