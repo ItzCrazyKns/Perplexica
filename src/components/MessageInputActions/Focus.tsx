@@ -54,6 +54,12 @@ const focusModes = [
     description: 'Search for discussions and opinions',
     icon: <SiReddit className="h-[16px] w-auto mr-0.5" />,
   },
+  {
+    key: 'triangulateNews',
+    title: 'Triangulate News',
+    description: 'Compare news across diverse sources',
+    icon: <ScanEye size={16} />,
+  },
 ];
 
 const Focus = () => {
