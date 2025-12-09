@@ -21,6 +21,7 @@ import { useSpeech } from 'react-text-to-speech';
 import ThinkBox from './ThinkBox';
 import { useChat, Section } from '@/lib/hooks/useChat';
 import Citation from './Citation';
+import { TriangulatedNewsResult } from './TriangulatedNews';
 
 const ThinkTagProcessor = ({
   children,
@@ -45,7 +46,13 @@ const MessageBox = ({
   dividerRef?: MutableRefObject<HTMLDivElement | null>;
   isLast: boolean;
 }) => {
-  const { loading, chatTurns, sendMessage, rewrite } = useChat();
+  const { loading, chatTurns, sendMessage, rewrite, focusMode } = useChat();
+
+  // Check if this is triangulated news data (has sharedFacts/conflicts/uniqueAngles)
+  const isTriangulatedNews =
+    focusMode === 'triangulateNews' &&
+    section.sourceMessage?.sources &&
+    'sharedFacts' in (section.sourceMessage.sources as any);
 
   const parsedMessage = section.parsedAssistantMessage || '';
   const speechMessage = section.speechMessage || '';
@@ -81,17 +88,23 @@ const MessageBox = ({
           className="flex flex-col space-y-6 w-full lg:w-9/12"
         >
           {section.sourceMessage &&
-            section.sourceMessage.sources.length > 0 && (
-              <div className="flex flex-col space-y-2">
-                <div className="flex flex-row items-center space-x-2">
-                  <BookCopy className="text-black dark:text-white" size={20} />
-                  <h3 className="text-black dark:text-white font-medium text-xl">
-                    Sources
-                  </h3>
+            (isTriangulatedNews ? (
+              <TriangulatedNewsResult
+                data={section.sourceMessage.sources as any}
+              />
+            ) : (
+              section.sourceMessage.sources.length > 0 && (
+                <div className="flex flex-col space-y-2">
+                  <div className="flex flex-row items-center space-x-2">
+                    <BookCopy className="text-black dark:text-white" size={20} />
+                    <h3 className="text-black dark:text-white font-medium text-xl">
+                      Sources
+                    </h3>
+                  </div>
+                  <MessageSources sources={section.sourceMessage.sources} />
                 </div>
-                <MessageSources sources={section.sourceMessage.sources} />
-              </div>
-            )}
+              )
+            ))}
 
           <div className="flex flex-col space-y-2">
             {section.sourceMessage && (
