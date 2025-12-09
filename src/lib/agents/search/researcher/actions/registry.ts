@@ -4,6 +4,7 @@ import {
   AdditionalConfig,
   ClassifierOutput,
   ResearchAction,
+  SearchAgentConfig,
 } from '../../types';
 
 class ActionRegistry {
@@ -19,6 +20,7 @@ class ActionRegistry {
 
   static getAvailableActions(config: {
     classification: ClassifierOutput;
+    mode: SearchAgentConfig['mode'];
   }): ResearchAction[] {
     return Array.from(
       this.actions.values().filter((action) => action.enabled(config)),
@@ -27,23 +29,25 @@ class ActionRegistry {
 
   static getAvailableActionTools(config: {
     classification: ClassifierOutput;
+    mode: SearchAgentConfig['mode'];
   }): Tool[] {
     const availableActions = this.getAvailableActions(config);
 
     return availableActions.map((action) => ({
       name: action.name,
-      description: action.description,
+      description: action.getToolDescription({ mode: config.mode }),
       schema: action.schema,
     }));
   }
 
   static getAvailableActionsDescriptions(config: {
     classification: ClassifierOutput;
+    mode: SearchAgentConfig['mode'];
   }): string {
     const availableActions = this.getAvailableActions(config);
 
     return availableActions
-      .map((action) => `------------\n##${action.name}\n${action.description}`)
+      .map((action) => `<tool name="${action.name}">\n${action.getDescription({ mode: config.mode })}\n</tool>`)
       .join('\n\n');
   }
 

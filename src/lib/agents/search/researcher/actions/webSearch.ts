@@ -10,22 +10,76 @@ const actionSchema = z.object({
     .describe('An array of search queries to perform web searches for.'),
 });
 
-const actionDescription = `
-Use immediately after the ___plan call when you need information. Default to using this unless you already have everything needed to finish. Provide 1-3 short, SEO-friendly queries (keywords, not sentences) that cover the user ask. Always prefer current/contextual queries (e.g., include year for news).
+const speedModePrompt = `
+Use this tool to perform web searches based on the provided queries. This is useful when you need to gather information from the web to answer the user's questions. You can provide up to 3 queries at a time. You will have to use this every single time if this is present and relevant.
+You are currently on speed mode, meaning you would only get to call this tool once. Make sure to prioritize the most important queries that are likely to get you the needed information in one go.
 
-You can search maximum of 3 queries at a time.
+Your queries should be very targeted and specific to the information you need, avoid broad or generic queries.
+Your queries shouldn't be sentences but rather keywords that are SEO friendly and can be used to search the web for information.
 
-For fast mode, you can only use this tool once so make sure to get all needed information in one go.
+For example, if the user is asking about the features of a new technology, you might use queries like "GPT-5.1 features", "GPT-5.1 release date", "GPT-5.1 improvements" rather than a broad query like "Tell me about GPT-5.1".
 
-For balanced and quality modes, you can use this tool multiple times as needed. 
+You can search for 3 queries in one go, make sure to utilize all 3 queries to maximize the information you can gather. If a question is simple, then split your queries to cover different aspects or related topics to get a comprehensive understanding.
+If this tool is present and no other tools are more relevant, you MUST use this tool to get the needed information.
+`
 
-In quality and balanced mode, first try to gather upper level information with broad queries, then use more specific queries based on what you find to find all information needed.
-`;
+const balancedModePrompt = `
+Use this tool to perform web searches based on the provided queries. This is useful when you need to gather information from the web to answer the user's questions. You can provide up to 3 queries at a time. You will have to use this every single time if this is present and relevant.
+
+You can call this tool several times if needed to gather enough information.
+Start initially with broader queries to get an overview, then narrow down with more specific queries based on the results you receive.
+
+Your queries shouldn't be sentences but rather keywords that are SEO friendly and can be used to search the web for information.
+
+For example if the user is asking about Tesla, your actions should be like:
+1. __plan "The user is asking about Tesla. I will start with broader queries to get an overview of Tesla, then narrow down with more specific queries based on the results I receive." then
+2. web_search ["Tesla", "Tesla latest news", "Tesla stock price"] then
+3. __plan "Based on the previous search results, I will now narrow down my queries to focus on Tesla's recent developments and stock performance." then
+4. web_search ["Tesla Q2 2025 earnings", "Tesla new model 2025", "Tesla stock analysis"] then done.
+5. __plan "I have gathered enough information to provide a comprehensive answer."
+6. done.
+
+You can search for 3 queries in one go, make sure to utilize all 3 queries to maximize the information you can gather. If a question is simple, then split your queries to cover different aspects or related topics to get a comprehensive understanding.
+If this tool is present and no other tools are more relevant, you MUST use this tool to get the needed information. You can call this tools, multiple times as needed.
+`
+
+const qualityModePrompt = `
+Use this tool to perform web searches based on the provided queries. This is useful when you need to gather information from the web to answer the user's questions. You can provide up to 3 queries at a time. You will have to use this every single time if this is present and relevant.
+
+You have to call this tool several times to gather enough information unless the question is very simple (like greeting questions or basic facts).
+Start initially with broader queries to get an overview, then narrow down with more specific queries based on the results you receive.
+Never stop before at least 5-6 iterations of searches unless the user question is very simple.
+
+Your queries shouldn't be sentences but rather keywords that are SEO friendly and can be used to search the web for information.
+
+You can search for 3 queries in one go, make sure to utilize all 3 queries to maximize the information you can gather. If a question is simple, then split your queries to cover different aspects or related topics to get a comprehensive understanding.
+If this tool is present and no other tools are more relevant, you MUST use this tool to get the needed information. You can call this tools, multiple times as needed.
+`
 
 const webSearchAction: ResearchAction<typeof actionSchema> = {
   name: 'web_search',
-  description: actionDescription,
   schema: actionSchema,
+  getToolDescription: () => 'Use this tool to perform web searches based on the provided queries. This is useful when you need to gather information from the web to answer the user\'s questions. You can provide up to 3 queries at a time. You will have to use this every single time if this is present and relevant.',
+  getDescription: (config) => {
+    let prompt = ''
+
+    switch (config.mode) {
+      case 'speed':
+        prompt = speedModePrompt
+        break;
+      case 'balanced':
+        prompt = balancedModePrompt
+        break;
+      case 'quality':
+        prompt = qualityModePrompt
+        break;
+      default:
+        prompt = speedModePrompt
+        break;
+    }
+
+    return prompt
+  },
   enabled: (config) =>
     config.classification.classification.skipSearch === false,
   execute: async (input, additionalConfig) => {

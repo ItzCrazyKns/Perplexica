@@ -5,6 +5,7 @@ import SessionManager from '@/lib/session';
 import { Message, ReasoningResearchBlock } from '@/lib/types';
 import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 import { ToolCall } from '@/lib/models/types';
+import fs from 'fs';
 
 class Researcher {
   async research(
@@ -21,11 +22,13 @@ class Researcher {
 
     const availableTools = ActionRegistry.getAvailableActionTools({
       classification: input.classification,
+      mode: input.config.mode,
     });
 
     const availableActionsDescription =
       ActionRegistry.getAvailableActionsDescriptions({
         classification: input.classification,
+        mode: input.config.mode
       });
 
     const researchBlockId = crypto.randomUUID();

@@ -10,11 +10,19 @@ const schema = z.object({
   urls: z.array(z.string()).describe('A list of URLs to scrape content from.'),
 });
 
+const actionDescription = `
+Use this tool to scrape and extract content from the provided URLs. This is useful when you the user has asked you to extract or summarize information from specific web pages. You can provide up to 3 URLs at a time. NEVER CALL THIS TOOL EXPLICITLY YOURSELF UNLESS INSTRUCTED TO DO SO BY THE USER.
+You should only call this tool when the user has specifically requested information from certain web pages, never call this yourself to get extra information without user instruction.
+
+For example, if the user says "Please summarize the content of https://example.com/article", you can call this tool with that URL to get the content and then provide the summary or "What does X mean according to https://example.com/page", you can call this tool with that URL to get the content and provide the explanation.
+`
+
 const scrapeURLAction: ResearchAction<typeof schema> = {
   name: 'scrape_url',
-  description:
-    'Use this tool to scrape and extract content from the provided URLs. This is useful when you the user has asked you to extract or summarize information from specific web pages. You can provide up to 3 URLs at a time. NEVER CALL THIS TOOL EXPLICITLY YOURSELF UNLESS INSTRUCTED TO DO SO BY THE USER.',
   schema: schema,
+  getToolDescription: () =>
+    'Use this tool to scrape and extract content from the provided URLs. This is useful when you the user has asked you to extract or summarize information from specific web pages. You can provide up to 3 URLs at a time. NEVER CALL THIS TOOL EXPLICITLY YOURSELF UNLESS INSTRUCTED TO DO SO BY THE USER.',
+  getDescription: () => actionDescription,
   enabled: (_) => true,
   execute: async (params, additionalConfig) => {
     params.urls = params.urls.slice(0, 3);
