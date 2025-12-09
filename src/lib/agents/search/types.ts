@@ -99,9 +99,10 @@ export interface ResearchAction<
   TSchema extends z.ZodObject<any> = z.ZodObject<any>,
 > {
   name: string;
-  description: string;
   schema: z.ZodObject<any>;
-  enabled: (config: { classification: ClassifierOutput }) => boolean;
+  getToolDescription: (config: { mode: SearchAgentConfig['mode'] }) => string;
+  getDescription: (config: { mode: SearchAgentConfig['mode'] }) => string;
+  enabled: (config: { classification: ClassifierOutput, mode: SearchAgentConfig['mode'] }) => boolean;
   execute: (
     params: z.infer<TSchema>,
     additionalConfig: AdditionalConfig & {
