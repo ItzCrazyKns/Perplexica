@@ -1,0 +1,6 @@
+# Track the bias database CSV
+!media_bias.csv
+
+# Ignore runtime-generated log of unknown domains
+unknown_domains.txt
+

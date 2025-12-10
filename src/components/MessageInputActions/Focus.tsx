@@ -3,8 +3,8 @@ import {
   ChevronDown,
   Globe,
   Pencil,
-  ScanEye,
   SwatchBook,
+  Triangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -58,7 +58,7 @@ const focusModes = [
     key: 'triangulateNews',
     title: 'Triangulate News',
     description: 'Compare news across diverse sources',
-    icon: <ScanEye size={16} />,
+    icon: <Triangle size={16} />,
   },
 ];
 

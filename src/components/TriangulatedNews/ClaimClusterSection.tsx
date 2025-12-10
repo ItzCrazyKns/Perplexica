@@ -1,14 +1,15 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
-import type { ClaimCluster, Lane } from '@/types/newsTriangulate';
+import type { ClaimCluster, Lane, NewsSource } from '@/types/newsTriangulate';
 
 interface ClaimClusterSectionProps {
   title: string;
   icon: React.ReactNode;
   clusters: ClaimCluster[];
+  sources: NewsSource[];
   variant: 'shared' | 'conflict' | 'unique';
   className?: string;
 }
@@ -37,6 +38,125 @@ const VARIANT_STYLES = {
 };
 
 /**
+ * Individual claim card with expandable details and source links.
+ */
+const ClaimCard = ({
+  cluster,
+  sources,
+  accentClass,
+}: {
+  cluster: ClaimCluster;
+  sources: NewsSource[];
+  accentClass: string;
+}) => {
+  const [detailsExpanded, setDetailsExpanded] = useState(false);
+  const TEXT_TRUNCATE_LENGTH = 150;
+  
+  const isLongText = cluster.representativeText.length > TEXT_TRUNCATE_LENGTH;
+  const displayText = isLongText && !detailsExpanded
+    ? cluster.representativeText.slice(0, TEXT_TRUNCATE_LENGTH) + '...'
+    : cluster.representativeText;
+
+  // Get the actual source objects for this cluster
+  const claimSources = cluster.supportingClaims
+    .map((sc) => sources.find((s) => s.id === sc.sourceId))
+    .filter((s): s is NewsSource => s !== undefined);
+
+  return (
+    <div
+      className={cn(
+        'bg-light-100 dark:bg-dark-100 rounded-lg p-3 border-l-4 space-y-2',
+        accentClass,
+      )}
+    >
+      {/* Claim text - clickable if truncated */}
+      <button
+        onClick={() => isLongText && setDetailsExpanded(!detailsExpanded)}
+        className={cn(
+          'text-left w-full',
+          isLongText && 'cursor-pointer hover:bg-light-200/50 dark:hover:bg-dark-200/50 -m-1 p-1 rounded transition',
+        )}
+        disabled={!isLongText}
+      >
+        <p className="text-sm text-black/90 dark:text-white/90 leading-relaxed">
+          {displayText}
+        </p>
+      </button>
+
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        {/* Lane badges */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {cluster.lanesCovered.map((lane) => (
+            <span
+              key={lane}
+              className={cn(
+                'text-[10px] px-1.5 py-0.5 rounded border font-medium',
+                LANE_BADGE_STYLES[lane],
+              )}
+            >
+              {lane === 'UNKNOWN' ? 'Other' : lane}
+            </span>
+          ))}
+        </div>
+
+        {/* Source count and agreement level */}
+        <div className="flex items-center gap-2 text-[10px] text-black/50 dark:text-white/50">
+          <button
+            onClick={() => setDetailsExpanded(!detailsExpanded)}
+            className="hover:text-black dark:hover:text-white transition underline"
+          >
+            {cluster.supportingClaims.length} source
+            {cluster.supportingClaims.length !== 1 ? 's' : ''}
+          </button>
+          <span
+            className={cn(
+              'px-1.5 py-0.5 rounded font-medium uppercase tracking-wide',
+              cluster.agreementLevel === 'high' &&
+                'bg-green-500/10 text-green-600 dark:text-green-400',
+              cluster.agreementLevel === 'medium' &&
+                'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+              cluster.agreementLevel === 'low' &&
+                'bg-gray-500/10 text-gray-600 dark:text-gray-400',
+            )}
+          >
+            {cluster.agreementLevel}
+          </span>
+        </div>
+      </div>
+
+      {/* Expanded source details */}
+      {detailsExpanded && claimSources.length > 0 && (
+        <div className="pt-2 mt-2 border-t border-light-200 dark:border-dark-200 space-y-1.5">
+          <p className="text-[10px] text-black/40 dark:text-white/40 uppercase tracking-wide font-medium">
+            Sources
+          </p>
+          {claimSources.map((source) => (
+            <a
+              key={source.id}
+              href={source.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-xs text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition group"
+            >
+              <ExternalLink size={12} className="opacity-50 group-hover:opacity-100" />
+              <span className="truncate flex-1">{source.title || source.domain}</span>
+              <span
+                className={cn(
+                  'text-[9px] px-1 py-0.5 rounded border font-medium shrink-0',
+                  LANE_BADGE_STYLES[source.lane || 'UNKNOWN'],
+                )}
+              >
+                {source.lane === 'UNKNOWN' || !source.lane ? 'Other' : source.lane}
+              </span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/**
  * Displays a section of claim clusters (shared facts, conflicts, or unique angles).
  * Each cluster shows the representative claim text, lane coverage, and source count.
  */
@@ -44,6 +164,7 @@ const ClaimClusterSection = ({
   title,
   icon,
   clusters,
+  sources,
   variant,
   className,
 }: ClaimClusterSectionProps) => {
@@ -84,55 +205,12 @@ const ClaimClusterSection = ({
       {expanded && (
         <div className="space-y-2">
           {clusters.map((cluster) => (
-            <div
+            <ClaimCard
               key={cluster.clusterId}
-              className={cn(
-                'bg-light-100 dark:bg-dark-100 rounded-lg p-3 border-l-4 space-y-2',
-                styles.accent,
-              )}
-            >
-              <p className="text-sm text-black/90 dark:text-white/90 leading-relaxed">
-                {cluster.representativeText}
-              </p>
-
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                {/* Lane badges */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {cluster.lanesCovered.map((lane) => (
-                    <span
-                      key={lane}
-                      className={cn(
-                        'text-[10px] px-1.5 py-0.5 rounded border font-medium',
-                        LANE_BADGE_STYLES[lane],
-                      )}
-                    >
-                      {lane === 'UNKNOWN' ? 'Other' : lane}
-                    </span>
-                  ))}
-                </div>
-
-                {/* Source count and agreement level */}
-                <div className="flex items-center gap-2 text-[10px] text-black/50 dark:text-white/50">
-                  <span>
-                    {cluster.supportingClaims.length} source
-                    {cluster.supportingClaims.length !== 1 ? 's' : ''}
-                  </span>
-                  <span
-                    className={cn(
-                      'px-1.5 py-0.5 rounded font-medium uppercase tracking-wide',
-                      cluster.agreementLevel === 'high' &&
-                        'bg-green-500/10 text-green-600 dark:text-green-400',
-                      cluster.agreementLevel === 'medium' &&
-                        'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-                      cluster.agreementLevel === 'low' &&
-                        'bg-gray-500/10 text-gray-600 dark:text-gray-400',
-                    )}
-                  >
-                    {cluster.agreementLevel}
-                  </span>
-                </div>
-              </div>
-            </div>
+              cluster={cluster}
+              sources={sources}
+              accentClass={styles.accent}
+            />
           ))}
         </div>
       )}

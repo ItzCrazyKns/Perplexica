@@ -640,24 +640,36 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           (msg, i) => i > userMessageIndex && msg.role === 'suggestion',
         );
 
+        // Check if we have sources - handle both regular array and triangulated object format
+        const hasSources = sourceMessage && (
+          Array.isArray(sourceMessage.sources) 
+            ? sourceMessage.sources.length > 0 
+            : (sourceMessage.sources as any)?.sources?.length > 0
+        );
+
         if (
-          sourceMessage &&
-          sourceMessage.sources.length > 0 &&
+          hasSources &&
           suggestionMessageIndex == -1
         ) {
-          const suggestions = await getSuggestions(messagesRef.current);
-          setMessages((prev) => {
-            return [
-              ...prev,
-              {
-                role: 'suggestion',
-                suggestions: suggestions,
-                chatId: chatId!,
-                createdAt: new Date(),
-                messageId: crypto.randomBytes(7).toString('hex'),
-              },
-            ];
-          });
+          try {
+            const suggestions = await getSuggestions(messagesRef.current);
+            if (suggestions && suggestions.length > 0) {
+              setMessages((prev) => {
+                return [
+                  ...prev,
+                  {
+                    role: 'suggestion',
+                    suggestions: suggestions,
+                    chatId: chatId!,
+                    createdAt: new Date(),
+                    messageId: crypto.randomBytes(7).toString('hex'),
+                  },
+                ];
+              });
+            }
+          } catch (err) {
+            console.error('Failed to generate suggestions:', err);
+          }
         }
       }
     };

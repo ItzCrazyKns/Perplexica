@@ -13,25 +13,29 @@ interface LaneIndicatorProps {
   className?: string;
 }
 
-const LANE_COLORS: Record<Lane, { bg: string; text: string; label: string }> = {
+const LANE_COLORS: Record<Lane, { bg: string; bar: string; text: string; label: string }> = {
   LEFT: {
-    bg: 'bg-blue-500/20 dark:bg-blue-400/20',
-    text: 'text-blue-600 dark:text-blue-400',
+    bg: 'bg-blue-500/30 dark:bg-blue-500/40',
+    bar: 'bg-blue-500 dark:bg-blue-400',
+    text: 'text-blue-500 dark:text-blue-400',
     label: 'Left',
   },
   RIGHT: {
-    bg: 'bg-red-500/20 dark:bg-red-400/20',
-    text: 'text-red-600 dark:text-red-400',
+    bg: 'bg-red-500/30 dark:bg-red-500/40',
+    bar: 'bg-red-500 dark:bg-red-400',
+    text: 'text-red-500 dark:text-red-400',
     label: 'Right',
   },
   CENTER: {
-    bg: 'bg-purple-500/20 dark:bg-purple-400/20',
-    text: 'text-purple-600 dark:text-purple-400',
+    bg: 'bg-purple-500/30 dark:bg-purple-500/40',
+    bar: 'bg-purple-500 dark:bg-purple-400',
+    text: 'text-purple-500 dark:text-purple-400',
     label: 'Center',
   },
   UNKNOWN: {
-    bg: 'bg-gray-500/20 dark:bg-gray-400/20',
-    text: 'text-gray-600 dark:text-gray-400',
+    bg: 'bg-slate-500/30 dark:bg-slate-500/40',
+    bar: 'bg-slate-400 dark:bg-slate-500',
+    text: 'text-slate-500 dark:text-slate-400',
     label: 'Other',
   },
 };
@@ -51,8 +55,8 @@ const LaneIndicator = ({ lanes, className }: LaneIndicatorProps) => {
         <span>{total} sources</span>
       </div>
 
-      {/* Proportional bar */}
-      <div className="flex h-2 rounded-full overflow-hidden bg-light-200 dark:bg-dark-200">
+      {/* Proportional bar - vibrant colors */}
+      <div className="flex h-3 rounded-full overflow-hidden bg-light-200 dark:bg-dark-200">
         {lanes
           .filter((l) => l.count > 0)
           .map((lane) => {
@@ -60,7 +64,7 @@ const LaneIndicator = ({ lanes, className }: LaneIndicatorProps) => {
             return (
               <div
                 key={lane.lane}
-                className={cn(LANE_COLORS[lane.lane].bg, 'transition-all')}
+                className={cn(LANE_COLORS[lane.lane].bar, 'transition-all')}
                 style={{ width: `${width}%` }}
                 title={`${LANE_COLORS[lane.lane].label}: ${lane.count}`}
               />
@@ -69,21 +73,21 @@ const LaneIndicator = ({ lanes, className }: LaneIndicatorProps) => {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-3 text-xs">
+      <div className="flex flex-wrap gap-4 text-xs">
         {lanes
           .filter((l) => l.count > 0)
           .map((lane) => (
             <div key={lane.lane} className="flex items-center gap-1.5">
               <div
                 className={cn(
-                  'w-2.5 h-2.5 rounded-full',
-                  LANE_COLORS[lane.lane].bg,
+                  'w-3 h-3 rounded-full',
+                  LANE_COLORS[lane.lane].bar,
                 )}
               />
-              <span className={LANE_COLORS[lane.lane].text}>
+              <span className={cn(LANE_COLORS[lane.lane].text, 'font-medium')}>
                 {LANE_COLORS[lane.lane].label}
               </span>
-              <span className="text-black/40 dark:text-white/40">
+              <span className="text-black/50 dark:text-white/50">
                 ({lane.count})
               </span>
             </div>

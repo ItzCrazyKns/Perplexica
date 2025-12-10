@@ -9,6 +9,8 @@ export interface NewsSource {
   timestamp?: string;
   sourceName?: string;
   lane?: Lane;
+  credibilityScore?: number; // 0-1 scale, higher is better
+  imageUrl?: string; // og:image or thumbnail from search results (safe for previews)
 }
 
 export interface NewsClaim {
