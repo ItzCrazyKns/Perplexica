@@ -31,6 +31,7 @@ export interface SourceCredibility {
 
 /**
  * Factual reporting score mapping (weight: 40%)
+ * Note: "DO NOT USE" entries are skipped entirely in loadCredibilityMap
  */
 const FACTUAL_SCORES: Record<string, number> = {
   'very high': 1.0,
@@ -38,8 +39,12 @@ const FACTUAL_SCORES: Record<string, number> = {
   'high (industry specific)': 0.85,
   'mostly factual': 0.7,
   'mixed': 0.5,
+  'mixed (opinion heavy)': 0.45,
   'low': 0.3,
+  'low (clickbait/ai)': 0.15,
   'very low': 0.1,
+  'n/a (blog)': 0.3,
+  'n/a': 0.3,
 };
 
 /**
@@ -48,7 +53,9 @@ const FACTUAL_SCORES: Record<string, number> = {
 const CREDIBILITY_SCORES: Record<string, number> = {
   'high credibility': 1.0,
   'medium credibility': 0.6,
+  'mixed credibility': 0.5,
   'low credibility': 0.2,
+  'not rated': 0.3,
 };
 
 /**
@@ -165,12 +172,21 @@ const BIAS_TO_LANE: Record<string, Lane> = {
   // CENTER
   'least biased': 'CENTER',
   'least biased (data focused)': 'CENTER',
-  'pro-business (commercial)': 'CENTER', // Commercial/industry sources
+  'pro-business (commercial)': 'CENTER',
+  'pro-business (market)': 'CENTER',
   'pro-science': 'CENTER',
   'pro- science': 'CENTER',
   'least – pro science': 'CENTER',
   'least pro-science': 'CENTER',
   'pro-science / least biased': 'CENTER',
+  
+  // Industry/Specialty sources (treat as CENTER for balance)
+  'pro-crypto': 'CENTER',
+  'pro-crypto (mainstream)': 'CENTER',
+  'commercial': 'CENTER',
+  
+  // Progressive left
+  'left (progressive)': 'LEFT',
 };
 
 /**
@@ -188,6 +204,7 @@ const EXCLUDED_CATEGORIES = new Set([
   'junk news',
   'not rated',
   'unrated',
+  'n/a', // Unknown/unvetted sources
 ]);
 
 // Cache for loaded bias data (now includes full credibility info)
@@ -265,6 +282,11 @@ export const loadCredibilityMap = (): Map<string, SourceCredibility> => {
       const credibilityRating = fields[7]?.toLowerCase().trim() || '';
 
       if (!source || !bias) continue;
+
+      // Skip domains marked as "DO NOT USE" (clickbait, content farms, etc.)
+      if (factualReporting.includes('do not use')) {
+        continue;
+      }
 
       // Skip excluded categories (conspiracy, pseudoscience, etc.)
       if (EXCLUDED_CATEGORIES.has(bias)) {
