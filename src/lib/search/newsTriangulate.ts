@@ -514,9 +514,9 @@ const generateNeutralSummary = async (
   
   let spectrumNote = '';
   if (dominantLane) {
-    spectrumNote = `\n*⚠ Limited diversity: ${Math.round((dominantLane[1] / totalSources) * 100)}% of sources are ${dominantLane[0].toLowerCase()}-leaning*`;
+    spectrumNote = `*⚠ Limited diversity: ${Math.round((dominantLane[1] / totalSources) * 100)}% of sources are ${dominantLane[0].toLowerCase()}-leaning*`;
   } else if (!hasFullSpectrum) {
-    spectrumNote = `\n*⚠ Limited spectrum: No ${laneCounts.LEFT === 0 ? 'left' : 'right'}-leaning sources available*`;
+    spectrumNote = `*⚠ Limited spectrum: No ${laneCounts.LEFT === 0 ? 'left' : 'right'}-leaning sources available*`;
   }
 
   // Detect polarized conflicts (conflicts that include both LEFT and RIGHT lanes)
@@ -549,7 +549,8 @@ Write a news briefing in this structure:
 
 # [Compelling, specific headline]
 
-*${laneBreakdown.replace(/:/g, ':').replace(/,/g, ' |')} sources | Credibility: ${credibilityLabel}*${spectrumNote}
+*${laneBreakdown.replace(/:/g, ':').replace(/,/g, ' |')} sources | Credibility: ${credibilityLabel}*
+${spectrumNote ? `\n${spectrumNote}` : ''}
 
 [OPENING: 2-3 sentence lead covering the core story. Hook the reader with the most newsworthy element.]
 
@@ -707,8 +708,8 @@ export class NewsTriangulationAgent implements MetaSearchAgentType {
         const tagged = withLaneAndCredibility(sources);
         const balanced = selectBalancedNewsSources(tagged);
 
-        // Minimum sources needed for meaningful triangulation (ideal: 5-10)
-        const MIN_SOURCES_FOR_TRIANGULATION = 5;
+        // Absolute minimum: need at least 3 sources for any meaningful comparison
+        const MIN_SOURCES_ABSOLUTE = 3;
 
         // Check for political diversity - need at least 1 LEFT and 1 RIGHT for true triangulation
         const hasLeft = balanced.some(s => s.lane === 'LEFT');
@@ -727,16 +728,11 @@ export class NewsTriangulationAgent implements MetaSearchAgentType {
         
         console.log(`[Triangulate] Query: "${searchQuery.substring(0, 50)}..." | Sources: ${balanced.length} | Lanes: L=${laneCounts.LEFT} R=${laneCounts.RIGHT} C=${laneCounts.CENTER} U=${laneCounts.UNKNOWN} | FullSpectrum: ${hasFullSpectrum}`);
 
-        // Handle low-source case: still show sources but skip claim extraction
-        if (balanced.length < MIN_SOURCES_FOR_TRIANGULATION) {
-          let summary: string;
-          if (balanced.length === 0) {
-            summary = 'No news sources found for this query. Try a more specific or recent news topic.';
-          } else if (balanced.length < 3) {
-            summary = `Only ${balanced.length} source${balanced.length === 1 ? '' : 's'} found. At least ${MIN_SOURCES_FOR_TRIANGULATION} diverse sources are needed for proper triangulation. Try a broader news topic.`;
-          } else {
-            summary = `Found ${balanced.length} sources, but ${MIN_SOURCES_FOR_TRIANGULATION}+ are recommended for reliable triangulation. Results may be limited.`;
-          }
+        // Handle zero or near-zero sources: can't triangulate at all
+        if (balanced.length < MIN_SOURCES_ABSOLUTE) {
+          const summary = balanced.length === 0
+            ? 'No news sources found for this query. Try a more specific or recent news topic.'
+            : `Only ${balanced.length} source${balanced.length === 1 ? '' : 's'} found. At least ${MIN_SOURCES_ABSOLUTE} sources are needed for triangulation. Try a broader news topic.`;
 
           const fallbackResult: TriangulatedNewsResult = {
             summary,

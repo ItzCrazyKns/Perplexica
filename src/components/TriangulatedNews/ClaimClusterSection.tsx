@@ -99,8 +99,8 @@ const ClaimCard = ({
           ))}
         </div>
 
-        {/* Source count and agreement level */}
-        <div className="flex items-center gap-2 text-[10px] text-black/50 dark:text-white/50">
+        {/* Source count */}
+        <div className="text-[10px] text-black/50 dark:text-white/50">
           <button
             onClick={() => setDetailsExpanded(!detailsExpanded)}
             className="hover:text-black dark:hover:text-white transition underline"
@@ -108,19 +108,6 @@ const ClaimCard = ({
             {cluster.supportingClaims.length} source
             {cluster.supportingClaims.length !== 1 ? 's' : ''}
           </button>
-          <span
-            className={cn(
-              'px-1.5 py-0.5 rounded font-medium uppercase tracking-wide',
-              cluster.agreementLevel === 'high' &&
-                'bg-green-500/10 text-green-600 dark:text-green-400',
-              cluster.agreementLevel === 'medium' &&
-                'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-              cluster.agreementLevel === 'low' &&
-                'bg-gray-500/10 text-gray-600 dark:text-gray-400',
-            )}
-          >
-            {cluster.agreementLevel}
-          </span>
         </div>
       </div>
 
