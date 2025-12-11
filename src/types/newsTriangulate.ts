@@ -43,4 +43,3 @@ export interface TriangulatedNewsResult {
   lanes: Array<{ lane: Lane; count: number }>;
   sources: NewsSource[];
 }
-

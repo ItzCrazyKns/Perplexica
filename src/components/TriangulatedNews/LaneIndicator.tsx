@@ -13,7 +13,10 @@ interface LaneIndicatorProps {
   className?: string;
 }
 
-const LANE_COLORS: Record<Lane, { bg: string; bar: string; text: string; label: string }> = {
+const LANE_COLORS: Record<
+  Lane,
+  { bg: string; bar: string; text: string; label: string }
+> = {
   LEFT: {
     bg: 'bg-blue-500/30 dark:bg-blue-500/40',
     bar: 'bg-blue-500 dark:bg-blue-400',
@@ -98,4 +101,3 @@ const LaneIndicator = ({ lanes, className }: LaneIndicatorProps) => {
 };
 
 export default LaneIndicator;
-

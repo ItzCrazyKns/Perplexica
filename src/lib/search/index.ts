@@ -1,4 +1,6 @@
-import MetaSearchAgent, { MetaSearchAgentType } from '@/lib/search/metaSearchAgent';
+import MetaSearchAgent, {
+  MetaSearchAgentType,
+} from '@/lib/search/metaSearchAgent';
 import { NewsTriangulationAgent } from './newsTriangulate';
 import prompts from '../prompts';
 

@@ -51,11 +51,12 @@ const ClaimCard = ({
 }) => {
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const TEXT_TRUNCATE_LENGTH = 150;
-  
+
   const isLongText = cluster.representativeText.length > TEXT_TRUNCATE_LENGTH;
-  const displayText = isLongText && !detailsExpanded
-    ? cluster.representativeText.slice(0, TEXT_TRUNCATE_LENGTH) + '...'
-    : cluster.representativeText;
+  const displayText =
+    isLongText && !detailsExpanded
+      ? cluster.representativeText.slice(0, TEXT_TRUNCATE_LENGTH) + '...'
+      : cluster.representativeText;
 
   // Get the actual source objects for this cluster
   const claimSources = cluster.supportingClaims
@@ -74,7 +75,8 @@ const ClaimCard = ({
         onClick={() => isLongText && setDetailsExpanded(!detailsExpanded)}
         className={cn(
           'text-left w-full',
-          isLongText && 'cursor-pointer hover:bg-light-200/50 dark:hover:bg-dark-200/50 -m-1 p-1 rounded transition',
+          isLongText &&
+            'cursor-pointer hover:bg-light-200/50 dark:hover:bg-dark-200/50 -m-1 p-1 rounded transition',
         )}
         disabled={!isLongText}
       >
@@ -125,15 +127,22 @@ const ClaimCard = ({
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-xs text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition group"
             >
-              <ExternalLink size={12} className="opacity-50 group-hover:opacity-100" />
-              <span className="truncate flex-1">{source.title || source.domain}</span>
+              <ExternalLink
+                size={12}
+                className="opacity-50 group-hover:opacity-100"
+              />
+              <span className="truncate flex-1">
+                {source.title || source.domain}
+              </span>
               <span
                 className={cn(
                   'text-[9px] px-1 py-0.5 rounded border font-medium shrink-0',
                   LANE_BADGE_STYLES[source.lane || 'UNKNOWN'],
                 )}
               >
-                {source.lane === 'UNKNOWN' || !source.lane ? 'Other' : source.lane}
+                {source.lane === 'UNKNOWN' || !source.lane
+                  ? 'Other'
+                  : source.lane}
               </span>
             </a>
           ))}
@@ -206,4 +215,3 @@ const ClaimClusterSection = ({
 };
 
 export default ClaimClusterSection;
-

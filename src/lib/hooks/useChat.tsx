@@ -641,16 +641,13 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         );
 
         // Check if we have sources - handle both regular array and triangulated object format
-        const hasSources = sourceMessage && (
-          Array.isArray(sourceMessage.sources) 
-            ? sourceMessage.sources.length > 0 
-            : (sourceMessage.sources as any)?.sources?.length > 0
-        );
+        const hasSources =
+          sourceMessage &&
+          (Array.isArray(sourceMessage.sources)
+            ? sourceMessage.sources.length > 0
+            : (sourceMessage.sources as any)?.sources?.length > 0);
 
-        if (
-          hasSources &&
-          suggestionMessageIndex == -1
-        ) {
+        if (hasSources && suggestionMessageIndex == -1) {
           try {
             const suggestions = await getSuggestions(messagesRef.current);
             if (suggestions && suggestions.length > 0) {

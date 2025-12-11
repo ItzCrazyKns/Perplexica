@@ -96,7 +96,10 @@ const MessageBox = ({
               section.sourceMessage.sources.length > 0 && (
                 <div className="flex flex-col space-y-2">
                   <div className="flex flex-row items-center space-x-2">
-                    <BookCopy className="text-black dark:text-white" size={20} />
+                    <BookCopy
+                      className="text-black dark:text-white"
+                      size={20}
+                    />
                     <h3 className="text-black dark:text-white font-medium text-xl">
                       Sources
                     </h3>

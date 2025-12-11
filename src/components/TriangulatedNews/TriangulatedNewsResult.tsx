@@ -14,11 +14,7 @@ import {
 import LaneIndicator from './LaneIndicator';
 import ClaimClusterSection from './ClaimClusterSection';
 import TriangulatedNewsSources from './TriangulatedNewsSources';
-import type {
-  ClaimCluster,
-  Lane,
-  NewsSource,
-} from '@/types/newsTriangulate';
+import type { ClaimCluster, Lane, NewsSource } from '@/types/newsTriangulate';
 
 interface TriangulatedNewsData {
   sources: NewsSource[];
@@ -40,10 +36,10 @@ interface TriangulatedNewsResultProps {
 const pickHeroImage = (sources: NewsSource[]): NewsSource | null => {
   const withImages = sources.filter((s) => s.imageUrl);
   if (withImages.length === 0) return null;
-  
+
   // Sort by credibility (highest first), then pick the first
   const sorted = [...withImages].sort(
-    (a, b) => (b.credibilityScore ?? 0) - (a.credibilityScore ?? 0)
+    (a, b) => (b.credibilityScore ?? 0) - (a.credibilityScore ?? 0),
   );
   return sorted[0];
 };
@@ -56,7 +52,13 @@ const TriangulatedNewsResult = ({
   data,
   className,
 }: TriangulatedNewsResultProps) => {
-  const { sources = [], sharedFacts = [], conflicts = [], uniqueAngles = [], lanes = [] } = data || {};
+  const {
+    sources = [],
+    sharedFacts = [],
+    conflicts = [],
+    uniqueAngles = [],
+    lanes = [],
+  } = data || {};
 
   const hasClaimData =
     sharedFacts.length > 0 || conflicts.length > 0 || uniqueAngles.length > 0;
@@ -166,4 +168,3 @@ const TriangulatedNewsResult = ({
 };
 
 export default TriangulatedNewsResult;
-

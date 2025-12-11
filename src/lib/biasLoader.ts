@@ -1,15 +1,15 @@
 /**
  * Media Bias & Credibility Loader
- * 
+ *
  * Loads bias and credibility data from data/bias/media_bias.csv (~4,500 domains).
  * Data sourced from Media Bias/Fact Check and includes:
  *   - Political bias (LEFT/CENTER/RIGHT/UNKNOWN)
  *   - Factual reporting rating
  *   - Credibility rating
  *   - Press freedom score
- * 
+ *
  * Unknown domains are logged to data/bias/unknown_domains.txt for expansion.
- * 
+ *
  * Scoring weights:
  *   - Factual reporting: 40%
  *   - Credibility rating: 35%
@@ -23,10 +23,10 @@ export type Lane = 'LEFT' | 'RIGHT' | 'CENTER' | 'UNKNOWN';
 
 export interface SourceCredibility {
   lane: Lane;
-  factualReporting: number;  // 0-1 scale
+  factualReporting: number; // 0-1 scale
   credibilityRating: number; // 0-1 scale
-  pressFreedom: number;      // 0-1 scale
-  overallScore: number;      // Weighted composite 0-1
+  pressFreedom: number; // 0-1 scale
+  overallScore: number; // Weighted composite 0-1
 }
 
 /**
@@ -35,12 +35,12 @@ export interface SourceCredibility {
  */
 const FACTUAL_SCORES: Record<string, number> = {
   'very high': 1.0,
-  'high': 0.85,
+  high: 0.85,
   'high (industry specific)': 0.85,
   'mostly factual': 0.7,
-  'mixed': 0.5,
+  mixed: 0.5,
   'mixed (opinion heavy)': 0.45,
-  'low': 0.3,
+  low: 0.3,
   'low (clickbait/ai)': 0.15,
   'very low': 0.1,
   'n/a (blog)': 0.3,
@@ -62,7 +62,7 @@ const CREDIBILITY_SCORES: Record<string, number> = {
  * Press freedom score mapping (weight: 25%)
  */
 const PRESS_FREEDOM_SCORES: Record<string, number> = {
-  'excellent': 1.0,
+  excellent: 1.0,
   'mostly free': 0.9,
   'mostly freedom': 0.9,
   'mosty free': 0.9, // typo in data
@@ -82,22 +82,22 @@ const parsePressFreedomRanking = (value: string): number | null => {
     const rank = parseInt(standardMatch[1], 10);
     const total = parseInt(standardMatch[2], 10);
     // Lower rank is better, so invert: 1/180 = ~1.0, 180/180 = ~0
-    return Math.max(0, 1 - (rank / total));
+    return Math.max(0, 1 - rank / total);
   }
-  
+
   // New format: "Problematic Situation (Rank ~55)"
   const rankMatch = value.match(/rank\s*~?\s*(\d+)/i);
   if (rankMatch) {
     const rank = parseInt(rankMatch[1], 10);
     // Assume out of 180 (RSF scale)
-    return Math.max(0, 1 - (rank / 180));
+    return Math.max(0, 1 - rank / 180);
   }
-  
+
   // Handle categorical "problematic" descriptions
   if (value.toLowerCase().includes('problematic')) {
     return 0.65; // Slightly below moderate
   }
-  
+
   return null;
 };
 
@@ -119,7 +119,7 @@ const calculateOverallScore = (
  */
 const BIAS_TO_LANE: Record<string, Lane> = {
   // LEFT
-  'left': 'LEFT',
+  left: 'LEFT',
   'left biased': 'LEFT',
   'left-center': 'LEFT',
   'left center': 'LEFT',
@@ -140,7 +140,7 @@ const BIAS_TO_LANE: Record<string, Lane> = {
   'left-conspiracy/pseudoscience': 'LEFT',
 
   // RIGHT
-  'right': 'RIGHT',
+  right: 'RIGHT',
   'right-center': 'RIGHT',
   'far right': 'RIGHT',
   'far-right': 'RIGHT',
@@ -179,12 +179,12 @@ const BIAS_TO_LANE: Record<string, Lane> = {
   'least – pro science': 'CENTER',
   'least pro-science': 'CENTER',
   'pro-science / least biased': 'CENTER',
-  
+
   // Industry/Specialty sources (treat as CENTER for balance)
   'pro-crypto': 'CENTER',
   'pro-crypto (mainstream)': 'CENTER',
-  'commercial': 'CENTER',
-  
+  commercial: 'CENTER',
+
   // Progressive left
   'left (progressive)': 'LEFT',
 };
@@ -235,8 +235,8 @@ const parseCSVLine = (line: string): string[] => {
 /**
  * Loads the media bias CSV and builds a domain-to-credibility map.
  * Caches the result for subsequent calls.
- * 
- * CSV columns: source, country, bias, factual_reporting, press_freedom, 
+ *
+ * CSV columns: source, country, bias, factual_reporting, press_freedom,
  *              media_type, popularity, mbfc_credibility_rating
  */
 export const loadCredibilityMap = (): Map<string, SourceCredibility> => {
@@ -262,7 +262,9 @@ export const loadCredibilityMap = (): Map<string, SourceCredibility> => {
     }
 
     if (!csvContent) {
-      console.warn('[BiasLoader] Could not find media_bias.csv, using empty map');
+      console.warn(
+        '[BiasLoader] Could not find media_bias.csv, using empty map',
+      );
       return credibilityMap;
     }
 
@@ -295,14 +297,14 @@ export const loadCredibilityMap = (): Map<string, SourceCredibility> => {
 
       // Map bias to lane
       const lane = BIAS_TO_LANE[bias] || 'UNKNOWN';
-      
+
       // Only include sources with a known lane
       if (lane === 'UNKNOWN') continue;
 
       // Calculate scores
       const factualScore = FACTUAL_SCORES[factualReporting] ?? 0.5;
       const credibilityScore = CREDIBILITY_SCORES[credibilityRating] ?? 0.5;
-      
+
       // Parse press freedom (handle both categorical and ranking formats)
       let pressFreedomScore = PRESS_FREEDOM_SCORES[pressFreedom];
       if (pressFreedomScore === undefined) {
@@ -325,7 +327,9 @@ export const loadCredibilityMap = (): Map<string, SourceCredibility> => {
       });
     }
 
-    console.log(`[BiasLoader] Loaded ${credibilityMap.size} domains with credibility scores`);
+    console.log(
+      `[BiasLoader] Loaded ${credibilityMap.size} domains with credibility scores`,
+    );
   } catch (err) {
     console.error('[BiasLoader] Error loading bias CSV:', err);
   }
@@ -343,7 +347,12 @@ export const loadBiasMap = (): Map<string, Lane> => {
 
 // Track unknown domains we've seen (for logging/research)
 const unknownDomainsSet = new Set<string>();
-const UNKNOWN_DOMAINS_LOG_PATH = join(process.cwd(), 'data', 'bias', 'unknown_domains.txt');
+const UNKNOWN_DOMAINS_LOG_PATH = join(
+  process.cwd(),
+  'data',
+  'bias',
+  'unknown_domains.txt',
+);
 
 /**
  * Logs an unknown domain to file for later research.
@@ -352,7 +361,7 @@ const UNKNOWN_DOMAINS_LOG_PATH = join(process.cwd(), 'data', 'bias', 'unknown_do
 const logUnknownDomain = (domain: string): void => {
   if (unknownDomainsSet.has(domain)) return;
   unknownDomainsSet.add(domain);
-  
+
   try {
     const timestamp = new Date().toISOString().split('T')[0];
     const logLine = `${timestamp}\t${domain}\n`;
@@ -372,15 +381,18 @@ export const getUnknownDomains = (): string[] => {
 /**
  * Reads all unknown domains from the log file.
  */
-export const readUnknownDomainsLog = (): Array<{ date: string; domain: string }> => {
+export const readUnknownDomainsLog = (): Array<{
+  date: string;
+  domain: string;
+}> => {
   try {
     if (!existsSync(UNKNOWN_DOMAINS_LOG_PATH)) return [];
-    
+
     const content = readFileSync(UNKNOWN_DOMAINS_LOG_PATH, 'utf-8');
     return content
       .split('\n')
-      .filter(line => line.trim())
-      .map(line => {
+      .filter((line) => line.trim())
+      .map((line) => {
         const [date, domain] = line.split('\t');
         return { date, domain };
       });
@@ -417,7 +429,7 @@ const GOV_EDU_CREDIBILITY: SourceCredibility = {
 const lookupDomain = (domain: string): SourceCredibility | null => {
   const cleanDomain = domain.toLowerCase().replace(/^www\./, '');
   const map = loadCredibilityMap();
-  
+
   // Direct lookup
   if (map.has(cleanDomain)) {
     return map.get(cleanDomain)!;
@@ -441,7 +453,7 @@ const lookupDomain = (domain: string): SourceCredibility | null => {
  */
 export const getCredibilityForDomain = (domain: string): SourceCredibility => {
   const cleanDomain = domain.toLowerCase().replace(/^www\./, '');
-  
+
   // Check our database
   const cred = lookupDomain(cleanDomain);
   if (cred) return cred;
@@ -502,9 +514,10 @@ export const isKnownDomain = (domain: string): boolean => {
 /**
  * Gets a human-readable credibility label.
  */
-export const getCredibilityLabel = (score: number): 'high' | 'medium' | 'low' => {
+export const getCredibilityLabel = (
+  score: number,
+): 'high' | 'medium' | 'low' => {
   if (score >= 0.75) return 'high';
   if (score >= 0.5) return 'medium';
   return 'low';
 };
-

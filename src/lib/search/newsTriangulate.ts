@@ -1,16 +1,16 @@
 /**
  * News Triangulation Agent
- * 
+ *
  * Searches for news articles across multiple sources, categorizes them by
  * political lean (LEFT/RIGHT/CENTER), extracts factual claims, and clusters
  * them to identify:
  *   - Shared facts (claims verified by multiple sources across lanes)
  *   - Conflicts (claims where sources disagree)
  *   - Unique angles (perspectives only covered by one source/lane)
- * 
+ *
  * Bias data is loaded from data/bias/media_bias.csv (~4,500 domains).
  * Unknown domains are logged to data/bias/unknown_domains.txt for expansion.
- * 
+ *
  * @see src/types/newsTriangulate.ts for type definitions
  * @see src/lib/biasLoader.ts for bias data loading
  */
@@ -43,11 +43,12 @@ type FetchOptions = {
 
 type NormalizedResult = NewsSource;
 
-const DEFAULT_FETCH_OPTS: Required<Pick<FetchOptions, 'limit' | 'perDomainCap'>> =
-  {
-    limit: 40,
-    perDomainCap: 2,
-  };
+const DEFAULT_FETCH_OPTS: Required<
+  Pick<FetchOptions, 'limit' | 'perDomainCap'>
+> = {
+  limit: 40,
+  perDomainCap: 2,
+};
 
 // Target 2-3 sources per lane for balanced coverage (8-12 total ideal)
 const DEFAULT_BALANCE_PER_LANE = 3;
@@ -68,17 +69,18 @@ const rewriteQueryWithHistory = async (
 ): Promise<string> => {
   // If no history or query seems standalone, return as-is
   if (history.length === 0) return query;
-  
+
   // Quick heuristic: if query is long enough and doesn't contain obvious follow-up phrases, skip LLM
-  const followUpPatterns = /^(tell me more|what about|how about|and|also|more on|expand|continue|go on|elaborate)/i;
+  const followUpPatterns =
+    /^(tell me more|what about|how about|and|also|more on|expand|continue|go on|elaborate)/i;
   const isShortQuery = query.split(' ').length <= 4;
-  
+
   if (!followUpPatterns.test(query) && !isShortQuery) {
     return query;
   }
 
   const historyStr = formatChatHistoryAsString(history);
-  
+
   const prompt = `You are a news search query optimizer. Given a conversation history and a follow-up question, rewrite the question as a standalone news search query that would find relevant current news articles.
 
 Conversation History:
@@ -90,10 +92,11 @@ Rewrite as a standalone news search query (output ONLY the query, nothing else):
 
   try {
     const response = await llm.invoke(prompt);
-    const rewritten = typeof response.content === 'string' 
-      ? response.content.trim() 
-      : String(response.content).trim();
-    
+    const rewritten =
+      typeof response.content === 'string'
+        ? response.content.trim()
+        : String(response.content).trim();
+
     // Sanity check: if rewritten is empty or too short, use original
     return rewritten.length >= 3 ? rewritten : query;
   } catch {
@@ -149,7 +152,8 @@ export const fetchNormalizedNewsResults = async (
     domainCounts.set(domain, current + 1);
 
     // Pick best available image (og:image or thumbnail from search engine)
-    const imageUrl = result.img_src || result.thumbnail_src || result.thumbnail || undefined;
+    const imageUrl =
+      result.img_src || result.thumbnail_src || result.thumbnail || undefined;
 
     normalized.push({
       id: randomUUID(),
@@ -224,12 +228,12 @@ export const selectBalancedNewsSources = (
     // Primary: higher credibility first
     const credDiff = (b.credibilityScore ?? 0.5) - (a.credibilityScore ?? 0.5);
     if (Math.abs(credDiff) > 0.1) return credDiff;
-    
+
     // Secondary: more recent first
     const aDate = parseTimestamp(a.timestamp)?.getTime() ?? 0;
     const bDate = parseTimestamp(b.timestamp)?.getTime() ?? 0;
     if (aDate !== bDate) return bDate - aDate;
-    
+
     return a.title.localeCompare(b.title);
   };
 
@@ -239,21 +243,23 @@ export const selectBalancedNewsSources = (
 
   const balanced: NewsSource[] = [];
   const knownLanes: Lane[] = ['LEFT', 'RIGHT', 'CENTER'];
-  
+
   // First pass: ensure at least 1 from each known lane if available
   for (const lane of knownLanes) {
-    if (grouped[lane].length > 0 && !balanced.some(s => s.lane === lane)) {
+    if (grouped[lane].length > 0 && !balanced.some((s) => s.lane === lane)) {
       balanced.push(grouped[lane][0]);
     }
   }
 
   // Second pass: fill up to perLane for each KNOWN lane
   for (const lane of knownLanes) {
-    const alreadyAdded = balanced.filter(s => s.lane === lane).length;
+    const alreadyAdded = balanced.filter((s) => s.lane === lane).length;
     const remaining = perLane - alreadyAdded;
-    
+
     if (remaining > 0) {
-      balanced.push(...grouped[lane].slice(alreadyAdded, alreadyAdded + remaining));
+      balanced.push(
+        ...grouped[lane].slice(alreadyAdded, alreadyAdded + remaining),
+      );
     }
   }
 
@@ -263,9 +269,9 @@ export const selectBalancedNewsSources = (
   const unknownSlots = Math.min(
     maxUnknown,
     Math.max(0, targetTotal - knownCount),
-    grouped.UNKNOWN.length
+    grouped.UNKNOWN.length,
   );
-  
+
   if (unknownSlots > 0) {
     balanced.push(...grouped.UNKNOWN.slice(0, unknownSlots));
   }
@@ -327,7 +333,9 @@ If no clear claims can be extracted, return an empty array: []`;
       who: claim.who,
       when: claim.when,
       where: claim.where,
-      claimType: (['fact', 'opinion', 'quote', 'other'].includes(claim.type || '')
+      claimType: (['fact', 'opinion', 'quote', 'other'].includes(
+        claim.type || '',
+      )
         ? claim.type
         : 'other') as NewsClaim['claimType'],
       confidence: (['low', 'medium', 'high'].includes(claim.confidence || '')
@@ -381,7 +389,9 @@ const buildClaimClusters = async (
     }
 
     // Build cluster metadata
-    const lanes = [...new Set(cluster.map((c) => c.lane).filter(Boolean))] as Lane[];
+    const lanes = [
+      ...new Set(cluster.map((c) => c.lane).filter(Boolean)),
+    ] as Lane[];
     const uniqueSources = new Set(cluster.map((c) => c.sourceId));
 
     // Determine agreement level based on source diversity
@@ -393,8 +403,8 @@ const buildClaimClusters = async (
     }
 
     // Determine representative text (longest/most descriptive claim in cluster)
-    const representativeText = cluster.reduce((prev, current) => 
-      (current.text.length > prev.text.length ? current : prev)
+    const representativeText = cluster.reduce((prev, current) =>
+      current.text.length > prev.text.length ? current : prev,
     ).text;
 
     clusters.push({
@@ -454,7 +464,8 @@ const categorizeClaimClusters = (
   // Sort by agreement level and source count
   const sortByRelevance = (a: ClaimCluster, b: ClaimCluster) => {
     const levelOrder = { high: 0, medium: 1, low: 2 };
-    const levelDiff = levelOrder[a.agreementLevel] - levelOrder[b.agreementLevel];
+    const levelDiff =
+      levelOrder[a.agreementLevel] - levelOrder[b.agreementLevel];
     if (levelDiff !== 0) return levelDiff;
     return b.supportingClaims.length - a.supportingClaims.length;
   };
@@ -492,7 +503,10 @@ const generateNeutralSummary = async (
 
   const uniqueAnglesText = uniqueAngles
     .slice(0, 3)
-    .map((c) => `- ${c.representativeText} (from ${c.lanesCovered.join(', ')} sources)`)
+    .map(
+      (c) =>
+        `- ${c.representativeText} (from ${c.lanesCovered.join(', ')} sources)`,
+    )
     .join('\n');
 
   const laneBreakdown = Object.entries(laneCounts)
@@ -501,17 +515,24 @@ const generateNeutralSummary = async (
     .join(', ');
 
   // Calculate average credibility
-  const avgCredibility = sources.length > 0
-    ? sources.reduce((sum, s) => sum + (s.credibilityScore ?? 0.5), 0) / sources.length
-    : 0.5;
-  const credibilityLabel = avgCredibility >= 0.75 ? '🟢 High' : avgCredibility >= 0.5 ? '🟡 Medium' : '🔴 Low';
+  const avgCredibility =
+    sources.length > 0
+      ? sources.reduce((sum, s) => sum + (s.credibilityScore ?? 0.5), 0) /
+        sources.length
+      : 0.5;
+  const credibilityLabel =
+    avgCredibility >= 0.75
+      ? '🟢 High'
+      : avgCredibility >= 0.5
+        ? '🟡 Medium'
+        : '🔴 Low';
 
   // Check for single-lane dominance (80%+ from one perspective)
   const totalSources = Object.values(laneCounts).reduce((a, b) => a + b, 0);
   const dominantLane = Object.entries(laneCounts)
     .filter(([lane]) => lane !== 'UNKNOWN')
     .find(([, count]) => count / totalSources >= 0.8);
-  
+
   let spectrumNote = '';
   if (dominantLane) {
     spectrumNote = `*⚠ Limited diversity: ${Math.round((dominantLane[1] / totalSources) * 100)}% of sources are ${dominantLane[0].toLowerCase()}-leaning*`;
@@ -520,8 +541,8 @@ const generateNeutralSummary = async (
   }
 
   // Detect polarized conflicts (conflicts that include both LEFT and RIGHT lanes)
-  const hasPolarizedConflicts = conflicts.some((c) =>
-    c.lanesCovered.includes('LEFT') && c.lanesCovered.includes('RIGHT'),
+  const hasPolarizedConflicts = conflicts.some(
+    (c) => c.lanesCovered.includes('LEFT') && c.lanesCovered.includes('RIGHT'),
   );
 
   const prompt = `You are a senior journalist at Reuters writing a comprehensive news briefing. Create a fluid, professional article that synthesizes information across political perspectives.
@@ -570,13 +591,17 @@ Each section should have:
 
 ---
 
-${hasPolarizedConflicts ? `**Disputed Details Between Left and Right**
+${
+  hasPolarizedConflicts
+    ? `**Disputed Details Between Left and Right**
 
 [Explain the disagreements with clear attribution. Example: "Conservative outlets emphasized X, while liberal sources focused on Y." Be specific about WHO says WHAT and what details differ. Keep this to 1-2 short paragraphs focused on the dispute itself.]
 
 ---
 
-` : ''}**Analysis & Context**
+`
+    : ''
+}**Analysis & Context**
 
 [1-2 paragraphs: Why this matters. What happens next. Historical context if relevant. Keep it analytical and forward-looking.]
 
@@ -620,7 +645,8 @@ const buildTriangulatedResult = async (
   const clusters = await buildClaimClusters(allClaims, embeddings);
 
   // Categorize clusters
-  const { sharedFacts, conflicts, uniqueAngles } = categorizeClaimClusters(clusters);
+  const { sharedFacts, conflicts, uniqueAngles } =
+    categorizeClaimClusters(clusters);
 
   // Calculate lane counts
   const laneCounts = sources.reduce<Record<Lane, number>>(
@@ -670,14 +696,18 @@ export class NewsTriangulationAgent implements MetaSearchAgentType {
     _systemInstructions: string,
   ) {
     const emitter = new EventEmitter();
-    
+
     // Prevent unhandled rejection warnings if no error listener attached
     emitter.on('error', () => {});
 
     queueMicrotask(async () => {
       try {
         // Rewrite query using history for contextual follow-ups
-        const searchQuery = await rewriteQueryWithHistory(message, history, llm);
+        const searchQuery = await rewriteQueryWithHistory(
+          message,
+          history,
+          llm,
+        );
 
         // Phase 1: Fetch and normalize news sources from multiple engines
         let sources = await fetchNormalizedNewsResults(searchQuery, {
@@ -689,8 +719,12 @@ export class NewsTriangulationAgent implements MetaSearchAgentType {
         });
 
         // If we're missing LEFT or RIGHT, fetch a second page with a higher cap to try to pull in missing lanes
-        const hasLeftInitial = sources.some((s) => tagLaneForDomain(s.domain) === 'LEFT');
-        const hasRightInitial = sources.some((s) => tagLaneForDomain(s.domain) === 'RIGHT');
+        const hasLeftInitial = sources.some(
+          (s) => tagLaneForDomain(s.domain) === 'LEFT',
+        );
+        const hasRightInitial = sources.some(
+          (s) => tagLaneForDomain(s.domain) === 'RIGHT',
+        );
         if (!hasLeftInitial || !hasRightInitial) {
           const extra = await fetchNormalizedNewsResults(searchQuery, {
             engines: ['bing news', 'google news', 'duckduckgo'],
@@ -712,8 +746,8 @@ export class NewsTriangulationAgent implements MetaSearchAgentType {
         const MIN_SOURCES_ABSOLUTE = 3;
 
         // Check for political diversity - need at least 1 LEFT and 1 RIGHT for true triangulation
-        const hasLeft = balanced.some(s => s.lane === 'LEFT');
-        const hasRight = balanced.some(s => s.lane === 'RIGHT');
+        const hasLeft = balanced.some((s) => s.lane === 'LEFT');
+        const hasRight = balanced.some((s) => s.lane === 'RIGHT');
         const hasFullSpectrum = hasLeft && hasRight;
 
         // Phase 6: Logging for debugging and quality tuning
@@ -725,14 +759,17 @@ export class NewsTriangulationAgent implements MetaSearchAgentType {
           },
           { LEFT: 0, RIGHT: 0, CENTER: 0, UNKNOWN: 0 },
         );
-        
-        console.log(`[Triangulate] Query: "${searchQuery.substring(0, 50)}..." | Sources: ${balanced.length} | Lanes: L=${laneCounts.LEFT} R=${laneCounts.RIGHT} C=${laneCounts.CENTER} U=${laneCounts.UNKNOWN} | FullSpectrum: ${hasFullSpectrum}`);
+
+        console.log(
+          `[Triangulate] Query: "${searchQuery.substring(0, 50)}..." | Sources: ${balanced.length} | Lanes: L=${laneCounts.LEFT} R=${laneCounts.RIGHT} C=${laneCounts.CENTER} U=${laneCounts.UNKNOWN} | FullSpectrum: ${hasFullSpectrum}`,
+        );
 
         // Handle zero or near-zero sources: can't triangulate at all
         if (balanced.length < MIN_SOURCES_ABSOLUTE) {
-          const summary = balanced.length === 0
-            ? 'No news sources found for this query. Try a more specific or recent news topic.'
-            : `Only ${balanced.length} source${balanced.length === 1 ? '' : 's'} found. At least ${MIN_SOURCES_ABSOLUTE} sources are needed for triangulation. Try a broader news topic.`;
+          const summary =
+            balanced.length === 0
+              ? 'No news sources found for this query. Try a more specific or recent news topic.'
+              : `Only ${balanced.length} source${balanced.length === 1 ? '' : 's'} found. At least ${MIN_SOURCES_ABSOLUTE} sources are needed for triangulation. Try a broader news topic.`;
 
           const fallbackResult: TriangulatedNewsResult = {
             summary,
@@ -745,23 +782,34 @@ export class NewsTriangulationAgent implements MetaSearchAgentType {
             sources: balanced,
           };
 
-          emitter.emit('data', JSON.stringify({ type: 'response', data: fallbackResult.summary }));
-          emitter.emit('data', JSON.stringify({
-            type: 'sources',
-            data: {
-              sources: fallbackResult.sources,
-              sharedFacts: fallbackResult.sharedFacts,
-              conflicts: fallbackResult.conflicts,
-              uniqueAngles: fallbackResult.uniqueAngles,
-              lanes: fallbackResult.lanes,
-            },
-          }));
+          emitter.emit(
+            'data',
+            JSON.stringify({ type: 'response', data: fallbackResult.summary }),
+          );
+          emitter.emit(
+            'data',
+            JSON.stringify({
+              type: 'sources',
+              data: {
+                sources: fallbackResult.sources,
+                sharedFacts: fallbackResult.sharedFacts,
+                conflicts: fallbackResult.conflicts,
+                uniqueAngles: fallbackResult.uniqueAngles,
+                lanes: fallbackResult.lanes,
+              },
+            }),
+          );
           emitter.emit('end');
           return;
         }
 
         // Phase 3/4: Extract claims, cluster, and build triangulated result
-        const result = await buildTriangulatedResult(balanced, llm, embeddings, hasFullSpectrum);
+        const result = await buildTriangulatedResult(
+          balanced,
+          llm,
+          embeddings,
+          hasFullSpectrum,
+        );
 
         // Emit structured response
         emitter.emit(
@@ -786,20 +834,27 @@ export class NewsTriangulationAgent implements MetaSearchAgentType {
         emitter.emit('end');
       } catch (error) {
         console.error('News triangulation failed:', error);
-        
+
         // Emit user-friendly error response instead of crashing
-        const errorMessage = 'Unable to complete news triangulation. This may be due to search engine issues or LLM timeout. Please try again.';
-        emitter.emit('data', JSON.stringify({ type: 'response', data: errorMessage }));
-        emitter.emit('data', JSON.stringify({
-          type: 'sources',
-          data: {
-            sources: [],
-            sharedFacts: [],
-            conflicts: [],
-            uniqueAngles: [],
-            lanes: [],
-          },
-        }));
+        const errorMessage =
+          'Unable to complete news triangulation. This may be due to search engine issues or LLM timeout. Please try again.';
+        emitter.emit(
+          'data',
+          JSON.stringify({ type: 'response', data: errorMessage }),
+        );
+        emitter.emit(
+          'data',
+          JSON.stringify({
+            type: 'sources',
+            data: {
+              sources: [],
+              sharedFacts: [],
+              conflicts: [],
+              uniqueAngles: [],
+              lanes: [],
+            },
+          }),
+        );
         emitter.emit('end');
       }
     });
@@ -807,4 +862,3 @@ export class NewsTriangulationAgent implements MetaSearchAgentType {
     return emitter;
   }
 }
-
