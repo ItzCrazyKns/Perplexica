@@ -16,8 +16,10 @@
  *   - Press freedom: 25%
  */
 
-import { readFileSync, appendFileSync, existsSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
+import { appendFile } from 'fs/promises';
 import { join } from 'path';
+import psl from 'psl';
 
 export type Lane = 'LEFT' | 'RIGHT' | 'CENTER' | 'UNKNOWN';
 
@@ -357,18 +359,19 @@ const UNKNOWN_DOMAINS_LOG_PATH = join(
 /**
  * Logs an unknown domain to file for later research.
  * Only logs each domain once per session.
+ * Uses async I/O to avoid blocking the event loop.
  */
 const logUnknownDomain = (domain: string): void => {
   if (unknownDomainsSet.has(domain)) return;
   unknownDomainsSet.add(domain);
 
-  try {
-    const timestamp = new Date().toISOString().split('T')[0];
-    const logLine = `${timestamp}\t${domain}\n`;
-    appendFileSync(UNKNOWN_DOMAINS_LOG_PATH, logLine);
-  } catch {
+  const timestamp = new Date().toISOString().split('T')[0];
+  const logLine = `${timestamp}\t${domain}\n`;
+
+  // Fire-and-forget async write to avoid blocking the event loop
+  appendFile(UNKNOWN_DOMAINS_LOG_PATH, logLine).catch(() => {
     // Silently fail if we can't write (e.g., permissions)
-  }
+  });
 };
 
 /**
@@ -425,6 +428,7 @@ const GOV_EDU_CREDIBILITY: SourceCredibility = {
 
 /**
  * Looks up a domain in the credibility map, handling subdomains.
+ * Uses psl (Public Suffix List) for proper TLD extraction (e.g., bbc.co.uk, not co.uk).
  */
 const lookupDomain = (domain: string): SourceCredibility | null => {
   const cleanDomain = domain.toLowerCase().replace(/^www\./, '');
@@ -435,12 +439,11 @@ const lookupDomain = (domain: string): SourceCredibility | null => {
     return map.get(cleanDomain)!;
   }
 
-  // Try without subdomains (e.g., news.bbc.com -> bbc.com)
-  const parts = cleanDomain.split('.');
-  if (parts.length > 2) {
-    const rootDomain = parts.slice(-2).join('.');
-    if (map.has(rootDomain)) {
-      return map.get(rootDomain)!;
+  // Extract root domain using psl for proper multi-part TLD handling
+  const parsed = psl.parse(cleanDomain);
+  if (parsed && 'domain' in parsed && parsed.domain) {
+    if (map.has(parsed.domain)) {
+      return map.get(parsed.domain)!;
     }
   }
 

@@ -10,7 +10,7 @@ import {
   TransitionChild,
 } from '@headlessui/react';
 import { ExternalLink } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import type { Lane, NewsSource } from '@/types/newsTriangulate';
 
 interface TriangulatedNewsSourcesProps {
@@ -51,6 +51,13 @@ const TriangulatedNewsSources = ({
     setIsDialogOpen(true);
     document.body.classList.add('overflow-hidden-scrollable');
   };
+
+  // Cleanup: ensure body scroll class is removed if component unmounts while dialog is open
+  useEffect(() => {
+    return () => {
+      document.body.classList.remove('overflow-hidden-scrollable');
+    };
+  }, []);
 
   const SourceCard = ({
     source,
