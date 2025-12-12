@@ -257,6 +257,16 @@ export const POST = async (req: Request) => {
 
     const registry = new ModelRegistry();
 
+    console.info(
+      '[chat] Loading models',
+      JSON.stringify({
+        chatProvider: body.chatModel.providerId,
+        chatModel: body.chatModel.key,
+        embeddingProvider: body.embeddingModel.providerId,
+        embeddingModel: body.embeddingModel.key,
+      }),
+    );
+
     const [llm, embedding] = await Promise.all([
       registry.loadChatModel(body.chatModel.providerId, body.chatModel.key),
       registry.loadEmbeddingModel(

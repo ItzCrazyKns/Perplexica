@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AddProvider from './AddProviderDialog';
 import {
   ConfigModelProvider,
@@ -17,6 +17,10 @@ const Models = ({
 }) => {
   const [providers, setProviders] = useState<ConfigModelProvider[]>(values);
 
+  useEffect(() => {
+    setProviders(values);
+  }, [values]);
+
   return (
     <div className="flex-1 space-y-6 overflow-y-auto py-6">
       <div className="flex flex-col px-6 gap-y-4">
@@ -24,13 +28,13 @@ const Models = ({
           Select models
         </h3>
         <ModelSelect
-          providers={values.filter((p) =>
+          providers={providers.filter((p) =>
             p.chatModels.some((m) => m.key != 'error'),
           )}
           type="chat"
         />
         <ModelSelect
-          providers={values.filter((p) =>
+          providers={providers.filter((p) =>
             p.embeddingModels.some((m) => m.key != 'error'),
           )}
           type="embedding"
