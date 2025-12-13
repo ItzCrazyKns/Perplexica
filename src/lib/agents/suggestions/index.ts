@@ -19,7 +19,7 @@ const generateSuggestions = async (
   input: SuggestionGeneratorInput,
   llm: BaseLLM<any>,
 ) => {
-  const res = await llm.generateObject<z.infer<typeof schema>>({
+  const res = await llm.generateObject<typeof schema>({
     messages: [
       {
         role: 'system',
