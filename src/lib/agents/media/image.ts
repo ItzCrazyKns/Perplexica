@@ -29,7 +29,7 @@ const searchImages = async (
     query: z.string().describe('The image search query.'),
   });
 
-  const res = await llm.generateObject<z.infer<typeof schema>>({
+  const res = await llm.generateObject<typeof schema>({
     messages: [
       {
         role: 'system',
