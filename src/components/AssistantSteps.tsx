@@ -16,9 +16,12 @@ import { useChat } from '@/lib/hooks/useChat';
 const getStepIcon = (step: ResearchBlockSubStep) => {
   if (step.type === 'reasoning') {
     return <Brain className="w-4 h-4" />;
-  } else if (step.type === 'searching') {
+  } else if (step.type === 'searching' || step.type === 'upload_searching') {
     return <Search className="w-4 h-4" />;
-  } else if (step.type === 'search_results') {
+  } else if (
+    step.type === 'search_results' ||
+    step.type === 'upload_search_results'
+  ) {
     return <FileText className="w-4 h-4" />;
   } else if (step.type === 'reading') {
     return <BookSearch className="w-4 h-4" />;
@@ -39,6 +42,10 @@ const getStepTitle = (
     return `Found ${step.reading.length} ${step.reading.length === 1 ? 'result' : 'results'}`;
   } else if (step.type === 'reading') {
     return `Reading ${step.reading.length} ${step.reading.length === 1 ? 'source' : 'sources'}`;
+  } else if (step.type === 'upload_searching') {
+    return 'Scanning your uploaded documents';
+  } else if (step.type === 'upload_search_results') {
+    return `Reading ${step.results.length} ${step.results.length === 1 ? 'document' : 'documents'}`;
   }
 
   return 'Processing';
@@ -191,6 +198,56 @@ const AssistantSteps = ({
                                   )}
                                   <span className="line-clamp-1">{title}</span>
                                 </span>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                      {step.type === 'upload_searching' &&
+                        step.queries.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-1.5">
+                            {step.queries.map((query, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-light-100 dark:bg-dark-100 text-black/70 dark:text-white/70 border border-light-200 dark:border-dark-200"
+                              >
+                                {query}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                      {step.type === 'upload_search_results' &&
+                        step.results.length > 0 && (
+                          <div className="mt-1.5 space-y-2">
+                            {step.results.slice(0, 4).map((result, idx) => {
+                              const title =
+                                (result.metadata &&
+                                  (result.metadata.title ||
+                                    result.metadata.fileName)) ||
+                                'Untitled document';
+                              const snippet = (result.content || '')
+                                .replace(/\s+/g, ' ')
+                                .trim()
+                                .slice(0, 220);
+
+                              return (
+                                <div
+                                  key={idx}
+                                  className="flex gap-3 items-start rounded-lg border border-light-200 dark:border-dark-200 bg-light-100 dark:bg-dark-100 p-2"
+                                >
+                                  <div className="mt-0.5 h-10 w-10 rounded-md bg-cyan-100 text-cyan-800 dark:bg-sky-500 dark:text-cyan-50 flex items-center justify-center">
+                                    <FileText className="w-5 h-5" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-semibold text-black dark:text-white line-clamp-1">
+                                      {title}
+                                    </div>
+                                    <div className="text-xs text-black/70 dark:text-white/70 mt-0.5 leading-relaxed line-clamp-3">
+                                      {snippet || 'No preview available.'}
+                                    </div>
+                                  </div>
+                                </div>
                               );
                             })}
                           </div>
