@@ -58,7 +58,7 @@ class SearchAgent {
       searchResults?.searchFindings
         .map(
           (f, index) =>
-            `<result index=${index} title=${f.metadata.title}>${f.content}</result>`,
+            `<result index=${index + 1} title=${f.metadata.title}>${f.content}</result>`,
         )
         .join('\n') || '';
 
