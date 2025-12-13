@@ -1,7 +1,6 @@
 import generateSuggestions from '@/lib/agents/suggestions';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
-import { AIMessage, BaseMessage, HumanMessage } from '@langchain/core/messages';
 
 interface SuggestionsGenerationBody {
   chatHistory: any[];

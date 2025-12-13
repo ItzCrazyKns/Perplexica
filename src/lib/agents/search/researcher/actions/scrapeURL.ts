@@ -15,7 +15,7 @@ Use this tool to scrape and extract content from the provided URLs. This is usef
 You should only call this tool when the user has specifically requested information from certain web pages, never call this yourself to get extra information without user instruction.
 
 For example, if the user says "Please summarize the content of https://example.com/article", you can call this tool with that URL to get the content and then provide the summary or "What does X mean according to https://example.com/page", you can call this tool with that URL to get the content and provide the explanation.
-`
+`;
 
 const scrapeURLAction: ResearchAction<typeof schema> = {
   name: 'scrape_url',
