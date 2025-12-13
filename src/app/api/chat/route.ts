@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import { z } from 'zod';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
@@ -206,6 +205,7 @@ export const POST = async (req: Request) => {
         embedding: embedding,
         sources: ['web'],
         mode: body.optimizationMode,
+        fileIds: body.files,
       },
     });
 
