@@ -161,8 +161,13 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       yield {
         contentChunk: chunk.message.content,
         toolCallChunk:
-          chunk.message.tool_calls?.map((tc) => ({
-            id: crypto.randomUUID(),
+          chunk.message.tool_calls?.map((tc, i) => ({
+            id: crypto
+              .createHash('sha256')
+              .update(
+                `${i}-${tc.function.name}`,
+              ) /* Ollama currently doesn't return a tool call ID so we're creating one based on the index and tool call name */
+              .digest('hex'),
             name: tc.function.name,
             arguments: tc.function.arguments,
           })) || [],
