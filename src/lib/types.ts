@@ -87,11 +87,25 @@ export type ReadingResearchBlock = {
   reading: Chunk[];
 };
 
+export type UploadSearchingResearchBlock = {
+  id: string;
+  type: 'upload_searching';
+  queries: string[];
+};
+
+export type UploadSearchResultsResearchBlock = {
+  id: string;
+  type: 'upload_search_results';
+  results: Chunk[];
+};
+
 export type ResearchBlockSubStep =
   | ReasoningResearchBlock
   | SearchingResearchBlock
   | SearchResultsResearchBlock
-  | ReadingResearchBlock;
+  | ReadingResearchBlock
+  | UploadSearchingResearchBlock
+  | UploadSearchResultsResearchBlock;
 
 export type ResearchBlock = {
   id: string;
