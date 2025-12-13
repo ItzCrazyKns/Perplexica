@@ -5,7 +5,6 @@ import SessionManager from '@/lib/session';
 import { Message, ReasoningResearchBlock } from '@/lib/types';
 import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 import { ToolCall } from '@/lib/models/types';
-import fs from 'fs';
 
 class Researcher {
   async research(
@@ -22,13 +21,15 @@ class Researcher {
 
     const availableTools = ActionRegistry.getAvailableActionTools({
       classification: input.classification,
+      fileIds: input.config.fileIds,
       mode: input.config.mode,
     });
 
     const availableActionsDescription =
       ActionRegistry.getAvailableActionsDescriptions({
         classification: input.classification,
-        mode: input.config.mode
+        fileIds: input.config.fileIds,
+        mode: input.config.mode,
       });
 
     const researchBlockId = crypto.randomUUID();
@@ -59,6 +60,7 @@ class Researcher {
         input.config.mode,
         i,
         maxIteration,
+        input.config.fileIds,
       );
 
       const actionStream = input.config.llm.streamText({
@@ -83,7 +85,7 @@ class Researcher {
         if (partialRes.toolCallChunk.length > 0) {
           partialRes.toolCallChunk.forEach((tc) => {
             if (
-              tc.name === '___plan' &&
+              tc.name === '0_reasoning' &&
               tc.arguments['plan'] &&
               !reasoningEmitted &&
               block &&
@@ -105,7 +107,7 @@ class Researcher {
                 },
               ]);
             } else if (
-              tc.name === '___plan' &&
+              tc.name === '0_reasoning' &&
               tc.arguments['plan'] &&
               reasoningEmitted &&
               block &&
@@ -162,6 +164,7 @@ class Researcher {
         embedding: input.config.embedding,
         session: session,
         researchBlockId: researchBlockId,
+        fileIds: input.config.fileIds,
       });
 
       actionOutput.push(...actionResults);
