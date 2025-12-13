@@ -20,6 +20,7 @@ class ActionRegistry {
 
   static getAvailableActions(config: {
     classification: ClassifierOutput;
+    fileIds: string[];
     mode: SearchAgentConfig['mode'];
   }): ResearchAction[] {
     return Array.from(
@@ -29,6 +30,7 @@ class ActionRegistry {
 
   static getAvailableActionTools(config: {
     classification: ClassifierOutput;
+    fileIds: string[];
     mode: SearchAgentConfig['mode'];
   }): Tool[] {
     const availableActions = this.getAvailableActions(config);
@@ -42,19 +44,26 @@ class ActionRegistry {
 
   static getAvailableActionsDescriptions(config: {
     classification: ClassifierOutput;
+    fileIds: string[];
     mode: SearchAgentConfig['mode'];
   }): string {
     const availableActions = this.getAvailableActions(config);
 
     return availableActions
-      .map((action) => `<tool name="${action.name}">\n${action.getDescription({ mode: config.mode })}\n</tool>`)
+      .map(
+        (action) =>
+          `<tool name="${action.name}">\n${action.getDescription({ mode: config.mode })}\n</tool>`,
+      )
       .join('\n\n');
   }
 
   static async execute(
     name: string,
     params: any,
-    additionalConfig: AdditionalConfig & { researchBlockId: string },
+    additionalConfig: AdditionalConfig & {
+      researchBlockId: string;
+      fileIds: string[];
+    },
   ) {
     const action = this.actions.get(name);
 
@@ -67,7 +76,10 @@ class ActionRegistry {
 
   static async executeAll(
     actions: ToolCall[],
-    additionalConfig: AdditionalConfig & { researchBlockId: string },
+    additionalConfig: AdditionalConfig & {
+      researchBlockId: string;
+      fileIds: string[];
+    },
   ): Promise<ActionOutput[]> {
     const results: ActionOutput[] = [];
 

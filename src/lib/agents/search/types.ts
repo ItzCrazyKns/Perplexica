@@ -8,6 +8,7 @@ export type SearchSources = 'web' | 'discussions' | 'academic';
 
 export type SearchAgentConfig = {
   sources: SearchSources[];
+  fileIds: string[];
   llm: BaseLLM<any>;
   embedding: BaseEmbedding<any>;
   mode: 'speed' | 'balanced' | 'quality';
@@ -102,11 +103,16 @@ export interface ResearchAction<
   schema: z.ZodObject<any>;
   getToolDescription: (config: { mode: SearchAgentConfig['mode'] }) => string;
   getDescription: (config: { mode: SearchAgentConfig['mode'] }) => string;
-  enabled: (config: { classification: ClassifierOutput, mode: SearchAgentConfig['mode'] }) => boolean;
+  enabled: (config: {
+    classification: ClassifierOutput;
+    fileIds: string[];
+    mode: SearchAgentConfig['mode'];
+  }) => boolean;
   execute: (
     params: z.infer<TSchema>,
     additionalConfig: AdditionalConfig & {
       researchBlockId: string;
+      fileIds: string[];
     },
   ) => Promise<ActionOutput>;
 }
