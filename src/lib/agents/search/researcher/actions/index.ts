@@ -2,11 +2,13 @@ import doneAction from './done';
 import planAction from './plan';
 import ActionRegistry from './registry';
 import scrapeURLAction from './scrapeURL';
+import uploadsSearchAction from './uploadsSearch';
 import webSearchAction from './webSearch';
 
 ActionRegistry.register(webSearchAction);
 ActionRegistry.register(doneAction);
 ActionRegistry.register(planAction);
 ActionRegistry.register(scrapeURLAction);
+ActionRegistry.register(uploadsSearchAction);
 
 export { ActionRegistry };
