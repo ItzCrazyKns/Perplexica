@@ -13,6 +13,13 @@ export const POST = async (req: Request) => {
   try {
     const body: VideoSearchBody = await req.json();
 
+    if (!body.query || body.query.trim() === '') {
+      return Response.json(
+        { message: 'Query is required' },
+        { status: 400 },
+      );
+    }
+
     const chatHistory = body.chatHistory
       .map((msg: any) => {
         if (msg.role === 'user') {

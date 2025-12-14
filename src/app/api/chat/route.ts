@@ -100,45 +100,50 @@ const handleEmitterEvents = async (
   let receivedMessage = '';
   const aiMessageId = crypto.randomBytes(7).toString('hex');
 
-  stream.on('data', (data) => {
-    const parsedData = JSON.parse(data);
-    if (parsedData.type === 'response') {
-      writer.write(
-        encoder.encode(
-          JSON.stringify({
-            type: 'message',
-            data: parsedData.data,
-            messageId: aiMessageId,
-          }) + '\n',
-        ),
-      );
+  stream.on('data', async (data) => {
+    try {
+      const parsedData = JSON.parse(data);
+      if (parsedData.type === 'response') {
+        writer.write(
+          encoder.encode(
+            JSON.stringify({
+              type: 'message',
+              data: parsedData.data,
+              messageId: aiMessageId,
+            }) + '\n',
+          ),
+        );
 
-      receivedMessage += parsedData.data;
-    } else if (parsedData.type === 'sources') {
-      writer.write(
-        encoder.encode(
-          JSON.stringify({
-            type: 'sources',
-            data: parsedData.data,
-            messageId: aiMessageId,
-          }) + '\n',
-        ),
-      );
+        receivedMessage += parsedData.data;
+      } else if (parsedData.type === 'sources') {
+        writer.write(
+          encoder.encode(
+            JSON.stringify({
+              type: 'sources',
+              data: parsedData.data,
+              messageId: aiMessageId,
+            }) + '\n',
+          ),
+        );
 
-      const sourceMessageId = crypto.randomBytes(7).toString('hex');
+        const sourceMessageId = crypto.randomBytes(7).toString('hex');
 
-      db.insert(messagesSchema)
-        .values({
-          chatId: chatId,
-          messageId: sourceMessageId,
-          role: 'source',
-          sources: parsedData.data,
-          createdAt: new Date().toString(),
-        })
-        .execute();
+        await db.insert(messagesSchema)
+          .values({
+            chatId: chatId,
+            messageId: sourceMessageId,
+            role: 'source',
+            sources: parsedData.data,
+            createdAt: new Date().toString(),
+          })
+          .execute();
+      }
+    } catch (error) {
+      console.error('Error parsing stream data:', error);
+      return;
     }
   });
-  stream.on('end', () => {
+  stream.on('end', async () => {
     writer.write(
       encoder.encode(
         JSON.stringify({
@@ -148,7 +153,7 @@ const handleEmitterEvents = async (
     );
     writer.close();
 
-    db.insert(messagesSchema)
+    await db.insert(messagesSchema)
       .values({
         content: receivedMessage,
         chatId: chatId,
@@ -158,13 +163,12 @@ const handleEmitterEvents = async (
       })
       .execute();
   });
-  stream.on('error', (data) => {
-    const parsedData = JSON.parse(data);
+  stream.on('error', (error) => {
     writer.write(
       encoder.encode(
         JSON.stringify({
           type: 'error',
-          data: parsedData.data,
+          data: error.message || 'An error occurred',
         }),
       ),
     );
@@ -195,12 +199,13 @@ const handleHistorySave = async (
         files: fileData,
       })
       .execute();
-  } else if (JSON.stringify(chat.files ?? []) != JSON.stringify(fileData)) {
-    db.update(chats)
+  } else if (JSON.stringify(chat.files ?? []) !== JSON.stringify(fileData)) {
+    await db.update(chats)
       .set({
         files: files.map(getFileDetails),
       })
-      .where(eq(chats.id, message.chatId));
+      .where(eq(chats.id, message.chatId))
+      .execute();
   }
 
   const messageExists = await db.query.messages.findFirst({

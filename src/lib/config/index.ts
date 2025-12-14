@@ -357,7 +357,7 @@ class ConfigManager {
       );
     } else {
       provider.embeddingModels = provider.embeddingModels.filter(
-        (m) => m.key != modelKey,
+        (m) => m.key !== modelKey,
       );
     }
 

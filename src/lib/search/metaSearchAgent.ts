@@ -318,11 +318,16 @@ class MetaSearchAgent implements MetaSearchAgentType {
     }
 
     const filesData = fileIds
-      .map((file) => {
+      .flatMap((file) => {
         const filePath = path.join(process.cwd(), 'uploads', file);
 
         const contentPath = filePath + '-extracted.json';
         const embeddingsPath = filePath + '-embeddings.json';
+
+        if (!fs.existsSync(contentPath) || !fs.existsSync(embeddingsPath)) {
+          console.error(`File not found for ${file}`);
+          return [];
+        }
 
         const content = JSON.parse(fs.readFileSync(contentPath, 'utf8'));
         const embeddings = JSON.parse(fs.readFileSync(embeddingsPath, 'utf8'));
@@ -338,8 +343,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
         );
 
         return fileSimilaritySearchObject;
-      })
-      .flat();
+      });
 
     if (query.toLocaleLowerCase() === 'summarize') {
       return docs.slice(0, 15);
@@ -505,7 +509,11 @@ class MetaSearchAgent implements MetaSearchAgentType {
       },
     );
 
-    this.handleStream(stream, emitter);
+    try {
+      await this.handleStream(stream, emitter);
+    } catch (error: any) {
+      emitter.emit('error', JSON.stringify({ type: 'error', data: error?.message || 'An error occurred' }));
+    }
 
     return emitter;
   }

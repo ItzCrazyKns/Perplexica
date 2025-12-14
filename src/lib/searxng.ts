@@ -39,11 +39,32 @@ export const searchSearxng = async (
     });
   }
 
-  const res = await fetch(url);
-  const data = await res.json();
+  try {
+    const res = await fetch(url);
 
-  const results: SearxngSearchResult[] = data.results;
-  const suggestions: string[] = data.suggestions;
+    if (!res.ok) {
+      throw new Error(
+        `SearXNG request failed: ${res.status} ${res.statusText}`,
+      );
+    }
 
-  return { results, suggestions };
+    const contentType = res.headers.get('content-type');
+    if (!contentType?.includes('application/json')) {
+      throw new Error('SearXNG did not return JSON');
+    }
+
+    const data = await res.json();
+
+    const results: SearxngSearchResult[] = data.results || [];
+    const suggestions: string[] = data.suggestions || [];
+
+    return { results, suggestions };
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      console.error(`Network error when connecting to SearXNG:`, error);
+      throw new Error(`Failed to connect to SearXNG at ${searxngURL}`);
+    }
+    console.error(`SearXNG search error for query "${query}":`, error);
+    throw error;
+  }
 };

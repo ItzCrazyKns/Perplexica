@@ -30,6 +30,10 @@ logs/
 # Testing
 /coverage/
 
+# Build artifacts
+*.tsbuildinfo
+package-lock.json
+
 # Miscellaneous
 .DS_Store
 Thumbs.db
