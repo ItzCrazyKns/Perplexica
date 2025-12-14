@@ -91,7 +91,7 @@ class UploadManager {
             case 'text/plain':
                 const content = fs.readFileSync(filePath, 'utf-8');
 
-                const splittedText = splitText(content, 256, 64)
+                const splittedText = splitText(content, 512, 128)
                 const embeddings = await this.embeddingModel.embedText(splittedText)
 
                 if (embeddings.length !== splittedText.length) {
@@ -121,7 +121,7 @@ class UploadManager {
 
                 const pdfText = await parser.getText().then(res => res.text)
 
-                const pdfSplittedText = splitText(pdfText, 256, 64)
+                const pdfSplittedText = splitText(pdfText, 512, 128)
                 const pdfEmbeddings = await this.embeddingModel.embedText(pdfSplittedText)
 
                 if (pdfEmbeddings.length !== pdfSplittedText.length) {
@@ -147,7 +147,7 @@ class UploadManager {
 
                 const docText = await officeParser.parseOfficeAsync(docBuffer)
 
-                const docSplittedText = splitText(docText, 256, 64)
+                const docSplittedText = splitText(docText, 512, 128)
                 const docEmbeddings = await this.embeddingModel.embedText(docSplittedText)
 
                 if (docEmbeddings.length !== docSplittedText.length) {
