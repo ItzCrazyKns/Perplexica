@@ -4,6 +4,7 @@ import { ModelWithProvider } from '@/lib/models/types';
 import SearchAgent from '@/lib/agents/search';
 import SessionManager from '@/lib/session';
 import { ChatTurnMessage } from '@/lib/types';
+import { SearchSources } from '@/lib/agents/search/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,7 +32,7 @@ const bodySchema = z.object({
   optimizationMode: z.enum(['speed', 'balanced', 'quality'], {
     message: 'Optimization mode must be one of: speed, balanced, quality',
   }),
-  focusMode: z.string().min(1, 'Focus mode is required'),
+  sources: z.array(z.string()).optional().default([]),
   history: z
     .array(z.tuple([z.string(), z.string()]))
     .optional()
@@ -42,7 +43,6 @@ const bodySchema = z.object({
   systemInstructions: z.string().nullable().optional().default(''),
 });
 
-type Message = z.infer<typeof messageSchema>;
 type Body = z.infer<typeof bodySchema>;
 
 const safeValidateBody = (data: unknown) => {
@@ -203,7 +203,7 @@ export const POST = async (req: Request) => {
       config: {
         llm,
         embedding: embedding,
-        sources: ['web'],
+        sources: body.sources as SearchSources[],
         mode: body.optimizationMode,
         fileIds: body.files,
       },
