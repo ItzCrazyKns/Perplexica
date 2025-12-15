@@ -34,7 +34,7 @@ type ChatContext = {
   chatHistory: [string, string][];
   files: File[];
   fileIds: string[];
-  focusMode: string;
+  sources: string[];
   chatId: string | undefined;
   optimizationMode: string;
   isMessagesLoaded: boolean;
@@ -48,7 +48,7 @@ type ChatContext = {
   researchEnded: boolean;
   setResearchEnded: (ended: boolean) => void;
   setOptimizationMode: (mode: string) => void;
-  setFocusMode: (mode: string) => void;
+  setSources: (sources: string[]) => void;
   setFiles: (files: File[]) => void;
   setFileIds: (fileIds: string[]) => void;
   sendMessage: (
@@ -176,7 +176,7 @@ const loadMessages = async (
   setMessages: (messages: Message[]) => void,
   setIsMessagesLoaded: (loaded: boolean) => void,
   setChatHistory: (history: [string, string][]) => void,
-  setFocusMode: (mode: string) => void,
+  setSources: (sources: string[]) => void,
   setNotFound: (notFound: boolean) => void,
   setFiles: (files: File[]) => void,
   setFileIds: (fileIds: string[]) => void,
@@ -234,7 +234,7 @@ const loadMessages = async (
   setFileIds(files.map((file: File) => file.fileId));
 
   setChatHistory(history);
-  setFocusMode(data.chat.focusMode);
+  setSources(data.chat.sources);
   setIsMessagesLoaded(true);
 };
 
@@ -243,7 +243,7 @@ export const chatContext = createContext<ChatContext>({
   chatId: '',
   fileIds: [],
   files: [],
-  focusMode: '',
+  sources: [],
   hasError: false,
   isMessagesLoaded: false,
   isReady: false,
@@ -260,7 +260,7 @@ export const chatContext = createContext<ChatContext>({
   sendMessage: async () => {},
   setFileIds: () => {},
   setFiles: () => {},
-  setFocusMode: () => {},
+  setSources: () => {},
   setOptimizationMode: () => {},
   setChatModelProvider: () => {},
   setEmbeddingModelProvider: () => {},
@@ -286,7 +286,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [files, setFiles] = useState<File[]>([]);
   const [fileIds, setFileIds] = useState<string[]>([]);
 
-  const [focusMode, setFocusMode] = useState('webSearch');
+  const [sources, setSources] = useState<string[]>(['web']);
   const [optimizationMode, setOptimizationMode] = useState('speed');
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
@@ -436,7 +436,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         setMessages,
         setIsMessagesLoaded,
         setChatHistory,
-        setFocusMode,
+        setSources,
         setNotFound,
         setFiles,
         setFileIds,
@@ -722,7 +722,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         },
         chatId: chatId!,
         files: fileIds,
-        focusMode: focusMode,
+        sources: sources,
         optimizationMode: optimizationMode,
         history: rewrite
           ? chatHistory.slice(0, messageIndex === -1 ? undefined : messageIndex)
@@ -774,7 +774,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         chatHistory,
         files,
         fileIds,
-        focusMode,
+        sources,
         chatId,
         hasError,
         isMessagesLoaded,
@@ -785,7 +785,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         optimizationMode,
         setFileIds,
         setFiles,
-        setFocusMode,
+        setSources,
         setOptimizationMode,
         rewrite,
         sendMessage,
