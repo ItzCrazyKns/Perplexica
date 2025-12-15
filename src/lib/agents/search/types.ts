@@ -107,6 +107,7 @@ export interface ResearchAction<
     classification: ClassifierOutput;
     fileIds: string[];
     mode: SearchAgentConfig['mode'];
+    sources: SearchSources[];
   }) => boolean;
   execute: (
     params: z.infer<TSchema>,

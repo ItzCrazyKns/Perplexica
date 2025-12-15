@@ -23,6 +23,7 @@ class Researcher {
       classification: input.classification,
       fileIds: input.config.fileIds,
       mode: input.config.mode,
+      sources: input.config.sources,
     });
 
     const availableActionsDescription =
@@ -30,6 +31,7 @@ class Researcher {
         classification: input.classification,
         fileIds: input.config.fileIds,
         mode: input.config.mode,
+        sources: input.config.sources,
       });
 
     const researchBlockId = crypto.randomUUID();

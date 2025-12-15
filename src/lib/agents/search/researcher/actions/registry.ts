@@ -5,6 +5,7 @@ import {
   ClassifierOutput,
   ResearchAction,
   SearchAgentConfig,
+  SearchSources,
 } from '../../types';
 
 class ActionRegistry {
@@ -22,6 +23,7 @@ class ActionRegistry {
     classification: ClassifierOutput;
     fileIds: string[];
     mode: SearchAgentConfig['mode'];
+    sources: SearchSources[];
   }): ResearchAction[] {
     return Array.from(
       this.actions.values().filter((action) => action.enabled(config)),
@@ -32,6 +34,7 @@ class ActionRegistry {
     classification: ClassifierOutput;
     fileIds: string[];
     mode: SearchAgentConfig['mode'];
+    sources: SearchSources[];
   }): Tool[] {
     const availableActions = this.getAvailableActions(config);
 
@@ -46,6 +49,7 @@ class ActionRegistry {
     classification: ClassifierOutput;
     fileIds: string[];
     mode: SearchAgentConfig['mode'];
+    sources: SearchSources[];
   }): string {
     const availableActions = this.getAvailableActions(config);
 
