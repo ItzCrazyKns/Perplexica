@@ -57,7 +57,7 @@ export const POST = async (req: Request) => {
         llm: llm,
         sources: ['web', 'discussions', 'academic'],
         mode: 'balanced',
-        fileIds: []
+        fileIds: [],
       },
       followUp: body.query,
     });

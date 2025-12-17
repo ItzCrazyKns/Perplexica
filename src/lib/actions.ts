@@ -1,5 +1,3 @@
-import { Message } from '@/components/ChatWindow';
-
 export const getSuggestions = async (chatHistory: [string, string][]) => {
   const chatTurns = chatHistory.map(([role, content]) => {
     if (role === 'human') {
