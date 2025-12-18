@@ -25,7 +25,7 @@ const sourcesList = [
   },
   {
     name: 'Social',
-    key: 'social',
+    key: 'discussions',
     icon: <NetworkIcon className="h-[16px] w-auto" />,
   },
 ];
