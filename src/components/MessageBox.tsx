@@ -218,10 +218,10 @@ const MessageBox = ({
                                 className="group w-full py-4 text-left transition-colors duration-200"
                               >
                                 <div className="flex items-center justify-between gap-3">
-                                  <div className="flex flex-row space-x-3 items-center ">
+                                  <div className="flex flex-row space-x-3 items-center">
                                     <CornerDownRight
-                                      size={17}
-                                      className="group-hover:text-sky-400 transition-colors duration-200"
+                                      size={15}
+                                      className="group-hover:text-sky-400 transition-colors duration-200 flex-shrink-0"
                                     />
                                     <p className="text-sm text-black/70 dark:text-white/70 group-hover:text-sky-400 transition-colors duration-200 leading-relaxed">
                                       {suggestion}
