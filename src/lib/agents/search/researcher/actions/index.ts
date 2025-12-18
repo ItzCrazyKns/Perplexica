@@ -1,3 +1,4 @@
+import academicSearchAction from './academicSearch';
 import doneAction from './done';
 import planAction from './plan';
 import ActionRegistry from './registry';
@@ -10,5 +11,6 @@ ActionRegistry.register(doneAction);
 ActionRegistry.register(planAction);
 ActionRegistry.register(scrapeURLAction);
 ActionRegistry.register(uploadsSearchAction);
+ActionRegistry.register(academicSearchAction);
 
 export { ActionRegistry };
