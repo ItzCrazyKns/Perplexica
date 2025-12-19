@@ -182,8 +182,10 @@ const AssistantSteps = ({
                                 : '';
 
                               return (
-                                <span
+                                <a
                                   key={idx}
+                                  href={url}
+                                  target="_blank"
                                   className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-light-100 dark:bg-dark-100 text-black/70 dark:text-white/70 border border-light-200 dark:border-dark-200"
                                 >
                                   {faviconUrl && (
@@ -197,7 +199,7 @@ const AssistantSteps = ({
                                     />
                                   )}
                                   <span className="line-clamp-1">{title}</span>
-                                </span>
+                                </a>
                               );
                             })}
                           </div>
@@ -219,33 +221,26 @@ const AssistantSteps = ({
 
                       {step.type === 'upload_search_results' &&
                         step.results.length > 0 && (
-                          <div className="mt-1.5 space-y-2">
+                          <div className="mt-1.5 grid gap-3 lg:grid-cols-3">
                             {step.results.slice(0, 4).map((result, idx) => {
                               const title =
                                 (result.metadata &&
                                   (result.metadata.title ||
                                     result.metadata.fileName)) ||
                                 'Untitled document';
-                              const snippet = (result.content || '')
-                                .replace(/\s+/g, ' ')
-                                .trim()
-                                .slice(0, 220);
 
                               return (
                                 <div
                                   key={idx}
-                                  className="flex gap-3 items-start rounded-lg border border-light-200 dark:border-dark-200 bg-light-100 dark:bg-dark-100 p-2"
+                                  className="flex flex-row space-x-3 rounded-lg border border-light-200 dark:border-dark-200 bg-light-100 dark:bg-dark-100 p-2 cursor-pointer"
                                 >
                                   <div className="mt-0.5 h-10 w-10 rounded-md bg-cyan-100 text-cyan-800 dark:bg-sky-500 dark:text-cyan-50 flex items-center justify-center">
                                     <FileText className="w-5 h-5" />
                                   </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="text-sm font-semibold text-black dark:text-white line-clamp-1">
+                                  <div className="flex flex-col justify-center">
+                                    <p className="text-[13px] text-black dark:text-white line-clamp-1">
                                       {title}
-                                    </div>
-                                    <div className="text-xs text-black/70 dark:text-white/70 mt-0.5 leading-relaxed line-clamp-3">
-                                      {snippet || 'No preview available.'}
-                                    </div>
+                                    </p>
                                   </div>
                                 </div>
                               );
