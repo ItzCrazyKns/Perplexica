@@ -85,9 +85,16 @@ const Optimization = () => {
                           : 'hover:bg-light-secondary dark:hover:bg-dark-secondary',
                       )}
                     >
-                      <div className="flex flex-row items-center space-x-1 text-black dark:text-white">
-                        {mode.icon}
-                        <p className="text-xs font-medium">{mode.title}</p>
+                      <div className="flex flex-row justify-between w-full text-black dark:text-white">
+                        <div className='flex flex-row space-x-1'>
+                          {mode.icon}
+                          <p className="text-xs font-medium">{mode.title}</p>
+                        </div>
+                        {mode.key === 'quality' && (
+                          <span className='bg-violet-500/70 dark:bg-violet-500/40 border border-violet-500 px-1 rounded-full text-[10px] text-white'>
+                            Beta
+                          </span>
+                        )}
                       </div>
                       <p className="text-black/70 dark:text-white/70 text-xs">
                         {mode.description}
