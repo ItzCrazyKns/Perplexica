@@ -2,6 +2,7 @@ import { Check, ClipboardList } from 'lucide-react';
 import { Message } from '../ChatWindow';
 import { useState } from 'react';
 import { Section } from '@/lib/hooks/useChat';
+import { SourceBlock } from '@/lib/types';
 
 const Copy = ({
   section,
@@ -15,15 +16,24 @@ const Copy = ({
   return (
     <button
       onClick={() => {
+        const sources = section.message.responseBlocks.filter(
+          (b) => b.type === 'source' && b.data.length > 0,
+        ) as SourceBlock[];
+
         const contentToCopy = `${initialMessage}${
-          section?.message.responseBlocks.filter((b) => b.type === 'source')
-            ?.length > 0 &&
-          `\n\nCitations:\n${section.message.responseBlocks
-            .filter((b) => b.type === 'source')
-            ?.map((source: any, i: any) => `[${i + 1}] ${source.metadata.url}`)
+          sources.length > 0 &&
+          `\n\nCitations:\n${sources
+            .map((source) => source.data)
+            .flat()
+            .map(
+              (s, i) =>
+                `[${i + 1}] ${s.metadata.url.startsWith('file_id://') ? s.metadata.fileName || 'Uploaded File' : s.metadata.url}`,
+            )
             .join(`\n`)}`
         }`;
+
         navigator.clipboard.writeText(contentToCopy);
+
         setCopied(true);
         setTimeout(() => setCopied(false), 1000);
       }}
