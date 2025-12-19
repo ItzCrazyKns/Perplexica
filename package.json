@@ -57,6 +57,7 @@
     "@types/pdf-parse": "^1.1.4",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "@types/turndown": "^5.0.6",
     "autoprefixer": "^10.0.1",
     "drizzle-kit": "^0.30.5",
