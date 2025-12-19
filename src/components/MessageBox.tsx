@@ -12,7 +12,7 @@ import {
   Plus,
   CornerDownRight,
 } from 'lucide-react';
-import Markdown, { MarkdownToJSX } from 'markdown-to-jsx';
+import Markdown, { MarkdownToJSX, RuleType } from 'markdown-to-jsx';
 import Copy from './MessageActions/Copy';
 import Rewrite from './MessageActions/Rewrite';
 import MessageSources from './MessageSources';
@@ -21,10 +21,11 @@ import SearchVideos from './SearchVideos';
 import { useSpeech } from 'react-text-to-speech';
 import ThinkBox from './ThinkBox';
 import { useChat, Section } from '@/lib/hooks/useChat';
-import Citation from './Citation';
+import Citation from './MessageRenderer/Citation';
 import AssistantSteps from './AssistantSteps';
 import { ResearchBlock } from '@/lib/types';
 import Renderer from './Widgets/Renderer';
+import CodeBlock from './MessageRenderer/CodeBlock';
 
 const ThinkTagProcessor = ({
   children,
@@ -67,6 +68,21 @@ const MessageBox = ({
   const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
 
   const markdownOverrides: MarkdownToJSX.Options = {
+    renderRule(next, node, renderChildren, state) {
+      if (node.type === RuleType.codeInline) {
+        return `\`${node.text}\``;
+      }
+
+      if (node.type === RuleType.codeBlock) {
+        return (
+          <CodeBlock key={state.key} language={node.lang || ''}>
+            {node.text}
+          </CodeBlock>
+        );
+      }
+
+      return next();
+    },
     overrides: {
       think: {
         component: ThinkTagProcessor,
