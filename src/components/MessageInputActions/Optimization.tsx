@@ -91,7 +91,7 @@ const Optimization = () => {
                           <p className="text-xs font-medium">{mode.title}</p>
                         </div>
                         {mode.key === 'quality' && (
-                          <span className='bg-violet-500/70 dark:bg-violet-500/40 border border-violet-500 px-1 rounded-full text-[10px] text-white'>
+                          <span className='bg-sky-500/70 dark:bg-sky-500/40 border border-sky-600 px-1 rounded-full text-[10px] text-white'>
                             Beta
                           </span>
                         )}
