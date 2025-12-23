@@ -51,22 +51,26 @@ const ChatWindow = () => {
     );
   }
 
-  return isReady ? notFound ? (
-    <NextError statusCode={404} />
+  return isReady ? (
+    notFound ? (
+      <NextError statusCode={404} />
+    ) : (
+      <div>
+        {messages.length > 0 ? (
+          <>
+            <Navbar />
+            <Chat />
+          </>
+        ) : (
+          <EmptyChat />
+        )}
+      </div>
+    )
   ) : (
-    <div>
-      {messages.length > 0 ? (
-        <>
-          <Navbar />
-          <Chat />
-        </>
-      ) : (
-        <EmptyChat />
-      )}
+    <div className="flex items-center justify-center min-h-screen w-full">
+      <Loader />
     </div>
-  ) : <div className='flex items-center justify-center min-h-screen w-full'>
-    <Loader />
-  </div>;
+  );
 };
 
 export default ChatWindow;

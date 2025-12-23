@@ -269,7 +269,7 @@ export const chatContext = createContext<ChatContext>({
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const params: { chatId: string } = useParams();
-  
+
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
 
@@ -506,7 +506,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       setIsReady(true);
       console.debug(new Date(), 'app:ready');
     } else if (isMessagesLoaded && isConfigReady && !newChatCreated) {
-      checkReconnect()
+      checkReconnect();
     } else {
       setIsReady(false);
     }

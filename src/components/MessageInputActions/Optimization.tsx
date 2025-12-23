@@ -86,12 +86,12 @@ const Optimization = () => {
                       )}
                     >
                       <div className="flex flex-row justify-between w-full text-black dark:text-white">
-                        <div className='flex flex-row space-x-1'>
+                        <div className="flex flex-row space-x-1">
                           {mode.icon}
                           <p className="text-xs font-medium">{mode.title}</p>
                         </div>
                         {mode.key === 'quality' && (
-                          <span className='bg-sky-500/70 dark:bg-sky-500/40 border border-sky-600 px-1 rounded-full text-[10px] text-white'>
+                          <span className="bg-sky-500/70 dark:bg-sky-500/40 border border-sky-600 px-1 rounded-full text-[10px] text-white">
                             Beta
                           </span>
                         )}
