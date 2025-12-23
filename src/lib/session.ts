@@ -2,8 +2,14 @@ import { EventEmitter } from 'stream';
 import { applyPatch } from 'rfc6902';
 import { Block } from './types';
 
+const sessions =
+  (global as any)._sessionManagerSessions || new Map<string, SessionManager>();
+if (process.env.NODE_ENV !== 'production') {
+  (global as any)._sessionManagerSessions = sessions;
+}
+
 class SessionManager {
-  private static sessions = new Map<string, SessionManager>();
+  private static sessions: Map<string, SessionManager> = sessions;
   readonly id: string;
   private blocks = new Map<string, Block>();
   private events: { event: string; data: any }[] = [];
