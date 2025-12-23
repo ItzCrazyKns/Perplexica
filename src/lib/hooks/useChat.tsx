@@ -401,6 +401,50 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     });
   }, [messages]);
 
+  const checkReconnect = async () => {
+    if (messages.length > 0) {
+      const lastMsg = messages[messages.length - 1];
+
+      if (lastMsg.status === 'answering') {
+        setLoading(true);
+        setResearchEnded(false);
+        setMessageAppeared(false);
+
+        const res = await fetch(`/api/reconnect/${lastMsg.backendId}`, {
+          method: 'POST',
+        });
+
+        if (!res.body) throw new Error('No response body');
+
+        const reader = res.body?.getReader();
+        const decoder = new TextDecoder('utf-8');
+
+        let partialChunk = '';
+
+        const messageHandler = getMessageHandler(lastMsg);
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          partialChunk += decoder.decode(value, { stream: true });
+
+          try {
+            const messages = partialChunk.split('\n');
+            for (const msg of messages) {
+              if (!msg.trim()) continue;
+              const json = JSON.parse(msg);
+              messageHandler(json);
+            }
+            partialChunk = '';
+          } catch (error) {
+            console.warn('Incomplete JSON, waiting for next chunk...');
+          }
+        }
+      }
+    }
+  };
+
   useEffect(() => {
     checkConfig(
       setChatModelProvider,
@@ -454,13 +498,22 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   }, [messages]);
 
   useEffect(() => {
-    if (isMessagesLoaded && isConfigReady) {
+    if (isMessagesLoaded && isConfigReady && newChatCreated) {
       setIsReady(true);
       console.debug(new Date(), 'app:ready');
+    } else if (isMessagesLoaded && isConfigReady && !newChatCreated) {
+      checkReconnect()
+        .then(() => {
+          setIsReady(true);
+          console.debug(new Date(), 'app:ready');
+        })
+        .catch((err) => {
+          console.error('Error during reconnect:', err);
+        });
     } else {
       setIsReady(false);
     }
-  }, [isMessagesLoaded, isConfigReady]);
+  }, [isMessagesLoaded, isConfigReady, newChatCreated]);
 
   const rewrite = (messageId: string) => {
     const index = messages.findIndex((msg) => msg.messageId === messageId);
@@ -488,38 +541,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfigReady, isReady, initialMessage]);
 
-  const sendMessage: ChatContext['sendMessage'] = async (
-    message,
-    messageId,
-    rewrite = false,
-  ) => {
-    if (loading || !message) return;
-    setLoading(true);
-    setResearchEnded(false);
-    setMessageAppeared(false);
+  const getMessageHandler = (message: Message) => {
+    const messageId = message.messageId;
 
-    if (messages.length <= 1) {
-      window.history.replaceState(null, '', `/c/${chatId}`);
-    }
-
-    messageId = messageId ?? crypto.randomBytes(7).toString('hex');
-    const backendId = crypto.randomBytes(20).toString('hex');
-
-    const newMessage: Message = {
-      messageId,
-      chatId: chatId!,
-      backendId,
-      query: message,
-      responseBlocks: [],
-      status: 'answering',
-      createdAt: new Date(),
-    };
-
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
-
-    const receivedTextRef = { current: '' };
-
-    const messageHandler = async (data: any) => {
+    return async (data: any) => {
       if (data.type === 'error') {
         toast.error(data.data);
         setLoading(false);
@@ -536,7 +561,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       if (data.type === 'researchComplete') {
         setResearchEnded(true);
         if (
-          newMessage.responseBlocks.find(
+          message.responseBlocks.find(
             (b) => b.type === 'source' && b.data.length > 0,
           )
         ) {
@@ -556,6 +581,13 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
             return msg;
           }),
         );
+
+        if (
+          (data.block.type === 'source' && data.block.data.length > 0) ||
+          data.block.type === 'text'
+        ) {
+          setMessageAppeared(true);
+        }
       }
 
       if (data.type === 'updateBlock') {
@@ -577,72 +609,19 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         );
       }
 
-      if (data.type === 'sources') {
-        const sourceBlock: Block = {
-          id: crypto.randomBytes(7).toString('hex'),
-          type: 'source',
-          data: data.data,
-        };
-
-        setMessages((prev) =>
-          prev.map((msg) => {
-            if (msg.messageId === messageId) {
-              return {
-                ...msg,
-                responseBlocks: [...msg.responseBlocks, sourceBlock],
-              };
-            }
-            return msg;
-          }),
-        );
-        if (data.data.length > 0) {
-          setMessageAppeared(true);
-        }
-      }
-
-      if (data.type === 'message') {
-        receivedTextRef.current += data.data;
-
-        setMessages((prev) =>
-          prev.map((msg) => {
-            if (msg.messageId === messageId) {
-              const existingTextBlockIndex = msg.responseBlocks.findIndex(
-                (b) => b.type === 'text',
-              );
-
-              if (existingTextBlockIndex >= 0) {
-                const updatedBlocks = [...msg.responseBlocks];
-                const existingBlock = updatedBlocks[
-                  existingTextBlockIndex
-                ] as Block & { type: 'text' };
-                updatedBlocks[existingTextBlockIndex] = {
-                  ...existingBlock,
-                  data: existingBlock.data + data.data,
-                };
-                return { ...msg, responseBlocks: updatedBlocks };
-              } else {
-                const textBlock: Block = {
-                  id: crypto.randomBytes(7).toString('hex'),
-                  type: 'text',
-                  data: data.data,
-                };
-                return {
-                  ...msg,
-                  responseBlocks: [...msg.responseBlocks, textBlock],
-                };
-              }
-            }
-            return msg;
-          }),
-        );
-        setMessageAppeared(true);
-      }
-
       if (data.type === 'messageEnd') {
+        const currentMsg = messagesRef.current.find(
+          (msg) => msg.messageId === messageId,
+        );
+
         const newHistory: [string, string][] = [
           ...chatHistory,
-          ['human', message],
-          ['assistant', receivedTextRef.current],
+          ['human', message.query],
+          [
+            'assistant',
+            currentMsg?.responseBlocks.find((b) => b.type === 'text')?.data ||
+              '',
+          ],
         ];
 
         setChatHistory(newHistory);
@@ -672,9 +651,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         // Check if there are sources and no suggestions
-        const currentMsg = messagesRef.current.find(
-          (msg) => msg.messageId === messageId,
-        );
 
         const hasSourceBlocks = currentMsg?.responseBlocks.some(
           (block) => block.type === 'source' && block.data.length > 0,
@@ -705,6 +681,36 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
     };
+  };
+
+  const sendMessage: ChatContext['sendMessage'] = async (
+    message,
+    messageId,
+    rewrite = false,
+  ) => {
+    if (loading || !message) return;
+    setLoading(true);
+    setResearchEnded(false);
+    setMessageAppeared(false);
+
+    if (messages.length <= 1) {
+      window.history.replaceState(null, '', `/c/${chatId}`);
+    }
+
+    messageId = messageId ?? crypto.randomBytes(7).toString('hex');
+    const backendId = crypto.randomBytes(20).toString('hex');
+
+    const newMessage: Message = {
+      messageId,
+      chatId: chatId!,
+      backendId,
+      query: message,
+      responseBlocks: [],
+      status: 'answering',
+      createdAt: new Date(),
+    };
+
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
 
     const messageIndex = messages.findIndex((m) => m.messageId === messageId);
 
@@ -745,6 +751,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     const decoder = new TextDecoder('utf-8');
 
     let partialChunk = '';
+
+    const messageHandler = getMessageHandler(newMessage);
 
     while (true) {
       const { value, done } = await reader.read();
