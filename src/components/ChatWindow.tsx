@@ -6,7 +6,8 @@ import EmptyChat from './EmptyChat';
 import NextError from 'next/error';
 import { useChat } from '@/lib/hooks/useChat';
 import SettingsButtonMobile from './Settings/SettingsButtonMobile';
-import { Block, Chunk } from '@/lib/types';
+import { Block } from '@/lib/types';
+import Loader from './ui/Loader';
 
 export interface BaseMessage {
   chatId: string;
@@ -21,35 +22,6 @@ export interface Message extends BaseMessage {
   status: 'answering' | 'completed' | 'error';
 }
 
-export interface UserMessage extends BaseMessage {
-  role: 'user';
-  content: string;
-}
-
-export interface AssistantMessage extends BaseMessage {
-  role: 'assistant';
-  content: string;
-  suggestions?: string[];
-}
-
-export interface SourceMessage extends BaseMessage {
-  role: 'source';
-  sources: Chunk[];
-}
-
-export interface SuggestionMessage extends BaseMessage {
-  role: 'suggestion';
-  suggestions: string[];
-}
-
-export type LegacyMessage =
-  | AssistantMessage
-  | UserMessage
-  | SourceMessage
-  | SuggestionMessage;
-
-export type ChatTurn = UserMessage | AssistantMessage;
-
 export interface File {
   fileName: string;
   fileExtension: string;
@@ -62,7 +34,8 @@ export interface Widget {
 }
 
 const ChatWindow = () => {
-  const { hasError, notFound, messages } = useChat();
+  const { hasError, notFound, messages, isReady } = useChat();
+
   if (hasError) {
     return (
       <div className="relative">
@@ -78,7 +51,7 @@ const ChatWindow = () => {
     );
   }
 
-  return notFound ? (
+  return isReady ? notFound ? (
     <NextError statusCode={404} />
   ) : (
     <div>
@@ -91,7 +64,9 @@ const ChatWindow = () => {
         <EmptyChat />
       )}
     </div>
-  );
+  ) : <div className='flex items-center justify-center min-h-screen w-full'>
+    <Loader />
+  </div>;
 };
 
 export default ChatWindow;
