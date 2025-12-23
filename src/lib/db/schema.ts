@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
 import { Block } from '../types';
+import { SearchSources } from '../agents/search/types';
 
 export const messages = sqliteTable('messages', {
   id: integer('id').primaryKey(),
@@ -26,7 +27,11 @@ export const chats = sqliteTable('chats', {
   id: text('id').primaryKey(),
   title: text('title').notNull(),
   createdAt: text('createdAt').notNull(),
-  focusMode: text('focusMode').notNull(),
+  sources: text('sources', {
+    mode: 'json',
+  })
+    .$type<SearchSources[]>()
+    .default(sql`'[]'`),
   files: text('files', { mode: 'json' })
     .$type<DBFile[]>()
     .default(sql`'[]'`),
