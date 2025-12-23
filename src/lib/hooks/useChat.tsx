@@ -269,6 +269,7 @@ export const chatContext = createContext<ChatContext>({
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const params: { chatId: string } = useParams();
+  
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
 
@@ -402,6 +403,9 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   }, [messages]);
 
   const checkReconnect = async () => {
+    setIsReady(true);
+    console.debug(new Date(), 'app:ready');
+
     if (messages.length > 0) {
       const lastMsg = messages[messages.length - 1];
 
@@ -503,13 +507,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       console.debug(new Date(), 'app:ready');
     } else if (isMessagesLoaded && isConfigReady && !newChatCreated) {
       checkReconnect()
-        .then(() => {
-          setIsReady(true);
-          console.debug(new Date(), 'app:ready');
-        })
-        .catch((err) => {
-          console.error('Error during reconnect:', err);
-        });
     } else {
       setIsReady(false);
     }
