@@ -67,15 +67,32 @@ class SessionManager {
     }
   }
 
-  addListener(event: string, listener: (data: any) => void) {
-    this.emitter.addListener(event, listener);
+  getAllBlocks() {
+    return Array.from(this.blocks.values());
   }
 
-  replay() {
-    for (const { event, data } of this.events) {
-      /* Using emitter directly to avoid infinite loop */
-      this.emitter.emit(event, data);
+  subscribe(listener: (event: string, data: any) => void): () => void {
+    const currentEventsLength = this.events.length;
+
+    const handler = (event: string) => (data: any) => listener(event, data);
+    const dataHandler = handler('data');
+    const endHandler = handler('end');
+    const errorHandler = handler('error');
+
+    this.emitter.on('data', dataHandler);
+    this.emitter.on('end', endHandler);
+    this.emitter.on('error', errorHandler);
+
+    for (let i = 0; i < currentEventsLength; i++) {
+      const { event, data } = this.events[i];
+      listener(event, data);
     }
+
+    return () => {
+      this.emitter.off('data', dataHandler);
+      this.emitter.off('end', endHandler);
+      this.emitter.off('error', errorHandler);
+    };
   }
 }
 
