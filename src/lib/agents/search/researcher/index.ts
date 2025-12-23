@@ -206,8 +206,9 @@ class Researcher {
       })
       .filter((r) => r !== undefined);
 
-    session.emit('data', {
-      type: 'sources',
+    session.emitBlock({
+      id: crypto.randomUUID(),
+      type: 'source',
       data: filteredSearchResults,
     });
 
