@@ -18,6 +18,8 @@ export type SearchAgentInput = {
   chatHistory: ChatTurnMessage[];
   followUp: string;
   config: SearchAgentConfig;
+  chatId: string;
+  messageId: string;
 };
 
 export type WidgetInput = {
