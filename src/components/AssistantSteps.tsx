@@ -54,17 +54,21 @@ const getStepTitle = (
 const AssistantSteps = ({
   block,
   status,
+  isLast,
 }: {
   block: ResearchBlock;
   status: 'answering' | 'completed' | 'error';
+  isLast: boolean;
 }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(
+    isLast && status === 'answering' ? true : false,
+  );
   const { researchEnded, loading } = useChat();
 
   useEffect(() => {
-    if (researchEnded) {
+    if (researchEnded && isLast) {
       setIsExpanded(false);
-    } else if (status === 'answering') {
+    } else if (status === 'answering' && isLast) {
       setIsExpanded(true);
     }
   }, [researchEnded, status]);

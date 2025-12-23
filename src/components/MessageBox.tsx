@@ -131,6 +131,7 @@ const MessageBox = ({
                 <AssistantSteps
                   block={researchBlock}
                   status={section.message.status}
+                  isLast={isLast}
                 />
               </div>
             ))}
