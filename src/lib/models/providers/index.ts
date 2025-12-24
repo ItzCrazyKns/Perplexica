@@ -5,6 +5,7 @@ import OllamaProvider from './ollama';
 import GeminiProvider from './gemini';
 import TransformersProvider from './transformers';
 import GroqProvider from './groq';
+import LemonadeProvider from './lemonade';
 
 export const providers: Record<string, ProviderConstructor<any>> = {
   openai: OpenAIProvider,
@@ -12,6 +13,7 @@ export const providers: Record<string, ProviderConstructor<any>> = {
   gemini: GeminiProvider,
   transformers: TransformersProvider,
   groq: GroqProvider,
+  lemonade: LemonadeProvider
 };
 
 export const getModelProvidersUIConfigSection =
