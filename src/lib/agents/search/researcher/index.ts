@@ -87,7 +87,7 @@ class Researcher {
         if (partialRes.toolCallChunk.length > 0) {
           partialRes.toolCallChunk.forEach((tc) => {
             if (
-              tc.name === '0_reasoning' &&
+              tc.name === '__reasoning_preamble' &&
               tc.arguments['plan'] &&
               !reasoningEmitted &&
               block &&
@@ -109,7 +109,7 @@ class Researcher {
                 },
               ]);
             } else if (
-              tc.name === '0_reasoning' &&
+              tc.name === '__reasoning_preamble' &&
               tc.arguments['plan'] &&
               reasoningEmitted &&
               block &&

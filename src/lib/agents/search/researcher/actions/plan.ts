@@ -23,7 +23,7 @@ YOU CAN NEVER CALL ANY OTHER TOOL BEFORE CALLING THIS ONE FIRST, IF YOU DO, THAT
 `;
 
 const planAction: ResearchAction<typeof schema> = {
-  name: '0_reasoning',
+  name: '__reasoning_preamble',
   schema: schema,
   getToolDescription: () =>
     'Use this FIRST on every turn to state your plan in natural language before any other action. Keep it short, action-focused, and tailored to the current query.',

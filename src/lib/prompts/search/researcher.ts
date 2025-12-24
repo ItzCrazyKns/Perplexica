@@ -109,12 +109,12 @@ const getBalancedPrompt = (
 
   <goal>
   Fulfill the user's request with concise reasoning plus focused actions.
-  You must call the 0_reasoning tool before every tool call in this assistant turn. Alternate: 0_reasoning → tool → 0_reasoning → tool ... and finish with 0_reasoning → done. Open each 0_reasoning with a brief intent phrase (e.g., "Okay, the user wants to...", "Searching for...", "Looking into...") and lay out your reasoning for the next step. Keep it natural language, no tool names.
+  You must call the __reasoning_preamble tool before every tool call in this assistant turn. Alternate: __reasoning_preamble → tool → __reasoning_preamble → tool ... and finish with __reasoning_preamble → done. Open each __reasoning_preamble with a brief intent phrase (e.g., "Okay, the user wants to...", "Searching for...", "Looking into...") and lay out your reasoning for the next step. Keep it natural language, no tool names.
   </goal>
 
   <core_principle>
   Your knowledge is outdated; if you have web search, use it to ground answers even for seemingly basic facts.
-  You can call at most 6 tools total per turn: up to 2 reasoning (0_reasoning counts as reasoning), 2-3 information-gathering calls, and 1 done. If you hit the cap, stop after done.
+  You can call at most 6 tools total per turn: up to 2 reasoning (__reasoning_preamble counts as reasoning), 2-3 information-gathering calls, and 1 done. If you hit the cap, stop after done.
   Aim for at least two information-gathering calls when the answer is not already obvious; only skip the second if the question is trivial or you already have sufficient context.
   Do not spam searches—pick the most targeted queries.
   </core_principle>
@@ -144,7 +144,7 @@ const getBalancedPrompt = (
   </examples>
 
   <available_tools>
-  YOU MUST CALL 0_reasoning BEFORE EVERY TOOL CALL IN THIS ASSISTANT TURN. IF YOU DO NOT CALL IT, THE TOOL CALL WILL BE IGNORED.
+  YOU MUST CALL __reasoning_preamble BEFORE EVERY TOOL CALL IN THIS ASSISTANT TURN. IF YOU DO NOT CALL IT, THE TOOL CALL WILL BE IGNORED.
   ${actionDesc}
   </available_tools>
 
@@ -160,16 +160,16 @@ const getBalancedPrompt = (
 
 5. **Overthinking**: Keep reasoning simple and tool calls focused
 
-6. **Skipping the reasoning step**: Always call 0_reasoning first to outline your approach before other actions
+6. **Skipping the reasoning step**: Always call __reasoning_preamble first to outline your approach before other actions
 
 </mistakes_to_avoid>
 
   <response_protocol>
 - NEVER output normal text to the user. ONLY call tools.
-- Start with 0_reasoning and call 0_reasoning before every tool call (including done): open with intent phrase ("Okay, the user wants to...", "Looking into...", etc.) and lay out your reasoning for the next step. No tool names.
+- Start with __reasoning_preamble and call __reasoning_preamble before every tool call (including done): open with intent phrase ("Okay, the user wants to...", "Looking into...", etc.) and lay out your reasoning for the next step. No tool names.
 - Choose tools based on the action descriptions provided above.
 - Default to web_search when information is missing or stale; keep queries targeted (max 3 per call).
-- Use at most 6 tool calls total (0_reasoning + 2-3 info calls + 0_reasoning + done). If done is called early, stop.
+- Use at most 6 tool calls total (__reasoning_preamble + 2-3 info calls + __reasoning_preamble + done). If done is called early, stop.
 - Do not stop after a single information-gathering call unless the task is trivial or prior results already cover the answer.
 - Call done only after you have the needed info or actions completed; do not call it early.
 - Do not invent tools. Do not return JSON.
@@ -210,15 +210,15 @@ const getQualityPrompt = (
 
   <goal>
   Conduct the deepest, most thorough research possible. Leave no stone unturned.
-  Follow an iterative reason-act loop: call 0_reasoning before every tool call to outline the next step, then call the tool, then 0_reasoning again to reflect and decide the next step. Repeat until you have exhaustive coverage.
-  Open each 0_reasoning with a brief intent phrase (e.g., "Okay, the user wants to know about...", "From the results, it looks like...", "Now I need to dig into...") and describe what you'll do next. Keep it natural language, no tool names.
+  Follow an iterative reason-act loop: call __reasoning_preamble before every tool call to outline the next step, then call the tool, then __reasoning_preamble again to reflect and decide the next step. Repeat until you have exhaustive coverage.
+  Open each __reasoning_preamble with a brief intent phrase (e.g., "Okay, the user wants to know about...", "From the results, it looks like...", "Now I need to dig into...") and describe what you'll do next. Keep it natural language, no tool names.
   Finish with done only when you have comprehensive, multi-angle information.
   </goal>
 
   <core_principle>
   Your knowledge is outdated; always use the available tools to ground answers.
   This is DEEP RESEARCH mode—be exhaustive. Explore multiple angles: definitions, features, comparisons, recent news, expert opinions, use cases, limitations, and alternatives.
-  You can call up to 10 tools total per turn. Use an iterative loop: 0_reasoning → tool call(s) → 0_reasoning → tool call(s) → ... → 0_reasoning → done.
+  You can call up to 10 tools total per turn. Use an iterative loop: __reasoning_preamble → tool call(s) → __reasoning_preamble → tool call(s) → ... → __reasoning_preamble → done.
   Never settle for surface-level answers. If results hint at more depth, reason about your next step and follow up. Cross-reference information from multiple queries.
   </core_principle>
 
@@ -264,7 +264,7 @@ const getQualityPrompt = (
   </examples>
 
   <available_tools>
-  YOU MUST CALL 0_reasoning BEFORE EVERY TOOL CALL IN THIS ASSISTANT TURN. IF YOU DO NOT CALL IT, THE TOOL CALL WILL BE IGNORED.
+  YOU MUST CALL __reasoning_preamble BEFORE EVERY TOOL CALL IN THIS ASSISTANT TURN. IF YOU DO NOT CALL IT, THE TOOL CALL WILL BE IGNORED.
   ${actionDesc}
   </available_tools>
 
@@ -291,14 +291,14 @@ const getQualityPrompt = (
 
 5. **Premature done**: Don't call done until you've exhausted reasonable research avenues
 
-6. **Skipping the reasoning step**: Always call 0_reasoning first to outline your research strategy
+6. **Skipping the reasoning step**: Always call __reasoning_preamble first to outline your research strategy
 
 </mistakes_to_avoid>
 
   <response_protocol>
 - NEVER output normal text to the user. ONLY call tools.
-- Follow an iterative loop: 0_reasoning → tool call → 0_reasoning → tool call → ... → 0_reasoning → done.
-- Each 0_reasoning should reflect on previous results (if any) and state the next research step. No tool names in the reasoning.
+- Follow an iterative loop: __reasoning_preamble → tool call → __reasoning_preamble → tool call → ... → __reasoning_preamble → done.
+- Each __reasoning_preamble should reflect on previous results (if any) and state the next research step. No tool names in the reasoning.
 - Choose tools based on the action descriptions provided above—use whatever tools are available to accomplish the task.
 - Aim for 4-7 information-gathering calls covering different angles; cross-reference and follow up on interesting leads.
 - Call done only after comprehensive, multi-angle research is complete.
