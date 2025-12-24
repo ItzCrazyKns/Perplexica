@@ -114,7 +114,11 @@ class SearchAgent {
 
     const finalContextWithWidgets = `<search_results note="These are the search results and assistant can cite these">\n${finalContext}\n</search_results>\n<widgets_result noteForAssistant="Its output is already showed to the user, assistant can use this information to answer the query but do not CITE this as a souce">\n${widgetContext}\n</widgets_result>`;
 
-    const writerPrompt = getWriterPrompt(finalContextWithWidgets);
+    const writerPrompt = getWriterPrompt(
+      finalContextWithWidgets,
+      input.config.systemInstructions,
+      input.config.mode,
+    );
     const answerStream = input.config.llm.streamText({
       messages: [
         {
@@ -129,24 +133,36 @@ class SearchAgent {
       ],
     });
 
-    const block: TextBlock = {
-      id: crypto.randomUUID(),
-      type: 'text',
-      data: '',
-    };
-
-    session.emitBlock(block);
+    let responseBlockId = '';
 
     for await (const chunk of answerStream) {
-      block.data += chunk.contentChunk;
+      if (!responseBlockId) {
+        const block: TextBlock = {
+          id: crypto.randomUUID(),
+          type: 'text',
+          data: chunk.contentChunk,
+        };
 
-      session.updateBlock(block.id, [
-        {
-          op: 'replace',
-          path: '/data',
-          value: block.data,
-        },
-      ]);
+        session.emitBlock(block);
+
+        responseBlockId = block.id;
+      } else {
+        const block = session.getBlock(responseBlockId) as TextBlock | null;
+
+        if (!block) {
+          continue;
+        }
+
+        block.data += chunk.contentChunk;
+
+        session.updateBlock(block.id, [
+          {
+            op: 'replace',
+            path: '/data',
+            value: block.data,
+          },
+        ]);
+      }
     }
 
     session.emit('end', {});
