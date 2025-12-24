@@ -51,12 +51,12 @@ const Sources = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.1, ease: 'easeOut' }}
-                  className="origin-top-right flex flex-col bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-full p-1 max-h-[200px] md:max-h-none overflow-y-auto shadow-md shadow-dark-50"
+                  className="origin-top-right flex flex-col bg-light-primary dark:bg-dark-primary border rounded-lg border-light-200 dark:border-dark-200 w-full p-1 max-h-[200px] md:max-h-none overflow-y-auto shadow-lg"
                 >
                   {sourcesList.map((source, i) => (
                     <div
                       key={i}
-                      className="flex flex-row justify-between hover:bg-white-100 hover:dark:bg-dark-100 rounded-md py-3 px-2 cursor-pointer"
+                      className="flex flex-row justify-between hover:bg-light-100 hover:dark:bg-dark-100 rounded-md py-3 px-2 cursor-pointer"
                       onClick={() => {
                         if (!sources.includes(source.key)) {
                           setSources([...sources, source.key]);
@@ -65,13 +65,13 @@ const Sources = () => {
                         }
                       }}
                     >
-                      <div className="flex flex-row space-x-1.5 text-white/80">
+                      <div className="flex flex-row space-x-1.5 text-black/80 dark:text-white/80">
                         {source.icon}
                         <p className="text-xs">{source.name}</p>
                       </div>
                       <Switch
                         checked={sources.includes(source.key)}
-                        className="group relative flex h-4 w-7 shrink-0 cursor-pointer rounded-full bg-white/10 p-0.5 duration-200 ease-in-out focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed data-[checked]:bg-sky-500"
+                        className="group relative flex h-4 w-7 shrink-0 cursor-pointer rounded-full bg-light-200 dark:bg-white/10 p-0.5 duration-200 ease-in-out focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed data-[checked]:bg-sky-500 dark:data-[checked]:bg-sky-500"
                       >
                         <span
                           aria-hidden="true"
