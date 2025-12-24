@@ -59,7 +59,7 @@ const Chat = () => {
   }, [messages]);
 
   return (
-    <div className="flex flex-col space-y-6 pt-8 pb-28 sm:mx-4 md:mx-8">
+    <div className="flex flex-col space-y-6 pt-8 pb-44 lg:pb-28 sm:mx-4 md:mx-8">
       {sections.map((section, i) => {
         const isLast = i === sections.length - 1;
 
@@ -80,7 +80,7 @@ const Chat = () => {
       {loading && !messageAppeared && <MessageBoxLoading />}
       <div ref={messageEnd} className="h-0" />
       {dividerWidth > 0 && (
-        <div className="bottom-6 fixed z-40" style={{ width: dividerWidth }}>
+        <div className="fixed z-40 bottom-24 lg:bottom-6" style={{ width: dividerWidth }}>
           <div
             className="pointer-events-none absolute -bottom-6 left-0 right-0 h-[calc(100%+24px+24px)] dark:hidden"
             style={{
