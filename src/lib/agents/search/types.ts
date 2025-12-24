@@ -12,6 +12,7 @@ export type SearchAgentConfig = {
   llm: BaseLLM<any>;
   embedding: BaseEmbedding<any>;
   mode: 'speed' | 'balanced' | 'quality';
+  systemInstructions: string;
 };
 
 export type SearchAgentInput = {
