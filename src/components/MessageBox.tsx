@@ -136,8 +136,6 @@ const MessageBox = ({
               </div>
             ))}
 
-          {section.widgets.length > 0 && <Renderer widgets={section.widgets} />}
-
           {isLast &&
             loading &&
             !researchEnded &&
@@ -151,6 +149,8 @@ const MessageBox = ({
                 </span>
               </div>
             )}
+
+          {section.widgets.length > 0 && <Renderer widgets={section.widgets} />}
 
           <div className="flex flex-col space-y-2">
             {sources.length > 0 && (
