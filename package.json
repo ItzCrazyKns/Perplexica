@@ -11,9 +11,10 @@
     "format:write": "prettier . --write"
   },
   "dependencies": {
+    "@google/genai": "^1.34.0",
     "@headlessui/react": "^2.2.0",
     "@headlessui/tailwindcss": "^0.2.2",
-    "@huggingface/transformers": "^3.7.5",
+    "@huggingface/transformers": "^3.8.1",
     "@icons-pack/react-simple-icons": "^12.3.0",
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-tooltip": "^1.2.8",
