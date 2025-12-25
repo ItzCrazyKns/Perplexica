@@ -1,4 +1,4 @@
-import OpenAILLM from "../openai/openaiLLM";
+import OpenAILLM from '../openai/openaiLLM';
 
 class AnthropicLLM extends OpenAILLM {}
 

@@ -1,4 +1,4 @@
-import OpenAIEmbedding from "../openai/openaiEmbedding";
+import OpenAIEmbedding from '../openai/openaiEmbedding';
 
 class LemonadeEmbedding extends OpenAIEmbedding {}
 

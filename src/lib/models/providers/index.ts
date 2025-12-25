@@ -15,7 +15,7 @@ export const providers: Record<string, ProviderConstructor<any>> = {
   transformers: TransformersProvider,
   groq: GroqProvider,
   lemonade: LemonadeProvider,
-  anthropic: AnthropicProvider
+  anthropic: AnthropicProvider,
 };
 
 export const getModelProvidersUIConfigSection =

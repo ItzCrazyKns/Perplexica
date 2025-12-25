@@ -81,7 +81,7 @@ class AnthropicProvider extends BaseModelProvider<AnthropicConfig> {
     return new AnthropicLLM({
       apiKey: this.config.apiKey,
       model: key,
-      baseURL: 'https://api.anthropic.com/v1'
+      baseURL: 'https://api.anthropic.com/v1',
     });
   }
 
