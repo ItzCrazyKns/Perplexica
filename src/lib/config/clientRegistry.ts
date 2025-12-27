@@ -11,3 +11,19 @@ export const getAutoMediaSearch = () =>
 
 export const getSystemInstructions = () =>
   getClientConfig('systemInstructions', '');
+
+export const getShowWeatherWidget = () =>
+  getClientConfig('showWeatherWidget', 'true') === 'true';
+
+export const getShowNewsWidget = () =>
+  getClientConfig('showNewsWidget', 'true') === 'true';
+
+export const getMeasurementUnit = () => {
+  const value =
+    getClientConfig('measureUnit') ??
+    getClientConfig('measurementUnit', 'metric');
+
+  if (typeof value !== 'string') return 'metric';
+
+  return value.toLowerCase();
+};

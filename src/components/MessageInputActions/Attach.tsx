@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { Fragment, useRef, useState } from 'react';
 import { useChat } from '@/lib/hooks/useChat';
+import { AnimatePresence } from 'motion/react';
+import { motion } from 'framer-motion';
 
 const Attach = () => {
   const { files, setFiles, setFileIds, fileIds } = useChat();
@@ -53,86 +55,95 @@ const Attach = () => {
 
   return loading ? (
     <div className="active:border-none hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg focus:outline-none text-black/50 dark:text-white/50 transition duration-200">
-      <LoaderCircle size={16} className="text-sky-400 animate-spin" />
+      <LoaderCircle size={16} className="text-sky-500 animate-spin" />
     </div>
   ) : files.length > 0 ? (
     <Popover className="relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
-      <PopoverButton
-        type="button"
-        className="active:border-none hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg focus:outline-none headless-open:text-black dark:headless-open:text-white text-black/50 dark:text-white/50 active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
-      >
-        <File size={16} className="text-sky-400" />
-      </PopoverButton>
-      <Transition
-        as={Fragment}
-        enter="transition ease-out duration-150"
-        enterFrom="opacity-0 translate-y-1"
-        enterTo="opacity-100 translate-y-0"
-        leave="transition ease-in duration-150"
-        leaveFrom="opacity-100 translate-y-0"
-        leaveTo="opacity-0 translate-y-1"
-      >
-        <PopoverPanel className="absolute z-10 w-64 md:w-[350px] right-0">
-          <div className="bg-light-primary dark:bg-dark-primary border rounded-md border-light-200 dark:border-dark-200 w-full max-h-[200px] md:max-h-none overflow-y-auto flex flex-col">
-            <div className="flex flex-row items-center justify-between px-3 py-2">
-              <h4 className="text-black dark:text-white font-medium text-sm">
-                Attached files
-              </h4>
-              <div className="flex flex-row items-center space-x-4">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current.click()}
-                  className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black hover:dark:text-white transition duration-200 focus:outline-none"
+      {({ open }) => (
+        <>
+          <PopoverButton
+            type="button"
+            className="active:border-none hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg focus:outline-none headless-open:text-black dark:headless-open:text-white text-black/50 dark:text-white/50 active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
+          >
+            <File size={16} className="text-sky-500" />
+          </PopoverButton>
+          <AnimatePresence>
+            {open && (
+              <PopoverPanel
+                className="absolute z-10 w-64 md:w-[350px] right-0"
+                static
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.1, ease: 'easeOut' }}
+                  className="origin-top-right bg-light-primary dark:bg-dark-primary border rounded-md border-light-200 dark:border-dark-200 w-full max-h-[200px] md:max-h-none overflow-y-auto flex flex-col"
                 >
-                  <input
-                    type="file"
-                    onChange={handleChange}
-                    ref={fileInputRef}
-                    accept=".pdf,.docx,.txt"
-                    multiple
-                    hidden
-                  />
-                  <Plus size={16} />
-                  <p className="text-xs">Add</p>
-                </button>
-                <button
-                  onClick={() => {
-                    setFiles([]);
-                    setFileIds([]);
-                  }}
-                  className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black hover:dark:text-white transition duration-200 focus:outline-none"
-                >
-                  <Trash size={14} />
-                  <p className="text-xs">Clear</p>
-                </button>
-              </div>
-            </div>
-            <div className="h-[0.5px] mx-2 bg-white/10" />
-            <div className="flex flex-col items-center">
-              {files.map((file, i) => (
-                <div
-                  key={i}
-                  className="flex flex-row items-center justify-start w-full space-x-3 p-3"
-                >
-                  <div className="bg-light-100 dark:bg-dark-100 flex items-center justify-center w-10 h-10 rounded-md">
-                    <File
-                      size={16}
-                      className="text-black/70 dark:text-white/70"
-                    />
+                  <div className="flex flex-row items-center justify-between px-3 py-2">
+                    <h4 className="text-black/70 dark:text-white/70 text-sm">
+                      Attached files
+                    </h4>
+                    <div className="flex flex-row items-center space-x-4">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current.click()}
+                        className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black hover:dark:text-white transition duration-200 focus:outline-none"
+                      >
+                        <input
+                          type="file"
+                          onChange={handleChange}
+                          ref={fileInputRef}
+                          accept=".pdf,.docx,.txt"
+                          multiple
+                          hidden
+                        />
+                        <Plus size={16} />
+                        <p className="text-xs">Add</p>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setFiles([]);
+                          setFileIds([]);
+                        }}
+                        className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black hover:dark:text-white transition duration-200 focus:outline-none"
+                      >
+                        <Trash size={13} />
+                        <p className="text-xs">Clear</p>
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-black/70 dark:text-white/70 text-sm">
-                    {file.fileName.length > 25
-                      ? file.fileName.replace(/\.\w+$/, '').substring(0, 25) +
-                        '...' +
-                        file.fileExtension
-                      : file.fileName}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </PopoverPanel>
-      </Transition>
+                  <div className="h-[0.5px] mx-2 bg-white/10" />
+                  <div className="flex flex-col items-center">
+                    {files.map((file, i) => (
+                      <div
+                        key={i}
+                        className="flex flex-row items-center justify-start w-full space-x-3 p-3"
+                      >
+                        <div className="bg-light-100 dark:bg-dark-100 flex items-center justify-center w-9 h-9 rounded-md">
+                          <File
+                            size={16}
+                            className="text-black/70 dark:text-white/70"
+                          />
+                        </div>
+                        <p className="text-black/70 dark:text-white/70 text-xs">
+                          {file.fileName.length > 25
+                            ? file.fileName
+                                .replace(/\.\w+$/, '')
+                                .substring(0, 25) +
+                              '...' +
+                              file.fileExtension
+                            : file.fileName}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              </PopoverPanel>
+            )}
+          </AnimatePresence>
+        </>
+      )}
     </Popover>
   ) : (
     <button
