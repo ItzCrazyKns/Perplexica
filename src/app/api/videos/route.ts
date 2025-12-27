@@ -21,7 +21,10 @@ export const POST = async (req: Request) => {
 
     const videos = await handleVideoSearch(
       {
-        chatHistory: body.chatHistory,
+        chatHistory: body.chatHistory.map(([role, content]) => ({
+          role: role === 'human' ? 'user' : 'assistant',
+          content,
+        })),
         query: body.query,
       },
       llm,

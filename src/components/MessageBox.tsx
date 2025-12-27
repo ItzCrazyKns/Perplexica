@@ -50,7 +50,14 @@ const MessageBox = ({
   dividerRef?: MutableRefObject<HTMLDivElement | null>;
   isLast: boolean;
 }) => {
-  const { loading, sendMessage, rewrite, messages, researchEnded } = useChat();
+  const {
+    loading,
+    sendMessage,
+    rewrite,
+    messages,
+    researchEnded,
+    chatHistory,
+  } = useChat();
 
   const parsedMessage = section.parsedTextBlocks.join('\n\n');
   const speechMessage = section.speechMessage || '';
@@ -265,11 +272,11 @@ const MessageBox = ({
           <div className="lg:sticky lg:top-20 flex flex-col items-center space-y-3 w-full lg:w-3/12 z-30 h-full pb-4">
             <SearchImages
               query={section.message.query}
-              chatHistory={messages}
+              chatHistory={chatHistory}
               messageId={section.message.messageId}
             />
             <SearchVideos
-              chatHistory={messages}
+              chatHistory={chatHistory}
               query={section.message.query}
               messageId={section.message.messageId}
             />

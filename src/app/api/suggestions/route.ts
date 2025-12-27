@@ -20,7 +20,10 @@ export const POST = async (req: Request) => {
 
     const suggestions = await generateSuggestions(
       {
-        chatHistory: body.chatHistory,
+        chatHistory: body.chatHistory.map(([role, content]) => ({
+          role: role === 'human' ? 'user' : 'assistant',
+          content,
+        })),
       },
       llm,
     );
