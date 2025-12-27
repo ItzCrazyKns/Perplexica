@@ -28,8 +28,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "focusMode": {
-          "name": "focusMode",
+        "sources": {
+          "name": "sources",
           "type": "text",
           "primaryKey": false,
           "notNull": true,

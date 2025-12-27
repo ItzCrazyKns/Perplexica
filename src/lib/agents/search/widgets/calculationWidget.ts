@@ -51,6 +51,10 @@ const calculationWidget: Widget = {
       schema,
     });
 
+    if (output.notPresent) {
+      return;
+    }
+
     const result = mathEval(output.expression);
 
     return {
