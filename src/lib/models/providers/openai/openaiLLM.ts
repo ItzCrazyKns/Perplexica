@@ -167,7 +167,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
           contentChunk: chunk.choices[0].delta.content || '',
           toolCallChunk:
             toolCalls?.map((tc) => {
-              if (tc.type === 'function') {
+              if (!recievedToolCalls[tc.index]) {
                 const call = {
                   name: tc.function?.name!,
                   id: tc.id!,
