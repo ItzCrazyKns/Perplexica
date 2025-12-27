@@ -70,7 +70,7 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
         >
           <div className="flex flex-row items-center space-x-1">
             {sources.slice(3, 6).map((source, i) => {
-              return source.metadata.url === 'File' ? (
+              return source.metadata.includes('file_id://') ? (
                 <div
                   key={i}
                   className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-6 h-6 rounded-full"
@@ -124,7 +124,7 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
                         </p>
                         <div className="flex flex-row items-center justify-between">
                           <div className="flex flex-row items-center space-x-1">
-                            {source.metadata.url === 'File' ? (
+                            {source.metadata.url.includes('file_id://') ? (
                               <div className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-6 h-6 rounded-full">
                                 <File size={12} className="text-white/70" />
                               </div>
