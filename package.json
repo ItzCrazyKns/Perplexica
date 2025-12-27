@@ -67,7 +67,9 @@
     "postcss": "^8",
     "prettier": "^3.2.5",
     "tailwindcss": "^3.3.0",
-    "typescript": "^5.9.3",
+    "typescript": "^5.9.3"
+  },
+  "optionalDependencies": {
     "@napi-rs/canvas": "^0.1.87"
   }
 }
