@@ -4,8 +4,8 @@
   "license": "MIT",
   "author": "ItzCrazyKns",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
     "format:write": "prettier . --write"
@@ -19,7 +19,6 @@
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tailwindcss/typography": "^0.5.12",
-    "@types/jspdf": "^2.0.0",
     "axios": "^1.8.3",
     "better-sqlite3": "^11.9.1",
     "clsx": "^2.1.0",
@@ -54,6 +53,7 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
+    "@types/jspdf": "^2.0.0",
     "@types/node": "^24.8.1",
     "@types/pdf-parse": "^1.1.4",
     "@types/react": "^18",
@@ -67,6 +67,7 @@
     "postcss": "^8",
     "prettier": "^3.2.5",
     "tailwindcss": "^3.3.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@napi-rs/canvas": "^0.1.87"
   }
 }
