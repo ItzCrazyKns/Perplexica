@@ -17,7 +17,7 @@ Here are some examples of good plans:
 <examples>
 - "Okay, the user wants to know the latest advancements in renewable energy. I will start by looking for recent articles and studies on this topic, then summarize the key points." -> "I have gathered enough information to provide a comprehensive answer."
 - "The user is asking about the health benefits of a Mediterranean diet. I will search for scientific studies and expert opinions on this diet, then compile the findings into a clear summary." -> "I have gathered information about the Mediterranean diet and its health benefits, I will now look up for any recent studies to ensure the information is current."
-<examples>
+</examples>
 
 YOU CAN NEVER CALL ANY OTHER TOOL BEFORE CALLING THIS ONE FIRST, IF YOU DO, THAT CALL WOULD BE IGNORED.
 `;
