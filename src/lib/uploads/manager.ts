@@ -4,8 +4,8 @@ import crypto from "crypto"
 import fs from 'fs';
 import { splitText } from "../utils/splitText";
 import { PDFParse } from 'pdf-parse';
+import { CanvasFactory } from 'pdf-parse/worker';
 import officeParser from 'officeparser'
-import { Chunk } from "../types";
 
 const supportedMimeTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'] as const
 
@@ -116,7 +116,8 @@ class UploadManager {
                 const pdfBuffer = fs.readFileSync(filePath);
 
                 const parser = new PDFParse({
-                    data: pdfBuffer
+                    data: pdfBuffer,
+                    CanvasFactory
                 })
 
                 const pdfText = await parser.getText().then(res => res.text)
