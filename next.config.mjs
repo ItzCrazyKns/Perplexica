@@ -11,6 +11,13 @@ const nextConfig = {
     ],
   },
   serverExternalPackages: ['pdf-parse'],
+  outputFileTracingIncludes: {
+    '/api/**': [
+      './node_modules/@napi-rs/canvas/**',
+      './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
+      './node_modules/@napi-rs/canvas-linux-x64-musl/**',
+    ],
+  },
   env: {
     NEXT_PUBLIC_VERSION: pkg.version,
   },
