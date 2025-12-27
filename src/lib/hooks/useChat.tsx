@@ -175,7 +175,7 @@ const loadMessages = async (
   chatId: string,
   setMessages: (messages: Message[]) => void,
   setIsMessagesLoaded: (loaded: boolean) => void,
-  setChatHistory: (history: [string, string][]) => void,
+  chatHistory: React.MutableRefObject<[string, string][]>,
   setSources: (sources: string[]) => void,
   setNotFound: (notFound: boolean) => void,
   setFiles: (files: File[]) => void,
@@ -233,7 +233,7 @@ const loadMessages = async (
   setFiles(files);
   setFileIds(files.map((file: File) => file.fileId));
 
-  setChatHistory(history);
+  chatHistory.current = history;
   setSources(data.chat.sources);
   setIsMessagesLoaded(true);
 };
@@ -281,7 +281,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [researchEnded, setResearchEnded] = useState(false);
 
-  const [chatHistory, setChatHistory] = useState<[string, string][]>([]);
+  const chatHistory = useRef<[string, string][]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
 
   const [files, setFiles] = useState<File[]>([]);
@@ -402,7 +402,12 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     });
   }, [messages]);
 
+  const isReconnectingRef = useRef(false);
+  const handledMessageEndRef = useRef<Set<string>>(new Set());
+
   const checkReconnect = async () => {
+    if (isReconnectingRef.current) return;
+
     setIsReady(true);
     console.debug(new Date(), 'app:ready');
 
@@ -413,6 +418,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(true);
         setResearchEnded(false);
         setMessageAppeared(false);
+
+        isReconnectingRef.current = true;
 
         const res = await fetch(`/api/reconnect/${lastMsg.backendId}`, {
           method: 'POST',
@@ -427,23 +434,27 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
         const messageHandler = getMessageHandler(lastMsg);
 
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
+        try {
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
 
-          partialChunk += decoder.decode(value, { stream: true });
+            partialChunk += decoder.decode(value, { stream: true });
 
-          try {
-            const messages = partialChunk.split('\n');
-            for (const msg of messages) {
-              if (!msg.trim()) continue;
-              const json = JSON.parse(msg);
-              messageHandler(json);
+            try {
+              const messages = partialChunk.split('\n');
+              for (const msg of messages) {
+                if (!msg.trim()) continue;
+                const json = JSON.parse(msg);
+                messageHandler(json);
+              }
+              partialChunk = '';
+            } catch (error) {
+              console.warn('Incomplete JSON, waiting for next chunk...');
             }
-            partialChunk = '';
-          } catch (error) {
-            console.warn('Incomplete JSON, waiting for next chunk...');
           }
+        } finally {
+          isReconnectingRef.current = false;
         }
       }
     }
@@ -463,7 +474,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     if (params.chatId && params.chatId !== chatId) {
       setChatId(params.chatId);
       setMessages([]);
-      setChatHistory([]);
+      chatHistory.current = [];
       setFiles([]);
       setFileIds([]);
       setIsMessagesLoaded(false);
@@ -483,7 +494,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         chatId,
         setMessages,
         setIsMessagesLoaded,
-        setChatHistory,
+        chatHistory,
         setSources,
         setNotFound,
         setFiles,
@@ -519,9 +530,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
     setMessages((prev) => prev.slice(0, index));
 
-    setChatHistory((prev) => {
-      return prev.slice(0, index * 2);
-    });
+    chatHistory.current = chatHistory.current.slice(0, index * 2);
 
     const messageToRewrite = messages[index];
     sendMessage(messageToRewrite.query, messageToRewrite.messageId, true);
@@ -621,12 +630,18 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data.type === 'messageEnd') {
+        if (handledMessageEndRef.current.has(messageId)) {
+          return;
+        }
+
+        handledMessageEndRef.current.add(messageId);
+
         const currentMsg = messagesRef.current.find(
           (msg) => msg.messageId === messageId,
         );
 
         const newHistory: [string, string][] = [
-          ...chatHistory,
+          ...chatHistory.current,
           ['human', message.query],
           [
             'assistant',
@@ -635,7 +650,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           ],
         ];
 
-        setChatHistory(newHistory);
+        chatHistory.current = newHistory;
 
         setMessages((prev) =>
           prev.map((msg) =>
@@ -652,13 +667,15 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         const autoMediaSearch = getAutoMediaSearch();
 
         if (autoMediaSearch) {
-          document
-            .getElementById(`search-images-${lastMsg.messageId}`)
-            ?.click();
+          setTimeout(() => {
+            document
+              .getElementById(`search-images-${lastMsg.messageId}`)
+              ?.click();
 
-          document
-            .getElementById(`search-videos-${lastMsg.messageId}`)
-            ?.click();
+            document
+              .getElementById(`search-videos-${lastMsg.messageId}`)
+              ?.click();
+          }, 200);
         }
 
         // Check if there are sources and no suggestions
@@ -742,8 +759,11 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         sources: sources,
         optimizationMode: optimizationMode,
         history: rewrite
-          ? chatHistory.slice(0, messageIndex === -1 ? undefined : messageIndex)
-          : chatHistory,
+          ? chatHistory.current.slice(
+              0,
+              messageIndex === -1 ? undefined : messageIndex,
+            )
+          : chatHistory.current,
         chatModel: {
           key: chatModelProvider.key,
           providerId: chatModelProvider.providerId,
@@ -790,7 +810,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         messages,
         sections,
-        chatHistory,
+        chatHistory: chatHistory.current,
         files,
         fileIds,
         sources,
