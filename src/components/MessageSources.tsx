@@ -6,11 +6,11 @@ import {
   Transition,
   TransitionChild,
 } from '@headlessui/react';
-import { Document } from '@langchain/core/documents';
 import { File } from 'lucide-react';
 import { Fragment, useState } from 'react';
+import { Chunk } from '@/lib/types';
 
-const MessageSources = ({ sources }: { sources: Document[] }) => {
+const MessageSources = ({ sources }: { sources: Chunk[] }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const closeModal = () => {
@@ -37,7 +37,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
           </p>
           <div className="flex flex-row items-center justify-between">
             <div className="flex flex-row items-center space-x-1">
-              {source.metadata.url === 'File' ? (
+              {source.metadata.url.includes('file_id://') ? (
                 <div className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-6 h-6 rounded-full">
                   <File size={12} className="text-white/70" />
                 </div>
@@ -51,7 +51,9 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
                 />
               )}
               <p className="text-xs text-black/50 dark:text-white/50 overflow-hidden whitespace-nowrap text-ellipsis">
-                {source.metadata.url.replace(/.+\/\/|www.|\..+/g, '')}
+                {source.metadata.url.includes('file_id://')
+                  ? 'Uploaded File'
+                  : source.metadata.url.replace(/.+\/\/|www.|\..+/g, '')}
               </p>
             </div>
             <div className="flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 text-xs">

@@ -1,7 +1,5 @@
 import { ConfigModelProvider } from '../config/types';
-import BaseModelProvider, {
-  createProviderInstance,
-} from './providers/baseProvider';
+import BaseModelProvider, { createProviderInstance } from './base/provider';
 import { getConfiguredModelProviders } from '../config/serverRegistry';
 import { providers } from './providers';
 import { MinimalProvider, ModelList } from './types';

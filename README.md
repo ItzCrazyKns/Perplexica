@@ -18,9 +18,11 @@ Want to know more about its architecture and how it works? You can read it [here
 
 🤖 **Support for all major AI providers** - Use local LLMs through Ollama or connect to OpenAI, Anthropic Claude, Google Gemini, Groq, and more. Mix and match models based on your needs.
 
-⚡ **Smart search modes** - Choose Balanced Mode for everyday searches, Fast Mode when you need quick answers, or wait for Quality Mode (coming soon) for deep research.
+⚡ **Smart search modes** - Choose Speed Mode when you need quick answers, Balanced Mode for everyday searches, or Quality Mode for deep research.
 
-🎯 **Six specialized focus modes** - Get better results with modes designed for specific tasks: Academic papers, YouTube videos, Reddit discussions, Wolfram Alpha calculations, writing assistance, or general web search.
+🧭 **Pick your sources** - Search the web, discussions, or academic papers. More sources and integrations are in progress.
+
+🧩 **Widgets** - Helpful UI cards that show up when relevant, like weather, calculations, stock prices, and other quick lookups.
 
 🔍 **Web search powered by SearxNG** - Access multiple search engines while keeping your identity private. Support for Tavily and Exa coming soon for even better results.
 
@@ -81,7 +83,7 @@ There are mainly 2 ways of installing Perplexica - With Docker, Without Docker. 
 Perplexica can be easily run using Docker. Simply run the following command:
 
 ```bash
-docker run -d -p 3000:3000 -v perplexica-data:/home/perplexica/data -v perplexica-uploads:/home/perplexica/uploads --name perplexica itzcrazykns1337/perplexica:latest
+docker run -d -p 3000:3000 -v perplexica-data:/home/perplexica/data --name perplexica itzcrazykns1337/perplexica:latest
 ```
 
 This will pull and start the Perplexica container with the bundled SearxNG search engine. Once running, open your browser and navigate to http://localhost:3000. You can then configure your settings (API keys, models, etc.) directly in the setup screen.
@@ -93,7 +95,7 @@ This will pull and start the Perplexica container with the bundled SearxNG searc
 If you already have SearxNG running, you can use the slim version of Perplexica:
 
 ```bash
-docker run -d -p 3000:3000 -e SEARXNG_API_URL=http://your-searxng-url:8080 -v perplexica-data:/home/perplexica/data -v perplexica-uploads:/home/perplexica/uploads --name perplexica itzcrazykns1337/perplexica:slim-latest
+docker run -d -p 3000:3000 -e SEARXNG_API_URL=http://your-searxng-url:8080 -v perplexica-data:/home/perplexica/data --name perplexica itzcrazykns1337/perplexica:slim-latest
 ```
 
 **Important**: Make sure your SearxNG instance has:
@@ -120,7 +122,7 @@ If you prefer to build from source or need more control:
 
    ```bash
    docker build -t perplexica .
-   docker run -d -p 3000:3000 -v perplexica-data:/home/perplexica/data -v perplexica-uploads:/home/perplexica/uploads --name perplexica perplexica
+   docker run -d -p 3000:3000 -v perplexica-data:/home/perplexica/data --name perplexica perplexica
    ```
 
 5. Access Perplexica at http://localhost:3000 and configure your settings in the setup screen.
@@ -237,13 +239,8 @@ Perplexica runs on Next.js and handles all API requests. It works right away on 
 
 ## Upcoming Features
 
-- [x] Add settings page
-- [x] Adding support for local LLMs
-- [x] History Saving features
-- [x] Introducing various Focus Modes
-- [x] Adding API support
-- [x] Adding Discover
-- [ ] Finalizing Copilot Mode
+- [ ] Adding more widgets, integrations, search sources
+- [ ] Adding authentication
 
 ## Support Us
 

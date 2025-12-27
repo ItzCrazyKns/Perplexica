@@ -1,15 +1,13 @@
 'use client';
 
-import { Document } from '@langchain/core/documents';
 import Navbar from './Navbar';
 import Chat from './Chat';
 import EmptyChat from './EmptyChat';
-import { Settings } from 'lucide-react';
-import Link from 'next/link';
 import NextError from 'next/error';
 import { useChat } from '@/lib/hooks/useChat';
-import Loader from './ui/Loader';
 import SettingsButtonMobile from './Settings/SettingsButtonMobile';
+import { Block } from '@/lib/types';
+import Loader from './ui/Loader';
 
 export interface BaseMessage {
   chatId: string;
@@ -17,33 +15,12 @@ export interface BaseMessage {
   createdAt: Date;
 }
 
-export interface AssistantMessage extends BaseMessage {
-  role: 'assistant';
-  content: string;
-  suggestions?: string[];
+export interface Message extends BaseMessage {
+  backendId: string;
+  query: string;
+  responseBlocks: Block[];
+  status: 'answering' | 'completed' | 'error';
 }
-
-export interface UserMessage extends BaseMessage {
-  role: 'user';
-  content: string;
-}
-
-export interface SourceMessage extends BaseMessage {
-  role: 'source';
-  sources: Document[];
-}
-
-export interface SuggestionMessage extends BaseMessage {
-  role: 'suggestion';
-  suggestions: string[];
-}
-
-export type Message =
-  | AssistantMessage
-  | UserMessage
-  | SourceMessage
-  | SuggestionMessage;
-export type ChatTurn = UserMessage | AssistantMessage;
 
 export interface File {
   fileName: string;
@@ -51,8 +28,14 @@ export interface File {
   fileId: string;
 }
 
+export interface Widget {
+  widgetType: string;
+  params: Record<string, any>;
+}
+
 const ChatWindow = () => {
-  const { hasError, isReady, notFound, messages } = useChat();
+  const { hasError, notFound, messages, isReady } = useChat();
+
   if (hasError) {
     return (
       <div className="relative">
@@ -84,7 +67,7 @@ const ChatWindow = () => {
       </div>
     )
   ) : (
-    <div className="flex flex-row items-center justify-center min-h-screen">
+    <div className="flex items-center justify-center min-h-screen w-full">
       <Loader />
     </div>
   );

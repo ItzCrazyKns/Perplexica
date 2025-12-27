@@ -17,7 +17,7 @@ const SearchImages = ({
   messageId,
 }: {
   query: string;
-  chatHistory: Message[];
+  chatHistory: [string, string][];
   messageId: string;
 }) => {
   const [images, setImages] = useState<Image[] | null>(null);

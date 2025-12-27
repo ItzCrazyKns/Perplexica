@@ -310,7 +310,7 @@ const SettingsSwitch = ({
           checked={isChecked}
           onChange={handleSave}
           disabled={loading}
-          className="group relative flex h-6 w-12 shrink-0 cursor-pointer rounded-full bg-white/10 p-1 duration-200 ease-in-out focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed data-[checked]:bg-sky-500"
+          className="group relative flex h-6 w-12 shrink-0 cursor-pointer rounded-full bg-light-200 dark:bg-white/10 p-1 duration-200 ease-in-out focus:outline-none transition-colors disabled:opacity-60 disabled:cursor-not-allowed data-[checked]:bg-sky-500 dark:data-[checked]:bg-sky-500"
         >
           <span
             aria-hidden="true"

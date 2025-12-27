@@ -30,7 +30,7 @@ const Searchvideos = ({
   messageId,
 }: {
   query: string;
-  chatHistory: Message[];
+  chatHistory: [string, string][];
   messageId: string;
 }) => {
   const [videos, setVideos] = useState<Video[] | null>(null);
