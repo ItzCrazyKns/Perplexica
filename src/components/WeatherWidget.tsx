@@ -91,7 +91,7 @@ const WeatherWidget = () => {
       setData({
         temperature: data.temperature,
         condition: data.condition,
-        location: 'Mars',
+        location: location.city,
         humidity: data.humidity,
         windSpeed: data.windSpeed,
         icon: data.icon,
