@@ -570,6 +570,20 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         setMessages((prev) =>
           prev.map((msg) => {
             if (msg.messageId === messageId) {
+              const exists = msg.responseBlocks.findIndex(
+                (b) => b.id === data.block.id,
+              );
+
+              if (exists !== -1) {
+                const existingBlocks = [...msg.responseBlocks];
+                existingBlocks[exists] = data.block;
+
+                return {
+                  ...msg,
+                  responseBlocks: existingBlocks,
+                };
+              }
+
               return {
                 ...msg,
                 responseBlocks: [...msg.responseBlocks, data.block],
