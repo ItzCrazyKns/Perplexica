@@ -1,6 +1,6 @@
 {
-  "name": "perplexica-frontend",
-  "version": "1.11.2",
+  "name": "perplexica",
+  "version": "1.12.0",
   "license": "MIT",
   "author": "ItzCrazyKns",
   "scripts": {
