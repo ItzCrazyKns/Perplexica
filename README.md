@@ -239,8 +239,8 @@ Perplexica runs on Next.js and handles all API requests. It works right away on 
 
 ## Upcoming Features
 
-- [] Adding more widgets, integrations, search sources
-- [] Adding authentication
+- [ ] Adding more widgets, integrations, search sources
+- [ ] Adding authentication
 
 ## Support Us
 
