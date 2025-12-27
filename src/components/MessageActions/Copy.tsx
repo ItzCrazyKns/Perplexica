@@ -21,15 +21,16 @@ const Copy = ({
         ) as SourceBlock[];
 
         const contentToCopy = `${initialMessage}${
-          sources.length > 0 &&
-          `\n\nCitations:\n${sources
-            .map((source) => source.data)
-            .flat()
-            .map(
-              (s, i) =>
-                `[${i + 1}] ${s.metadata.url.startsWith('file_id://') ? s.metadata.fileName || 'Uploaded File' : s.metadata.url}`,
-            )
-            .join(`\n`)}`
+          sources.length > 0
+            ? `\n\nCitations:\n${sources
+                .map((source) => source.data)
+                .flat()
+                .map(
+                  (s, i) =>
+                    `[${i + 1}] ${s.metadata.url.startsWith('file_id://') ? s.metadata.fileName || 'Uploaded File' : s.metadata.url}`,
+                )
+                .join(`\n`)}`
+            : ''
         }`;
 
         navigator.clipboard.writeText(contentToCopy);

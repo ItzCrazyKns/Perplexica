@@ -205,8 +205,9 @@ const Navbar = () => {
   useEffect(() => {
     if (sections.length > 0 && sections[0].message) {
       const newTitle =
-        sections[0].message.query.substring(0, 30) + '...' ||
-        'New Conversation';
+        sections[0].message.query.length > 30
+          ? `${sections[0].message.query.substring(0, 30).trim()}...`
+          : sections[0].message.query || 'New Conversation';
 
       setTitle(newTitle);
       const newTimeAgo = formatTimeDifference(
