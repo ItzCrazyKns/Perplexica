@@ -80,7 +80,10 @@ const Chat = () => {
       {loading && !messageAppeared && <MessageBoxLoading />}
       <div ref={messageEnd} className="h-0" />
       {dividerWidth > 0 && (
-        <div className="fixed z-40 bottom-24 lg:bottom-6" style={{ width: dividerWidth }}>
+        <div
+          className="fixed z-40 bottom-24 lg:bottom-6"
+          style={{ width: dividerWidth }}
+        >
           <div
             className="pointer-events-none absolute -bottom-6 left-0 right-0 h-[calc(100%+24px+24px)] dark:hidden"
             style={{
