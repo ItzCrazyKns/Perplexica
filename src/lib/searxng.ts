@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { getSearxngURL } from './config/serverRegistry';
 
 interface SearxngSearchOptions {
@@ -44,6 +43,6 @@ export const searchSearxng = async (
 
   const results: SearxngSearchResult[] = data.results;
   const suggestions: string[] = data.suggestions;
-
+  
   return { results, suggestions };
 };
