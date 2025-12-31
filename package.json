@@ -19,6 +19,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tailwindcss/typography": "^0.5.12",
+    "@toolsycc/json-repair": "^0.1.22",
     "axios": "^1.8.3",
     "better-sqlite3": "^11.9.1",
     "clsx": "^2.1.0",

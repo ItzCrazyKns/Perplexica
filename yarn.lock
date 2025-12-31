@@ -1384,6 +1384,11 @@
   resolved "https://registry.yarnpkg.com/@tokenizer/token/-/token-0.3.0.tgz#fe98a93fe789247e998c75e74e9c7c63217aa276"
   integrity sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==
 
+"@toolsycc/json-repair@^0.1.22":
+  version "0.1.22"
+  resolved "https://registry.yarnpkg.com/@toolsycc/json-repair/-/json-repair-0.1.22.tgz#7ad0eb30c4ef1c4286ad3487dc1bbda562f09986"
+  integrity sha512-IMrsxovS9a5pWGRxMCDQDW8FKKEZI/yK/HMcyJlbnd/s+Mk0dRtGr1BFicL276gDsPvb/JfNHtHSi1oc0eY1jA==
+
 "@types/better-sqlite3@^7.6.12":
   version "7.6.12"
   resolved "https://registry.yarnpkg.com/@types/better-sqlite3/-/better-sqlite3-7.6.12.tgz#e5712d46d71097dcc2775c0b068072eadc15deb7"
