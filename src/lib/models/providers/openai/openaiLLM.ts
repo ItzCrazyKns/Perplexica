@@ -18,6 +18,7 @@ import {
   ChatCompletionToolMessageParam,
 } from 'openai/resources/index.mjs';
 import { Message } from '@/lib/types';
+import { repairJson } from '@toolsycc/json-repair';
 
 type OpenAIConfig = {
   apiKey: string;
@@ -213,7 +214,13 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
 
     if (response.choices && response.choices.length > 0) {
       try {
-        return input.schema.parse(response.choices[0].message.parsed) as T;
+        return input.schema.parse(
+          JSON.parse(
+            repairJson(response.choices[0].message.content!, {
+              extractJson: true,
+            }) as string,
+          ),
+        ) as T;
       } catch (err) {
         throw new Error(`Error parsing response from OpenAI: ${err}`);
       }
