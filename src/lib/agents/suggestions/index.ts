@@ -3,7 +3,6 @@ import { suggestionGeneratorPrompt } from '@/lib/prompts/suggestions';
 import { ChatTurnMessage } from '@/lib/types';
 import z from 'zod';
 import BaseLLM from '@/lib/models/base/llm';
-import { i } from 'mathjs';
 
 type SuggestionGeneratorInput = {
   chatHistory: ChatTurnMessage[];

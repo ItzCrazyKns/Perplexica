@@ -43,6 +43,6 @@ export const searchSearxng = async (
 
   const results: SearxngSearchResult[] = data.results;
   const suggestions: string[] = data.suggestions;
-  
+
   return { results, suggestions };
 };
