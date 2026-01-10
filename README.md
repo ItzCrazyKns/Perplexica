@@ -240,6 +240,7 @@ Perplexica runs on Next.js and handles all API requests. It works right away on 
 ## Upcoming Features
 
 - [ ] Adding more widgets, integrations, search sources
+- [ ] Adding ability to create custom agents (name T.B.D.)
 - [ ] Adding authentication
 
 ## Support Us
