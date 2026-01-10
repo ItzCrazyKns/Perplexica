@@ -42,7 +42,9 @@ const VoiceInput = ({
     if (mediaRecorderRef.current && recording) {
       mediaRecorderRef.current.stop();
       // Stop all tracks to release microphone
-      mediaRecorderRef.current.stream?.getTracks().forEach(track => track.stop());
+      mediaRecorderRef.current.stream
+        ?.getTracks()
+        .forEach((track) => track.stop());
     }
   };
 
@@ -58,7 +60,7 @@ const VoiceInput = ({
       console.log('Transcription completed:', text);
       if (text) {
         // Append to existing message with proper spacing
-        const newMessage = message.trim() 
+        const newMessage = message.trim()
           ? `${message.trim()} ${text.trim()}`
           : text.trim();
         setMessage(newMessage);
@@ -95,7 +97,7 @@ const VoiceInput = ({
         <div className="flex items-center space-x-2 bg-[#24A0ED]/10 rounded-xl px-3 py-2">
           {/* Voice recognition icon */}
           <VoiceIcon />
-          
+
           {/* Stop recording button */}
           <button
             type="button"
@@ -107,12 +109,14 @@ const VoiceInput = ({
           </button>
         </div>
       )}
-      
+
       {/* Subtle transcription indicator */}
       {transcribing && (
         <div className="ml-2 flex items-center space-x-1">
           <div className="w-4 h-4 border-2 border-gray-300/40 dark:border-gray-500/40 border-t-[#24A0ED] rounded-full animate-spin" />
-          <span className="text-xs text-gray-500 dark:text-gray-400">transcribing...</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">
+            transcribing...
+          </span>
         </div>
       )}
     </div>

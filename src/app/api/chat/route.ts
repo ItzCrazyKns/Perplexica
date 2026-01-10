@@ -276,15 +276,15 @@ export const POST = async (req: Request) => {
     // Get client location information for location-aware search
     const forwarded = req.headers.get('x-forwarded-for');
     const clientIP = forwarded ? forwarded.split(',')[0] : '127.0.0.1';
-    
+
     // Create a request-like object for getLocalDateFromRequest
     const requestLike = {
       headers: {
         'x-forwarded-for': req.headers.get('x-forwarded-for') || undefined,
       },
-      socket: { remoteAddress: clientIP }
+      socket: { remoteAddress: clientIP },
     } as any;
-    
+
     const localDate = getLocalDateFromRequest(requestLike);
     console.log(`Chat local date: ${localDate}`);
 

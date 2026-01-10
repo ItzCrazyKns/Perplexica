@@ -284,9 +284,12 @@ class MetaSearchAgent implements MetaSearchAgentType {
           .pipe(this.processDocs),
       }),
       ChatPromptTemplate.fromMessages([
-        ['system', typeof this.config.responsePrompt === 'function' 
-          ? this.config.responsePrompt('{context}', requestContext)  
-          : this.config.responsePrompt.replace('{context}', '{context}')],
+        [
+          'system',
+          typeof this.config.responsePrompt === 'function'
+            ? this.config.responsePrompt('{context}', requestContext)
+            : this.config.responsePrompt.replace('{context}', '{context}'),
+        ],
         new MessagesPlaceholder('chat_history'),
         ['user', '{query}'],
       ]),

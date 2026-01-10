@@ -64,13 +64,16 @@ Follow up question: {query}
 Rephrased question:
 `;
 
-export const webSearchResponsePrompt = (context: string, req?: IncomingMessage): string => {
+export const webSearchResponsePrompt = (
+  context: string,
+  req?: IncomingMessage,
+): string => {
   // 默认调试位置
   const defaultLocation = {
-    city: "Unknown",
-    state: "Unknown",
-    country: "Unknown",
-    timezone: "UTC"
+    city: 'Unknown',
+    state: 'Unknown',
+    country: 'Unknown',
+    timezone: 'UTC',
   };
 
   let locationInfo = { ...defaultLocation };
@@ -101,7 +104,7 @@ export const webSearchResponsePrompt = (context: string, req?: IncomingMessage):
         day: 'numeric',
         hour: 'numeric',
         minute: 'numeric',
-        timeZoneName: 'short'
+        timeZoneName: 'short',
       });
     }
   } else {
@@ -113,7 +116,7 @@ export const webSearchResponsePrompt = (context: string, req?: IncomingMessage):
       day: 'numeric',
       hour: 'numeric',
       minute: 'numeric',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     });
   }
 

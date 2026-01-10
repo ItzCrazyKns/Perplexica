@@ -9,7 +9,10 @@ try {
   const geoTzModule = require('geo-tz');
   geoTz = geoTzModule.find;
 } catch (error) {
-  console.warn('GeoIP functionality disabled:', error.message);
+  console.warn(
+    'GeoIP functionality disabled:',
+    error instanceof Error ? error.message : String(error),
+  );
 }
 
 /**
@@ -32,19 +35,22 @@ export function getTimeZoneFromRequest(req: IncomingMessage): string {
   if (!geoip || !geoTz) {
     return 'UTC'; // Fallback when GeoIP is not available
   }
-  
+
   const ip = getIPAddress(req);
   const geo = geoip.lookup(ip);
   let timeZone = 'UTC';
-  
+
   try {
     if (geo && geo.ll) {
       timeZone = geoTz(geo.ll[0], geo.ll[1])[0];
     }
   } catch (error) {
-    console.warn('GeoIP lookup failed:', error.message);
+    console.warn(
+      'GeoIP lookup failed:',
+      error instanceof Error ? error.message : String(error),
+    );
   }
-  
+
   return timeZone;
 }
 
@@ -61,6 +67,6 @@ export function getLocalDateFromRequest(req: IncomingMessage): string {
     day: 'numeric',
     hour: 'numeric',
     minute: 'numeric',
-    timeZoneName: 'short'
+    timeZoneName: 'short',
   });
 }

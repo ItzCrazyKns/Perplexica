@@ -49,12 +49,14 @@ const ChatHistory = () => {
 
   return (
     <div className="flex flex-col w-full px-1">
-      <button 
+      <button
         onClick={toggleExpanded}
         className="flex items-center w-full px-2 py-1.5 mb-0.5 text-sm text-left rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors duration-150"
       >
         <div className="flex items-center gap-1.5">
-          <span className={`transition-transform duration-200 ${isExpanded ? 'rotate-0' : '-rotate-90'}`}>
+          <span
+            className={`transition-transform duration-200 ${isExpanded ? 'rotate-0' : '-rotate-90'}`}
+          >
             <ChevronDown size={14} />
           </span>
           <BookOpenText size={14} />
@@ -63,7 +65,10 @@ const ChatHistory = () => {
       </button>
 
       {isExpanded && (
-        <div className="mt-0.5 overflow-y-auto max-h-[50vh] overflow-x-hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div
+          className="mt-0.5 overflow-y-auto max-h-[50vh] overflow-x-hidden"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           <style jsx global>{`
             .hide-scrollbar::-webkit-scrollbar {
               display: none;
@@ -81,15 +86,19 @@ const ChatHistory = () => {
             ) : (
               <div className="flex flex-col">
                 {chats.map((chat) => (
-                  <Link 
-                    href={`/c/${chat.id}`} 
+                  <Link
+                    href={`/c/${chat.id}`}
                     key={chat.id}
                     className={cn(
-                      "flex flex-col px-2.5 py-1 rounded-md text-black/80 dark:text-white/80 hover:bg-black/5 dark:hover:bg-white/5 transition-colors",
-                      pathname === `/c/${chat.id}` ? "bg-black/5 dark:bg-white/5 font-medium" : "font-normal"
+                      'flex flex-col px-2.5 py-1 rounded-md text-black/80 dark:text-white/80 hover:bg-black/5 dark:hover:bg-white/5 transition-colors',
+                      pathname === `/c/${chat.id}`
+                        ? 'bg-black/5 dark:bg-white/5 font-medium'
+                        : 'font-normal',
                     )}
                   >
-                    <span className="truncate text-sm leading-tight">{chat.title}</span>
+                    <span className="truncate text-sm leading-tight">
+                      {chat.title}
+                    </span>
                   </Link>
                 ))}
               </div>

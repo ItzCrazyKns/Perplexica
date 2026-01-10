@@ -1,7 +1,15 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import { BookOpenText, Home, Search, SquarePen, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  BookOpenText,
+  Home,
+  Search,
+  SquarePen,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useSelectedLayoutSegments } from 'next/navigation';
 import React, { useState, type ReactNode } from 'react';
@@ -45,16 +53,21 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div>
-      <div className={cn(
-        "hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col transition-all duration-300 relative",
-        isSidebarExpanded ? "lg:w-72" : "lg:w-20"
-      )}>
+      <div
+        className={cn(
+          'hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col transition-all duration-300 relative',
+          isSidebarExpanded ? 'lg:w-72' : 'lg:w-20',
+        )}
+      >
         <div className="flex grow flex-col items-center justify-between gap-y-3 overflow-y-auto bg-light-secondary dark:bg-dark-secondary px-2 py-6">
           <div className="flex w-full items-center justify-center">
-            <a href="/" className={cn(
-              "flex items-center cursor-pointer hover:bg-black/15 dark:hover:bg-white/15 duration-150 transition rounded-lg p-2 relative group",
-              isSidebarExpanded && "justify-start px-3 w-full"
-            )}>
+            <a
+              href="/"
+              className={cn(
+                'flex items-center cursor-pointer hover:bg-black/15 dark:hover:bg-white/15 duration-150 transition rounded-lg p-2 relative group',
+                isSidebarExpanded && 'justify-start px-3 w-full',
+              )}
+            >
               <SquarePen className="cursor-pointer" />
               {isSidebarExpanded && (
                 <span className="ml-2 font-semibold">Perplexica</span>
@@ -66,7 +79,7 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
               )}
             </a>
           </div>
-          
+
           {isSidebarExpanded ? (
             <div className="w-full flex-grow overflow-hidden flex flex-col mt-5">
               <div className="flex flex-col space-y-0.5 w-full px-2 mb-2">
@@ -75,10 +88,10 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
                     key={i}
                     href={link.href}
                     className={cn(
-                      "flex flex-row items-center py-1.5 px-2.5 rounded-md transition-colors duration-200",
+                      'flex flex-row items-center py-1.5 px-2.5 rounded-md transition-colors duration-200',
                       link.active
-                        ? "text-black dark:text-white bg-black/5 dark:bg-white/5"
-                        : "text-black/70 dark:text-white/70 hover:bg-black/15 dark:hover:bg-white/15"
+                        ? 'text-black dark:text-white bg-black/5 dark:bg-white/5'
+                        : 'text-black/70 dark:text-white/70 hover:bg-black/15 dark:hover:bg-white/15',
                     )}
                   >
                     <link.icon size={16} />
@@ -86,7 +99,7 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
                   </Link>
                 ))}
               </div>
-              
+
               <div className="flex-grow overflow-y-auto mt-0.5 border-t border-black/10 dark:border-white/10 pt-2">
                 <ChatHistory />
               </div>
@@ -113,7 +126,7 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
                   </div>
                 </Link>
               ))}
-              
+
               <button
                 onClick={toggleSidebar}
                 aria-label="Expand sidebar"
@@ -127,20 +140,33 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
             </VerticalIconContainer>
           )}
 
-          <div className={cn(
-            "flex items-center w-full mt-auto pt-8 pb-2",
-            isSidebarExpanded ? "justify-start border-t border-black/10 dark:border-white/10 px-2 mt-6" : "justify-center"
-          )}>
-            <Link 
-              href="/settings" 
+          <div
+            className={cn(
+              'flex items-center w-full mt-auto pt-8 pb-2',
+              isSidebarExpanded
+                ? 'justify-start border-t border-black/10 dark:border-white/10 px-2 mt-6'
+                : 'justify-center',
+            )}
+          >
+            <Link
+              href="/settings"
               className={cn(
-                "flex items-center p-3 rounded-lg hover:bg-black/15 dark:hover:bg-white/15 transition-colors relative group",
-                isSidebarExpanded ? "w-full justify-start gap-3" : "justify-center"
+                'flex items-center p-3 rounded-lg hover:bg-black/15 dark:hover:bg-white/15 transition-colors relative group',
+                isSidebarExpanded
+                  ? 'w-full justify-start gap-3'
+                  : 'justify-center',
               )}
               title="Settings"
             >
-              <Settings size={20} className="text-black/70 dark:text-white/70" />
-              {isSidebarExpanded && <span className="text-sm text-black/70 dark:text-white/70">Settings</span>}
+              <Settings
+                size={20}
+                className="text-black/70 dark:text-white/70"
+              />
+              {isSidebarExpanded && (
+                <span className="text-sm text-black/70 dark:text-white/70">
+                  Settings
+                </span>
+              )}
               {!isSidebarExpanded && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-black/80 dark:bg-white/90 text-white dark:text-black text-xs rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50">
                   设置
@@ -149,7 +175,7 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
             </Link>
           </div>
         </div>
-        
+
         {/* Elegant circular collapse button at the edge */}
         {isSidebarExpanded && (
           <button
@@ -190,10 +216,12 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
         ))}
       </div>
 
-      <div className={cn(
-        "lg:pl-20 transition-all duration-300",
-        isSidebarExpanded && "lg:pl-72"
-      )}>
+      <div
+        className={cn(
+          'lg:pl-20 transition-all duration-300',
+          isSidebarExpanded && 'lg:pl-72',
+        )}
+      >
         <Layout>{children}</Layout>
       </div>
     </div>

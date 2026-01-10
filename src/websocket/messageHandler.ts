@@ -191,9 +191,11 @@ export const handleMessage = async (
 
       if (handler) {
         try {
-          const responsePrompt = typeof handler.config?.responsePrompt === 'function' 
-            ? handler.config.responsePrompt('', request)
-            : (handler.config?.responsePrompt || prompts.webSearchResponsePrompt('', request));
+          const responsePrompt =
+            typeof handler.config?.responsePrompt === 'function'
+              ? handler.config.responsePrompt('', request)
+              : handler.config?.responsePrompt ||
+                prompts.webSearchResponsePrompt('', request);
 
           const emitter = await handler.searchAndAnswer(
             parsedMessage.content,
@@ -203,7 +205,7 @@ export const handleMessage = async (
             parsedWSMessage.optimizationMode,
             parsedWSMessage.files,
             responsePrompt,
-            request
+            request,
           );
 
           handleEmitterEvents(emitter, ws, aiMessageId, parsedMessage.chatId);

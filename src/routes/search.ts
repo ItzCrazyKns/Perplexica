@@ -115,7 +115,8 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Invalid model selected' });
     }
 
-    const searchHandler: MetaSearchAgentType = searchHandlers[body.focusMode];
+    const searchHandler: MetaSearchAgentType =
+      searchHandlers[body.focusMode as keyof typeof searchHandlers];
 
     if (!searchHandler) {
       return res.status(400).json({ message: 'Invalid focus mode' });
@@ -124,9 +125,11 @@ router.post('/', async (req, res) => {
     const localDate = getLocalDateFromRequest(req);
     console.log(`Local date: ${localDate}`);
 
-    const responsePrompt = typeof searchHandler.config?.responsePrompt === 'function' 
-      ? searchHandler.config.responsePrompt('', req)
-      : (searchHandler.config?.responsePrompt || prompts.webSearchResponsePrompt('', req));
+    const responsePrompt =
+      typeof (searchHandler as any).config?.responsePrompt === 'function'
+        ? (searchHandler as any).config.responsePrompt('', req)
+        : (searchHandler as any).config?.responsePrompt ||
+          prompts.default.webSearchResponsePrompt('', req);
 
     const emitter = await searchHandler.searchAndAnswer(
       body.query,
@@ -136,7 +139,7 @@ router.post('/', async (req, res) => {
       body.optimizationMode,
       [],
       responsePrompt,
-      req
+      req,
     );
 
     let message = '';

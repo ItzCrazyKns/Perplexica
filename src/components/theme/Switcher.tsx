@@ -52,7 +52,7 @@ const ThemeSwitcher = ({ className }: { className?: string }) => {
       options={[
         { value: 'system', label: 'System' },
         { value: 'light', label: 'Light' },
-        { value: 'dark', label: 'Dark' }
+        { value: 'dark', label: 'Dark' },
       ]}
     />
   );

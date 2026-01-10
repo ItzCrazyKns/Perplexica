@@ -5,11 +5,14 @@ import { NextRequest } from 'next/server';
 
 export async function POST(req: NextRequest) {
   console.log('=== Groq Transcribe API Called ===');
-  
+
   const apiKey = process.env.GROQ_API_KEY;
   console.log('API Key exists:', !!apiKey);
-  console.log('API Key prefix:', apiKey ? apiKey.substring(0, 10) + '...' : 'undefined');
-  
+  console.log(
+    'API Key prefix:',
+    apiKey ? apiKey.substring(0, 10) + '...' : 'undefined',
+  );
+
   if (!apiKey) {
     console.error('GROQ_API_KEY not configured');
     return new Response('GROQ_API_KEY not configured', { status: 500 });
@@ -19,14 +22,14 @@ export async function POST(req: NextRequest) {
     console.log('Getting form data...');
     const formData = await req.formData();
     console.log('Form data keys:', Array.from(formData.keys()));
-    
+
     const file = formData.get('file') as File;
     console.log('File info:', {
       name: file?.name,
       size: file?.size,
-      type: file?.type
+      type: file?.type,
     });
-    
+
     if (!file) {
       console.error('No file provided');
       return new Response('No file provided', { status: 400 });
@@ -36,7 +39,7 @@ export async function POST(req: NextRequest) {
     console.log('Testing API key...');
     const testResponse = await fetch('https://api.groq.com/openai/v1/models', {
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
       },
     });
 
@@ -55,29 +58,36 @@ export async function POST(req: NextRequest) {
     groqFormData.append('response_format', 'json');
 
     console.log('Sending request to Groq...');
-    const grokRes = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
+    const grokRes = await fetch(
+      'https://api.groq.com/openai/v1/audio/transcriptions',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: groqFormData,
       },
-      body: groqFormData,
-    });
+    );
 
     console.log('Groq response status:', grokRes.status);
 
     if (!grokRes.ok) {
       const errorText = await grokRes.text();
       console.error('Groq API error:', grokRes.status, errorText);
-      return new Response(`Groq API error: ${errorText}`, { status: grokRes.status });
+      return new Response(`Groq API error: ${errorText}`, {
+        status: grokRes.status,
+      });
     }
 
     const data = await grokRes.json();
     console.log('Groq response data:', data);
-    
+
     return Response.json({ text: data.text });
   } catch (error) {
     console.error('Transcription error:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(`Internal server error: ${errorMessage}`, { status: 500 });
+    return new Response(`Internal server error: ${errorMessage}`, {
+      status: 500,
+    });
   }
 }
