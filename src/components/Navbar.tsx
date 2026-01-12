@@ -27,6 +27,29 @@ const downloadFile = (filename: string, content: string, type: string) => {
   }, 0);
 };
 
+const exportSources = (sections: Section[], title: string) => {
+  let md = "# Source export\n";
+
+  sections.forEach((section, idx) => {
+    const sourceResponseBlock = section.message.responseBlocks.find(
+      (block) => block.type === 'source',
+    ) as SourceBlock | undefined;
+  
+    if (
+      sourceResponseBlock &&
+      sourceResponseBlock.data &&
+      sourceResponseBlock.data.length > 0
+    ) {
+      md += `\n**Citations:**\n`;
+      sourceResponseBlock.data.forEach((src: any, i: number) => {
+        const url = src.metadata?.url || '';
+        md += `- [${i + 1}] [${url}](${url})\n`;
+      });
+    }
+  });
+  downloadFile(`${title || 'chat'}_sources.md`, md, 'text/markdown');
+};
+
 const exportAsMarkdown = (sections: Section[], title: string) => {
   const date = new Date(
     sections[0].message.createdAt || Date.now(),
@@ -278,6 +301,20 @@ const Navbar = () => {
                       </p>
                     </div>
                     <div className="space-y-1">
+                      <button
+                        className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200"
+                        onClick={() => exportSources(sections, title || '')}
+                      >
+                        <FileText size={16} className="text-[#24A0ED]" />
+                        <div>
+                          <p className="text-sm font-medium text-black dark:text-white">
+                            Sources
+                          </p>
+                          <p className="text-xs text-black/50 dark:text-white/50">
+                            .md format
+                          </p>
+                        </div>
+                      </button>
                       <button
                         className="w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200"
                         onClick={() => exportAsMarkdown(sections, title || '')}
