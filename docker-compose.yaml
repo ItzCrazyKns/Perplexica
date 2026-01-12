@@ -1,6 +1,5 @@
 services:
-  perplexica:
-    image: itzcrazykns1337/perplexica:latest
+  perplexica_min:
     build:
       context: .
     ports:
@@ -11,4 +10,4 @@ services:
 
 volumes:
   data:
-    name: 'perplexica-data'
+    name: 'perplexica-min-data'
