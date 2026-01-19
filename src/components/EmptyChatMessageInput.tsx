@@ -7,6 +7,7 @@ import Attach from './MessageInputActions/Attach';
 import { useChat } from '@/lib/hooks/useChat';
 import ModelSelector from './MessageInputActions/ChatModelSelector';
 import Focus from './MessageInputActions/Focus';
+import ProToggle from './MessageInputActions/ProToggle';
 
 const EmptyChatMessageInput = () => {
   const { sendMessage } = useChat();
@@ -66,9 +67,9 @@ const EmptyChatMessageInput = () => {
           placeholder="Ask anything..."
         />
         <div className="flex flex-row items-center justify-between mt-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <Focus />
-            <Optimization />
+            <ProToggle />
           </div>
           <div className="flex flex-row items-center space-x-2">
             <div className="flex flex-row items-center space-x-1">
