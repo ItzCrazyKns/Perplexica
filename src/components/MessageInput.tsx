@@ -61,8 +61,8 @@ const MessageInput = () => {
         }
       }}
       className={cn(
-        'relative bg-light-secondary dark:bg-dark-secondary p-4 flex items-center overflow-visible border border-light-200 dark:border-dark-200 shadow-sm shadow-light-200/10 dark:shadow-black/20 transition-all duration-200 focus-within:border-light-300 dark:focus-within:border-dark-300',
-        mode === 'multi' ? 'flex-col rounded-2xl' : 'flex-row rounded-full',
+        'relative bg-light-secondary/80 dark:bg-dark-secondary/80 backdrop-blur-md p-4 flex items-center overflow-visible border border-light-200 dark:border-dark-200 shadow-xl shadow-light-200/10 dark:shadow-black/20 transition-all duration-200 focus-within:border-light-300 dark:focus-within:border-dark-300',
+        mode === 'multi' ? 'flex-col rounded-[32px]' : 'flex-row rounded-[32px]',
       )}
     >
       {mode === 'single' && <AttachSmall />}
