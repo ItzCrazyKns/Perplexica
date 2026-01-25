@@ -27,8 +27,8 @@ const ThemeSwitcher = ({ className }: { className?: string }) => {
       );
 
       const detectThemeChange = (event: MediaQueryListEvent) => {
-        const theme: Theme = event.matches ? 'dark' : 'light';
-        setTheme(theme);
+        // Don't change the theme setting, just let next-themes handle it
+        // The system theme will automatically update based on OS preference
       };
 
       preferDarkScheme.addEventListener('change', detectThemeChange);

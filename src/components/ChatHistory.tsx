@@ -31,7 +31,18 @@ const ChatHistory = () => {
           },
         });
 
+        if (!res.ok) {
+          throw new Error(`Failed to fetch chats: ${res.status}`);
+        }
+
         const data = await res.json();
+
+        if (!data || !Array.isArray(data.chats)) {
+          console.error('Invalid response format:', data);
+          setChats([]);
+          return;
+        }
+
         setChats(data.chats);
       } catch (error) {
         console.error('Failed to fetch chat history:', error);

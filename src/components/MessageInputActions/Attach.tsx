@@ -27,30 +27,40 @@ const Attach = ({
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setLoading(true);
-    const data = new FormData();
 
-    for (let i = 0; i < e.target.files!.length; i++) {
-      data.append('files', e.target.files![i]);
+    try {
+      const data = new FormData();
+
+      for (let i = 0; i < e.target.files!.length; i++) {
+        data.append('files', e.target.files![i]);
+      }
+
+      const embeddingModelProvider = localStorage.getItem(
+        'embeddingModelProvider',
+      );
+      const embeddingModel = localStorage.getItem('embeddingModel');
+
+      data.append('embedding_model_provider', embeddingModelProvider!);
+      data.append('embedding_model', embeddingModel!);
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/uploads`, {
+        method: 'POST',
+        body: data,
+      });
+
+      if (!res.ok) {
+        throw new Error(`Upload failed: ${res.status}`);
+      }
+
+      const resData = await res.json();
+
+      setFiles([...files, ...resData.files]);
+      setFileIds([...fileIds, ...resData.files.map((file: any) => file.fileId)]);
+    } catch (error) {
+      console.error('File upload failed:', error);
+    } finally {
+      setLoading(false);
     }
-
-    const embeddingModelProvider = localStorage.getItem(
-      'embeddingModelProvider',
-    );
-    const embeddingModel = localStorage.getItem('embeddingModel');
-
-    data.append('embedding_model_provider', embeddingModelProvider!);
-    data.append('embedding_model', embeddingModel!);
-
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/uploads`, {
-      method: 'POST',
-      body: data,
-    });
-
-    const resData = await res.json();
-
-    setFiles([...files, ...resData.files]);
-    setFileIds([...fileIds, ...resData.files.map((file: any) => file.fileId)]);
-    setLoading(false);
   };
 
   return loading ? (
@@ -110,7 +120,7 @@ const Attach = ({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current.click()}
-                  className="flex flex-row items-center space-x-1 text-white/70 hover:text-white transition duration-200"
+                  className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition duration-200"
                 >
                   <input
                     type="file"
@@ -128,7 +138,7 @@ const Attach = ({
                     setFiles([]);
                     setFileIds([]);
                   }}
-                  className="flex flex-row items-center space-x-1 text-white/70 hover:text-white transition duration-200"
+                  className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white transition duration-200"
                 >
                   <Trash size={14} />
                   <p className="text-xs">Clear</p>

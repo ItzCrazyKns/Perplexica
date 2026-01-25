@@ -116,21 +116,25 @@ const handleEmitterEvents = (
       sources = parsedData.data;
     }
   });
-  emitter.on('end', () => {
+  emitter.on('end', async () => {
     ws.send(JSON.stringify({ type: 'messageEnd', messageId: messageId }));
 
-    db.insert(messagesSchema)
-      .values({
-        content: recievedMessage,
-        chatId: chatId,
-        messageId: messageId,
-        role: 'assistant',
-        metadata: JSON.stringify({
-          createdAt: new Date(),
-          ...(sources && sources.length > 0 && { sources }),
-        }),
-      })
-      .execute();
+    try {
+      await db.insert(messagesSchema)
+        .values({
+          content: recievedMessage,
+          chatId: chatId,
+          messageId: messageId,
+          role: 'assistant',
+          metadata: JSON.stringify({
+            createdAt: new Date(),
+            ...(sources && sources.length > 0 && { sources }),
+          }),
+        })
+        .execute();
+    } catch (error) {
+      console.error('Failed to save assistant message to database:', error);
+    }
   });
   emitter.on('error', (data) => {
     const parsedData = JSON.parse(data);

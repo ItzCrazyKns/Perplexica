@@ -30,7 +30,7 @@
     "compute-cosine-similarity": "^1.1.0",
     "compute-dot": "^1.1.0",
     "drizzle-orm": "^0.40.1",
-    "express": "4.18.2",
+    "express": "^4.21.2",
     "geo-tz": "^8.1.4",
     "geoip-lite": "^1.4.10",
     "html-to-text": "^9.0.5",

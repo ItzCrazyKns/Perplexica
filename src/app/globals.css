@@ -49,12 +49,23 @@
   }
 }
 
-.voice-bar-1 {
-  animation: voice-bar-1 1.2s ease-in-out infinite;
+@media (prefers-reduced-motion: no-preference) {
+  .voice-bar-1 {
+    animation: voice-bar-1 1.2s ease-in-out infinite;
+  }
+  .voice-bar-2 {
+    animation: voice-bar-2 1s ease-in-out infinite;
+  }
+  .voice-bar-3 {
+    animation: voice-bar-3 1.4s ease-in-out infinite;
+  }
 }
-.voice-bar-2 {
-  animation: voice-bar-2 1s ease-in-out infinite;
-}
-.voice-bar-3 {
-  animation: voice-bar-3 1.4s ease-in-out infinite;
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-bar-1,
+  .voice-bar-2,
+  .voice-bar-3 {
+    animation: none;
+    height: 12px;
+  }
 }

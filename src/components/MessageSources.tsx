@@ -27,7 +27,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
     <div className="flex flex-col space-y-2 w-full">
       <div className="flex flex-row items-center space-x-2">
         <button
-          onClick={() => setIsDialogOpen(true)}
+          onClick={openModal}
           className="flex flex-row items-center space-x-1 text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white text-xs transition-colors duration-200"
         >
           <Image size={14} className="text-black/70 dark:text-white/70" />
@@ -41,6 +41,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
             key={i}
             href={source.metadata.url}
             target="_blank"
+            rel="noopener noreferrer"
           >
             <p className="dark:text-white text-xs overflow-hidden whitespace-nowrap text-ellipsis">
               {source.metadata.title}
@@ -79,11 +80,12 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
             <div className="flex flex-row items-center space-x-1">
               {sources.slice(3, 6).map((source, i) => {
                 return source.metadata.url === 'File' ? (
-                  <div className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-6 h-6 rounded-full">
+                  <div key={i} className="bg-dark-200 hover:bg-dark-100 transition duration-200 flex items-center justify-center w-6 h-6 rounded-full">
                     <File size={12} className="text-white/70" />
                   </div>
                 ) : (
                   <img
+                    key={i}
                     src={`https://s2.googleusercontent.com/s2/favicons?domain_url=${source.metadata.url}`}
                     width={16}
                     height={16}
@@ -123,6 +125,7 @@ const MessageSources = ({ sources }: { sources: Document[] }) => {
                         key={i}
                         href={source.metadata.url}
                         target="_blank"
+                        rel="noopener noreferrer"
                       >
                         <p className="dark:text-white text-xs overflow-hidden whitespace-nowrap text-ellipsis">
                           {source.metadata.title}

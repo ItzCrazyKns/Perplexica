@@ -19,6 +19,17 @@ const VoiceInput = ({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stream
+          ?.getTracks()
+          .forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -59,11 +70,13 @@ const VoiceInput = ({
       const text = await transcribeWithGrok(blob);
       console.log('Transcription completed:', text);
       if (text) {
-        // Append to existing message with proper spacing
-        const newMessage = message.trim()
-          ? `${message.trim()} ${text.trim()}`
-          : text.trim();
-        setMessage(newMessage);
+        // Use functional state update to append to the latest message
+        setMessage((prevMessage) => {
+          const newMessage = prevMessage.trim()
+            ? `${prevMessage.trim()} ${text.trim()}`
+            : text.trim();
+          return newMessage;
+        });
       }
     } catch (err) {
       console.error('Transcription failed', err);

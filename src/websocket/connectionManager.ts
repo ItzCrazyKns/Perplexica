@@ -90,10 +90,11 @@ export const handleConnection = async (
         }),
       );
       ws.close();
+      return;
     }
 
     const interval = setInterval(() => {
-      if (ws.readyState === ws.OPEN) {
+      if (ws.readyState === WebSocket.OPEN) {
         ws.send(
           JSON.stringify({
             type: 'signal',

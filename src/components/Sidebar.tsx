@@ -48,7 +48,7 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
   ];
 
   const toggleSidebar = () => {
-    setIsSidebarExpanded(!isSidebarExpanded);
+    setIsSidebarExpanded((prev) => !prev);
   };
 
   return (
@@ -181,7 +181,7 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
           <button
             onClick={toggleSidebar}
             aria-label="Collapse sidebar"
-            className="absolute -right-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-dark-primary flex items-center justify-center shadow-lg border border-black/20 dark:border-white/20 z-50 transition-all duration-200 hover:shadow-xl hover:bg-sky-50 dark:hover:bg-sky-900/30"
+            className="group absolute -right-4 top-1/2 transform -translate-y-1/2 w-8 h-8 rounded-full bg-white dark:bg-dark-primary flex items-center justify-center shadow-lg border border-black/20 dark:border-white/20 z-50 transition-all duration-200 hover:shadow-xl hover:bg-sky-50 dark:hover:bg-sky-900/30"
             title="Collapse sidebar"
           >
             <ChevronLeft size={16} className="text-sky-500" />
