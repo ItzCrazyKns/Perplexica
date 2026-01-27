@@ -34,6 +34,11 @@ import {
 
 class SentinelBackground {
   private settings: SentinelSettings = { ...DEFAULT_SETTINGS };
+  private recentlyAnalyzed = new Map<string, number>();
+  private llmBusy = false;
+
+  private static readonly DEDUP_TTL_MS = 60_000;
+  private static readonly DEDUP_MAX_SIZE = 200;
 
   constructor() {
     this.init();
@@ -130,8 +135,9 @@ class SentinelBackground {
   private async analyzeWithLLM(
     metadata: PageMetadata,
   ): Promise<ThreatAnalysisResult | null> {
-    if (!isLLMReady()) return null;
+    if (!isLLMReady() || this.llmBusy) return null;
 
+    this.llmBusy = true;
     try {
       const prompt = buildAnalysisPrompt(metadata);
       const raw = await runLLMInference(prompt);
@@ -162,6 +168,8 @@ class SentinelBackground {
     } catch (err) {
       console.error('[Sentinel] LLM analysis failed:', err);
       return null;
+    } finally {
+      this.llmBusy = false;
     }
   }
 
@@ -336,10 +344,31 @@ class SentinelBackground {
 
   // ===== Page Analysis Entry Point =====
 
+  private evictStaleDedup(): void {
+    if (this.recentlyAnalyzed.size <= SentinelBackground.DEDUP_MAX_SIZE) return;
+    const now = Date.now();
+    for (const [key, ts] of this.recentlyAnalyzed) {
+      if (now - ts > SentinelBackground.DEDUP_TTL_MS) {
+        this.recentlyAnalyzed.delete(key);
+      }
+    }
+  }
+
   private async analyzePage(
     metadata: PageMetadata,
     tabId: number,
+    manual = false,
   ): Promise<void> {
+    // Dedup: skip if same URL was analyzed recently (unless manual)
+    if (!manual) {
+      const lastAnalyzed = this.recentlyAnalyzed.get(metadata.url);
+      if (lastAnalyzed && Date.now() - lastAnalyzed < SentinelBackground.DEDUP_TTL_MS) {
+        return;
+      }
+    }
+    this.recentlyAnalyzed.set(metadata.url, Date.now());
+    this.evictStaleDedup();
+
     // Notify sidepanel that analysis is in progress
     chrome.runtime
       .sendMessage({
@@ -412,7 +441,7 @@ class SentinelBackground {
 
       case 'MANUAL_ANALYSIS': {
         if (tabId) {
-          this.analyzePage(message.payload, tabId);
+          this.analyzePage(message.payload, tabId, true);
         }
         sendResponse({ success: true });
         break;
@@ -430,6 +459,8 @@ class SentinelBackground {
       case 'GET_EVIDENCE_LIST': {
         this.getEvidenceRecords().then((records) => {
           sendResponse({ records });
+        }).catch(() => {
+          sendResponse({ records: [], error: 'Failed to load evidence' });
         });
         return true; // async
       }
@@ -437,6 +468,8 @@ class SentinelBackground {
       case 'DELETE_EVIDENCE': {
         this.deleteEvidenceRecord(message.payload.id).then(() => {
           sendResponse({ success: true });
+        }).catch(() => {
+          sendResponse({ success: false, error: 'Failed to delete' });
         });
         return true;
       }
@@ -465,6 +498,8 @@ class SentinelBackground {
           } else {
             sendResponse({ error: 'Record not found' });
           }
+        }).catch(() => {
+          sendResponse({ error: 'Failed to generate report' });
         });
         return true;
       }

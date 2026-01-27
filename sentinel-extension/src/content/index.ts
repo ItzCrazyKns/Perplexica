@@ -113,10 +113,13 @@ class SentinelContentScript {
     return forms;
   }
 
+  private static readonly MAX_EXTERNAL_LINKS = 50;
+
   private extractExternalLinks(): LinkInfo[] {
     const links: LinkInfo[] = [];
-    document.querySelectorAll('a[href]').forEach((anchor) => {
-      const a = anchor as HTMLAnchorElement;
+    const anchors = document.querySelectorAll('a[href]');
+    for (let i = 0; i < anchors.length && links.length < SentinelContentScript.MAX_EXTERNAL_LINKS; i++) {
+      const a = anchors[i] as HTMLAnchorElement;
       try {
         if (a.hostname && a.hostname !== window.location.hostname) {
           links.push({
@@ -128,20 +131,24 @@ class SentinelContentScript {
       } catch {
         // skip invalid hrefs
       }
-    });
+    }
     return links;
   }
 
+  private static readonly MAX_SCRIPTS = 50;
+
   private extractScripts(): ScriptInfo[] {
     const scripts: ScriptInfo[] = [];
-    document.querySelectorAll('script').forEach((script) => {
+    const scriptEls = document.querySelectorAll('script');
+    for (let i = 0; i < scriptEls.length && scripts.length < SentinelContentScript.MAX_SCRIPTS; i++) {
+      const script = scriptEls[i];
       scripts.push({
         src: script.src || '[inline]',
         isExternal:
           !!script.src && !script.src.includes(window.location.hostname),
         hasObfuscation: this.detectObfuscation(script.textContent || ''),
       });
-    });
+    }
     return scripts;
   }
 

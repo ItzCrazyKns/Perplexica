@@ -8,6 +8,19 @@
   color: #e5e5e5;
 }
 
+/* ===== Error Banner ===== */
+
+.sp-error-banner {
+  background: #4a1c1c;
+  color: #ff9999;
+  padding: 8px 16px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 /* ===== Header ===== */
 
 .sp-header {

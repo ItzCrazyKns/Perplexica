@@ -24,18 +24,23 @@ const App: React.FC = () => {
     loadingProgress: 0,
   });
   const [analyzing, setAnalyzing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // --- Load initial data ---
 
   useEffect(() => {
     chrome.runtime.sendMessage({ type: 'GET_EVIDENCE_LIST' }, (resp) => {
+      if (chrome.runtime.lastError) {
+        setError('Failed to load evidence records');
+        return;
+      }
       if (resp?.records) setRecords(resp.records);
     });
     chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }, (resp) => {
-      if (resp?.settings) setSettings(resp.settings);
+      if (!chrome.runtime.lastError && resp?.settings) setSettings(resp.settings);
     });
     chrome.runtime.sendMessage({ type: 'GET_MODEL_STATUS' }, (resp) => {
-      if (resp) setModelStatus(resp);
+      if (!chrome.runtime.lastError && resp) setModelStatus(resp);
     });
   }, []);
 
@@ -136,6 +141,13 @@ const App: React.FC = () => {
           Settings
         </button>
       </nav>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="sp-error-banner" onClick={() => setError(null)}>
+          {error} <span style={{ marginLeft: 8, cursor: 'pointer' }}>&#x2715;</span>
+        </div>
+      )}
 
       {/* Content */}
       <main className="sp-content">

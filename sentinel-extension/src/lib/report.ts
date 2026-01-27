@@ -47,7 +47,7 @@ export function generateReport(evidence: EvidenceRecord): SentinelReport {
     metadata: {
       browserInfo: navigator.userAgent,
       extensionVersion: chrome.runtime.getManifest().version,
-      analysisMethod: 'Heuristics (Phase 1)',
+      analysisMethod: 'Heuristics + Local LLM (Gemma 3n)',
     },
   };
 }
