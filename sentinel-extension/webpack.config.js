@@ -7,6 +7,7 @@ module.exports = {
     background: './src/background/index.ts',
     content: './src/content/index.ts',
     sidepanel: './src/sidepanel/index.tsx',
+    offscreen: './src/offscreen/index.ts',
   },
 
   output: {
@@ -45,6 +46,7 @@ module.exports = {
       patterns: [
         { from: 'manifest.json', to: '.' },
         { from: 'sidepanel.html', to: '.' },
+        { from: 'offscreen.html', to: '.' },
         { from: 'styles', to: 'styles' },
         { from: 'icons', to: 'icons', noErrorOnMissing: true },
       ],

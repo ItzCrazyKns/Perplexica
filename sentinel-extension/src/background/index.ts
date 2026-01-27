@@ -11,6 +11,18 @@ import {
   calculateThreatScore,
 } from '../lib/heuristics';
 import { generateReport } from '../lib/report';
+import { buildAnalysisPrompt } from '../lib/prompts';
+import {
+  installLLMMessageHandler,
+  initLLM,
+  runLLMInference,
+  isLLMReady,
+  isLLMLoading,
+  getLLMModelName,
+  onLLMProgress,
+  onLLMReady,
+  onLLMError,
+} from '../lib/llmBridge';
 import {
   DEFAULT_SETTINGS,
   STORAGE_KEYS,
@@ -30,20 +42,47 @@ class SentinelBackground {
   private async init(): Promise<void> {
     await this.loadSettings();
 
+    // Install the LLM message handler BEFORE the general handler
+    // so it can intercept LLM-specific messages.
+    installLLMMessageHandler();
+
+    // Forward LLM lifecycle events to the sidepanel
+    onLLMProgress((progress, text) => {
+      chrome.runtime
+        .sendMessage({
+          type: 'MODEL_LOADING_PROGRESS',
+          payload: { progress, text },
+        })
+        .catch(() => {});
+    });
+
+    onLLMReady((model) => {
+      console.log('[Sentinel] LLM ready:', model);
+    });
+
+    onLLMError((error) => {
+      console.error('[Sentinel] LLM error:', error);
+    });
+
     chrome.runtime.onMessage.addListener(this.handleMessage.bind(this));
 
     chrome.sidePanel
       .setPanelBehavior({ openPanelOnActionClick: true })
       .catch(() => {});
+
+    // Start loading the LLM via offscreen document
+    initLLM();
   }
 
-  // ===== Analysis (heuristic-only for Phase 1) =====
+  // ===== Combined Analysis (Heuristics + LLM) =====
 
+  /**
+   * Run heuristic analysis. Always available, fast.
+   */
   private analyzeWithHeuristics(metadata: PageMetadata): ThreatAnalysisResult {
     const indicators = detectHeuristicThreats(metadata);
     const score = calculateThreatScore(indicators);
-    const threshold =
-      THREAT_THRESHOLDS[this.settings.sensitivityLevel];
+    const threshold = THREAT_THRESHOLDS[this.settings.sensitivityLevel];
 
     if (score < threshold) {
       return {
@@ -81,6 +120,99 @@ class SentinelBackground {
       confidence: score,
       summary: `Detected ${indicators.length} threat indicator(s) on this page`,
       details: indicators.map((i) => i.description),
+    };
+  }
+
+  /**
+   * Run LLM analysis via the offscreen document.
+   * Returns null if the LLM is not ready.
+   */
+  private async analyzeWithLLM(
+    metadata: PageMetadata,
+  ): Promise<ThreatAnalysisResult | null> {
+    if (!isLLMReady()) return null;
+
+    try {
+      const prompt = buildAnalysisPrompt(metadata);
+      const raw = await runLLMInference(prompt);
+
+      // Extract JSON from the response (model may wrap it in markdown)
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.warn('[Sentinel] LLM returned non-JSON:', raw.slice(0, 200));
+        return null;
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      // Validate required fields
+      if (typeof parsed.isThreat !== 'boolean' || !parsed.level || !parsed.type) {
+        console.warn('[Sentinel] LLM JSON missing fields:', parsed);
+        return null;
+      }
+
+      return {
+        isThreat: parsed.isThreat,
+        level: parsed.level,
+        type: parsed.type,
+        confidence: Math.max(0, Math.min(1, parsed.confidence ?? 0.5)),
+        summary: parsed.summary ?? 'LLM analysis complete',
+        details: Array.isArray(parsed.details) ? parsed.details : [],
+      };
+    } catch (err) {
+      console.error('[Sentinel] LLM analysis failed:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Merge heuristic and LLM results into a single verdict.
+   *
+   * Strategy:
+   * - If only heuristics available, use heuristics.
+   * - If both available, take the MORE severe verdict but boost
+   *   confidence when both agree.
+   * - LLM details are appended to heuristic details.
+   */
+  private mergeAnalysis(
+    heuristic: ThreatAnalysisResult,
+    llm: ThreatAnalysisResult | null,
+  ): ThreatAnalysisResult {
+    if (!llm) return heuristic;
+
+    const levelSeverity: Record<ThreatLevel, number> = {
+      low: 0,
+      medium: 1,
+      high: 2,
+      critical: 3,
+    };
+
+    const hSev = levelSeverity[heuristic.level];
+    const lSev = levelSeverity[llm.level];
+
+    // Take the more severe result as the base
+    const primary = lSev >= hSev ? llm : heuristic;
+    const secondary = lSev >= hSev ? heuristic : llm;
+
+    // If both flag as threat, boost confidence
+    const bothThreat = heuristic.isThreat && llm.isThreat;
+    const confidence = bothThreat
+      ? Math.min(1, Math.max(primary.confidence, secondary.confidence) + 0.1)
+      : primary.confidence;
+
+    // Combine details, deduplicating
+    const detailSet = new Set([...primary.details, ...secondary.details]);
+
+    // If either says threat, it's a threat
+    const isThreat = heuristic.isThreat || llm.isThreat;
+
+    return {
+      isThreat,
+      level: primary.level,
+      type: primary.type,
+      confidence,
+      summary: llm.summary || primary.summary,
+      details: Array.from(detailSet),
     };
   }
 
@@ -217,10 +349,17 @@ class SentinelBackground {
       .catch(() => {});
 
     try {
-      const analysis = this.analyzeWithHeuristics(metadata);
+      // 1. Always run heuristics (fast, no dependencies)
+      const heuristicResult = this.analyzeWithHeuristics(metadata);
 
-      if (analysis.isThreat) {
-        await this.handleThreatDetected(tabId, metadata, analysis);
+      // 2. Run LLM analysis if available
+      const llmResult = await this.analyzeWithLLM(metadata);
+
+      // 3. Merge results
+      const merged = this.mergeAnalysis(heuristicResult, llmResult);
+
+      if (merged.isThreat) {
+        await this.handleThreatDetected(tabId, metadata, merged);
       }
     } catch (err) {
       console.error('[Sentinel] Analysis error:', err);
@@ -320,7 +459,9 @@ class SentinelBackground {
             (r) => r.id === message.payload.id,
           );
           if (record) {
-            sendResponse({ report: JSON.stringify(generateReport(record), null, 2) });
+            sendResponse({
+              report: JSON.stringify(generateReport(record), null, 2),
+            });
           } else {
             sendResponse({ error: 'Record not found' });
           }
@@ -329,10 +470,10 @@ class SentinelBackground {
       }
 
       case 'GET_MODEL_STATUS': {
-        // Phase 1: no WebLLM yet, report heuristics-only mode
         sendResponse({
-          loaded: false,
-          model: 'heuristics-only',
+          loaded: isLLMReady(),
+          loading: isLLMLoading(),
+          model: getLLMModelName() || 'gemma-3n',
           loadingProgress: 0,
         });
         break;
@@ -348,6 +489,13 @@ class SentinelBackground {
         sendResponse({ success: true });
         break;
       }
+
+      // --- LLM messages handled by llmBridge, ignore here ---
+      case 'LLM_LOADING_PROGRESS':
+      case 'LLM_READY':
+      case 'LLM_ERROR':
+      case 'LLM_INFERENCE_RESULT':
+        break;
 
       default:
         sendResponse({ error: 'Unknown message type' });
