@@ -47,7 +47,8 @@ export const searchSearxng = async (
     });
 
     if (!res.ok) {
-      throw new Error(`SearXNG error: ${res.statusText}`);
+      console.error(`SearXNG returned status ${res.status} for query: ${query}`);
+      return { results: [], suggestions: [] };
     }
 
     const data = await res.json();
@@ -58,9 +59,11 @@ export const searchSearxng = async (
     return { results, suggestions };
   } catch (err: any) {
     if (err.name === 'AbortError') {
-      throw new Error('SearXNG search timed out');
+      console.error(`SearXNG search timed out for query: ${query}`);
+      return { results: [], suggestions: [] };
     }
-    throw err;
+    console.error(`SearXNG search failed for query "${query}":`, err);
+    return { results: [], suggestions: [] };
   } finally {
     clearTimeout(timeoutId);
   }

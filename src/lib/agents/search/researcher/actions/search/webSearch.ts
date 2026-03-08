@@ -89,6 +89,15 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
       Array.isArray(input.queries) ? input.queries : [input.queries]
     ).slice(0, 3);
 
+    // Guard against undefined/string queries from malformed tool calls
+    input.queries = input.queries.filter(
+      (q) => typeof q === 'string' && q.trim().length > 0
+    );
+
+    if (input.queries.length === 0) {
+      return { type: 'search_results', results: [] };
+    }
+
     const researchBlock = additionalConfig.session.getBlock(
       additionalConfig.researchBlockId,
     ) as ResearchBlock | undefined;
