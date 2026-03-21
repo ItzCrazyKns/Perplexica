@@ -17,7 +17,7 @@ import type {
 export class GoogleCustomSearchProvider implements SearchProvider {
   async search(query: string, opts?: SearchOptions): Promise<SearchResponse> {
     const apiKey = getGoogleCustomSearchApiKey();
-    const cx = getGoogleCustomSearchCx();
+    const cx = opts?.cx ?? getGoogleCustomSearchCx();
 
     if (!apiKey || !cx) {
       throw new Error(

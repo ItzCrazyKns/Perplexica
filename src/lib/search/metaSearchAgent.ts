@@ -38,6 +38,7 @@ export interface MetaSearchAgentType {
     customResponsePrompt?: string,
     customRetrieverPrompt?: string,
     restrictToSites?: string[],
+    searchEngineCx?: string,
   ) => Promise<{ emitter: eventEmitter; promptUsed: string }>;
 }
 
@@ -68,6 +69,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     llm: BaseChatModel,
     restrictToSites?: string[],
     customRetrieverPrompt?: string,
+    searchEngineCx?: string,
   ) {
     (llm as unknown as ChatOpenAI).temperature = 0;
 
@@ -243,6 +245,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
           const res = await search(searchQuery, {
             language: getDefaultLanguage(),
             engines: this.config.activeEngines,
+            ...(searchEngineCx && { cx: searchEngineCx }),
           });
 
           const documents = res.results.map(
@@ -276,6 +279,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     customResponsePrompt?: string,
     customRetrieverPrompt?: string,
     restrictToSites?: string[],
+    searchEngineCx?: string,
   ) {
     const promptToUse = customResponsePrompt || this.config.responsePrompt;
 
@@ -298,6 +302,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
               llm,
               restrictToSites,
               customRetrieverPrompt,
+              searchEngineCx,
             );
 
             const searchRetrieverResult = await searchRetrieverChain.invoke({
@@ -528,6 +533,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
     customResponsePrompt?: string,
     customRetrieverPrompt?: string,
     restrictToSites?: string[],
+    searchEngineCx?: string,
   ) {
     const emitter = new eventEmitter();
     const promptUsed = customResponsePrompt || this.config.responsePrompt;
@@ -542,6 +548,7 @@ class MetaSearchAgent implements MetaSearchAgentType {
         customResponsePrompt,
         customRetrieverPrompt,
         restrictToSites,
+        searchEngineCx,
       );
 
       const stream = answeringChain.streamEvents(

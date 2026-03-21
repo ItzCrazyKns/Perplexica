@@ -7,6 +7,7 @@ export interface SearchOptions {
   engines?: string[];
   language?: string;
   pageno?: number;
+  cx?: string;
 }
 
 export interface SearchResult {
