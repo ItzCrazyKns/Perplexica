@@ -13,3 +13,9 @@ export const getConfiguredModelProviderById = (
 
 export const getSearxngURL = () =>
   configManager.getConfig('search.searxngURL', '');
+
+export const getTavilyAPIKey = (): string =>
+  configManager.getConfig('search.tavilyAPIKey', '');
+
+export const getSearchProvider = (): 'searxng' | 'tavily' =>
+  configManager.getConfig('search.searchProvider', 'searxng');
