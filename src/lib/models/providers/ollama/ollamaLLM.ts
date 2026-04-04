@@ -216,7 +216,9 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
         ),
       ) as T;
     } catch (err) {
-      throw new Error(`Error parsing response from Ollama: ${err}`);
+      throw new Error(
+        `Error parsing response from Ollama: ${err}\nRaw response: ${response.message.content}`,
+      );
     }
   }
 

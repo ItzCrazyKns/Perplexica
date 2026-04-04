@@ -213,16 +213,19 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     });
 
     if (response.choices && response.choices.length > 0) {
+      const rawContent = response.choices[0].message.content;
       try {
         return input.schema.parse(
           JSON.parse(
-            repairJson(response.choices[0].message.content!, {
+            repairJson(rawContent!, {
               extractJson: true,
             }) as string,
           ),
         ) as T;
       } catch (err) {
-        throw new Error(`Error parsing response from OpenAI: ${err}`);
+        throw new Error(
+          `Error parsing response from OpenAI: ${err}\nRaw response: ${rawContent}`,
+        );
       }
     }
 
@@ -265,7 +268,9 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         try {
           yield parse(chunk.text) as T;
         } catch (err) {
-          throw new Error(`Error parsing response from OpenAI: ${err}`);
+          throw new Error(
+            `Error parsing response from OpenAI: ${err}\nRaw response: ${chunk.text}`,
+          );
         }
       }
     }
