@@ -39,6 +39,7 @@ export interface MetaSearchAgentType {
     customRetrieverPrompt?: string,
     restrictToSites?: string[],
     searchEngineCx?: string,
+    synthesize?: boolean,
   ) => Promise<{ emitter: eventEmitter; promptUsed: string }>;
 }
 
@@ -522,6 +523,62 @@ class MetaSearchAgent implements MetaSearchAgentType {
     }
   }
 
+  private async runSearchOnly(
+    message: string,
+    history: BaseMessage[],
+    llm: BaseChatModel,
+    embeddings: Embeddings,
+    optimizationMode: 'speed' | 'balanced' | 'quality',
+    fileIds: string[],
+    emitter: eventEmitter,
+    customRetrieverPrompt?: string,
+    restrictToSites?: string[],
+    searchEngineCx?: string,
+  ) {
+    try {
+      const processedHistory = formatChatHistoryAsString(history);
+
+      let docs: Document[] = [];
+      let query = message;
+
+      if (this.config.searchWeb) {
+        const searchRetrieverChain = await this.createSearchRetrieverChain(
+          llm,
+          restrictToSites,
+          customRetrieverPrompt,
+          searchEngineCx,
+        );
+
+        const result = await searchRetrieverChain.invoke({
+          chat_history: processedHistory,
+          query: message,
+        });
+
+        query = result.query;
+        docs = result.docs;
+      }
+
+      const sortedDocs = await this.rerankDocs(
+        query,
+        docs,
+        fileIds,
+        embeddings,
+        optimizationMode,
+      );
+
+      emitter.emit('data', JSON.stringify({ type: 'sources', data: sortedDocs }));
+      emitter.emit('end');
+    } catch (error: any) {
+      emitter.emit(
+        'error',
+        JSON.stringify({
+          type: 'error',
+          data: error?.message || 'An error occurred during search',
+        }),
+      );
+    }
+  }
+
   async searchAndAnswer(
     message: string,
     history: BaseMessage[],
@@ -534,9 +591,26 @@ class MetaSearchAgent implements MetaSearchAgentType {
     customRetrieverPrompt?: string,
     restrictToSites?: string[],
     searchEngineCx?: string,
+    synthesize: boolean = true,
   ) {
     const emitter = new eventEmitter();
     const promptUsed = customResponsePrompt || this.config.responsePrompt;
+
+    if (!synthesize) {
+      this.runSearchOnly(
+        message,
+        history,
+        llm,
+        embeddings,
+        optimizationMode,
+        fileIds,
+        emitter,
+        customRetrieverPrompt,
+        restrictToSites,
+        searchEngineCx,
+      );
+      return { emitter, promptUsed };
+    }
 
     try {
       const answeringChain = await this.createAnsweringChain(
