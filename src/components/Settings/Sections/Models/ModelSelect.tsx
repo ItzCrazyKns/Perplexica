@@ -36,13 +36,17 @@ const ModelSelect = ({
           key: modelKey,
         });
 
-        await fetch('/api/config', {
+        const res = await fetch('/api/config', {
           method: 'POST',
           body: JSON.stringify({
             key: 'defaultChatModel',
             value: { providerId, key: modelKey },
           }),
         });
+
+        if (!res.ok) {
+          throw new Error('Failed to save default chat model');
+        }
       } else {
         localStorage.setItem('embeddingModelProviderId', providerId);
         localStorage.setItem('embeddingModelKey', modelKey);
@@ -52,13 +56,17 @@ const ModelSelect = ({
           key: modelKey,
         });
 
-        await fetch('/api/config', {
+        const res = await fetch('/api/config', {
           method: 'POST',
           body: JSON.stringify({
             key: 'defaultEmbeddingModel',
             value: { providerId, key: modelKey },
           }),
         });
+
+        if (!res.ok) {
+          throw new Error('Failed to save default embedding model');
+        }
       }
     } catch (error) {
       console.error('Error saving config:', error);

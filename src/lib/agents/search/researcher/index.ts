@@ -183,6 +183,7 @@ class Researcher {
       }
     } catch (err) {
       console.error('Error during research iterations:', err);
+      throw err;
     }
 
     const searchResults = actionOutput

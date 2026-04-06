@@ -197,6 +197,8 @@ class SearchAgent {
           ),
         )
         .execute();
+
+      throw err;
     }
   }
 }

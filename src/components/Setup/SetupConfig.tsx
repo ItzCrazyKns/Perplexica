@@ -123,7 +123,8 @@ const SetupConfig = ({
   const copyToClipboard = () => {
     const text = envVars.join('\n');
     navigator.clipboard.writeText(text);
-    toast.success('Copied to clipboard');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (

@@ -14,6 +14,12 @@ import configManager from '@/lib/config';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+const debugLog = (...args: any[]) => {
+  if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+    console.log(...args);
+  }
+};
+
 const chatCompletionRequestSchema = z.object({
   model: z.string(),
   messages: z.array(
@@ -68,11 +74,11 @@ export const POST = async (req: NextRequest) => {
   const startTime = performance.now();
   try {
     const body = (await req.json()) as ChatCompletionRequest;
-    console.log('[DEBUG] Chat Completion Request Body:', JSON.stringify(body, null, 2));
+    debugLog('[DEBUG] Chat Completion Request Body:', JSON.stringify(body, null, 2));
 
     const parseResult = chatCompletionRequestSchema.safeParse(body);
     if (!parseResult.success) {
-      console.error('[DEBUG] Invalid request body:', parseResult.error);
+      debugLog('[DEBUG] Invalid request body:', parseResult.error);
       return NextResponse.json(
         { error: 'Invalid request body', details: parseResult.error },
         { status: 400 }
@@ -119,7 +125,7 @@ export const POST = async (req: NextRequest) => {
         if (['web', 'academic', 'discussions', 'news', 'videos', 'images'].includes(parts[0])) {
             requestedSources = [parts[0] as SearchSources];
             model = parts.slice(1).join('/');
-            console.log(`[DEBUG] Extracted source: ${requestedSources[0]}, Remaining model: ${model}`);
+            debugLog(`[DEBUG] Extracted source: ${requestedSources[0]}, Remaining model: ${model}`);
         }
     }
     
@@ -163,13 +169,13 @@ export const POST = async (req: NextRequest) => {
         if (configManager.currentConfig.defaultChatModel) {
              selectedProviderId = configManager.currentConfig.defaultChatModel.providerId;
              selectedModelKey = configManager.currentConfig.defaultChatModel.key;
-             console.log(`[DEBUG] Requested model '${model}' not found or not setup. Handling request using default model: ${selectedModelKey}`);
+             debugLog(`[DEBUG] Requested model '${model}' not found or not setup. Handling request using default model: ${selectedModelKey}`);
         } else if (firstChatModelProvider) {
             selectedProviderId = firstChatModelProvider.id;
             selectedModelKey = firstChatModelProvider.chatModels[0].key;
-            console.log(`[DEBUG] Requested model '${model}' not found and no default model configured. Handling request using first available model: ${selectedModelKey} from provider ${firstChatModelProvider.name}`);
+            debugLog(`[DEBUG] Requested model '${model}' not found and no default model configured. Handling request using first available model: ${selectedModelKey} from provider ${firstChatModelProvider.name}`);
         } else {
-            console.error(`[DEBUG] Model '${model}' not found and no active providers with chat models are configured.`);
+            debugLog(`[DEBUG] Model '${model}' not found and no active providers with chat models are configured.`);
             return NextResponse.json(
                 { error: `Model '${model}' not found and no active providers with chat models are configured.` },
                 { status: 404 }
@@ -177,7 +183,7 @@ export const POST = async (req: NextRequest) => {
         }
     }
 
-    console.log(`[DEBUG] Selected Provider: ${selectedProviderId}, Model: ${selectedModelKey}, Sources: ${requestedSources}`);
+    debugLog(`[DEBUG] Selected Provider: ${selectedProviderId}, Model: ${selectedModelKey}, Sources: ${requestedSources}`);
 
     const [llm, embedding] = await Promise.all([
         registry.loadChatModel(selectedProviderId!, selectedModelKey!),
@@ -220,10 +226,10 @@ export const POST = async (req: NextRequest) => {
         query: query,
     });
 
-    console.log(`[DEBUG] setup complete in ${(performance.now() - startTime).toFixed(2)}ms. Starting search...`);
+    debugLog(`[DEBUG] setup complete in ${(performance.now() - startTime).toFixed(2)}ms. Starting search...`);
 
     if (stream) {
-      console.log('[DEBUG] Streaming response...');
+      debugLog('[DEBUG] Streaming response...');
       const responseStream = new TransformStream();
       const writer = responseStream.writable.getWriter();
       const encoder = new TextEncoder();
@@ -284,7 +290,7 @@ export const POST = async (req: NextRequest) => {
                     }
                 }
             } else if (event === 'end') {
-                console.log(`[DEBUG] search complete in ${(performance.now() - startTime).toFixed(2)}ms`);
+                debugLog(`[DEBUG] search complete in ${(performance.now() - startTime).toFixed(2)}ms`);
                 const chunk = {
                     id: messageId,
                     object: 'chat.completion.chunk',
@@ -346,7 +352,7 @@ export const POST = async (req: NextRequest) => {
       });
 
       req.signal.addEventListener('abort', () => {
-        console.log('[DEBUG] Request aborted');
+        debugLog('[DEBUG] Request aborted');
         disconnect();
         writer.close();
       });
@@ -373,7 +379,7 @@ export const POST = async (req: NextRequest) => {
                         }
                     }
                 } else if (event === 'end') {
-                    console.log(`[DEBUG] search complete in ${(performance.now() - startTime).toFixed(2)}ms`);
+                    debugLog(`[DEBUG] search complete in ${(performance.now() - startTime).toFixed(2)}ms`);
                     const blocks = session.getAllBlocks();
                     const textBlocks = blocks.filter(b => b.type === 'text') as TextBlock[];
                     const fullContent = textBlocks.map(b => b.data).join('');
@@ -400,8 +406,8 @@ export const POST = async (req: NextRequest) => {
                         },
                         citations: citations 
                     };
-                    console.log('[DEBUG] Sending non-streaming response with citations:', citations.length);
-                    console.log('[DEBUG] Response Content preview:', fullContent.substring(0, 500) + '...');
+                    debugLog('[DEBUG] Sending non-streaming response with citations:', citations.length);
+                    debugLog('[DEBUG] Response Content preview:', fullContent.substring(0, 500) + '...');
                     resolve(NextResponse.json(responseBody));
                     session.removeAllListeners();
                 } else if (event === 'error') {
