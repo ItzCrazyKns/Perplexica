@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'fs';
 import { Config, ConfigModelProvider, UIConfigSections } from './types';
-import { hashObj } from '../serverUtils';
+import { hashObj } from '../utils/hash';
 import { getModelProvidersUIConfigSection } from '../models/providers';
 
 class ConfigManager {

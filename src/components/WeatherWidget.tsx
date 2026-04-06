@@ -1,5 +1,8 @@
-import { Cloud, Sun, CloudRain, CloudSnow, Wind } from 'lucide-react';
+'use client';
+
+import { Wind } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { getApproxLocation } from '@/lib/actions';
 
 const WeatherWidget = () => {
   const [data, setData] = useState({
@@ -14,17 +17,6 @@ const WeatherWidget = () => {
   });
 
   const [loading, setLoading] = useState(true);
-
-  const getApproxLocation = async () => {
-    const res = await fetch('https://ipwhois.app/json/');
-    const data = await res.json();
-
-    return {
-      latitude: data.latitude,
-      longitude: data.longitude,
-      city: data.city,
-    };
-  };
 
   const getLocation = async (
     callback: (location: {

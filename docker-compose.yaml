@@ -1,7 +1,6 @@
 services:
-  perplexica:
-#    image: itzcrazykns1337/perplexica:latest
-    image: perplexica:local
+  vane:
+    image: itzcrazykns1337/vane:latest
     build:
       context: .
       dockerfile: Dockerfile.alpine
@@ -29,25 +28,13 @@ services:
       - PREFERENCES_SHOW_WEATHER_WIDGET=true
       - PREFERENCES_SHOW_NEWS_WIDGET=true
     volumes:
-      - ./data:/home/perplexica/data
+      - data:/home/vane/data
     restart: unless-stopped
     depends_on:
       - searxng
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  searxng:
-    image: searxng/searxng:latest
-    volumes:
-      - ./searxng:/etc/searxng:rw
-    ports:
-      - '8080:8080'
-    environment:
-      - SEARXNG_BASE_URL=http://localhost:8080/
-    restart: unless-stopped
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - SETGID
-      - SETUID
+volumes:
+  data:
+    name: 'vane-data'

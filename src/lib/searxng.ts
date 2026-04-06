@@ -42,24 +42,30 @@ export const searchSearxng = async (
     });
   }
 
-  const res = await fetch(url);
-  const text = await res.text();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-  let data;
   try {
-    data = JSON.parse(text);
-  } catch (err) {
-    if (text.trim().startsWith('<!doctype html') || text.trim().startsWith('<html')) {
-      throw new Error(
-        'SearXNG returned an HTML response instead of JSON. ' +
-        'Please ensure that JSON output is enabled in your SearXNG settings (e.g., SEARXNG_SETTINGS_SEARCH__FORMATS=["html", "json"]).'
-      );
+    const res = await fetch(url, {
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      throw new Error(`SearXNG error: ${res.statusText}`);
     }
-    throw new Error(`Failed to parse SearXNG response as JSON: ${err instanceof Error ? err.message : String(err)}`);
-  }
+
+    const data = await res.json();
 
   const results: SearxngSearchResult[] = data.results || [];
   const suggestions: string[] = data.suggestions || [];
 
-  return { results, suggestions };
+    return { results, suggestions };
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      throw new Error('SearXNG search timed out');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 };

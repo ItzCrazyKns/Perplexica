@@ -20,3 +20,17 @@ export const getSuggestions = async (chatHistory: [string, string][]) => {
 
   return data.suggestions;
 };
+
+export const getApproxLocation = async () => {
+  const res = await fetch('https://free.freeipapi.com/api/json', {
+    method: 'GET',
+  });
+
+  const data = await res.json();
+
+  return {
+    latitude: data.latitude,
+    longitude: data.longitude,
+    city: data.cityName,
+  };
+};

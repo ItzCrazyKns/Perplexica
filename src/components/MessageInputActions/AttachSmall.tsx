@@ -9,6 +9,7 @@ import { Fragment, useRef, useState } from 'react';
 import { useChat } from '@/lib/hooks/useChat';
 import { AnimatePresence } from 'motion/react';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 const AttachSmall = () => {
   const { files, setFiles, setFileIds, fileIds } = useChat();
@@ -17,31 +18,59 @@ const AttachSmall = () => {
   const fileInputRef = useRef<any>();
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLoading(true);
-    const data = new FormData();
+    const selectedFiles = e.target.files;
 
-    for (let i = 0; i < e.target.files!.length; i++) {
-      data.append('files', e.target.files![i]);
+    if (!selectedFiles?.length) {
+      return;
     }
 
-    const embeddingModelProvider = localStorage.getItem(
-      'embeddingModelProviderId',
-    );
-    const embeddingModel = localStorage.getItem('embeddingModelKey');
+    setLoading(true);
 
-    data.append('embedding_model_provider_id', embeddingModelProvider!);
-    data.append('embedding_model_key', embeddingModel!);
+    try {
+      const data = new FormData();
 
-    const res = await fetch(`/api/uploads`, {
-      method: 'POST',
-      body: data,
-    });
+      for (let i = 0; i < selectedFiles.length; i++) {
+        data.append('files', selectedFiles[i]);
+      }
 
-    const resData = await res.json();
+      const embeddingModelProvider = localStorage.getItem(
+        'embeddingModelProviderId',
+      );
+      const embeddingModel = localStorage.getItem('embeddingModelKey');
 
-    setFiles([...files, ...resData.files]);
-    setFileIds([...fileIds, ...resData.files.map((file: any) => file.fileId)]);
-    setLoading(false);
+      if (!embeddingModelProvider || !embeddingModel) {
+        throw new Error('Please select an embedding model before uploading.');
+      }
+
+      data.append('embedding_model_provider_id', embeddingModelProvider);
+      data.append('embedding_model_key', embeddingModel);
+
+      const res = await fetch(`/api/uploads`, {
+        method: 'POST',
+        body: data,
+      });
+
+      const resData = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(resData.message || 'Failed to upload file(s).');
+      }
+
+      if (!Array.isArray(resData.files)) {
+        throw new Error('Invalid upload response from server.');
+      }
+
+      setFiles([...files, ...resData.files]);
+      setFileIds([
+        ...fileIds,
+        ...resData.files.map((file: any) => file.fileId),
+      ]);
+    } catch (err: any) {
+      toast(err?.message || 'Failed to upload file(s).');
+    } finally {
+      setLoading(false);
+      e.target.value = '';
+    }
   };
 
   return loading ? (

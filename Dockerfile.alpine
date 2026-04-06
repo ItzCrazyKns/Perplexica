@@ -15,22 +15,22 @@ COPY drizzle ./drizzle
 
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATA_DIR=/home/perplexica/data
+ENV DATA_DIR=/home/vane/data
 
 RUN yarn build
 
 # Runner stage
 FROM node:24-alpine AS runner
 
-WORKDIR /home/perplexica
+WORKDIR /home/vane
 
 # Create a non-root user
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 # Create data directory with correct permissions
-RUN mkdir -p /home/perplexica/data && chown nextjs:nodejs /home/perplexica/data
-RUN mkdir -p /home/perplexica/uploads && chown nextjs:nodejs /home/perplexica/uploads
+RUN mkdir -p /home/vane/data && chown nextjs:nodejs /home/vane/data
+RUN mkdir -p /home/vane/uploads && chown nextjs:nodejs /home/vane/uploads
 
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./

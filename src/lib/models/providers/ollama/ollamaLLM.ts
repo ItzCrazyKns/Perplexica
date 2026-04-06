@@ -25,7 +25,9 @@ const reasoningModels = [
   'qwen3',
   'deepseek-v3.1',
   'magistral',
-  'nemotron-3-nano',
+  'nemotron-3',
+  'nemotron-cascade-2',
+  'glm-4.7-flash',
 ];
 
 class OllamaLLM extends BaseLLM<OllamaConfig> {

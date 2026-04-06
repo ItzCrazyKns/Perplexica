@@ -2,8 +2,7 @@ import BaseEmbedding from "../models/base/embedding";
 import UploadManager from "./manager";
 import computeSimilarity from "../utils/computeSimilarity";
 import { Chunk } from "../types";
-import { hashObj } from "../serverUtils";
-import fs from 'fs';
+import { hashObj } from '../utils/hash';
 
 type UploadStoreParams = {
     embeddingModel: BaseEmbedding<any>;

@@ -1,5 +1,5 @@
 {
-  "name": "perplexica",
+  "name": "vane",
   "version": "1.12.1",
   "license": "MIT",
   "author": "ItzCrazyKns",
@@ -62,7 +62,7 @@
     "@types/turndown": "^5.0.6",
     "autoprefixer": "^10.0.1",
     "drizzle-kit": "^0.31.8",
-    "eslint": "^10.0.0",
+    "eslint": "^9.34.0",
     "eslint-config-next": "^16.1.6",
     "postcss": "^8",
     "prettier": "^3.2.5",
