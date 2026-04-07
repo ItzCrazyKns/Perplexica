@@ -9,6 +9,12 @@ import { chats, messages } from '@/lib/db/schema';
 import { and, eq, gt } from 'drizzle-orm';
 import { TextBlock } from '@/lib/types';
 
+const debugLog = (...args: any[]) => {
+  if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+    console.log(...args);
+  }
+};
+
 class SearchAgent {
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
     try {
@@ -52,13 +58,16 @@ class SearchAgent {
           .execute();
       }
 
+      debugLog(`[DEBUG] Starting classification for query: ${input.followUp}`);
       const classification = await classify({
         chatHistory: input.chatHistory,
         enabledSources: input.config.sources,
         query: input.followUp,
         llm: input.config.llm,
       });
+      debugLog(`[DEBUG] Classification complete: ${JSON.stringify(classification.classification)}`);
 
+      debugLog('[DEBUG] Starting widget execution...');
       const widgetPromise = WidgetExecutor.executeAll({
         classification,
         chatHistory: input.chatHistory,
@@ -81,6 +90,7 @@ class SearchAgent {
       let searchPromise: Promise<ResearcherOutput> | null = null;
 
       if (!classification.classification.skipSearch) {
+        debugLog('[DEBUG] Starting researcher...');
         const researcher = new Researcher();
         searchPromise = researcher.research(session, {
           chatHistory: input.chatHistory,
@@ -94,6 +104,7 @@ class SearchAgent {
         widgetPromise,
         searchPromise,
       ]);
+      debugLog(`[DEBUG] Researcher and widgets complete. Findings: ${searchResults?.findings.length || 0}`);
 
       session.emit('data', {
         type: 'researchComplete',
@@ -115,6 +126,7 @@ class SearchAgent {
 
       const finalContextWithWidgets = `<search_results note="These are the search results and assistant can cite these">\n${finalContext}\n</search_results>\n<widgets_result noteForAssistant="Its output is already showed to the user, assistant can use this information to answer the query but do not CITE this as a souce">\n${widgetContext}\n</widgets_result>`;
 
+      debugLog('[DEBUG] Generating final answer...');
       const writerPrompt = getWriterPrompt(
         finalContextWithWidgets,
         input.config.systemInstructions,

@@ -42,8 +42,11 @@ export const searchSearxng = async (
     });
   }
 
+  const timeout = process.env.SEARXNG_TIMEOUT
+    ? parseInt(process.env.SEARXNG_TIMEOUT)
+    : 30000;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
     const res = await fetch(url, {
