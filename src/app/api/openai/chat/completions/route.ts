@@ -118,14 +118,48 @@ export const POST = async (req: NextRequest) => {
     let selectedProviderId: string | null = null;
     let selectedModelKey: string | null = null;
     let requestedSources: SearchSources[] = ['web'];
+    let optimizationMode: 'speed' | 'balanced' | 'quality' = 'speed';
 
-    // Handle source prefixes in model name (e.g., "academic/gpt-4")
-    if (model.includes('/')) {
-        const parts = model.split('/');
-        if (['web', 'academic', 'discussions', 'news', 'videos', 'images'].includes(parts[0])) {
-            requestedSources = [parts[0] as SearchSources];
+    // Handle optimization mode and source prefixes in model name
+    // Format: [mode:][source1,source2,...]/modelname
+    // Examples: "balanced:web,news/gpt-4", "web/gpt-4", "quality:academic/gpt-4"
+    
+    let modelPath = model;
+    if (modelPath.includes(':')) {
+        const modePart = modelPath.split(':')[0];
+        if (['speed', 'balanced', 'quality'].includes(modePart)) {
+            optimizationMode = modePart as any;
+            modelPath = modelPath.split(':').slice(1).join(':');
+            debugLog(`[DEBUG] Extracted optimization mode: ${optimizationMode}`);
+        }
+    }
+
+    if (modelPath.includes('/')) {
+        const parts = modelPath.split('/');
+        const sourcePart = parts[0];
+        const potentialSources = sourcePart.split(',').map(s => s.trim());
+        const validSources: SearchSources[] = [];
+        const allowedSources = ['web', 'academic', 'discussions', 'news', 'videos', 'images'];
+        
+        let allValid = true;
+        for (const s of potentialSources) {
+            if (allowedSources.includes(s)) {
+                validSources.push(s as SearchSources);
+            } else {
+                allValid = false;
+                break;
+            }
+        }
+
+        if (validSources.length > 0 && allValid) {
+            requestedSources = validSources;
             model = parts.slice(1).join('/');
-            debugLog(`[DEBUG] Extracted source: ${requestedSources[0]}, Remaining model: ${model}`);
+            debugLog(`[DEBUG] Extracted sources: ${requestedSources.join(', ')}, Remaining model: ${model}`);
+        } else if (potentialSources.length > 0 && !allValid) {
+             return NextResponse.json(
+                { error: `Invalid search focus: '${sourcePart}'. Allowed values: ${allowedSources.join(', ')}` },
+                { status: 400 }
+            );
         }
     }
     
@@ -345,7 +379,7 @@ export const POST = async (req: NextRequest) => {
           llm,
           embedding: embedding,
           sources: requestedSources, 
-          mode: 'speed', 
+          mode: optimizationMode, 
           fileIds: [],
           systemInstructions: systemMessage || 'None',
         },
@@ -429,7 +463,7 @@ export const POST = async (req: NextRequest) => {
                   llm,
                   embedding: embedding,
                   sources: requestedSources, 
-                  mode: 'speed', 
+                  mode: optimizationMode, 
                   fileIds: [],
                   systemInstructions: systemMessage || 'None',
                 },
