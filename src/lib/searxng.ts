@@ -24,7 +24,11 @@ export const searchSearxng = async (
 ) => {
   const searxngURL = getSearxngURL();
 
-  const url = new URL(`${searxngURL}/search?format=json`);
+  const baseURL = searxngURL.endsWith('/')
+    ? searxngURL.slice(0, -1)
+    : searxngURL;
+
+  const url = new URL(`${baseURL}/search?format=json`);
   url.searchParams.append('q', query);
 
   if (opts) {
@@ -38,8 +42,11 @@ export const searchSearxng = async (
     });
   }
 
+  const timeout = process.env.SEARXNG_TIMEOUT
+    ? parseInt(process.env.SEARXNG_TIMEOUT)
+    : 30000;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
 
   try {
     const res = await fetch(url, {
@@ -52,8 +59,8 @@ export const searchSearxng = async (
 
     const data = await res.json();
 
-    const results: SearxngSearchResult[] = data.results;
-    const suggestions: string[] = data.suggestions;
+  const results: SearxngSearchResult[] = data.results || [];
+  const suggestions: string[] = data.suggestions || [];
 
     return { results, suggestions };
   } catch (err: any) {
