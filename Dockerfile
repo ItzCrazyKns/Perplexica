@@ -73,5 +73,6 @@ RUN echo "searxng ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 EXPOSE 3000 8080
 
 ENV SEARXNG_API_URL=http://localhost:8080
+ENV HOSTNAME=0.0.0.0
 
 CMD ["/home/vane/entrypoint.sh"]
