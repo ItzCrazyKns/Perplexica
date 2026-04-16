@@ -15,6 +15,13 @@ const themeLight = (colors: DefaultColors) => ({
   300: '#d0d7de',
 });
 
+const themeWarm = (colors: DefaultColors) => ({
+  50: '#faf6f1',
+  100: '#f5ede3',
+  200: '#e8d9c6',
+  300: '#d4b896',
+});
+
 const config: Config = {
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
@@ -28,11 +35,13 @@ const config: Config = {
         return {
           light: themeLight(colors),
           dark: themeDark(colors),
+          warm: themeWarm(colors),
         };
       },
       colors: ({ colors }) => {
         const colorsDark = themeDark(colors);
         const colorsLight = themeLight(colors);
+        const colorsWarm = themeWarm(colors);
 
         return {
           dark: {
@@ -44,6 +53,11 @@ const config: Config = {
             primary: colorsLight[50],
             secondary: colorsLight[100],
             ...colorsLight,
+          },
+          warm: {
+            primary: colorsWarm[50],
+            secondary: colorsWarm[100],
+            ...colorsWarm,
           },
         };
       },

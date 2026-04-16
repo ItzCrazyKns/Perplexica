@@ -23,9 +23,8 @@ const SetupWizard = ({
       setShowWelcome(false);
       await delay(600);
       setShowSetup(true);
-      setSetupState(1);
       await delay(1500);
-      setSetupState(2);
+      setSetupState(1); // Start with admin account creation
     })();
   }, []);
 
@@ -79,28 +78,25 @@ const SetupWizard = ({
           <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
             <AnimatePresence mode="wait">
               {setupState === 1 && (
-                <motion.p
-                  key="setup-text"
-                  transition={{ duration: 0.6 }}
+                <motion.div
+                  key="setup-config"
                   initial={{ opacity: 0, translateY: '30px' }}
-                  animate={{ opacity: 1, translateY: '0px' }}
-                  exit={{
-                    opacity: 0,
-                    translateY: '-30px',
+                  animate={{
+                    opacity: 1,
+                    translateY: '0px',
                     transition: { duration: 0.6 },
                   }}
-                  className="text-2xl md:text-4xl xl:text-6xl font-normal font-['Instrument_Serif'] tracking-tight"
                 >
-                  Let us get
-                  <span className="text-[#24A0ED] italic font-['PP_Editorial']">
-                    Vane
-                  </span>{' '}
-                  set up for you
-                </motion.p>
+                  <SetupConfig
+                    configSections={configSections}
+                    setupState={setupState}
+                    setSetupState={setSetupState}
+                  />
+                </motion.div>
               )}
               {setupState > 1 && (
                 <motion.div
-                  key="setup-config"
+                  key="setup-config-2plus"
                   initial={{ opacity: 0, translateY: '30px' }}
                   animate={{
                     opacity: 1,

@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import ModelRegistry from '@/lib/models/registry';
 import UploadManager from '@/lib/uploads/manager';
+import { requireAuth } from '@/lib/middleware';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const auth = await requireAuth(req);
+    if (!auth.success) return auth.error;
+
     const formData = await req.formData();
 
     const files = formData.getAll('files') as File[];
@@ -23,9 +27,10 @@ export async function POST(req: Request) {
     
     const uploadManager = new UploadManager({
       embeddingModel: model,
-    })
+      userId: auth.user.id, // Scope uploads to authenticated user
+    });
 
-    const processedFiles = await uploadManager.processFiles(files);
+    const processedFiles = await uploadManager.processFiles(files, auth.user.id);
 
     return NextResponse.json({
       files: processedFiles,

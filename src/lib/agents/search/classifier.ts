@@ -34,8 +34,23 @@ const schema = z.object({
     ),
 });
 
+const safeDefault = (query: string): z.infer<typeof schema> => ({
+  classification: {
+    skipSearch: false,
+    personalSearch: false,
+    academicSearch: false,
+    discussionSearch: false,
+    showWeatherWidget: false,
+    showStockWidget: false,
+    showCalculationWidget: false,
+  },
+  standaloneFollowUp: query,
+});
+
 export const classify = async (input: ClassifierInput) => {
-  const output = await input.llm.generateObject<typeof schema>({
+  let fullText = '';
+
+  const stream = input.llm.streamText({
     messages: [
       {
         role: 'system',
@@ -46,8 +61,28 @@ export const classify = async (input: ClassifierInput) => {
         content: `<conversation_history>\n${formatChatHistoryAsString(input.chatHistory)}\n</conversation_history>\n<user_query>\n${input.query}\n</user_query>`,
       },
     ],
-    schema,
   });
 
-  return output;
+  for await (const chunk of stream) {
+    fullText += chunk.contentChunk;
+  }
+
+  try {
+    let parsed: unknown;
+
+    // Try direct parse first (model followed instructions exactly)
+    try {
+      parsed = JSON.parse(fullText.trim());
+    } catch {
+      // Model may have wrapped JSON in markdown or added extra text — extract it
+      const match = fullText.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error('No JSON object found in classifier response');
+      parsed = JSON.parse(match[0]);
+    }
+
+    return schema.parse(parsed);
+  } catch (err) {
+    console.warn('[classify] Failed to parse response, falling back to defaults. Raw response:', fullText, 'Error:', err);
+    return safeDefault(input.query);
+  }
 };

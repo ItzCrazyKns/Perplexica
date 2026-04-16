@@ -74,7 +74,19 @@ const AssistantSteps = ({
     }
   }, [researchEnded, status]);
 
-  if (!block || block.data.subSteps.length === 0) return null;
+  if (!block) return null;
+
+  if (block.data.subSteps.length === 0) {
+    if (!loading || !isLast || researchEnded) return null;
+    return (
+      <div className="flex items-center gap-2 p-3 rounded-lg bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200">
+        <Brain className="w-4 h-4 text-black dark:text-white animate-pulse" />
+        <span className="text-sm text-black/70 dark:text-white/70">
+          Researching...
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-lg bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200 overflow-hidden">

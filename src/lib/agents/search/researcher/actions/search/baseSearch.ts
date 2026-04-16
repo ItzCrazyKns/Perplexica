@@ -88,13 +88,19 @@ export const executeSearch = async (input: {
         results.push(...resultChunks);
       }
 
+      // Strip embeddings before sending to SSE to avoid huge payloads
+      const cleanResultChunks = resultChunks.map((chunk) => {
+        const { embedding, ...rest } = chunk.metadata;
+        return { ...chunk, metadata: { ...rest } };
+      });
+
       if (!searchResultsEmitted) {
         searchResultsEmitted = true;
 
         researchBlock.data.subSteps.push({
           id: searchResultsBlockId,
           type: 'search_results',
-          reading: resultChunks,
+          reading: cleanResultChunks,
         });
 
         input.session.updateBlock(researchBlock.id, [
@@ -113,7 +119,7 @@ export const executeSearch = async (input: {
           subStepIndex
         ] as SearchResultsResearchBlock;
 
-        subStep.reading.push(...resultChunks);
+        subStep.reading.push(...cleanResultChunks);
 
         input.session.updateBlock(researchBlock.id, [
           {
@@ -198,13 +204,19 @@ export const executeSearch = async (input: {
 
       searchResults.push(...resultChunks);
 
+      // Strip embeddings before sending to SSE to avoid huge payloads
+      const cleanResultChunks = resultChunks.map((chunk) => {
+        const { embedding, ...rest } = chunk.metadata;
+        return { ...chunk, metadata: { ...rest } };
+      });
+
       if (!searchResultsEmitted) {
         searchResultsEmitted = true;
 
         researchBlock.data.subSteps.push({
           id: searchResultsBlockId,
           type: 'search_results',
-          reading: resultChunks,
+          reading: cleanResultChunks,
         });
 
         input.session.updateBlock(researchBlock.id, [
@@ -223,7 +235,7 @@ export const executeSearch = async (input: {
           subStepIndex
         ] as SearchResultsResearchBlock;
 
-        subStep.reading.push(...resultChunks);
+        subStep.reading.push(...cleanResultChunks);
 
         input.session.updateBlock(researchBlock.id, [
           {
@@ -302,11 +314,18 @@ export const executeSearch = async (input: {
       (r) => !alreadyExtractedURLs.find((url) => url === r.metadata.url),
     );
 
-    if (filteredResults.length > 0) {
+    // Strip embeddings before sending to SSE to avoid huge payloads
+    const cleanFilteredResults = filteredResults.map((chunk: Chunk) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { embedding, ...rest } = chunk.metadata;
+      return { ...chunk, metadata: { ...rest } };
+    });
+
+    if (cleanFilteredResults.length > 0) {
       researchBlock.data.subSteps.push({
         id: crypto.randomUUID(),
         type: 'reading',
-        reading: filteredResults,
+        reading: cleanFilteredResults,
       });
 
       input.session.updateBlock(researchBlock.id, [
@@ -365,39 +384,45 @@ export const executeSearch = async (input: {
     await Promise.all(
       filteredResults.map(async (result, i) => {
         try {
-          const scrapedData = await Scraper.scrape(result.metadata.url).catch(
-            (err) => {
-              console.log('Error scraping data from', result.metadata.url, err);
-            },
-          );
+          const scrapedData = await Scraper.scrape(result.metadata.url).catch(() => {});
 
           if (!scrapedData) return;
 
           let accumulatedContent = '';
-          const chunks = splitText(scrapedData.content, 4000, 500);
+          const contentChunks = splitText(scrapedData.content, 4000, 500);
+
+          // Timeout helper
+          const scrapeTimeout = (promise: Promise<any>, ms = 15000) => {
+            return Promise.race([
+              promise,
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timed out')), ms)),
+            ]);
+          };
 
           await Promise.all(
-            chunks.map(async (chunk) => {
+            contentChunks.map(async (chunk) => {
               try {
-                const extractorOutput = await input.llm.generateObject<
-                  typeof extractorSchema
-                >({
-                  schema: extractorSchema,
-                  messages: [
-                    {
-                      role: 'system',
-                      content: extractorPrompt,
-                    },
-                    {
-                      role: 'user',
-                      content: `<queries>${input.queries.join(', ')}</queries>\n<scraped_data>${chunk}</scraped_data>`,
-                    },
-                  ],
-                });
-
+                const extractorOutput = await scrapeTimeout(
+                  input.llm.generateObject<
+                    typeof extractorSchema
+                  >({
+                    schema: extractorSchema,
+                    messages: [
+                      {
+                        role: 'system',
+                        content: extractorPrompt,
+                      },
+                      {
+                        role: 'user',
+                        content: `<queries>${input.queries.join(', ')}</queries>\n<scraped_data>${chunk}</scraped_data>`,
+                      },
+                    ],
+                  }),
+                  15000 // 15秒timeout
+                );
                 accumulatedContent += extractorOutput.extracted_facts + '\n';
               } catch (err) {
-                console.log('Error extracting information from chunk', err);
+                console.log('[EXTRACT_TIMEOUT_OR_ERROR]', result.metadata.url, err);
               }
             }),
           );
@@ -405,6 +430,11 @@ export const executeSearch = async (input: {
           extractedFacts.push({
             ...result,
             content: accumulatedContent,
+            metadata: (() => {
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              const { embedding, ...rest } = result.metadata;
+              return rest;
+            })(),
           });
         } catch (err) {
           console.log(

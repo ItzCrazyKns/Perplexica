@@ -13,6 +13,9 @@ COPY public ./public
 COPY drizzle ./drizzle
 
 RUN mkdir -p /home/vane/data
+# Build-time ARG is not persisted in image layers — safe for CI/CD / docker build
+ARG JWT_SECRET=dummy-build-secret
+ENV JWT_SECRET=$JWT_SECRET
 RUN yarn build
 
 FROM node:24.5.0-slim

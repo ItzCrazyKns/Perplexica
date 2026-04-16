@@ -5,22 +5,17 @@ import {
   BookOpenText,
   Home,
   Search,
-  SquarePen,
   Settings,
   Plus,
-  ArrowLeft,
+  LogOut,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useSelectedLayoutSegments } from 'next/navigation';
 import React, { useState, type ReactNode } from 'react';
 import Layout from './Layout';
-import {
-  Description,
-  Dialog,
-  DialogPanel,
-  DialogTitle,
-} from '@headlessui/react';
 import SettingsButton from './Settings/SettingsButton';
+import { useAuth } from '@/lib/hooks/useAuth';
+import { toast } from 'sonner';
 
 const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
   return <div className="flex flex-col items-center w-full">{children}</div>;
@@ -29,6 +24,7 @@ const VerticalIconContainer = ({ children }: { children: ReactNode }) => {
 const Sidebar = ({ children }: { children: React.ReactNode }) => {
   const segments = useSelectedLayoutSegments();
   const [isOpen, setIsOpen] = useState<boolean>(true);
+  const { logout } = useAuth();
 
   const navLinks = [
     {
@@ -50,6 +46,12 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
       label: 'Library',
     },
   ];
+
+  const handleLogout = async () => {
+    await logout();
+    toast.success('Logged out successfully');
+    window.location.href = '/';
+  };
 
   return (
     <div>
@@ -101,7 +103,16 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
             ))}
           </VerticalIconContainer>
 
-          <SettingsButton />
+          <div className="flex flex-col items-center gap-3">
+            <SettingsButton />
+            <button
+              onClick={handleLogout}
+              className="p-2.5 rounded-full text-black/50 dark:text-white/50 hover:text-red-500 hover:bg-light-200 dark:hover:bg-dark-200 transition duration-200"
+              title="Log out"
+            >
+              <LogOut size={19} />
+            </button>
+          </div>
         </div>
       </div>
 

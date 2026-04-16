@@ -3,7 +3,7 @@ import { useTheme } from 'next-themes';
 import { useCallback, useEffect, useState } from 'react';
 import Select from '../ui/Select';
 
-type Theme = 'dark' | 'light' | 'system';
+type Theme = 'dark' | 'light' | 'warm' | 'system';
 
 const ThemeSwitcher = ({ className }: { className?: string }) => {
   const [mounted, setMounted] = useState(false);
@@ -52,6 +52,7 @@ const ThemeSwitcher = ({ className }: { className?: string }) => {
       options={[
         { value: 'light', label: 'Light' },
         { value: 'dark', label: 'Dark' },
+        { value: 'warm', label: 'Warm' },
       ]}
     />
   );

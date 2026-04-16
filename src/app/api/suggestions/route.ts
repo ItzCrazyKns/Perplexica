@@ -1,14 +1,19 @@
+import { NextRequest, NextResponse } from 'next/server';
 import generateSuggestions from '@/lib/agents/suggestions';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
+import { requireAuth } from '@/lib/middleware';
 
 interface SuggestionsGenerationBody {
   chatHistory: any[];
   chatModel: ModelWithProvider;
 }
 
-export const POST = async (req: Request) => {
+export const POST = async (req: NextRequest) => {
   try {
+    const auth = await requireAuth(req);
+    if (!auth.success) return auth.error;
+
     const body: SuggestionsGenerationBody = await req.json();
 
     const registry = new ModelRegistry();

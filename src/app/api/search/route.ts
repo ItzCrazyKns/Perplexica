@@ -1,9 +1,11 @@
+import { NextRequest, NextResponse } from 'next/server';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
 import SessionManager from '@/lib/session';
 import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
 import APISearchAgent from '@/lib/agents/search/api';
+import { requireAuth } from '@/lib/middleware';
 
 interface ChatRequestBody {
   optimizationMode: 'speed' | 'balanced' | 'quality';
@@ -16,8 +18,11 @@ interface ChatRequestBody {
   systemInstructions?: string;
 }
 
-export const POST = async (req: Request) => {
+export const POST = async (req: NextRequest) => {
   try {
+    const auth = await requireAuth(req);
+    if (!auth.success) return auth.error;
+
     const body: ChatRequestBody = await req.json();
 
     if (!body.sources || !body.query) {
@@ -48,7 +53,6 @@ export const POST = async (req: Request) => {
     });
 
     const session = SessionManager.createSession();
-
     const agent = new APISearchAgent();
 
     agent.searchAsync(session, {
@@ -84,12 +88,7 @@ export const POST = async (req: Request) => {
                   sources = data.data;
                 }
               } catch (error) {
-                reject(
-                  Response.json(
-                    { message: 'Error parsing data' },
-                    { status: 500 },
-                  ),
-                );
+                reject(Response.json({ message: 'Error parsing data' }, { status: 500 }));
               }
             }
 
@@ -98,12 +97,7 @@ export const POST = async (req: Request) => {
             }
 
             if (event === 'error') {
-              reject(
-                Response.json(
-                  { message: 'Search error', error: data },
-                  { status: 500 },
-                ),
-              );
+              reject(Response.json({ message: 'Search error', error: data }, { status: 500 }));
             }
           });
         },
@@ -111,7 +105,6 @@ export const POST = async (req: Request) => {
     }
 
     const encoder = new TextEncoder();
-
     const abortController = new AbortController();
     const { signal } = abortController;
 
@@ -119,70 +112,35 @@ export const POST = async (req: Request) => {
       start(controller) {
         let sources: any[] = [];
 
-        controller.enqueue(
-          encoder.encode(
-            JSON.stringify({
-              type: 'init',
-              data: 'Stream connected',
-            }) + '\n',
-          ),
-        );
+        controller.enqueue(encoder.encode(JSON.stringify({ type: 'init', data: 'Stream connected' }) + '\n'));
 
         signal.addEventListener('abort', () => {
           session.removeAllListeners();
-
-          try {
-            controller.close();
-          } catch (error) {}
+          try { controller.close(); } catch (error) {}
         });
 
         session.subscribe((event: string, data: Record<string, any>) => {
           if (event === 'data') {
             if (signal.aborted) return;
-
             try {
               if (data.type === 'response') {
-                controller.enqueue(
-                  encoder.encode(
-                    JSON.stringify({
-                      type: 'response',
-                      data: data.data,
-                    }) + '\n',
-                  ),
-                );
+                controller.enqueue(encoder.encode(JSON.stringify({ type: 'response', data: data.data }) + '\n'));
               } else if (data.type === 'searchResults') {
                 sources = data.data;
-                controller.enqueue(
-                  encoder.encode(
-                    JSON.stringify({
-                      type: 'sources',
-                      data: sources,
-                    }) + '\n',
-                  ),
-                );
+                controller.enqueue(encoder.encode(JSON.stringify({ type: 'sources', data: sources }) + '\n'));
               }
             } catch (error) {
               controller.error(error);
             }
           }
-
           if (event === 'end') {
-            if (signal.aborted) return;
-
-            controller.enqueue(
-              encoder.encode(
-                JSON.stringify({
-                  type: 'done',
-                }) + '\n',
-              ),
-            );
-            controller.close();
+            if (!signal.aborted) {
+              controller.enqueue(encoder.encode(JSON.stringify({ type: 'done' }) + '\n'));
+              controller.close();
+            }
           }
-
           if (event === 'error') {
-            if (signal.aborted) return;
-
-            controller.error(data);
+            if (!signal.aborted) controller.error(data);
           }
         });
       },
@@ -200,9 +158,6 @@ export const POST = async (req: Request) => {
     });
   } catch (err: any) {
     console.error(`Error in getting search results: ${err.message}`);
-    return Response.json(
-      { message: 'An error has occurred.' },
-      { status: 500 },
-    );
+    return Response.json({ message: 'An error has occurred.' }, { status: 500 });
   }
 };

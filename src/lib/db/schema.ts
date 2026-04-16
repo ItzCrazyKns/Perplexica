@@ -25,6 +25,7 @@ interface DBFile {
 
 export const chats = sqliteTable('chats', {
   id: text('id').primaryKey(),
+  userId: text('userId').notNull().default('anonymous'),
   title: text('title').notNull(),
   createdAt: text('createdAt').notNull(),
   sources: text('sources', {
@@ -35,4 +36,19 @@ export const chats = sqliteTable('chats', {
   files: text('files', { mode: 'json' })
     .$type<DBFile[]>()
     .default(sql`'[]'`),
+});
+
+export const users = sqliteTable('users', {
+  id: text('id').primaryKey(),
+  username: text('username').notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
+  role: text({ enum: ['admin', 'user'] }).notNull().default('user'),
+  createdAt: text('createdAt').notNull(),
+});
+
+export const sessions = sqliteTable('sessions', {
+  id: text('id').primaryKey(),
+  userId: text('userId').notNull(),
+  expiresAt: text('expiresAt').notNull(),
+  createdAt: text('createdAt').notNull(),
 });

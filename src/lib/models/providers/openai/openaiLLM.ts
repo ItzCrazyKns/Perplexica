@@ -181,7 +181,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
                 existingCall.arguments += tc.function?.arguments || '';
                 return {
                   ...existingCall,
-                  arguments: parse(existingCall.arguments),
+                  arguments: parse(existingCall.arguments || '{}'),
                 };
               }
             }) || [],

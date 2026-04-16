@@ -441,16 +441,17 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
             partialChunk += decoder.decode(value, { stream: true });
 
-            try {
-              const messages = partialChunk.split('\n');
-              for (const msg of messages) {
-                if (!msg.trim()) continue;
-                const json = JSON.parse(msg);
+            const lines = partialChunk.split('\n');
+            partialChunk = lines[lines.length - 1];
+
+            for (const line of lines.slice(0, -1)) {
+              if (!line.trim()) continue;
+              try {
+                const json = JSON.parse(line);
                 messageHandler(json);
+              } catch (error) {
+                console.warn('Failed to parse SSE line, skipping:', line);
               }
-              partialChunk = '';
-            } catch (error) {
-              console.warn('Incomplete JSON, waiting for next chunk...');
             }
           }
         } finally {
@@ -791,16 +792,19 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
       partialChunk += decoder.decode(value, { stream: true });
 
-      try {
-        const messages = partialChunk.split('\n');
-        for (const msg of messages) {
-          if (!msg.trim()) continue;
-          const json = JSON.parse(msg);
+      const lines = partialChunk.split('\n');
+      // All lines except the last are complete (server terminates each message with \n)
+      // The last element may be an incomplete line — keep it for the next chunk
+      partialChunk = lines[lines.length - 1];
+
+      for (const line of lines.slice(0, -1)) {
+        if (!line.trim()) continue;
+        try {
+          const json = JSON.parse(line);
           messageHandler(json);
+        } catch (error) {
+          console.warn('Failed to parse SSE line, skipping:', line);
         }
-        partialChunk = '';
-      } catch (error) {
-        console.warn('Incomplete JSON, waiting for next chunk...');
       }
     }
   };

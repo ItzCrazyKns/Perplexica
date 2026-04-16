@@ -3,6 +3,7 @@ import pkg from './package.json' with { type: 'json' };
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  allowedDevOrigins: ['10.0.0.54', '141.147.96.213', 'localhost'],
   output: 'standalone',
   images: {
     remotePatterns: [

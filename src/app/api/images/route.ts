@@ -1,6 +1,8 @@
+import { NextRequest, NextResponse } from 'next/server';
 import searchImages from '@/lib/agents/media/image';
 import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
+import { requireAuth } from '@/lib/middleware';
 
 interface ImageSearchBody {
   query: string;
@@ -8,8 +10,11 @@ interface ImageSearchBody {
   chatModel: ModelWithProvider;
 }
 
-export const POST = async (req: Request) => {
+export const POST = async (req: NextRequest) => {
   try {
+    const auth = await requireAuth(req);
+    if (!auth.success) return auth.error;
+
     const body: ImageSearchBody = await req.json();
 
     const registry = new ModelRegistry();
