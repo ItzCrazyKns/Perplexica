@@ -50,7 +50,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       } else if (msg.role === 'assistant') {
         return {
           role: 'assistant',
-          content: msg.content,
+          content: msg.content ?? "",
           ...(msg.tool_calls &&
             msg.tool_calls.length > 0 && {
               tool_calls: msg.tool_calls?.map((tc) => ({
@@ -102,9 +102,9 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
 
     if (response.choices && response.choices.length > 0) {
       return {
-        content: response.choices[0].message.content!,
+        content: response.choices[0].message?.content ?? '',
         toolCalls:
-          response.choices[0].message.tool_calls
+          response.choices[0].message?.tool_calls
             ?.map((tc) => {
               if (tc.type === 'function') {
                 return {
@@ -234,7 +234,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
 
     const stream = this.openAIClient.responses.stream({
       model: this.config.model,
-      input: input.messages,
+      input: input.messages as any,
       temperature:
         input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
       top_p: input.options?.topP ?? this.config.options?.topP,

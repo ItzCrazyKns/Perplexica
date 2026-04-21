@@ -65,7 +65,7 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
   getDescription: () => actionDescription,
   enabled: (_) => true,
   execute: async (params, additionalConfig) => {
-    params.urls = params.urls.slice(0, 3);
+    params.urls = (params.urls ?? []).slice(0, 3);
 
     let readingBlockId = crypto.randomUUID();
     let readingEmitted = false;
@@ -190,6 +190,7 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
             },
           });
         } catch (error) {
+          console.error(`Failed to scrape URL ${url}:`, error);
           results.push({
             content: `Failed to fetch content from ${url}: ${error}`,
             metadata: {
