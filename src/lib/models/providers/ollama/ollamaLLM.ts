@@ -52,7 +52,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       } else if (msg.role === 'assistant') {
         return {
           role: 'assistant',
-          content: msg.content,
+          content: msg.content ?? "",
           tool_calls:
             msg.tool_calls?.map((tc, i) => ({
               function: {

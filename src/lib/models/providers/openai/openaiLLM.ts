@@ -50,7 +50,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       } else if (msg.role === 'assistant') {
         return {
           role: 'assistant',
-          content: msg.content,
+          content: msg.content ?? "",
           ...(msg.tool_calls &&
             msg.tool_calls.length > 0 && {
               tool_calls: msg.tool_calls?.map((tc) => ({
