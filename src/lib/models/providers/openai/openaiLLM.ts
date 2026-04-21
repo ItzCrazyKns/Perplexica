@@ -234,7 +234,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
 
     const stream = this.openAIClient.responses.stream({
       model: this.config.model,
-      input: input.messages,
+      input: input.messages as any,
       temperature:
         input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
       top_p: input.options?.topP ?? this.config.options?.topP,
