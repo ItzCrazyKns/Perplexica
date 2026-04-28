@@ -29,7 +29,7 @@ const downloadFile = (filename: string, content: string, type: string) => {
 
 const exportAsMarkdown = (sections: Section[], title: string) => {
   const date = new Date(
-    sections[0].message.createdAt || Date.now(),
+    sections[0]?.message?.createdAt || Date.now(),
   ).toLocaleString();
   let md = `# 💬 Chat Export: ${title}\n\n`;
   md += `*Exported on: ${date}*\n\n---\n`;
@@ -142,10 +142,12 @@ const exportAsPDF = (sections: Section[], title: string) => {
       y += 6;
       doc.setTextColor(30);
       doc.setFontSize(12);
-      const assistantLines = doc.splitTextToSize(
-        section.parsedTextBlocks.join('\n'),
-        180,
-      );
+      const rawAssistantText = section.message.responseBlocks
+        .filter((b) => b.type === 'text')
+        .map((block) => block.data)
+        .join('\n')
+        .replace(/<[^>]*>/g, '');
+      const assistantLines = doc.splitTextToSize(rawAssistantText, 180);
       for (let i = 0; i < assistantLines.length; i++) {
         if (y > pageHeight - 20) {
           doc.addPage();
