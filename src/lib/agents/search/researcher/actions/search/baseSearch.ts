@@ -53,17 +53,28 @@ export const executeSearch = async (input: {
         const queryEmbedding = embeddings[0];
         const chunkEmbeddings = embeddings.slice(1);
 
-        resultChunks = res.results
-          .map((r, i) => ({
-            content: contents[i],
-            metadata: {
-              title: r.title,
-              url: r.url,
-              similarity: computeSimilarity(queryEmbedding, chunkEmbeddings[i]),
-              embedding: chunkEmbeddings[i],
-            },
-          }))
-          .filter((c) => c.metadata.similarity > 0.5);
+        const allChunks = res.results.map((r, i) => ({
+          content: contents[i],
+          metadata: {
+            title: r.title,
+            url: r.url,
+            similarity: computeSimilarity(queryEmbedding, chunkEmbeddings[i]),
+            embedding: chunkEmbeddings[i],
+          },
+        }));
+
+        resultChunks = allChunks.filter((c) => c.metadata.similarity > 0.5);
+
+        // If the > 0.5 filter empties everything, fall back to top-10 by
+        // similarity. The 0.5 threshold was tuned for all-MiniLM-L6-v2;
+        // models with different similarity distributions (e.g. Gemma-300M
+        // on the NPU) can score relevant snippets at 0.3–0.5 and would
+        // otherwise return "0 results". Mirrors the catch-block fallback.
+        if (resultChunks.length === 0 && allChunks.length > 0) {
+          resultChunks = allChunks
+            .sort((a, b) => b.metadata.similarity - a.metadata.similarity)
+            .slice(0, 10);
+        }
       } catch (err) {
         resultChunks = res.results.map((r) => {
           const content = r.content || r.title;
