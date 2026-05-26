@@ -49,6 +49,10 @@ export const priorartWorkspaces = sqliteTable('priorart_workspaces', {
   jsonPath: text('jsonPath'),
   claimChartPath: text('claimChartPath'),
   warnings: text('warnings', { mode: 'json' }).$type<string[]>().default(sql`'[]'`),
+  lastStep: text('lastStep'),
+  progress: integer('progress').default(0),
+  errorMessage: text('errorMessage'),
+  lastUpdatedAt: text('lastUpdatedAt'),
 });
 
 export const priorartDocuments = sqliteTable('priorart_documents', {

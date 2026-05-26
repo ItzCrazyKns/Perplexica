@@ -29,6 +29,13 @@
       "when": 1779794955230,
       "tag": "0003_priorart_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1779863000000,
+      "tag": "0004_priorart_run_progress",
+      "breakpoints": true
     }
   ]
 }

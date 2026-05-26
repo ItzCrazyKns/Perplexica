@@ -38,9 +38,16 @@ export type OrchestratorInputs = {
   mode?: 'clear' | 'landscape';
 };
 
+export type ProgressEvent = {
+  step: string;          // e.g. "step3 retrieval"
+  progress: number;      // 0..100
+  detail?: string;       // optional human-readable extra
+};
+
 export type OrchestratorConfig = {
   llm: BaseLLM<unknown>;
   embedder: BaseEmbedding<unknown>;
+  onProgress?: (evt: ProgressEvent) => void;
   uspto: UsptoOdpConfig;
   bigquery?: BigQueryPatentsConfig;
   workspaceRoot: string;
@@ -73,6 +80,10 @@ export async function runPriorArt(
   if (!/^\d{4}-\d{2}-\d{2}$/.test(priorityDate)) {
     throw new Error(`Invalid priority date: ${priorityDate}`);
   }
+  const emit = (step: string, progress: number, detail?: string) => {
+    cfg.onProgress?.({ step, progress, detail });
+  };
+  emit('step0 parsing inputs', 1);
 
   // Step 0b: Gemini Deep Research reframe. Grounded web search disambiguates
   // collision-prone terms ("switchyard"=electrical substation) and produces
@@ -81,14 +92,25 @@ export async function runPriorArt(
   // failure mode (Hitachi/Samsung SDI/Kawasaki matches).
   let reframe: ReframeResult | null = null;
   if (cfg.enableDeepResearchReframe !== false && cfg.geminiApiKey) {
+    emit('step0b Gemini Deep Research reframe (grounded web search, ~30-60s)', 5);
     console.log('[priorart] step0b: deepResearchReframe (Gemini grounded search)');
+    // Heartbeat inside step0b so the stale-detector doesn't false-trigger
+    // during the long Gemini grounded call. Bumps progress 5→18 over 60s.
+    const startedAt = Date.now();
+    const hb = setInterval(() => {
+      const secs = Math.floor((Date.now() - startedAt) / 1000);
+      const pct = Math.min(18, 5 + Math.floor(secs / 5));
+      emit(`step0b Gemini Deep Research reframe (${secs}s elapsed)`, pct);
+    }, 4000);
     reframe = await deepResearchReframe(inputs.featureDescription, {
       apiKey: cfg.geminiApiKey,
       model: cfg.deepResearchReframeModel,
-    }).catch((e: Error) => {
-      console.error(`[priorart] step0b reframe failed (continuing without): ${e.message}`);
-      return null;
-    });
+    })
+      .catch((e: Error) => {
+        console.error(`[priorart] step0b reframe failed (continuing without): ${e.message}`);
+        return null;
+      })
+      .finally(() => clearInterval(hb));
     if (reframe) {
       console.log(
         `[priorart] step0b OK: ${reframe.trueTechnicalPillars.length} pillars, ` +
@@ -99,6 +121,7 @@ export async function runPriorArt(
     }
   }
 
+  emit('step1 parsing feature into technical elements (LLM)', 20);
   console.log('[priorart] step1: parseFeature');
   const profile: FeatureProfile = await parseFeature(
     cfg.llm,
@@ -115,6 +138,7 @@ export async function runPriorArt(
     (el, i) => ({ ...el, label: `E${i + 1}` }),
   );
 
+  emit('step2 generating search queries (LLM)', 30);
   console.log('[priorart] step2: planQueries');
   let plan: QueryPlan = await planQueries(
     cfg.llm,
@@ -132,6 +156,7 @@ export async function runPriorArt(
   }
   console.log(`[priorart] step2 OK: ${plan.odpQueries.length} ODP queries`);
 
+  emit('step3 searching USPTO ODP + Google Patents BigQuery', 40);
   console.log('[priorart] step3: instantiate sources');
   const sources: PriorArtSource[] = [new UsptoOdpSource(cfg.uspto)];
   if (cfg.bigquery) sources.push(new BigQueryPatentsSource(cfg.bigquery));
@@ -176,6 +201,7 @@ export async function runPriorArt(
     throw new Error(`step3 store: ${e.message}`);
   }
   try {
+    emit(`step4 embedding ${embedPool.length} retrieved documents`, 55);
     console.log(`[priorart] step4a: ingest ${embedPool.length} docs`);
     await store.ingest(embedPool).catch((e) => {
       console.error(`[priorart] step4a ingest failed: ${e.stack ?? e.message}`);
@@ -210,6 +236,7 @@ export async function runPriorArt(
     // with the feature but live in unrelated technical domains (the classic
     // "switchyard → electrical substation" / "state management → solid-state
     // battery" failure mode). Runs ONE LLM call over the top-K, fail-open.
+    emit('step4d LLM-reasoned semantic domain filter', 65);
     console.log('[priorart] step4d: semantic domain filter');
     const filterResult = await filterByDomain(cfg.llm, profile, fused, {
       noiseDomainsToAvoid: reframe?.noiseDomainsToAvoid,
@@ -226,12 +253,14 @@ export async function runPriorArt(
         `(dropped ${filterResult.dropped.length} off-domain)`,
     );
 
+    emit('step5 landscape synthesis (LLM)', 75);
     console.log('[priorart] step5: synthesizeLandscape');
     const landscape = await synthesizeLandscape(cfg.llm, profile, filteredFused).catch((e) => {
       throw new Error(`step5 synthesizeLandscape: ${e.message}`);
     });
     console.log(`[priorart] step5 OK: ${landscape.topAssignees.length} assignees`);
 
+    emit('step5c per-element coverage matrix', 82);
     console.log('[priorart] step5c: per-element coverage matrix');
     const coverage = await computeCoverage(labeledElements, filteredFused, cfg.embedder, {
       threshold: cfg.coverageThreshold,
@@ -250,16 +279,25 @@ export async function runPriorArt(
     // clearance-prep.
     let patentableEdges: PatentableEdge[] = [];
     if (reframe && cfg.geminiApiKey && reframe.trueTechnicalPillars.length) {
+      emit('step6b patentable-edge distillation per pillar (Gemini grounded)', 88);
       console.log('[priorart] step6b: patentable-edge distillation');
+      const edgeStart = Date.now();
+      const edgeHb = setInterval(() => {
+        const secs = Math.floor((Date.now() - edgeStart) / 1000);
+        const pct = Math.min(94, 88 + Math.floor(secs / 8));
+        emit(`step6b patentable-edge distillation (${secs}s elapsed)`, pct);
+      }, 4000);
       patentableEdges = await distillEdges(
         profile.summary,
         reframe,
         { apiKey: cfg.geminiApiKey, model: cfg.deepResearchReframeModel },
         { benchmarkDeltas: inputs.benchmarkDeltas },
-      ).catch((e: Error) => {
-        console.error(`[priorart] step6b distillEdges failed: ${e.message}`);
-        return [];
-      });
+      )
+        .catch((e: Error) => {
+          console.error(`[priorart] step6b distillEdges failed: ${e.message}`);
+          return [];
+        })
+        .finally(() => clearInterval(edgeHb));
       console.log(
         `[priorart] step6b OK: ${patentableEdges.length} edges (${
           patentableEdges.filter((e) => e.strength === 'strong').length
@@ -341,6 +379,7 @@ export async function runPriorArt(
       verificationWarnings: warnings,
     };
 
+    emit('step7 writing memo + json artifacts', 95);
     // Step 7: persist artifacts
     const dir = path.join(cfg.workspaceRoot, profile.featureId, nowStamp());
     fs.mkdirSync(dir, { recursive: true });

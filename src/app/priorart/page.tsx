@@ -41,15 +41,18 @@ type RunSummary = {
   patentableEdges?: { total: number; strong: number; moderate: number; weak: number };
 };
 
-const RUN_PHASES = [
-  'Parsing feature into technical elements (LLM, ~10-30s)',
-  'Generating per-element search queries (LLM, ~10-30s)',
-  'Searching USPTO ODP + Google Patents BigQuery in parallel',
-  'Date guard + family dedupe + local embedding',
-  'Landscape synthesis (LLM)',
-  'Open-questions synthesis (LLM)',
-  'Writing memo.md + memo.json to workspace',
-];
+type RunStatus = {
+  id: string;
+  status: 'running' | 'completed' | 'error';
+  lastStep: string | null;
+  progress: number;
+  errorMessage: string | null;
+  createdAt: string;
+  lastUpdatedAt: string | null;
+  markdownPath: string | null;
+  jsonPath: string | null;
+  warnings: string[];
+};
 
 const formatBytes = (n: number) => {
   if (n < 1024) return `${n} B`;
@@ -169,38 +172,58 @@ const RunCard = ({ run }: { run: RunSummary }) => {
   );
 };
 
-const ProgressIndicator = ({ phase, elapsed }: { phase: number; elapsed: number }) => (
-  <div className="rounded border border-indigo-500/40 bg-indigo-500/5 p-4 space-y-2">
-    <div className="flex items-center gap-2 font-medium">
-      <LoaderCircleIcon className="size-4 animate-spin text-indigo-500" />
-      Running — {elapsed}s elapsed (typical: 60-180s)
-    </div>
-    <ol className="text-xs space-y-1 ml-1">
-      {RUN_PHASES.map((p, i) => (
-        <li
-          key={i}
-          className={cn(
-            'flex items-center gap-2',
-            i < phase
-              ? 'text-muted-foreground line-through opacity-60'
-              : i === phase
-                ? 'text-foreground font-medium'
-                : 'text-muted-foreground/60',
+const ProgressIndicator = ({
+  status,
+  elapsed,
+}: {
+  status: RunStatus | null;
+  elapsed: number;
+}) => {
+  if (!status) return null;
+  const pct = Math.max(0, Math.min(100, status.progress));
+  const isError = status.status === 'error';
+  const isDone = status.status === 'completed';
+  const color = isError
+    ? 'border-rose-500/50 bg-rose-500/5'
+    : isDone
+      ? 'border-emerald-500/50 bg-emerald-500/5'
+      : 'border-indigo-500/40 bg-indigo-500/5';
+  return (
+    <div className={cn('rounded border p-4 space-y-3', color)}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 font-medium text-sm">
+          {isError ? (
+            <ShieldAlertIcon className="size-4 text-rose-500" />
+          ) : isDone ? (
+            <span className="text-emerald-500">✓</span>
+          ) : (
+            <LoaderCircleIcon className="size-4 animate-spin text-indigo-500" />
           )}
-        >
-          <span className="inline-block w-4 text-center">
-            {i < phase ? '✓' : i === phase ? '•' : '○'}
-          </span>
-          {p}
-        </li>
-      ))}
-    </ol>
-    <div className="text-xs text-muted-foreground italic pt-1">
-      The page does not stream progress yet — phases are time-estimated. Output files appear in the
-      Recent Runs panel above when the run finishes.
+          {isError ? 'Failed' : isDone ? 'Complete' : 'Running'} — {elapsed}s elapsed · {pct}%
+        </div>
+        <div className="text-[10px] text-muted-foreground font-mono">{status.id.slice(0, 18)}</div>
+      </div>
+      <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+        <div
+          className={cn(
+            'h-full transition-all duration-500',
+            isError ? 'bg-rose-500' : isDone ? 'bg-emerald-500' : 'bg-indigo-500',
+          )}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="text-xs font-mono break-words">
+        <span className="text-muted-foreground">step: </span>
+        {status.lastStep ?? 'starting…'}
+      </div>
+      {isError && status.errorMessage && (
+        <div className="text-xs text-rose-700 dark:text-rose-400 break-words rounded bg-rose-500/10 p-2">
+          {status.errorMessage}
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 const Page = () => {
   const [featureDescription, setFeatureDescription] = useState('');
@@ -208,12 +231,13 @@ const Page = () => {
   const [benchmarkDeltas, setBenchmarkDeltas] = useState('');
   const [priorityDate, setPriorityDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [running, setRunning] = useState(false);
-  const [phase, setPhase] = useState(0);
+  const [runStatus, setRunStatus] = useState<RunStatus | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [result, setResult] = useState<RunResult | null>(null);
   const [memoMarkdown, setMemoMarkdown] = useState<string>('');
   const [runs, setRuns] = useState<RunSummary[]>([]);
   const [workspaceRoot, setWorkspaceRoot] = useState<string>('');
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
 
   const refreshRuns = useCallback(async () => {
     try {
@@ -231,26 +255,98 @@ const Page = () => {
     refreshRuns();
   }, [refreshRuns]);
 
-  // estimated-phase ticker during a run
+  // elapsed-time ticker (1 Hz) while a run is in flight
   useEffect(() => {
     if (!running) return;
     setElapsed(0);
-    setPhase(0);
     const t0 = Date.now();
     const id = setInterval(() => {
-      const s = Math.floor((Date.now() - t0) / 1000);
-      setElapsed(s);
-      // rough time bands (calibrated to observed ~100s total)
-      if (s < 20) setPhase(0);
-      else if (s < 40) setPhase(1);
-      else if (s < 60) setPhase(2);
-      else if (s < 80) setPhase(3);
-      else if (s < 100) setPhase(4);
-      else if (s < 120) setPhase(5);
-      else setPhase(6);
+      setElapsed(Math.floor((Date.now() - t0) / 1000));
     }, 1000);
     return () => clearInterval(id);
   }, [running]);
+
+  const pollRunStatus = useCallback(
+    async (runId: string, signal: AbortSignal): Promise<void> => {
+      localStorage.setItem('priorart.activeRunId', runId);
+      setActiveRunId(runId);
+      while (!signal.aborted) {
+        try {
+          const resp = await fetch(`/api/priorart/runs/${encodeURIComponent(runId)}`, {
+            signal,
+          });
+          if (!resp.ok) {
+            if (resp.status === 404) {
+              await new Promise((r) => setTimeout(r, 1500));
+              continue;
+            }
+            throw new Error(`poll failed: ${resp.status}`);
+          }
+          const status = (await resp.json()) as RunStatus;
+          setRunStatus(status);
+          if (status.status === 'completed') {
+            localStorage.removeItem('priorart.activeRunId');
+            if (status.markdownPath) {
+              const md = await fetch(
+                `/api/priorart/memo?path=${encodeURIComponent(status.markdownPath)}`,
+              ).catch(() => null);
+              if (md && md.ok) setMemoMarkdown(await md.text());
+              setResult({
+                workspaceId: status.id,
+                workspaceDir: status.markdownPath.replace(/\/memo\.md$/, ''),
+                markdownPath: status.markdownPath,
+                jsonPath: status.jsonPath ?? '',
+                claimChartPath: null,
+                warnings: status.warnings,
+                memo: null,
+              });
+            }
+            return;
+          }
+          if (status.status === 'error') {
+            localStorage.removeItem('priorart.activeRunId');
+            toast.error(status.errorMessage ?? 'Run failed');
+            return;
+          }
+        } catch (e: any) {
+          if (signal.aborted) return;
+          console.error('poll error', e);
+        }
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+    },
+    [],
+  );
+
+  // Recover an in-flight run from localStorage on page mount.
+  // If a previous fetch was killed (refresh, tab-close, container restart),
+  // the runId is still in localStorage and the DB row still says 'running'.
+  useEffect(() => {
+    const saved =
+      typeof window !== 'undefined' ? localStorage.getItem('priorart.activeRunId') : null;
+    if (!saved) return;
+    (async () => {
+      try {
+        const resp = await fetch(`/api/priorart/runs/${encodeURIComponent(saved)}`);
+        if (!resp.ok) {
+          localStorage.removeItem('priorart.activeRunId');
+          return;
+        }
+        const status = (await resp.json()) as RunStatus;
+        if (status.status === 'running') {
+          setRunning(true);
+          setRunStatus(status);
+          const ctrl = new AbortController();
+          pollRunStatus(saved, ctrl.signal).finally(() => setRunning(false));
+        } else {
+          localStorage.removeItem('priorart.activeRunId');
+        }
+      } catch {
+        localStorage.removeItem('priorart.activeRunId');
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const run = async (mode: 'clear' | 'landscape') => {
     if (featureDescription.trim().length < 20) {
@@ -258,8 +354,10 @@ const Page = () => {
       return;
     }
     setRunning(true);
+    setRunStatus(null);
     setResult(null);
     setMemoMarkdown('');
+    const ctrl = new AbortController();
     try {
       const endpoint = mode === 'landscape' ? '/api/priorart/landscape' : '/api/priorart/clear';
       const resp = await fetch(endpoint, {
@@ -278,16 +376,18 @@ const Page = () => {
         toast.error(err.message ?? `Request failed (${resp.status})`);
         return;
       }
-      const data = (await resp.json()) as RunResult;
-      setResult(data);
-      const md = await fetch(`/api/priorart/memo?path=${encodeURIComponent(data.markdownPath)}`).catch(
-        () => null,
-      );
-      if (md && md.ok) setMemoMarkdown(await md.text());
+      const ack = (await resp.json()) as { runId: string; status: string };
+      if (!ack.runId) {
+        toast.error('Server did not return a run id');
+        return;
+      }
+      await pollRunStatus(ack.runId, ctrl.signal);
       await refreshRuns();
       toast.success('Run complete');
     } catch (e: any) {
-      toast.error(e.message ?? 'Failed to run prior art mode.');
+      if (!ctrl.signal.aborted) {
+        toast.error(e.message ?? 'Failed to run prior art mode.');
+      }
     } finally {
       setRunning(false);
     }
@@ -410,7 +510,7 @@ const Page = () => {
         </div>
       </section>
 
-      {running && <ProgressIndicator phase={phase} elapsed={elapsed} />}
+      {(running || runStatus) && <ProgressIndicator status={runStatus} elapsed={elapsed} />}
 
       {result && (
         <section className="space-y-3 border-t border-border pt-6">
