@@ -1,0 +1,15 @@
+{
+  "publication_number": "US-20210123456-A1",
+  "application_number": "17/234,567",
+  "title": ["Hybrid index for subscriber interest matching"],
+  "abstract": ["Combines dense and sparse signals for routing."],
+  "claims": ["1. A method comprising: receiving an event..."],
+  "filing_date": 20200803,
+  "publication_date": 20210429,
+  "priority_date": 20200803,
+  "assignees": ["Hybrid Match Inc"],
+  "inventors": ["Alex Wong"],
+  "cpc_codes": ["G06F16/30"],
+  "ipc_codes": ["G06F"],
+  "citation_count": 5
+}

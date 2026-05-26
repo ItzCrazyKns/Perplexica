@@ -9,6 +9,7 @@ import {
   GlobeIcon,
   GraduationCapIcon,
   NetworkIcon,
+  ScalesIcon,
 } from '@phosphor-icons/react';
 import { AnimatePresence, motion } from 'motion/react';
 
@@ -27,6 +28,11 @@ const sourcesList = [
     name: 'Social',
     key: 'discussions',
     icon: <NetworkIcon className="h-[16px] w-auto" />,
+  },
+  {
+    name: 'Prior Art',
+    key: 'priorart',
+    icon: <ScalesIcon className="h-[16px] w-auto" />,
   },
 ];
 

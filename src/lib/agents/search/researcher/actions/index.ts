@@ -1,6 +1,7 @@
 import academicSearchAction from './search/academicSearch';
 import doneAction from './done';
 import planAction from './plan';
+import priorArtSearchAction from './priorartSearch';
 import ActionRegistry from './registry';
 import scrapeURLAction from './scrapeURL';
 import socialSearchAction from './search/socialSearch';
@@ -14,5 +15,6 @@ ActionRegistry.register(scrapeURLAction);
 ActionRegistry.register(uploadsSearchAction);
 ActionRegistry.register(academicSearchAction);
 ActionRegistry.register(socialSearchAction);
+ActionRegistry.register(priorArtSearchAction);
 
 export { ActionRegistry };

@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y python3 python3-pip sqlite3 && rm -rf /
 WORKDIR /home/vane
 
 COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile --network-timeout 600000
+RUN yarn install --frozen-lockfile --ignore-engines --network-timeout 600000
 
 COPY tsconfig.json next.config.mjs next-env.d.ts postcss.config.js drizzle.config.ts tailwind.config.ts ./
 COPY src ./src
@@ -34,7 +34,7 @@ COPY drizzle ./drizzle
 
 RUN mkdir /home/vane/uploads
 
-RUN yarn add playwright
+RUN yarn add playwright --ignore-engines
 RUN yarn playwright install --with-deps --only-shell chromium
 
 RUN useradd --shell /bin/bash --system \

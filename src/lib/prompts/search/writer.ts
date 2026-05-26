@@ -1,9 +1,14 @@
+import { priorArtSystemAddendum } from '@/lib/prompts/priorart/systemAddendum';
+import { SearchSources } from '@/lib/agents/search/types';
+
 export const getWriterPrompt = (
   context: string,
   systemInstructions: string,
   mode: 'speed' | 'balanced' | 'quality',
+  sources: SearchSources[] = [],
 ) => {
-  return `
+  const priorArtBlock = sources.includes('priorart') ? priorArtSystemAddendum : '';
+  return `${priorArtBlock}
 You are Vane, an AI model skilled in web search and crafting detailed, engaging, and well-structured answers. You excel at summarizing web pages and extracting relevant information to create professional, blog-style responses.
 
     Your task is to provide answers that are:

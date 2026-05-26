@@ -3,6 +3,10 @@ import fs from 'fs';
 import { Config, ConfigModelProvider, UIConfigSections } from './types';
 import { hashObj } from '../utils/hash';
 import { getModelProvidersUIConfigSection } from '../models/providers';
+import {
+  priorArtConfigDefaults,
+  priorArtConfigFields,
+} from '../agents/priorart/configSection';
 
 class ConfigManager {
   configPath: string = path.join(
@@ -19,6 +23,7 @@ class ConfigManager {
     search: {
       searxngURL: '',
     },
+    priorart: { ...priorArtConfigDefaults },
   };
   uiConfigSections: UIConfigSections = {
     preferences: [
@@ -114,6 +119,7 @@ class ConfigManager {
         env: 'SEARXNG_API_URL',
       },
     ],
+    priorart: priorArtConfigFields,
   };
 
   constructor() {
@@ -231,6 +237,21 @@ class ConfigManager {
       if (f.env && !this.currentConfig.search[f.key]) {
         this.currentConfig.search[f.key] =
           process.env[f.env] ?? f.default ?? '';
+      }
+    });
+
+    /* priorart section */
+    if (!this.currentConfig.priorart) {
+      this.currentConfig.priorart = { ...priorArtConfigDefaults };
+    }
+    this.uiConfigSections.priorart.forEach((f) => {
+      const current = this.currentConfig.priorart![f.key];
+      const fromEnv = f.env ? process.env[f.env] : undefined;
+      if (fromEnv !== undefined && fromEnv !== '') {
+        this.currentConfig.priorart![f.key] = fromEnv;
+      } else if (current === undefined || current === '') {
+        this.currentConfig.priorart![f.key] =
+          priorArtConfigDefaults[f.key] ?? (f as any).default ?? '';
       }
     });
 

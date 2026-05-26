@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   BookOpenText,
   Home,
+  Scale,
   Search,
   SquarePen,
   Settings,
@@ -48,6 +49,12 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
       href: '/library',
       active: segments.includes('library'),
       label: 'Library',
+    },
+    {
+      icon: Scale,
+      href: '/priorart',
+      active: segments.includes('priorart'),
+      label: 'Prior Art',
     },
   ];
 

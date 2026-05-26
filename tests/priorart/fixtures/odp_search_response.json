@@ -1,0 +1,24 @@
+{
+  "patentBag": [
+    {
+      "applicationNumberText": "16123456",
+      "inventionTitle": "Streaming vector embedding pipeline with merkle commitment",
+      "abstractText": "A system for computing streaming vector embeddings of incoming event records and producing a merkle root over the event fields.",
+      "filingDate": "2019-05-12",
+      "publicationDate": "2020-11-19",
+      "applicantBag": [{ "name": "Example Streaming Corp" }],
+      "inventorBag": [{ "name": "Jane Doe" }],
+      "cpcClassificationBag": [{ "symbol": "G06F16/00" }]
+    },
+    {
+      "applicationNumberText": "17234567",
+      "inventionTitle": "Subscriber interest matching using hybrid dense and sparse signals",
+      "abstractText": "Method for matching incoming events to subscriber profiles using both dense semantic embeddings and sparse Boolean trees.",
+      "filingDate": "2020-08-03",
+      "publicationDate": "2022-02-10",
+      "applicantBag": [{ "name": "Hybrid Match Inc" }],
+      "inventorBag": [{ "name": "Alex Wong" }],
+      "cpcClassificationBag": [{ "symbol": "G06F16/30" }]
+    }
+  ]
+}

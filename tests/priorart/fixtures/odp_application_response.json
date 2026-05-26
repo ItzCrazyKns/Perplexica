@@ -1,0 +1,10 @@
+{
+  "applicationNumberText": "16123456",
+  "inventionTitle": "Streaming vector embedding pipeline with merkle commitment",
+  "abstractText": "A system for computing streaming vector embeddings.",
+  "filingDate": "2019-05-12",
+  "publicationDate": "2020-11-19",
+  "applicantBag": [{ "name": "Example Streaming Corp" }],
+  "inventorBag": [{ "name": "Jane Doe" }],
+  "cpcClassificationBag": [{ "symbol": "G06F16/00" }]
+}

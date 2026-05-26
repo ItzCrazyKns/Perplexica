@@ -24,6 +24,8 @@ Want to know more about its architecture and how it works? You can read it [here
 
 🧩 **Widgets** - Helpful UI cards that show up when relevant, like weather, calculations, stock prices, and other quick lookups.
 
+⚖️ **Prior Art Mode** — Switchyard feature clearance. Pulls from USPTO ODP + Google Patents BigQuery, applies a §102 strict-before date guard, verifies LLM-emitted citations, and renders a clearance memo skeleton. **Research artifact, not legal opinion.** See [docs/priorart.md](docs/priorart.md).
+
 🔍 **Web search powered by SearxNG** - Access multiple search engines while keeping your identity private. Support for Tavily and Exa coming soon for even better results.
 
 📷 **Image and video search** - Find visual content alongside text results. Search isn't limited to just articles anymore.

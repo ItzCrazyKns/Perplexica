@@ -16,12 +16,19 @@ const nextConfig = {
     'playwright',
     'officeparser',
     'file-type',
+    'sqlite-vec',
+    'better-sqlite3',
+    '@google-cloud/bigquery',
   ],
   outputFileTracingIncludes: {
     '/api/**': [
       './node_modules/@napi-rs/canvas/**',
       './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
       './node_modules/@napi-rs/canvas-linux-x64-musl/**',
+      './node_modules/sqlite-vec/**',
+      './node_modules/sqlite-vec-linux-arm64/**',
+      './node_modules/sqlite-vec-linux-x64/**',
+      './node_modules/sqlite-vec-darwin-arm64/**',
     ],
   },
   env: {

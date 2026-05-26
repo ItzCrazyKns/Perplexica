@@ -1,0 +1,89 @@
+use_default_settings:
+  engines:
+    remove:
+      - ahmia
+      - torch
+      - wikidata
+      - braveapi
+      - brave
+      - brave.images
+      - brave.videos
+      - brave.news
+      - karmasearch
+      - karmasearch images
+      - karmasearch videos
+      - karmasearch news
+      - qwant
+      - qwant news
+      - qwant images
+      - qwant videos
+
+general:
+  instance_name: 'searxng'
+
+search:
+  autocomplete: 'google'
+  formats:
+    - html
+    - json
+
+server:
+  secret_key: 'a2fb23f1b02e6ee83875b09826990de0f6bd908b6638e8c10277d415f6ab852b' # Is overwritten by ${SEARXNG_SECRET}
+  limiter: false
+  public_instance: false
+
+engines:
+  - name: wolframalpha
+    disabled: false
+
+  # Mojeek: opt-in via !moj shortcut — rate-limits with 180s suspensions when enabled globally
+  - name: mojeek
+    disabled: true       # !moj
+
+  # specialty engines: invoke explicitly via shortcut to keep general searches fast.
+  # Vane's "Academic" source selector auto-routes to crossref/openalex/arxiv when needed.
+  - name: marginalia
+    disabled: true       # !margin — long-tail, non-SEO
+  - name: yandex
+    disabled: true       # !ya — Russian/CIS coverage
+  - name: crossref
+    disabled: true       # !cr — academic
+  - name: openalex
+    disabled: true       # !openalex — academic
+  - name: github code
+    disabled: true       # !github code — code search
+
+  # USGS-operated Earth-science / minerals catalog. Slow (~10s typical),
+  # disabled by default to keep general searches fast — invoke explicitly via !sb shortcut.
+  - name: sciencebase
+    engine: json_engine
+    shortcut: sb
+    timeout: 20
+    categories: [science]
+    paging: true
+    search_url: https://www.sciencebase.gov/catalog/items?format=json&q={query}&offset={pageno}
+    results_query: items
+    url_query: link/url
+    title_query: title
+    content_query: summary
+    disabled: true
+    request_headers:
+      User-Agent: "Vane-Local-Search local@localhost"
+
+  # SEC EDGAR full-text filings search. Opt-in via !edgar shortcut.
+  # URLs from this engine are raw _id strings, not clickable Archives URLs.
+  # Workable as a discovery tool. Python engine subclass deferred.
+  - name: sec edgar
+    engine: json_engine
+    shortcut: edgar
+    timeout: 10
+    categories: [science]
+    paging: false
+    search_url: https://efts.sec.gov/LATEST/search-index?q={query}&count=50
+    results_query: hits/hits
+    url_query: _id
+    title_query: _source/display_names/0
+    content_query: _source/form
+    disabled: true
+    request_headers:
+      User-Agent: "Vane-Local-Search local@localhost"

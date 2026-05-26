@@ -5,8 +5,16 @@ services:
       context: .
     ports:
       - '3000:3000'
+      - '8081:8080'
     volumes:
       - data:/home/vane/data
+      - ./searxng-overrides/settings.yml:/etc/searxng/settings.yml:ro
+      - ${HOME}/.config/gcloud:/home/vane/.config/gcloud:ro
+    environment:
+      - USPTO_ODP_API_KEY=${USPTO_ODP_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID:-}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-}
     restart: unless-stopped
 
 volumes:

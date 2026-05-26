@@ -8,9 +8,17 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
-    "format:write": "prettier . --write"
+    "format:write": "prettier . --write",
+    "priorart": "tsx scripts/priorart-cli.ts",
+    "priorart:clear": "tsx scripts/priorart-cli.ts clear",
+    "priorart:landscape": "tsx scripts/priorart-cli.ts landscape",
+    "priorart:search": "tsx scripts/priorart-cli.ts search",
+    "priorart:fetch": "tsx scripts/priorart-cli.ts fetch",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
+    "@google-cloud/bigquery": "^8.3.1",
     "@google/genai": "^1.34.0",
     "@headlessui/react": "^2.2.0",
     "@headlessui/tailwindcss": "^0.2.2",
@@ -40,6 +48,7 @@
     "officeparser": "^6.0.7",
     "ollama": "^0.6.3",
     "openai": "^6.9.0",
+    "p-retry": "^8.0.0",
     "partial-json": "^0.1.7",
     "pdf-parse": "^2.4.5",
     "playwright": "^1.59.1",
@@ -50,6 +59,7 @@
     "react-textarea-autosize": "^8.5.3",
     "rfc6902": "^5.1.2",
     "sonner": "^1.4.41",
+    "sqlite-vec": "^0.1.9",
     "tailwind-merge": "^2.2.2",
     "yahoo-finance2": "^3.10.2",
     "yet-another-react-lightbox": "^3.17.2",
@@ -65,14 +75,18 @@
     "@types/react-dom": "^18",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/turndown": "^5.0.6",
+    "@vitest/coverage-v8": "^4.1.7",
     "autoprefixer": "^10.0.1",
     "drizzle-kit": "^0.18.1",
     "eslint": "^8",
     "eslint-config-next": "^16.2.2",
+    "msw": "^2.14.6",
     "postcss": "^8",
     "prettier": "^3.2.5",
     "tailwindcss": "^3.3.0",
-    "typescript": "^5.9.3"
+    "tsx": "^4.22.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.7"
   },
   "optionalDependencies": {
     "@napi-rs/canvas": "^0.1.87"

@@ -36,3 +36,27 @@ export const chats = sqliteTable('chats', {
     .$type<DBFile[]>()
     .default(sql`'[]'`),
 });
+
+export const priorartWorkspaces = sqliteTable('priorart_workspaces', {
+  id: text('id').primaryKey(),
+  featureId: text('featureId').notNull(),
+  title: text('title').notNull(),
+  priorityDate: text('priorityDate').notNull(),
+  claimText: text('claimText'),
+  status: text({ enum: ['running', 'completed', 'error'] }).default('running'),
+  createdAt: text('createdAt').notNull(),
+  markdownPath: text('markdownPath'),
+  jsonPath: text('jsonPath'),
+  claimChartPath: text('claimChartPath'),
+  warnings: text('warnings', { mode: 'json' }).$type<string[]>().default(sql`'[]'`),
+});
+
+export const priorartDocuments = sqliteTable('priorart_documents', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  workspaceId: text('workspaceId').notNull(),
+  publicationNumber: text('publicationNumber').notNull(),
+  title: text('title'),
+  source: text({ enum: ['uspto_odp', 'bigquery_patents'] }).notNull(),
+  fusedScore: text('fusedScore'),
+  json: text('json', { mode: 'json' }).$type<Record<string, unknown>>(),
+});
