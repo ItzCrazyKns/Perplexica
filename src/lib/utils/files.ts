@@ -2,10 +2,11 @@ import path from 'path';
 import fs from 'fs';
 
 export const getFileDetails = (fileId: string) => {
+  const safeFileId = path.basename(fileId);
   const fileLoc = path.join(
     process.cwd(),
     './uploads',
-    fileId + '-extracted.json',
+    safeFileId + '-extracted.json',
   );
 
   const parsedFile = JSON.parse(fs.readFileSync(fileLoc, 'utf8'));
