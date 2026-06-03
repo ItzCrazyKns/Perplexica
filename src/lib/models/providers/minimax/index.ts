@@ -12,9 +12,9 @@ interface MiniMaxConfig {
 }
 
 const DEFAULT_CHAT_MODELS: Model[] = [
+  { key: 'MiniMax-M3', name: 'MiniMax M3' },
   { key: 'MiniMax-M2.7', name: 'MiniMax M2.7' },
-  { key: 'MiniMax-M2.5', name: 'MiniMax M2.5' },
-  { key: 'MiniMax-M2.5-highspeed', name: 'MiniMax M2.5 High Speed' },
+  { key: 'MiniMax-M2.7-highspeed', name: 'MiniMax M2.7 High Speed' },
 ];
 
 const providerConfigFields: UIConfigField[] = [
