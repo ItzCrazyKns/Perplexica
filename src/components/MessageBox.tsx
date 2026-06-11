@@ -1,7 +1,7 @@
 'use client';
 
 /* eslint-disable @next/next/no-img-element */
-import React, { MutableRefObject } from 'react';
+import React, { MutableRefObject, useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import {
   BookCopy,
@@ -26,6 +26,44 @@ import AssistantSteps from './AssistantSteps';
 import { ResearchBlock } from '@/lib/types';
 import Renderer from './Widgets/Renderer';
 import CodeBlock from './MessageRenderer/CodeBlock';
+
+
+const BrainstormingStatus = () => {
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      setElapsed(Math.floor((Date.now() - startedAt) / 1000));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const phase =
+    elapsed < 8
+      ? 'Preparing models and classifying your question...'
+      : elapsed < 20
+        ? 'Planning research steps. If web search is enabled, Vane may be waiting for SearXNG or the model API.'
+        : elapsed < 45
+          ? 'Still working. Long waits usually mean the model API, embedding model download, or SearXNG is slow.'
+          : 'This is taking unusually long. Check terminal logs, OpenRouter key, and SearXNG URL.';
+
+  return (
+    <div className="flex flex-col gap-2 p-3 rounded-lg bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200">
+      <div className="flex items-center gap-2">
+        <Disc3 className="w-4 h-4 text-black dark:text-white animate-spin" />
+        <span className="text-sm font-medium text-black dark:text-white">
+          Brainstorming... {elapsed}s
+        </span>
+      </div>
+      <p className="text-xs text-black/60 dark:text-white/60">{phase}</p>
+      <p className="text-[11px] text-black/45 dark:text-white/45">
+        Once research starts, the Research Progress panel will show active queries and sources being read.
+      </p>
+    </div>
+  );
+};
 
 const ThinkTagProcessor = ({
   children,
@@ -149,12 +187,7 @@ const MessageBox = ({
             !section.message.responseBlocks.some(
               (b) => b.type === 'research' && b.data.subSteps.length > 0,
             ) && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200">
-                <Disc3 className="w-4 h-4 text-black dark:text-white animate-spin" />
-                <span className="text-sm text-black/70 dark:text-white/70">
-                  Brainstorming...
-                </span>
-              </div>
+<BrainstormingStatus />
             )}
 
           {section.widgets.length > 0 && <Renderer widgets={section.widgets} />}
