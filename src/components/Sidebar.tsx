@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   BookOpenText,
   Home,
+  LayoutGrid,
   Search,
   SquarePen,
   Settings,
@@ -36,6 +37,12 @@ const Sidebar = ({ children }: { children: React.ReactNode }) => {
       href: '/',
       active: segments.length === 0 || segments.includes('c'),
       label: 'Home',
+    },
+    {
+      icon: LayoutGrid,
+      href: '/spaces',
+      active: segments.includes('spaces'),
+      label: 'Spaces',
     },
     {
       icon: Search,

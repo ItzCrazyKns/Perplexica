@@ -7,7 +7,7 @@ import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
 import db from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { chats } from '@/lib/db/schema';
+import { chats, spaces } from '@/lib/db/schema';
 import UploadManager from '@/lib/uploads/manager';
 
 export const runtime = 'nodejs';
@@ -45,6 +45,7 @@ const bodySchema = z.object({
   chatModel: chatModelSchema,
   embeddingModel: embeddingModelSchema,
   systemInstructions: z.string().nullable().optional().default(''),
+  spaceId: z.string().nullable().optional().default(null),
 });
 
 type Body = z.infer<typeof bodySchema>;
@@ -73,6 +74,7 @@ const ensureChatExists = async (input: {
   sources: SearchSources[];
   query: string;
   fileIds: string[];
+  spaceId?: string | null;
 }) => {
   try {
     const exists = await db.query.chats
@@ -87,6 +89,7 @@ const ensureChatExists = async (input: {
         createdAt: new Date().toISOString(),
         sources: input.sources,
         title: input.query,
+        spaceId: input.spaceId ?? null,
         files: input.fileIds.map((id) => {
           return {
             fileId: id,
@@ -210,6 +213,43 @@ export const POST = async (req: Request) => {
       }
     });
 
+    let resolvedInstructions = body.systemInstructions || 'None';
+    let resolvedSources: SearchSources[] = body.sources as SearchSources[];
+    let resolvedFileIds: string[] = [...body.files];
+
+    if (body.spaceId) {
+      try {
+        const space = await db.query.spaces.findFirst({
+          where: eq(spaces.id, body.spaceId),
+        });
+        if (space) {
+          if (space.instructions) {
+            const globalPart =
+              space.useGlobalInstructions && resolvedInstructions !== 'None'
+                ? resolvedInstructions + '\n\n'
+                : '';
+            resolvedInstructions = `${globalPart}[Space: ${space.name}]\n${space.instructions}`;
+          }
+
+          const scope = space.defaultSourceScope;
+          const spaceFileIds = [
+            ...(space.files ?? []).map((f) => f.fileId),
+            ...(space.webSources ?? [])
+              .filter((s) => s.status === 'ready' && s.fileId)
+              .map((s) => s.fileId as string),
+          ];
+
+          if (scope === 'space') {
+            resolvedFileIds = [...resolvedFileIds, ...spaceFileIds];
+          } else if (scope === 'both') {
+            resolvedFileIds = [...resolvedFileIds, ...spaceFileIds];
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load space data:', err);
+      }
+    }
+
     agent.searchAsync(session, {
       chatHistory: history,
       followUp: message.content,
@@ -218,10 +258,10 @@ export const POST = async (req: Request) => {
       config: {
         llm,
         embedding: embedding,
-        sources: body.sources as SearchSources[],
+        sources: resolvedSources,
         mode: body.optimizationMode,
-        fileIds: body.files,
-        systemInstructions: body.systemInstructions || 'None',
+        fileIds: resolvedFileIds,
+        systemInstructions: resolvedInstructions,
       },
     });
 
@@ -230,6 +270,7 @@ export const POST = async (req: Request) => {
       sources: body.sources as SearchSources[],
       fileIds: body.files,
       query: body.message.content,
+      spaceId: body.spaceId,
     });
 
     req.signal.addEventListener('abort', () => {

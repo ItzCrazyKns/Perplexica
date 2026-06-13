@@ -3,6 +3,7 @@ import { Message } from './ChatWindow';
 import { useEffect, useState, Fragment } from 'react';
 import { formatTimeDifference } from '@/lib/utils';
 import DeleteChat from './DeleteChat';
+import MoveToSpace from './MoveToSpace';
 import {
   Popover,
   PopoverButton,
@@ -10,7 +11,7 @@ import {
   Transition,
 } from '@headlessui/react';
 import jsPDF from 'jspdf';
-import { useChat, Section } from '@/lib/hooks/useChat';
+import { useChat, Section, SpaceSummary } from '@/lib/hooks/useChat';
 import { SourceBlock } from '@/lib/types';
 
 const downloadFile = (filename: string, content: string, type: string) => {
@@ -196,11 +197,19 @@ const exportAsPDF = (sections: Section[], title: string) => {
   doc.save(`${title || 'chat'}.pdf`);
 };
 
+const SpaceIconMini = ({ icon }: { icon: SpaceSummary['icon'] }) => {
+  if (!icon) return <div className="w-4 h-4 rounded bg-indigo-500/30" />;
+  if (icon.type === 'emoji') {
+    return <span className="text-sm leading-none">{icon.value}</span>;
+  }
+  return <div className="w-4 h-4 rounded" style={{ backgroundColor: icon.value }} />;
+};
+
 const Navbar = () => {
   const [title, setTitle] = useState<string>('');
   const [timeAgo, setTimeAgo] = useState<string>('');
 
-  const { sections, chatId } = useChat();
+  const { sections, chatId, spaceId, spaceInfo, setSpaceId, setSpaceInfo } = useChat();
 
   useEffect(() => {
     if (sections.length > 0 && sections[0].message) {
@@ -250,13 +259,32 @@ const Navbar = () => {
             </div>
           </div>
 
-          <div className="flex-1 mx-4 min-w-0">
+          <div className="flex-1 mx-4 min-w-0 flex flex-col items-center gap-1.5">
             <h1 className="text-center text-sm font-medium text-black/80 dark:text-white/90 truncate">
               {title || 'New Conversation'}
             </h1>
+            {spaceInfo && (
+              <a
+                href={`/spaces/${spaceInfo.id}`}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200 text-xs text-black/60 dark:text-white/60 hover:text-[#24A0ED] transition-colors duration-150"
+              >
+                <SpaceIconMini icon={spaceInfo.icon} />
+                <span className="truncate max-w-[120px]">{spaceInfo.name}</span>
+              </a>
+            )}
           </div>
 
           <div className="flex items-center gap-1 min-w-0">
+            {chatId && (
+              <MoveToSpace
+                chatId={chatId}
+                currentSpaceId={spaceId}
+                onMoved={(newSpaceId, newSpaceInfo) => {
+                  setSpaceId(newSpaceId);
+                  setSpaceInfo(newSpaceInfo);
+                }}
+              />
+            )}
             <Popover className="relative">
               <PopoverButton className="p-2 rounded-lg hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200">
                 <Share size={16} className="text-black/60 dark:text-white/60" />

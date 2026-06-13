@@ -18,9 +18,24 @@ export const messages = sqliteTable('messages', {
   ),
 });
 
-interface DBFile {
+export interface DBFile {
   name: string;
   fileId: string;
+}
+
+export interface SpaceIcon {
+  type: 'emoji' | 'color';
+  value: string;
+}
+
+export interface SpaceWebSource {
+  id: string;
+  url: string;
+  title: string;
+  fileId: string | null;
+  status: 'pending' | 'ready' | 'failed';
+  error: string | null;
+  addedAt: string;
 }
 
 export const chats = sqliteTable('chats', {
@@ -35,4 +50,31 @@ export const chats = sqliteTable('chats', {
   files: text('files', { mode: 'json' })
     .$type<DBFile[]>()
     .default(sql`'[]'`),
+  spaceId: text('spaceId'),
+});
+
+export const spaces = sqliteTable('spaces', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull().unique(),
+  description: text('description'),
+  instructions: text('instructions'),
+  icon: text('icon', { mode: 'json' })
+    .$type<SpaceIcon>()
+    .default(sql`'{"type":"color","value":"#6366f1"}'`),
+  useGlobalInstructions: integer('useGlobalInstructions', { mode: 'boolean' })
+    .notNull()
+    .default(true),
+  defaultSourceScope: text('defaultSourceScope', {
+    enum: ['space', 'web', 'both'],
+  })
+    .notNull()
+    .default('both'),
+  files: text('files', { mode: 'json' })
+    .$type<DBFile[]>()
+    .default(sql`'[]'`),
+  webSources: text('webSources', { mode: 'json' })
+    .$type<SpaceWebSource[]>()
+    .default(sql`'[]'`),
+  createdAt: text('createdAt').notNull(),
+  updatedAt: text('updatedAt').notNull(),
 });

@@ -1,0 +1,17 @@
+{
+  "session": {
+    "id": null,
+    "activeWorkflow": null,
+    "suspendedWorkflows": [],
+    "status": "IDLE",
+    "startTime": null,
+    "activePersona": null,
+    "currentStep": 0,
+    "activeWorkflowPhase": 0
+  },
+  "context": {},
+  "tasks": [],
+  "terminals": {},
+  "chatAgents": {},
+  "teams": {}
+}

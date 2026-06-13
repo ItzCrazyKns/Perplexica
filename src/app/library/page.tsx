@@ -1,10 +1,17 @@
 'use client';
 
 import DeleteChat from '@/components/DeleteChat';
+import MoveToSpace from '@/components/MoveToSpace';
 import { formatTimeDifference } from '@/lib/utils';
 import { BookOpenText, ClockIcon, FileText, Globe2Icon } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+
+interface SpaceInfo {
+  id: string;
+  name: string;
+  icon: { type: 'emoji' | 'color'; value: string } | null;
+}
 
 export interface Chat {
   id: string;
@@ -12,6 +19,8 @@ export interface Chat {
   createdAt: string;
   sources: string[];
   files: { fileId: string; name: string }[];
+  spaceId: string | null;
+  space: SpaceInfo | null;
 }
 
 const Page = () => {
@@ -104,7 +113,7 @@ const Page = () => {
         </div>
       ) : (
         <div className="pt-6 pb-28 px-2">
-          <div className="rounded-2xl border border-light-200 dark:border-dark-200 overflow-hidden bg-light-primary dark:bg-dark-primary">
+          <div className="rounded-2xl border border-light-200 dark:border-dark-200 bg-light-primary dark:bg-dark-primary">
             {chats.map((chat, index) => {
               const sourcesLabel =
                 chat.sources.length === 0
@@ -136,7 +145,22 @@ const Page = () => {
                     >
                       {chat.title}
                     </Link>
-                    <div className="pt-0.5 shrink-0">
+                    <div className="flex items-center gap-1 pt-0.5 shrink-0">
+                      <MoveToSpace
+                        chatId={chat.id}
+                        currentSpaceId={chat.spaceId}
+                        popoverDirection="up"
+                        onMoved={(newSpaceId, spaceInfo) => {
+                          setChats((prev) =>
+                            prev.map((c) =>
+                              c.id === chat.id
+                                ? { ...c, spaceId: newSpaceId, space: spaceInfo }
+                                : c
+                            )
+                          );
+                        }}
+                        buttonClassName="p-1.5 rounded-lg hover:bg-light-secondary dark:hover:bg-dark-secondary transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                      />
                       <DeleteChat
                         chatId={chat.id}
                         chats={chats}
@@ -145,24 +169,41 @@ const Page = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 text-black/70 dark:text-white/70">
-                    <span className="inline-flex items-center gap-1 text-xs">
-                      <ClockIcon size={14} />
-                      {formatTimeDifference(new Date(), chat.createdAt)} Ago
-                    </span>
+                  <div className="flex items-center gap-2 text-black/70 dark:text-white/70">
+                    <div className="flex flex-wrap items-center gap-2 flex-1">
+                      <span className="inline-flex items-center gap-1 text-xs">
+                        <ClockIcon size={14} />
+                        {formatTimeDifference(new Date(), chat.createdAt)} Ago
+                      </span>
 
-                    {sourcesLabel && (
-                      <span className="inline-flex items-center gap-1 text-xs border border-black/20 dark:border-white/20 rounded-full px-2 py-0.5">
-                        <Globe2Icon size={14} />
-                        {sourcesLabel}
-                      </span>
-                    )}
-                    {chat.files.length > 0 && (
-                      <span className="inline-flex items-center gap-1 text-xs border border-black/20 dark:border-white/20 rounded-full px-2 py-0.5">
-                        <FileText size={14} />
-                        {chat.files.length}{' '}
-                        {chat.files.length === 1 ? 'file' : 'files'}
-                      </span>
+                      {sourcesLabel && (
+                        <span className="inline-flex items-center gap-1 text-xs border border-black/20 dark:border-white/20 rounded-full px-2 py-0.5">
+                          <Globe2Icon size={14} />
+                          {sourcesLabel}
+                        </span>
+                      )}
+                      {chat.files.length > 0 && (
+                        <span className="inline-flex items-center gap-1 text-xs border border-black/20 dark:border-white/20 rounded-full px-2 py-0.5">
+                          <FileText size={14} />
+                          {chat.files.length}{' '}
+                          {chat.files.length === 1 ? 'file' : 'files'}
+                        </span>
+                      )}
+                    </div>
+                    {chat.space && (
+                      <Link
+                        href={`/spaces/${chat.space.id}`}
+                        className="inline-flex items-center gap-1 text-xs border border-black/20 dark:border-white/20 rounded-full px-2 py-0.5 hover:text-[#24A0ED] transition-colors duration-150 shrink-0"
+                      >
+                        {chat.space.icon?.type === 'emoji' ? (
+                          <span className="text-sm leading-none">{chat.space.icon.value}</span>
+                        ) : chat.space.icon?.type === 'color' ? (
+                          <div className="w-3 h-3 rounded" style={{ backgroundColor: chat.space.icon.value }} />
+                        ) : (
+                          <div className="w-3 h-3 rounded bg-indigo-500/30" />
+                        )}
+                        {chat.space.name}
+                      </Link>
                     )}
                   </div>
                 </div>

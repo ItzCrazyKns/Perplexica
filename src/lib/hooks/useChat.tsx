@@ -28,6 +28,12 @@ export type Section = {
   suggestions?: string[];
 };
 
+export type SpaceSummary = {
+  id: string;
+  name: string;
+  icon: { type: 'emoji' | 'color'; value: string } | null;
+};
+
 type ChatContext = {
   messages: Message[];
   sections: Section[];
@@ -36,6 +42,8 @@ type ChatContext = {
   fileIds: string[];
   sources: string[];
   chatId: string | undefined;
+  spaceId: string | null;
+  spaceInfo: SpaceSummary | null;
   optimizationMode: string;
   isMessagesLoaded: boolean;
   loading: boolean;
@@ -51,6 +59,8 @@ type ChatContext = {
   setSources: (sources: string[]) => void;
   setFiles: (files: File[]) => void;
   setFileIds: (fileIds: string[]) => void;
+  setSpaceId: (spaceId: string | null) => void;
+  setSpaceInfo: (info: SpaceSummary | null) => void;
   sendMessage: (
     message: string,
     messageId?: string,
@@ -180,6 +190,8 @@ const loadMessages = async (
   setNotFound: (notFound: boolean) => void,
   setFiles: (files: File[]) => void,
   setFileIds: (fileIds: string[]) => void,
+  setSpaceId: (spaceId: string | null) => void,
+  setSpaceInfo: (info: SpaceSummary | null) => void,
 ) => {
   const res = await fetch(`/api/chats/${chatId}`, {
     method: 'GET',
@@ -235,12 +247,22 @@ const loadMessages = async (
 
   chatHistory.current = history;
   setSources(data.chat.sources);
+  if (data.chat.spaceId) {
+    setSpaceId(data.chat.spaceId);
+  }
+  if (data.space) {
+    setSpaceInfo(data.space);
+  } else {
+    setSpaceInfo(null);
+  }
   setIsMessagesLoaded(true);
 };
 
 export const chatContext = createContext<ChatContext>({
   chatHistory: [],
   chatId: '',
+  spaceId: null,
+  spaceInfo: null,
   fileIds: [],
   files: [],
   sources: [],
@@ -261,6 +283,8 @@ export const chatContext = createContext<ChatContext>({
   setFileIds: () => {},
   setFiles: () => {},
   setSources: () => {},
+  setSpaceId: () => {},
+  setSpaceInfo: () => {},
   setOptimizationMode: () => {},
   setChatModelProvider: () => {},
   setEmbeddingModelProvider: () => {},
@@ -272,8 +296,12 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
+  const spaceIdFromQuery = searchParams.get('space');
 
   const [chatId, setChatId] = useState<string | undefined>(params.chatId);
+  const [spaceId, setSpaceId] = useState<string | null>(spaceIdFromQuery);
+  const [spaceInfo, setSpaceInfo] = useState<SpaceSummary | null>(null);
+  const spaceIdRef = useRef<string | null>(spaceIdFromQuery);
   const [newChatCreated, setNewChatCreated] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -471,8 +499,48 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
+    spaceIdRef.current = spaceId;
+  }, [spaceId]);
+
+  useEffect(() => {
+    if (spaceIdFromQuery) {
+      setSpaceId(spaceIdFromQuery);
+    }
+  }, [spaceIdFromQuery]);
+
+  useEffect(() => {
+    if (!spaceId) {
+      setSpaceInfo(null);
+      return;
+    }
+    if (spaceInfo?.id === spaceId) return;
+    fetch(`/api/spaces/${spaceId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.space) {
+          setSpaceInfo({
+            id: data.space.id,
+            name: data.space.name,
+            icon: data.space.icon ?? null,
+          });
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spaceId]);
+
+  useEffect(() => {
     if (params.chatId && params.chatId !== chatId) {
       setChatId(params.chatId);
+      setMessages([]);
+      chatHistory.current = [];
+      setFiles([]);
+      setFileIds([]);
+      setIsMessagesLoaded(false);
+      setNotFound(false);
+      setNewChatCreated(false);
+    } else if (!params.chatId && messages.length > 0) {
+      setChatId(undefined);
       setMessages([]);
       chatHistory.current = [];
       setFiles([]);
@@ -499,6 +567,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         setNotFound,
         setFiles,
         setFileIds,
+        setSpaceId,
+        setSpaceInfo,
       );
     } else if (!chatId) {
       setNewChatCreated(true);
@@ -773,6 +843,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           providerId: embeddingModelProvider.providerId,
         },
         systemInstructions: localStorage.getItem('systemInstructions'),
+        spaceId: spaceIdRef.current,
       }),
     });
 
@@ -815,6 +886,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         fileIds,
         sources,
         chatId,
+        spaceId,
+        spaceInfo,
         hasError,
         isMessagesLoaded,
         isReady,
@@ -825,6 +898,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         setFileIds,
         setFiles,
         setSources,
+        setSpaceId,
+        setSpaceInfo,
         setOptimizationMode,
         rewrite,
         sendMessage,

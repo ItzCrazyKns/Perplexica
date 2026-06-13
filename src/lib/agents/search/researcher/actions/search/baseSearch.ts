@@ -70,6 +70,21 @@ export const executeSearch = async (input: {
             }),
           )
         ).filter((c) => c.metadata.similarity > 0.5);
+
+        if (resultChunks.length === 0) {
+          resultChunks = res.results.map((r) => {
+            const content = r.content || r.title;
+            return {
+              content,
+              metadata: {
+                title: r.title,
+                url: r.url,
+                similarity: 1,
+                embedding: [],
+              },
+            };
+          });
+        }
       } catch (err) {
         resultChunks = res.results.map((r) => {
           const content = r.content || r.title;

@@ -99,8 +99,8 @@ class SearchAgent {
       type: 'researchComplete',
     });
 
-    let finalContext =
-      '<Query to be answered without searching; Search not made>';
+    let finalContext = '';
+    let searchSkipped = false;
 
     if (searchResults) {
       finalContext = searchResults?.searchFindings
@@ -109,6 +109,10 @@ class SearchAgent {
             `<result index=${index + 1} title=${f.metadata.title}>${f.content}</result>`,
         )
         .join('\n');
+    } else {
+      searchSkipped = true;
+      finalContext =
+        '<no_search_results>Search was intentionally skipped because this query can be answered from general knowledge. Answer the question directly using your own knowledge. Citations are not required.</no_search_results>';
     }
 
     const widgetContext = widgetOutputs

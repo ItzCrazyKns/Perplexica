@@ -385,6 +385,12 @@ class ConfigManager {
   }
 }
 
-const configManager = new ConfigManager();
+const globalForConfig = globalThis as unknown as {
+  __configManager?: ConfigManager;
+};
+
+const configManager =
+  globalForConfig.__configManager ?? new ConfigManager();
+globalForConfig.__configManager = configManager;
 
 export default configManager;
