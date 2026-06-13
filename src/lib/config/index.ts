@@ -17,9 +17,9 @@ class ConfigManager {
     personalization: {},
     modelProviders: [],
     search: {
-      searchProvider: 'searxng',
+      searchProvider: '',
       searxngURL: '',
-      crwURL: 'https://fastcrw.com/api',
+      crwURL: '',
       crwApiKey: '',
     },
   };
