@@ -13,3 +13,11 @@ export const getConfiguredModelProviderById = (
 
 export const getSearxngURL = () =>
   configManager.getConfig('search.searxngURL', '');
+
+export const getCrwURL = () =>
+  configManager.getConfig('search.crwURL', 'https://fastcrw.com/api');
+
+export const getCrwApiKey = () => configManager.getConfig('search.crwApiKey', '');
+
+export const getSearchProvider = () =>
+  configManager.getConfig('search.searchProvider', 'searxng');
