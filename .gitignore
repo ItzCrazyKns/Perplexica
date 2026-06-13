@@ -39,3 +39,8 @@ db.sqlite
 /searxng
 
 certificates
+
+# Local tooling
+.switchboard/
+package-lock.json
+tsconfig.tsbuildinfo
