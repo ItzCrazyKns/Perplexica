@@ -18,7 +18,7 @@ permissions:
 jobs:
   quality:
     name: Quality gate
-    uses: DigitalBeer/ci-templates/.github/workflows/node-ci.yml@main
+    uses: DigitalBeer/ci-templates/.github/workflows/node-ci.yml@master
     with:
       node-version: '24'
       dockerfile: Dockerfile.slim
@@ -32,7 +32,7 @@ jobs:
     name: Publish image
     needs: quality
     if: github.event_name == 'push' && github.ref == 'refs/heads/feature/spaces'
-    uses: DigitalBeer/ci-templates/.github/workflows/docker-publish.yml@main
+    uses: DigitalBeer/ci-templates/.github/workflows/docker-publish.yml@master
     with:
       image-name: vane-spaces
       dockerfile: Dockerfile.slim
