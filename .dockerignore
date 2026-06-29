@@ -1,1 +1,40 @@
-**/node_modules
+# Dependencies
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# Build outputs
+.next/
+public/_next/
+
+# Data
+-data/
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Docs (but keep README and LICENSE)
+*.md
+!README.md
+!LICENSE

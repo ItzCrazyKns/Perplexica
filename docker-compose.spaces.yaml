@@ -1,0 +1,18 @@
+services:
+  vane-spaces:
+    image: vane-spaces:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.slim
+    container_name: vane-spaces
+    ports:
+      - '3001:3000'
+    volumes:
+      - data:/home/vane/data
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  data:
+    name: 'vane-spaces-data'

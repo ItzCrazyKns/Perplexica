@@ -1,0 +1,26 @@
+# Single Watchtower instance for the Unraid host. Set up ONCE — it covers every
+# project whose container carries the label:
+#     com.centurylinklabs.watchtower.enable=true
+#
+# Deploy:
+#     docker compose -f docker-compose.watchtower.yaml up -d
+#
+# Watchtower does a full pull → stop → recreate → start (equivalent to
+# `compose up -d`, NOT a bare `docker restart`), so updated images are actually
+# picked up.
+
+services:
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # If your GHCR packages are PRIVATE, `docker login ghcr.io` on the host
+      # first, then uncomment so Watchtower reuses those credentials:
+      # - /root/.docker/config.json:/config.json:ro
+    environment:
+      - WATCHTOWER_LABEL_ENABLE=true # only touch opted-in containers
+      - WATCHTOWER_CLEANUP=true # delete old images after updating
+      - WATCHTOWER_POLL_INTERVAL=300 # check every 5 minutes
+      - TZ=Europe/London
+    restart: unless-stopped

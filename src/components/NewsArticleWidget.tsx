@@ -40,7 +40,7 @@ const NewsArticleWidget = () => {
         <div className="w-full text-xs text-red-400">Could not load news.</div>
       ) : article ? (
         <a
-          href={`/?q=Summary: ${article.url}`}
+          href={`/?q=${encodeURIComponent(`Summarize this article: ${article.url}`)}&title=${encodeURIComponent(article.title)}`}
           className="flex flex-row items-stretch w-full h-full relative overflow-hidden group"
         >
           <div className="relative w-24 min-w-24 max-w-24 h-full overflow-hidden">

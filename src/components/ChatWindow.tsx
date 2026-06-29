@@ -18,8 +18,11 @@ export interface BaseMessage {
 export interface Message extends BaseMessage {
   backendId: string;
   query: string;
+  displayQuery?: string;
   responseBlocks: Block[];
   status: 'answering' | 'completed' | 'error';
+  responseStartedAt?: number;
+  completedAt?: number;
 }
 
 export interface File {

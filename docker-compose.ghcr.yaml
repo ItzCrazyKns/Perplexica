@@ -1,0 +1,29 @@
+# Unraid deployment for Vane-Spaces.
+#
+# Pulls the pre-built slim image from GHCR (built in GitHub Actions — never on
+# this host). Watchtower watches the labelled container and auto-pulls + recreates
+# it whenever a new :latest digest is published.
+#
+# First-time deploy on Unraid:
+#   mkdir -p /mnt/user/appdata/vane-spaces/data
+#   docker compose -f docker-compose.ghcr.yaml up -d
+#
+# If the GHCR package is private, run once on the host first:
+#   docker login ghcr.io -u <github-user> -p <PAT-with-read:packages>
+
+services:
+  vane-spaces:
+    image: ghcr.io/digitalbeer/vane-spaces:latest
+    container_name: vane-spaces
+    ports:
+      - '3000:3000'
+    volumes:
+      - /mnt/user/appdata/vane-spaces/data:/home/vane/data
+    environment:
+      # External SearxNG instance (slim image has no bundled SearxNG).
+      - SEARXNG_API_URL=http://192.168.1.250:1996
+      - TZ=Europe/London
+    labels:
+      # Opt this container in to the shared Watchtower instance.
+      - com.centurylinklabs.watchtower.enable=true
+    restart: unless-stopped

@@ -26,6 +26,7 @@ import AssistantSteps from './AssistantSteps';
 import { ResearchBlock } from '@/lib/types';
 import Renderer from './Widgets/Renderer';
 import CodeBlock from './MessageRenderer/CodeBlock';
+import { computeTokensPerSecond } from '@/lib/metrics';
 
 const ThinkTagProcessor = ({
   children,
@@ -72,6 +73,12 @@ const MessageBox = ({
 
   const hasContent = section.parsedTextBlocks.length > 0;
 
+  const tokensPerSecond = computeTokensPerSecond({
+    responseStartedAt: section.message.responseStartedAt,
+    completedAt: section.message.completedAt,
+    text: parsedMessage,
+  });
+
   const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
 
   const markdownOverrides: MarkdownToJSX.Options = {
@@ -107,7 +114,7 @@ const MessageBox = ({
     <div className="space-y-6">
       <div className={'w-full pt-8 break-words'}>
         <h2 className="text-black dark:text-white font-medium text-3xl lg:w-9/12">
-          {section.message.query}
+          {section.message.displayQuery || section.message.query}
         </h2>
       </div>
 
@@ -194,6 +201,11 @@ const MessageBox = ({
                         rewrite={rewrite}
                         messageId={section.message.messageId}
                       />
+                      {tokensPerSecond !== null && (
+                        <span className="text-xs text-black/40 dark:text-white/40">
+                          {tokensPerSecond.toFixed(1)} tok/s
+                        </span>
+                      )}
                     </div>
                     <div className="flex flex-row items-center -mr-2">
                       <Copy initialMessage={parsedMessage} section={section} />

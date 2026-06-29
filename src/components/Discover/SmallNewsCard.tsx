@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 const SmallNewsCard = ({ item }: { item: Discover }) => (
   <Link
-    href={`/?q=Summary: ${item.url}`}
+    href={`/?q=${encodeURIComponent(`Summarize this article: ${item.url}`)}&title=${encodeURIComponent(item.title)}`}
     className="rounded-3xl overflow-hidden bg-light-secondary dark:bg-dark-secondary shadow-sm shadow-light-200/10 dark:shadow-black/25 group flex flex-col"
     target="_blank"
   >

@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  vane:
+    image: itzcrazykns1337/vane:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vane
+    ports:
+      - '3000:3000'    # Vane web interface
+      - '8080:8080'    # SearxNG search engine
+    volumes:
+      # Persistent data for Vane (search history, uploads, etc.)
+      - /mnt/user/appdata/vane/data:/home/vane/data
+      # If you want to also persist SearxNG config (optional)
+      # - /mnt/user/appdata/vane/searxng:/etc/searxng
+    environment:
+      # Optional: Override SearxNG URL if using external SearxNG
+      # - SEARXNG_API_URL=http://your-searxng-ip:8080
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - vane_network
+
+networks:
+  vane_network:
+    driver: bridge

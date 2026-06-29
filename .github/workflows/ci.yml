@@ -1,0 +1,40 @@
+name: CI
+
+# Thin caller for the shared pipeline in DigitalBeer/ci-templates.
+# feature/spaces is this fork's release branch; master mirrors upstream.
+#  - On PRs to feature/spaces: run the quality gate (typecheck · tests · build · docker build, no push).
+#  - On push to feature/spaces (i.e. after auto-merge): re-run the gate, then build & push the image to GHCR.
+
+on:
+  pull_request:
+    branches: [feature/spaces]
+  push:
+    branches: [feature/spaces]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  quality:
+    name: Quality gate
+    uses: DigitalBeer/ci-templates/.github/workflows/node-ci.yml@main
+    with:
+      node-version: '24'
+      dockerfile: Dockerfile.slim
+      # `next lint` was removed in Next 16 and this project's ESLint config
+      # (eslint 8 vs eslint-config-next 16, which needs eslint 9) is broken.
+      # Gate on typecheck + tests + build until the lint toolchain is migrated.
+      run-lint: false
+    secrets: inherit
+
+  publish:
+    name: Publish image
+    needs: quality
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feature/spaces'
+    uses: DigitalBeer/ci-templates/.github/workflows/docker-publish.yml@main
+    with:
+      image-name: vane-spaces
+      dockerfile: Dockerfile.slim
+      platforms: linux/amd64
+    secrets: inherit

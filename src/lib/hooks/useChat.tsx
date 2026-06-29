@@ -11,7 +11,7 @@ import {
   useState,
 } from 'react';
 import crypto from 'crypto';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { getSuggestions } from '../actions';
 import { MinimalProvider } from '../models/types';
@@ -65,6 +65,7 @@ type ChatContext = {
     message: string,
     messageId?: string,
     rewrite?: boolean,
+    displayQuery?: string,
   ) => Promise<void>;
   rewrite: (messageId: string) => void;
   setChatModelProvider: (provider: ChatModelProvider) => void;
@@ -293,9 +294,11 @@ export const chatContext = createContext<ChatContext>({
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const params: { chatId: string } = useParams();
+  const router = useRouter();
 
   const searchParams = useSearchParams();
   const initialMessage = searchParams.get('q');
+  const initialDisplayTitle = searchParams.get('title');
   const spaceIdFromQuery = searchParams.get('space');
 
   const [chatId, setChatId] = useState<string | undefined>(params.chatId);
@@ -612,7 +615,12 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         toast.error('Cannot send message before the configuration is ready');
         return;
       }
-      sendMessage(initialMessage);
+      sendMessage(
+        initialMessage,
+        undefined,
+        false,
+        initialDisplayTitle ?? undefined,
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfigReady, isReady, initialMessage]);
@@ -653,6 +661,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
                 (b) => b.id === data.block.id,
               );
 
+              const responseStartedAt =
+                msg.responseStartedAt ??
+                (data.block.type === 'text' ? Date.now() : undefined);
+
               if (exists !== -1) {
                 const existingBlocks = [...msg.responseBlocks];
                 existingBlocks[exists] = data.block;
@@ -660,12 +672,14 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
                 return {
                   ...msg,
                   responseBlocks: existingBlocks,
+                  responseStartedAt,
                 };
               }
 
               return {
                 ...msg,
                 responseBlocks: [...msg.responseBlocks, data.block],
+                responseStartedAt,
               };
             }
             return msg;
@@ -705,6 +719,14 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         handledMessageEndRef.current.add(messageId);
+
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.messageId === messageId
+              ? { ...msg, completedAt: Date.now() }
+              : msg,
+          ),
+        );
 
         const currentMsg = messagesRef.current.find(
           (msg) => msg.messageId === messageId,
@@ -785,6 +807,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     message,
     messageId,
     rewrite = false,
+    displayQuery,
   ) => {
     if (loading || !message) return;
     setLoading(true);
@@ -792,7 +815,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     setMessageAppeared(false);
 
     if (messages.length <= 1) {
-      window.history.replaceState(null, '', `/c/${chatId}`);
+      router.replace(`/c/${chatId}`, { scroll: false });
     }
 
     messageId = messageId ?? crypto.randomBytes(7).toString('hex');
@@ -803,6 +826,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       chatId: chatId!,
       backendId,
       query: message,
+      displayQuery,
       responseBlocks: [],
       status: 'answering',
       createdAt: new Date(),
