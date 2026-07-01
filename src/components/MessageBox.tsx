@@ -1,7 +1,7 @@
 'use client';
 
 /* eslint-disable @next/next/no-img-element */
-import React, { MutableRefObject } from 'react';
+import React, { MutableRefObject, useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import {
   BookCopy,
@@ -11,6 +11,9 @@ import {
   Layers3,
   Plus,
   CornerDownRight,
+  Pencil,
+  Send,
+  X,
 } from 'lucide-react';
 import Markdown, { MarkdownToJSX, RuleType } from 'markdown-to-jsx';
 import Copy from './MessageActions/Copy';
@@ -79,6 +82,20 @@ const MessageBox = ({
     text: parsedMessage,
   });
 
+  const [editingQuery, setEditingQuery] = useState(false);
+  const [editQueryValue, setEditQueryValue] = useState('');
+  const editTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (editingQuery && editTextareaRef.current) {
+      editTextareaRef.current.focus();
+      editTextareaRef.current.setSelectionRange(
+        editTextareaRef.current.value.length,
+        editTextareaRef.current.value.length,
+      );
+    }
+  }, [editingQuery]);
+
   const { speechStatus, start, stop } = useSpeech({ text: speechMessage });
 
   const markdownOverrides: MarkdownToJSX.Options = {
@@ -107,15 +124,88 @@ const MessageBox = ({
       citation: {
         component: Citation,
       },
+      invoke: { component: () => null },
+      parameter: { component: () => null },
+      function_calls: { component: () => null },
     },
   };
 
   return (
     <div className="space-y-6">
-      <div className={'w-full pt-8 break-words'}>
-        <h2 className="text-black dark:text-white font-medium text-3xl lg:w-9/12">
-          {section.message.displayQuery || section.message.query}
-        </h2>
+      <div
+        className={cn(
+          'w-full break-words',
+          sectionIndex === 0
+            ? 'pt-8'
+            : 'pt-4 pb-4 px-5 rounded-xl bg-light-secondary dark:bg-dark-secondary border-l-4 border-t-2 border-[#24A0ED]',
+        )}
+      >
+        {editingQuery ? (
+          <div className="flex flex-col gap-2 lg:w-9/12">
+            <textarea
+              ref={editTextareaRef}
+              value={editQueryValue}
+              onChange={(e) => setEditQueryValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  if (editQueryValue.trim()) {
+                    setEditingQuery(false);
+                    rewrite(section.message.messageId, editQueryValue.trim());
+                  }
+                }
+                if (e.key === 'Escape') {
+                  setEditingQuery(false);
+                }
+              }}
+              rows={3}
+              className="w-full rounded-lg bg-light-primary dark:bg-dark-primary border border-light-200 dark:border-dark-200 px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[#24A0ED] resize-none text-black dark:text-white"
+            />
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setEditingQuery(false)}
+                className="p-1.5 rounded-lg text-black/50 dark:text-white/50 hover:bg-light-primary dark:hover:bg-dark-primary transition"
+              >
+                <X size={16} />
+              </button>
+              <button
+                onClick={() => {
+                  if (editQueryValue.trim()) {
+                    setEditingQuery(false);
+                    rewrite(section.message.messageId, editQueryValue.trim());
+                  }
+                }}
+                disabled={!editQueryValue.trim()}
+                className="p-1.5 rounded-lg text-[#24A0ED] hover:bg-[#24A0ED]/10 disabled:opacity-30 transition"
+              >
+                <Send size={16} />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2 group">
+            <h2
+              className={cn(
+                'text-black dark:text-white font-medium lg:w-9/12 flex-1',
+                sectionIndex === 0 ? 'text-3xl' : 'text-xl',
+              )}
+            >
+              {section.message.displayQuery || section.message.query}
+            </h2>
+            {!loading && (
+              <button
+                onClick={() => {
+                  setEditQueryValue(section.message.query);
+                  setEditingQuery(true);
+                }}
+                title="Edit and resubmit"
+                className="mt-1 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white hover:bg-light-primary dark:hover:bg-dark-primary transition"
+              >
+                <Pencil size={14} />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col space-y-9 lg:space-y-0 lg:flex-row lg:justify-between lg:space-x-9">
@@ -202,7 +292,7 @@ const MessageBox = ({
                         messageId={section.message.messageId}
                       />
                       {tokensPerSecond !== null && (
-                        <span className="text-xs text-black/40 dark:text-white/40">
+                        <span className="text-xs text-black/60 dark:text-white/60 ml-1">
                           {tokensPerSecond.toFixed(1)} tok/s
                         </span>
                       )}

@@ -11,16 +11,19 @@
 
 services:
   watchtower:
-    image: containrrr/watchtower:latest
+    # containrrr/watchtower is archived/abandoned and ships a Docker client too
+    # old for current daemons ("client version 1.25 is too old"). Use the
+    # actively maintained continuation instead.
+    image: ghcr.io/nicholas-fedor/watchtower:latest
     container_name: watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      # If your GHCR packages are PRIVATE, `docker login ghcr.io` on the host
-      # first, then uncomment so Watchtower reuses those credentials:
-      # - /root/.docker/config.json:/config.json:ro
+      # GHCR packages here are private, so Watchtower needs the same
+      # credentials used for `docker login ghcr.io` on this host:
+      - /root/.docker/config.json:/config.json:ro
     environment:
       - WATCHTOWER_LABEL_ENABLE=true # only touch opted-in containers
       - WATCHTOWER_CLEANUP=true # delete old images after updating
       - WATCHTOWER_POLL_INTERVAL=300 # check every 5 minutes
-      - TZ=Europe/London
+      - TZ=UTC
     restart: unless-stopped

@@ -195,7 +195,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   }
 
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
-    const response = await this.openAIClient.chat.completions.parse({
+    const params = {
       messages: this.convertToOpenAIMessages(input.messages),
       model: this.config.model,
       temperature:
@@ -210,13 +210,24 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
       response_format: zodResponseFormat(input.schema, 'object'),
-    });
+    };
 
-    if (response.choices && response.choices.length > 0) {
+    let content: string | null = null;
+
+    try {
+      const response = await this.openAIClient.chat.completions.parse(params);
+      content = response.choices?.[0]?.message?.content ?? null;
+    } catch {
+      // Fallback for OpenAI-compatible providers where .parse() is unsupported
+      const response = await this.openAIClient.chat.completions.create(params);
+      content = response.choices?.[0]?.message?.content ?? null;
+    }
+
+    if (content) {
       try {
         return input.schema.parse(
           JSON.parse(
-            repairJson(response.choices[0].message.content!, {
+            repairJson(content, {
               extractJson: true,
             }) as string,
           ),

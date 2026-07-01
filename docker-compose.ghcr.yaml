@@ -16,13 +16,14 @@ services:
     image: ghcr.io/digitalbeer/vane-spaces:latest
     container_name: vane-spaces
     ports:
-      - '3000:3000'
+      # Port 3000 is already used on this host by the upstream `vane` container.
+      - '3001:3000'
     volumes:
       - /mnt/user/appdata/vane-spaces/data:/home/vane/data
     environment:
       # External SearxNG instance (slim image has no bundled SearxNG).
       - SEARXNG_API_URL=http://192.168.1.250:1996
-      - TZ=Europe/London
+      - TZ=UTC
     labels:
       # Opt this container in to the shared Watchtower instance.
       - com.centurylinklabs.watchtower.enable=true
