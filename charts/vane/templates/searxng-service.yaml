@@ -1,0 +1,17 @@
+{{- if include "vane.searxng.deployed" . }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "vane.searxng.fullname" . }}
+  labels:
+    {{- include "vane.searxng.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.searxng.service.type }}
+  selector:
+    {{- include "vane.searxng.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.searxng.service.port }}
+      targetPort: http
+      protocol: TCP
+{{- end }}

@@ -39,3 +39,6 @@ coverage
 
 # Ignore all files in uploads directory
 uploads
+
+# Ignore Helm chart templates (Go templating conflicts with Prettier)
+charts/**/templates

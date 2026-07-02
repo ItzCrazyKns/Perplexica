@@ -45,8 +45,7 @@ Want to know more about its architecture and how it works? You can read it [here
 Vane's development is powered by the generous support of our sponsors. Their contributions help keep this project free, open-source, and accessible to everyone.
 
 <div align="center">
-  
-  
+
 <a href="https://www.warp.dev/perplexica">
   <img alt="Warp Terminal" src=".assets/sponsers/warp.png" width="100%">
 </a>
@@ -128,6 +127,23 @@ If you prefer to build from source or need more control:
 5. Access Vane at http://localhost:3000 and configure your settings in the setup screen.
 
 **Note**: After the containers are built, you can start Vane directly from Docker without having to open a terminal.
+
+### Kubernetes (Helm)
+
+A Helm chart is available in [`charts/vane`](charts/vane) to deploy Vane on Kubernetes. It supports both official images through a single `variant` switch:
+
+- `variant=full` (default) deploys `itzcrazykns1337/vane:latest` with the bundled SearxNG - no extra setup required.
+- `variant=slim` deploys `itzcrazykns1337/vane:slim-latest` and either deploys a SearxNG instance for you (`searxng.deploy=true`) or points at an existing one (`searxng.url`).
+
+```bash
+# Full image (Vane + bundled SearxNG)
+helm install vane ./charts/vane
+
+# Slim image with a chart-managed SearxNG
+helm install vane ./charts/vane --set variant=slim --set searxng.deploy=true
+```
+
+See the [chart README](charts/vane/README.md) for the full list of options (persistence, ingress, providers, etc.).
 
 ### Non-Docker Installation
 

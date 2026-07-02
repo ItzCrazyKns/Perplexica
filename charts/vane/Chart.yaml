@@ -1,0 +1,24 @@
+apiVersion: v2
+name: vane
+description: A privacy-focused AI answering engine that runs entirely on your own hardware
+type: application
+# Chart version. Bump on every change to the chart itself.
+version: 0.1.0
+# Version of Vane shipped by default. Matches the app version in package.json.
+appVersion: '1.12.2'
+home: https://github.com/ItzCrazyKns/Vane
+icon: https://raw.githubusercontent.com/ItzCrazyKns/Vane/master/public/icon-100.png
+sources:
+  - https://github.com/ItzCrazyKns/Vane
+keywords:
+  - ai
+  - search
+  - search-engine
+  - answering-engine
+  - llm
+  - rag
+  - searxng
+  - privacy
+maintainers:
+  - name: Vane contributors
+    url: https://github.com/ItzCrazyKns/Vane

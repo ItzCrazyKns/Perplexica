@@ -1,0 +1,200 @@
+# Default values for the Vane Helm chart.
+# This is a YAML-formatted file.
+# Declare variables to be passed into the templates.
+
+# -- Image variant to deploy.
+#   * "full" -> deploys `itzcrazykns1337/vane:latest`, which bundles a SearXNG
+#     instance inside the same container. Nothing else is required.
+#   * "slim" -> deploys `itzcrazykns1337/vane:slim-latest`, which does NOT ship
+#     SearXNG. You must either let this chart deploy SearXNG for you
+#     (`searxng.deploy=true`) or point it at an existing instance
+#     (`searxng.url`).
+variant: full
+
+image:
+  repository: itzcrazykns1337/vane
+  # -- Overrides the image tag. When empty the tag is derived from `variant`:
+  # "full" -> "latest", "slim" -> "slim-latest".
+  tag: ''
+  pullPolicy: IfNotPresent
+
+# -- Secrets used to pull the image from a private registry.
+imagePullSecrets: []
+
+# -- Override the chart name used in resource names.
+nameOverride: ''
+# -- Override the fully qualified app name used in resource names.
+fullnameOverride: ''
+
+# -- Number of Vane replicas. Vane stores its config and history in a local
+# SQLite database on a ReadWriteOnce volume, so running more than one replica
+# is not supported unless you supply a shared ReadWriteMany volume.
+replicaCount: 1
+
+# -- Deployment update strategy. Recommend `Recreate` with the default
+# ReadWriteOnce persistence so the old pod releases the volume first.
+updateStrategy:
+  type: Recreate
+
+vane:
+  # -- Extra environment variables passed to the Vane container as key/value
+  # pairs. Useful to pre-configure providers (e.g. OPENAI_API_KEY) or to set
+  # DATA_DIR. Search backend URL is wired automatically, see `searxng`.
+  env: {}
+  #  OPENAI_API_KEY: sk-...
+  #  ANTHROPIC_API_KEY: sk-ant-...
+
+  # -- Extra environment variables sourced from existing ConfigMaps/Secrets.
+  # Rendered verbatim under the container's `envFrom`.
+  envFrom: []
+  #  - secretRef:
+  #      name: vane-provider-keys
+
+searxng:
+  # -- (slim only) Deploy a SearXNG instance in the cluster and wire it to Vane
+  # automatically. Ignored when `variant=full` (SearXNG is bundled in the image).
+  deploy: true
+  # -- (slim only) URL of an external SearXNG instance. Used when
+  # `searxng.deploy=false`. Must have JSON format and the Wolfram Alpha engine
+  # enabled.
+  url: ''
+  image:
+    repository: searxng/searxng
+    tag: latest
+    pullPolicy: IfNotPresent
+  # -- Value for SearXNG's `server.secret_key`. Leave empty to auto-generate a
+  # stable key (reused across upgrades). Set explicitly to manage it yourself.
+  secretKey: ''
+  service:
+    type: ClusterIP
+    port: 8080
+  # -- Resource requests/limits for the SearXNG container.
+  resources: {}
+  # -- Pod-level security context for the SearXNG pod.
+  podSecurityContext: {}
+  # -- Container-level security context for the SearXNG container.
+  securityContext: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+serviceAccount:
+  # -- Whether to create a ServiceAccount for the Vane pod.
+  create: true
+  # -- Mount the API token into the pod. Vane does not talk to the Kubernetes
+  # API, so this is disabled by default.
+  automount: false
+  # -- Annotations to add to the ServiceAccount.
+  annotations: {}
+  # -- Name of the ServiceAccount. Generated from the fullname if empty.
+  name: ''
+
+# -- Additional annotations for the Vane pod.
+podAnnotations: {}
+# -- Additional labels for the Vane pod.
+podLabels: {}
+
+# -- Pod-level security context for the Vane pod. Note: the "full" image starts
+# SearXNG via sudo and therefore requires running as root, so do not force
+# runAsNonRoot when using `variant=full`.
+podSecurityContext: {}
+
+# -- Container-level security context for the Vane container.
+securityContext: {}
+
+service:
+  type: ClusterIP
+  # -- Service port that maps to Vane's HTTP port (container port 3000).
+  port: 3000
+
+ingress:
+  enabled: false
+  className: ''
+  annotations: {}
+  #  nginx.ingress.kubernetes.io/proxy-body-size: '100m'
+  hosts:
+    - host: vane.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: vane-tls
+  #    hosts:
+  #      - vane.local
+
+persistence:
+  # -- Persists Vane's config (`config.json`) and SQLite database
+  # (`db.sqlite`) at /home/vane/data.
+  data:
+    enabled: true
+    # -- Use an existing PersistentVolumeClaim instead of creating one.
+    existingClaim: ''
+    storageClass: ''
+    accessModes:
+      - ReadWriteOnce
+    size: 2Gi
+    annotations: {}
+  # -- Persists uploaded files at /home/vane/uploads.
+  uploads:
+    enabled: true
+    existingClaim: ''
+    storageClass: ''
+    accessModes:
+      - ReadWriteOnce
+    size: 5Gi
+    annotations: {}
+
+# -- Resource requests/limits for the Vane container.
+resources: {}
+#  limits:
+#    cpu: '1'
+#    memory: 2Gi
+#  requests:
+#    cpu: 500m
+#    memory: 1Gi
+
+# -- Liveness/readiness/startup probes. The startup probe is generous because
+# first boot runs database migrations (and, for the "full" image, starts the
+# bundled SearXNG).
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 6
+readinessProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+startupProbe:
+  httpGet:
+    path: /
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 5
+  failureThreshold: 60
+
+# -- Horizontal Pod Autoscaler. Not recommended with the default local SQLite
+# persistence (see `replicaCount`).
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: null
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# -- Extra volumes to add to the Vane pod.
+extraVolumes: []
+# -- Extra volume mounts to add to the Vane container.
+extraVolumeMounts: []
