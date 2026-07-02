@@ -1,0 +1,51 @@
+{{- if and .Values.persistence.data.enabled (not .Values.persistence.data.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "vane.fullname" . }}-data
+  labels:
+    {{- include "vane.labels" . | nindent 4 }}
+  {{- with .Values.persistence.data.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    {{- toYaml .Values.persistence.data.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.data.size | quote }}
+  {{- if .Values.persistence.data.storageClass }}
+  {{- if eq "-" .Values.persistence.data.storageClass }}
+  storageClassName: ''
+  {{- else }}
+  storageClassName: {{ .Values.persistence.data.storageClass | quote }}
+  {{- end }}
+  {{- end }}
+{{- end }}
+{{- if and .Values.persistence.uploads.enabled (not .Values.persistence.uploads.existingClaim) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "vane.fullname" . }}-uploads
+  labels:
+    {{- include "vane.labels" . | nindent 4 }}
+  {{- with .Values.persistence.uploads.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  accessModes:
+    {{- toYaml .Values.persistence.uploads.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.uploads.size | quote }}
+  {{- if .Values.persistence.uploads.storageClass }}
+  {{- if eq "-" .Values.persistence.uploads.storageClass }}
+  storageClassName: ''
+  {{- else }}
+  storageClassName: {{ .Values.persistence.uploads.storageClass | quote }}
+  {{- end }}
+  {{- end }}
+{{- end }}
