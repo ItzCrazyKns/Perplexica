@@ -12,10 +12,18 @@ console.log('mapYoucomResults');
 
 test('maps a standard result with title, url, snippet', () => {
   const out = mapYoucomResults([
-    { title: 'Rust', url: 'https://rust-lang.org', snippet: 'A language empowering everyone' },
+    {
+      title: 'Rust',
+      url: 'https://rust-lang.org',
+      snippet: 'A language empowering everyone',
+    },
   ]);
   assert.deepEqual(out, [
-    { title: 'Rust', url: 'https://rust-lang.org', content: 'A language empowering everyone' },
+    {
+      title: 'Rust',
+      url: 'https://rust-lang.org',
+      content: 'A language empowering everyone',
+    },
   ]);
 });
 

@@ -8,14 +8,11 @@ export interface MappedSearchResult {
   content: string;
 }
 
-export const mapYoucomResults = (
-  raw: unknown,
-): MappedSearchResult[] => {
+export const mapYoucomResults = (raw: unknown): MappedSearchResult[] => {
   if (!Array.isArray(raw)) return [];
   return (raw as Array<Record<string, unknown>>)
     .filter(
-      (r) =>
-        r && typeof r.url === 'string' && (r.url as string).length > 0,
+      (r) => r && typeof r.url === 'string' && (r.url as string).length > 0,
     )
     .map((r) => {
       const url = r.url as string;

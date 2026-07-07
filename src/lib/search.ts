@@ -7,10 +7,7 @@ export type { SearxngSearchOptions };
 // Config-driven dispatcher: routes to SearXNG (default) or You.com based on the
 // `search.provider` config value. Only the main web-search path uses this;
 // media/discover routes call `searchSearxng` directly (SearXNG engine-specific).
-export const searchWeb = async (
-  query: string,
-  opts?: SearxngSearchOptions,
-) => {
+export const searchWeb = async (query: string, opts?: SearxngSearchOptions) => {
   const provider = getSearchProvider();
 
   if (provider === 'youcom') {

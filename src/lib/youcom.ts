@@ -40,7 +40,9 @@ export const searchYoucom = async (
 
     const data = await res.json();
 
-    const results = mapYoucomResults(data.results ?? []) as SearxngSearchResult[];
+    const results = mapYoucomResults(
+      data.results ?? [],
+    ) as SearxngSearchResult[];
 
     return { results, suggestions: [] as string[] };
   } catch (err: any) {
