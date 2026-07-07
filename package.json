@@ -8,7 +8,8 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
-    "format:write": "prettier . --write"
+    "format:write": "prettier . --write",
+    "test": "node --experimental-strip-types src/lib/youcomMap.test.ts"
   },
   "dependencies": {
     "@google/genai": "^1.34.0",

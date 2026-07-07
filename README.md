@@ -105,6 +105,20 @@ docker run -d -p 3000:3000 -e SEARXNG_API_URL=http://your-searxng-url:8080 -v va
 
 Replace `http://your-searxng-url:8080` with your actual SearxNG URL. Then configure your AI provider settings in the setup screen at http://localhost:3000.
 
+#### Using You.com as the Search Provider
+
+Instead of running a SearXNG instance, you can use the [You.com Search API](https://you.com/) as the web search backend:
+
+```bash
+docker run -d -p 3000:3000 \
+  -e SEARCH_PROVIDER=youcom \
+  -e YDC_API_KEY=your-youcom-api-key \
+  -v vane-data:/home/vane/data \
+  --name vane itzcrazykns1337/vane:slim-latest
+```
+
+You can also set `SEARCH_PROVIDER=youcom` and `YDC_API_KEY` in the Settings → Search section of the setup screen. When the provider is set to `youcom`, the main web search uses the You.com Search API; image, video, and news discovery still use SearXNG (they rely on SearXNG's engine-specific capabilities).
+
 #### Advanced Setup (Building from Source)
 
 If you prefer to build from source or need more control:
