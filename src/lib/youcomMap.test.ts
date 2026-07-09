@@ -66,4 +66,18 @@ test('returns empty array for empty input', () => {
   assert.deepEqual(mapYoucomResults([]), []);
 });
 
+test('handles You.com snippets array', () => {
+  const out = mapYoucomResults([
+    {
+      title: 'Go',
+      url: 'https://go.dev',
+      snippets: ['Fast', 'Simple'],
+    },
+  ]);
+  assert.equal(out[0].title, 'Go');
+  assert.equal(out[0].url, 'https://go.dev');
+  // snippets is an array — mapper should fall through to description/content or empty
+  assert.equal(out[0].content, '');
+});
+
 console.log(`\n${passed} tests passed`);

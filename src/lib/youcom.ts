@@ -30,7 +30,7 @@ export const searchYoucom = async (
         'X-API-Key': apiKey,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ query, max_results: maxResults }),
+      body: JSON.stringify({ query, count: maxResults }),
       signal: controller.signal,
     });
 
@@ -40,9 +40,15 @@ export const searchYoucom = async (
 
     const data = await res.json();
 
-    const results = mapYoucomResults(
-      data.results ?? [],
-    ) as SearxngSearchResult[];
+    // You.com returns { results: { web: [...], news: [...] } } — flatten both arrays.
+    const r = data.results ?? {};
+    const flat = [...((r as any).web ?? []), ...((r as any).news ?? [])];
+    if (flat.length === 0 && Array.isArray(r)) {
+      // Fallback: some endpoints return a flat array directly.
+      flat.push(...(r as any[]));
+    }
+
+    const results = mapYoucomResults(flat) as SearxngSearchResult[];
 
     return { results, suggestions: [] as string[] };
   } catch (err: any) {
