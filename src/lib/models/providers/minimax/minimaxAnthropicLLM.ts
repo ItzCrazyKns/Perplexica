@@ -66,33 +66,48 @@ class MiniMaxAnthropicLLM extends BaseLLM<MiniMaxAnthropicConfig> {
       .map((message) => message.content)
       .join('\n\n');
 
-    const convertedMessages = messages.flatMap<MessageParam>((message) => {
+    const convertedMessages: MessageParam[] = [];
+
+    for (let index = 0; index < messages.length; index++) {
+      const message = messages[index];
+
       if (message.role === 'system') {
-        return [];
+        continue;
       }
 
       if (message.role === 'tool') {
-        return [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'tool_result',
-                tool_use_id: message.id,
-                content: message.content,
-              },
-            ],
-          },
-        ];
+        const content: ContentBlockParam[] = [];
+
+        while (index < messages.length && messages[index].role === 'tool') {
+          const toolMessage = messages[index];
+
+          if (toolMessage.role === 'tool') {
+            content.push({
+              type: 'tool_result',
+              tool_use_id: toolMessage.id,
+              content: toolMessage.content,
+            });
+          }
+
+          index++;
+        }
+
+        index--;
+        convertedMessages.push({ role: 'user', content });
+        continue;
       }
 
       if (message.role === 'assistant' && message.tool_calls?.length) {
-        const preservedContent = this.preservedContent.get(
-          message.tool_calls[0].id,
-        );
+        const preservedContent = message.tool_calls
+          .map((toolCall) => this.preservedContent.get(toolCall.id))
+          .find((content) => content !== undefined);
 
         if (preservedContent) {
-          return [{ role: 'assistant', content: preservedContent }];
+          convertedMessages.push({
+            role: 'assistant',
+            content: preservedContent,
+          });
+          continue;
         }
 
         const content: ContentBlockParam[] = [];
@@ -110,11 +125,15 @@ class MiniMaxAnthropicLLM extends BaseLLM<MiniMaxAnthropicConfig> {
           })),
         );
 
-        return [{ role: 'assistant', content }];
+        convertedMessages.push({ role: 'assistant', content });
+        continue;
       }
 
-      return [{ role: message.role, content: message.content }];
-    });
+      convertedMessages.push({
+        role: message.role,
+        content: message.content,
+      });
+    }
 
     return {
       messages: convertedMessages,

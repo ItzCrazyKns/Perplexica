@@ -20,7 +20,9 @@ class MiniMaxLLM extends OpenAILLM {
           return message;
         }
 
-        const content = this.preservedContent.get(message.tool_calls[0].id);
+        const content = message.tool_calls
+          .map((toolCall) => this.preservedContent.get(toolCall.id))
+          .find((preservedContent) => preservedContent !== undefined);
         return content ? { ...message, content } : message;
       }),
     };
