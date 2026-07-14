@@ -2,10 +2,9 @@ import assert from 'node:assert/strict';
 import { mapYoucomResults } from './youcomMap.ts';
 
 let passed = 0;
-const test = (name: string, fn: () => void) => {
-  fn();
-  passed++;
-  console.log(`  ✓ ${name}`);
+const tests: Array<[string, () => void | Promise<void>]> = [];
+const test = (name: string, fn: () => void | Promise<void>) => {
+  tests.push([name, fn]);
 };
 
 console.log('mapYoucomResults');
@@ -76,8 +75,13 @@ test('handles You.com snippets array', () => {
   ]);
   assert.equal(out[0].title, 'Go');
   assert.equal(out[0].url, 'https://go.dev');
-  // snippets is an array — mapper should fall through to description/content or empty
-  assert.equal(out[0].content, '');
+  assert.equal(out[0].content, 'Fast\nSimple');
 });
+
+for (const [name, fn] of tests) {
+  await fn();
+  passed++;
+  console.log(`  ✓ ${name}`);
+}
 
 console.log(`\n${passed} tests passed`);

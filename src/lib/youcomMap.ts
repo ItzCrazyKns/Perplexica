@@ -20,6 +20,10 @@ export const mapYoucomResults = (raw: unknown): MappedSearchResult[] => {
         (typeof r.snippet === 'string' && r.snippet) ||
         (typeof r.description === 'string' && r.description) ||
         (typeof r.content === 'string' && r.content) ||
+        (Array.isArray(r.snippets) &&
+          r.snippets.length > 0 &&
+          typeof r.snippets[0] === 'string' &&
+          (r.snippets as string[]).join('\n')) ||
         '';
       return {
         title: typeof r.title === 'string' ? r.title : url,
