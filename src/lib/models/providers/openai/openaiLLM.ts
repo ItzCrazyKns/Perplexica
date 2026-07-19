@@ -18,7 +18,6 @@ import {
   ChatCompletionToolMessageParam,
 } from 'openai/resources/index.mjs';
 import { Message } from '@/lib/types';
-import { repairJson } from '@toolsycc/json-repair';
 import { extractJsonObject } from '@/lib/utils/extractJson';
 
 type OpenAIConfig = {
@@ -211,8 +210,11 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
       // Use the SDK's zodResponseFormat to build a strict, cleaned json_schema
-      // (it strips Draft-7 markers z.toJSONSchema leaves in, which made
-      // constrained decoders like llama-swap emit doubled braces). But send via
+      // rather than passing z.toJSONSchema output directly — the Draft-7 markers
+      // it leaves in are the suspected trigger for the doubled-brace malformation
+      // vLLM's strict-json_schema guided decoder emits (confirmed by direct
+      // testing against vLLM 0.25 serving Qwen3.6 and GLM-5.2; llama-swap only
+      // forwards vLLM's bytes unchanged, so it is not the source). But send via
       // .create() not .parse(): the SDK's built-in parse runs JSON.parse on the
       // raw content and crashes on reasoning models that emit thinking markers
       // before the JSON. We repair/extract JSON ourselves below.
@@ -223,13 +225,10 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       const choice = response.choices[0];
       const raw = choice.message.content ?? '';
       try {
-        return input.schema.parse(
-          JSON.parse(
-            repairJson(extractJsonObject(raw), {
-              extractJson: true,
-            }) as string,
-          ),
-        ) as T;
+        // extractJsonObject handles structural malformation (spurious braces
+        // from vLLM strict-json_schema decoders) and delegates token-level
+        // repair to jsonrepair, returning a parseable JSON string.
+        return input.schema.parse(JSON.parse(extractJsonObject(raw))) as T;
       } catch (err) {
         // Keep the failure-path diagnostic: finish_reason + usage distinguish
         // truncation (finish_reason=length) from malformation, and raw content

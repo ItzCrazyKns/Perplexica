@@ -11,7 +11,6 @@ import { Ollama, Tool as OllamaTool, Message as OllamaMessage } from 'ollama';
 import { parse } from 'partial-json';
 import crypto from 'crypto';
 import { Message } from '@/lib/types';
-import { repairJson } from '@toolsycc/json-repair';
 import { extractJsonObject } from '@/lib/utils/extractJson';
 
 type OllamaConfig = {
@@ -210,13 +209,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
 
     const raw = response.message.content ?? '';
     try {
-      return input.schema.parse(
-        JSON.parse(
-          repairJson(extractJsonObject(raw), {
-            extractJson: true,
-          }) as string,
-        ),
-      ) as T;
+      return input.schema.parse(JSON.parse(extractJsonObject(raw))) as T;
     } catch (err) {
       // Keep raw content in the error so parse failures are debuggable.
       throw new Error(`Error parsing response from Ollama: ${err}\nraw=${raw}`);
