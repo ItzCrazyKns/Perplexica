@@ -23,30 +23,44 @@ export const extractJsonObject = (raw: string | null | undefined): string => {
   if (!raw) return '{}';
 
   // Reasoning markers and control tokens appear *before* the JSON object and
-  // can put a stray { in front of the real one, which would mislead the
-  // brace-balance walk below. But the same literal text can legitimately
-  // appear *inside* JSON string values (a field whose content discusses
-  // markup, or model-emitted control-token sentinels the caller wants
-  // preserved). Stripping across the whole string would silently alter that
-  // content, so we strip only the leading pre-JSON segment — everything up to
-  // (but not including) the first { — and leave the JSON body untouched.
-  const firstBrace = raw.indexOf('{');
+  // can put a stray { in front of the real one — for example a { that lives
+  // inside a leading reasoning block ("consider the set {1,2,3}") — which
+  // would mislead the brace-balance walk below. But the same literal text can
+  // legitimately appear *inside* JSON string values (a field whose content
+  // discusses markup, or model-emitted control-token sentinels the caller
+  // wants preserved), so we must NOT strip markers across the whole string.
+  //
+  // Strip only *leading* marker blocks, anchored at the front, BEFORE locating
+  // the first { — the order matters: slicing at the first { first would cut
+  // inside a marker block and destroy the opening tag, leaving the block
+  // un-strippable. Peeling front-anchored blocks first (complete reasoning
+  // blocks, bare tag fragments, control tokens) removes a { that lives inside
+  // a marker, so the next first { is the real object. Because peeling is
+  // front-anchored and stops once no marker remains at the front, marker text
+  // inside the JSON body is never touched.
+  let s = raw.trimStart();
+  for (;;) {
+    const before = s;
+    s = s
+      // Closing '>' is optional: Qwen3 and similar models emit "</think\n\n"
+      // (no angle bracket). Without this, a '{' inside the reasoning block
+      // would become firstBrace and discard the actual JSON object.
+      .replace(/^<think[\s\S]*?<\/think>?\s*/i, '')
+      .replace(/^<thinking[\s\S]*?<\/thinking>?\s*/i, '')
+      .replace(/^<\/?(?:think|thinking)>\s*/i, '')
+      // Bare standalone closers without '>' (e.g. leading "</think\n\n{...}").
+      .replace(/^<\/(?:think|thinking)(?=>|\s)[^>]*\s*/i, '')
+      .replace(/^<\|[^|]*\|>\s*/, '')
+      .trimStart();
+    if (s === before) break; // no leading marker left to peel
+  }
+  const firstBrace = s.indexOf('{');
   if (firstBrace === -1) return '{}';
-  const cleanedPrefix = raw
-    .slice(0, firstBrace)
-    .replace(/<think[\s\S]*?<\/think>/gi, '')
-    .replace(/<thinking[\s\S]*?<\/thinking>/gi, '')
-    .replace(/<\/?(?:think|thinking)>/gi, '')
-    .replace(/<\|[^|]*\|>/g, '');
-  // Re-locate the first { on the combined cleaned prefix + original body: an
-  // unclosed marker that bleeds across the original first { is removed from
-  // the prefix, shifting the object start. Anything before the object —
-  // markers or prose — is discarded; the JSON body is kept verbatim.
-  let s = (cleanedPrefix + raw.slice(firstBrace)).trim();
-  if (!s) return '{}';
-  const braceStart = s.indexOf('{');
-  if (braceStart === -1) return '{}';
-  s = s.slice(braceStart);
+  // Slice off any residual prose between the last peeled marker and the object
+  // (e.g. "Here is the JSON:" before the brace). The JSON body follows and is
+  // kept verbatim from here on.
+  s = s.slice(firstBrace);
+  if (!s.startsWith('{')) return '{}';
 
   s = repairSpuriousBraces(s);
 
