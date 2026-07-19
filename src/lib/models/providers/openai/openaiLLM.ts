@@ -19,6 +19,7 @@ import {
 } from 'openai/resources/index.mjs';
 import { Message } from '@/lib/types';
 import { repairJson } from '@toolsycc/json-repair';
+import { extractJsonObject } from '@/lib/utils/extractJson';
 
 type OpenAIConfig = {
   apiKey: string;
@@ -195,7 +196,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   }
 
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
-    const response = await this.openAIClient.chat.completions.parse({
+    const response = await this.openAIClient.chat.completions.create({
       messages: this.convertToOpenAIMessages(input.messages),
       model: this.config.model,
       temperature:
@@ -209,20 +210,36 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         this.config.options?.frequencyPenalty,
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
+      // Use the SDK's zodResponseFormat to build a strict, cleaned json_schema
+      // (it strips Draft-7 markers z.toJSONSchema leaves in, which made
+      // constrained decoders like llama-swap emit doubled braces). But send via
+      // .create() not .parse(): the SDK's built-in parse runs JSON.parse on the
+      // raw content and crashes on reasoning models that emit thinking markers
+      // before the JSON. We repair/extract JSON ourselves below.
       response_format: zodResponseFormat(input.schema, 'object'),
     });
 
     if (response.choices && response.choices.length > 0) {
+      const choice = response.choices[0];
+      const raw = choice.message.content ?? '';
       try {
         return input.schema.parse(
           JSON.parse(
-            repairJson(response.choices[0].message.content!, {
+            repairJson(extractJsonObject(raw), {
               extractJson: true,
             }) as string,
           ),
         ) as T;
       } catch (err) {
-        throw new Error(`Error parsing response from OpenAI: ${err}`);
+        // Keep the failure-path diagnostic: finish_reason + usage distinguish
+        // truncation (finish_reason=length) from malformation, and raw content
+        // shows exactly what the model returned so the parse error is debuggable.
+        throw new Error(
+          `Error parsing response from OpenAI: ${err}\n` +
+            `finish_reason=${choice.finish_reason}\n` +
+            `usage=${JSON.stringify((response as { usage?: unknown }).usage)}\n` +
+            `raw=${raw}`,
+        );
       }
     }
 
