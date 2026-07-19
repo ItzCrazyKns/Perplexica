@@ -223,7 +223,20 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
 
     if (response.choices && response.choices.length > 0) {
       const choice = response.choices[0];
-      const raw = choice.message.content ?? '';
+      // Preserve a genuine null/empty content as an explicit failure. The API
+      // returns content === null on refusals and on some failed/truncated
+      // completions; coercing that to '' would let extractJsonObject('') →
+      // '{}' flow through schema.parse and, when the schema permits {} (e.g.
+      // all-optional fields), return a valid empty object that masks the
+      // refusal. Fail loudly instead so the caller sees the real outcome.
+      const raw = choice.message.content;
+      if (raw == null || raw === '') {
+        throw new Error(
+          `Error parsing response from OpenAI: empty content\n` +
+            `finish_reason=${choice.finish_reason}\n` +
+            `usage=${JSON.stringify((response as { usage?: unknown }).usage)}`,
+        );
+      }
       try {
         // extractJsonObject handles structural malformation (spurious braces
         // from vLLM strict-json_schema decoders) and delegates token-level
