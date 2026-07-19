@@ -49,7 +49,12 @@ export const extractJsonObject = (raw: string | null | undefined): string => {
       .replace(/^<thinking[\s\S]*?<\/thinking>?\s*/i, '')
       .replace(/^<\/?(?:think|thinking)>\s*/i, '')
       // Bare standalone closers without '>' (e.g. leading "</think\n\n{...}").
-      .replace(/^<\/(?:think|thinking)(?=>|\s)[^>]*\s*/i, '')
+      // The optional (?:[^>]*>)? spans to a closing '>' when one exists; when
+      // there is none (Qwen's "</think\n\n{...}" form) it matches nothing, so
+      // the subsequent \s* consumes only the separating whitespace and the JSON
+      // payload survives. A bare [^>]* would run away to end-of-string when no
+      // '>' is present and swallow the whole object.
+      .replace(/^<\/(?:think|thinking)(?=>|\s)(?:[^>]*>)?\s*/i, '')
       .replace(/^<\|[^|]*\|>\s*/, '')
       .trimStart();
     if (s === before) break; // no leading marker left to peel
