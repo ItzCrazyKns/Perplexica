@@ -59,6 +59,13 @@ export const extractJsonObject = (raw: string | null | undefined): string => {
       .trimStart();
     if (s === before) break; // no leading marker left to peel
   }
+
+  // If the whole payload is a JSON string literal wrapping an object
+  // (`"{ \"picked_indices\": [...] }"`), peel the quoting layer before locating
+  // the first brace — otherwise the slice below would start at the leading `"`
+  // and never reach the object. Runs first because it sees the full string.
+  s = unwrapJsonString(s);
+
   const firstBrace = s.indexOf('{');
   if (firstBrace === -1) return '{}';
   // Slice off any residual prose between the last peeled marker and the object
@@ -68,6 +75,13 @@ export const extractJsonObject = (raw: string | null | undefined): string => {
   if (!s.startsWith('{')) return '{}';
 
   s = repairSpuriousBraces(s);
+  // After brace repair, a stray double-quote can survive at the boundary (e.g.
+  // a spurious leading `{` + `"` from a guided decoder, whose odd quote count
+  // defeated balanceOf). jsonrepair misreads such a quote as an empty-string
+  // key and nests the real object one level deeper
+  // (`{"":{"picked_indices":...}}`), where the schema can't find its fields.
+  // Anchor-scan to recover the innermost parseable object before delegating.
+  s = anchorObject(s);
 
   // Delegate token-level repair (commas, quotes, truncation, fences, prose
   // tail) to jsonrepair. Fall back to the brace-fixed string if it throws.
@@ -127,6 +141,61 @@ const parses = (s: string): boolean => {
   } catch {
     return false;
   }
+};
+
+// Unwrap a payload the model wrapped in a JSON string literal. When a guided
+// decoder stringifies an object (or the model quotes the whole object), the
+// raw content is a quoted JSON string (`"{ \"k\": 1 }"`) rather than the
+// object — JSON.parse once yields a *string*, not the object, and schema.parse
+// then fails ("expected array, received undefined" for nested fields). Detect
+// that and peel one layer of quoting before the rest of the pipeline runs.
+//
+// Only act when the parsed string is itself JSON and the inner payload begins
+// with a structural brace — so prose that merely contains braces ("foo {bar}")
+// is left for jsonrepair, and a literal string scalar is returned unchanged.
+const unwrapJsonString = (s: string): string => {
+  if (!parses(s)) return s;
+  let v: unknown;
+  try {
+    v = JSON.parse(s);
+  } catch {
+    return s;
+  }
+  if (typeof v !== 'string') return s;
+  const inner = v.trimStart();
+  if (!inner.startsWith('{')) return s;
+  return parses(inner) ? inner : s;
+};
+
+// Recover the real object when spurious leading noise survives brace repair.
+// A guided decoder can emit a stray `{` + `"` before the object
+// (`{\n"{ "picked_indices": [...] }`). The odd quote count defeats balanceOf's
+// string tracking, so repairSpuriousBraces never engages; jsonrepair would
+// then treat the stray `"` as an empty-string key and nest the real object one
+// level deep (`{"":{...}}`), hiding it from the schema.
+//
+// Parse-driven: try the full string, then every deeper `{` offset. Adopt the
+// first slice that parses as a non-string JSON value whose outermost token is
+// an object — that is the innermost real object. Only runs when the string
+// doesn't already parse, so clean/already-repaired JSON is untouched.
+const anchorObject = (s: string): string => {
+  if (parses(s)) return s;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] !== '{') continue;
+    const candidate = s.slice(i);
+    let v: unknown;
+    try {
+      v = JSON.parse(candidate);
+    } catch {
+      continue;
+    }
+    // Skip a string result — that is a quoted payload, not the object; an
+    // earlier offset (the quote's own `{`, once unwrapped) is the real one.
+    if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
+      return candidate;
+    }
+  }
+  return s;
 };
 
 // Drop spurious extra braces at the object boundary. Pass 1 handles the

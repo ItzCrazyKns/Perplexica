@@ -49,6 +49,28 @@ eq(
 // Word-boundary: </thinkers-guide> must not match the think closer.
 eq('word boundary not over-matched', extractJsonObject('</thinkers-guide>{"a":1}'), '{"a":1}');
 
+// --- Regression: spurious leading { + stray quote must not nest the object ---
+// A guided decoder emitted `{\n"{ "picked_indices": [...] }` — an extra opening
+// brace and a stray double-quote with no matchers. The odd quote count defeats
+// brace-balance tracking, so the prior repair never engaged and jsonrepair
+// misread the `"` as an empty-string key, nesting the real object as
+// `{"":{...}}` where the schema couldn't find picked_indices.
+eq(
+  'spurious leading { + stray quote recovers inner object',
+  extractJsonObject('{\n "{ "picked_indices": [0, 11, 21] }\n'),
+  '{ "picked_indices": [0, 11, 21] }',
+);
+eq(
+  'plain quoted (unescaped) object unwrapped',
+  extractJsonObject('"{ "picked_indices": [0, 11, 21] }"'),
+  '{ "picked_indices": [0, 11, 21] }',
+);
+eq(
+  'valid JSON-string-wrapped object unwrapped',
+  extractJsonObject('"{ \\"picked_indices\\": [0, 11, 21] }"'),
+  '{ "picked_indices": [0, 11, 21] }',
+);
+
 if (failures > 0) {
   console.error(`\n${failures} test(s) FAILED`);
   process.exit(1);
