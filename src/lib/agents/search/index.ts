@@ -9,6 +9,7 @@ import { messages } from '@/lib/db/schema';
 import { and, eq, gt } from 'drizzle-orm';
 import { TextBlock } from '@/lib/types';
 import { sanitizeUntrusted } from '@/lib/utils/sanitizeUntrusted';
+import { createToolCallXmlFilter } from '@/lib/utils/stripToolCallXml';
 
 class SearchAgent {
   /*
@@ -184,22 +185,31 @@ class SearchAgent {
     });
 
     let responseBlockId = '';
+    const xmlFilter = createToolCallXmlFilter();
 
-    for await (const chunk of answerStream) {
+    const emitAnswerText = (text: string) => {
+      if (!text) return;
+
       if (!responseBlockId) {
         const block: TextBlock = {
           id: crypto.randomUUID(),
           type: 'text',
-          data: chunk.contentChunk,
+          data: text,
         };
 
         session.emitBlock(block);
 
         responseBlockId = block.id;
       } else {
-        session.appendText(responseBlockId, chunk.contentChunk);
+        session.appendText(responseBlockId, text);
       }
+    };
+
+    for await (const chunk of answerStream) {
+      emitAnswerText(xmlFilter.write(chunk.contentChunk || ''));
     }
+
+    emitAnswerText(xmlFilter.flush());
 
     session.emit('end', {});
 

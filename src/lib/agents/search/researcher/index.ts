@@ -5,6 +5,7 @@ import SessionManager from '@/lib/session';
 import { Message, ReasoningResearchBlock } from '@/lib/types';
 import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 import { ToolCall } from '@/lib/models/types';
+import { parseTextActions } from './textActionFallback';
 import { createResearchBudget } from '../researchBudget';
 import { seedAllowedUrls } from '../urlAllowlist';
 
@@ -94,8 +95,10 @@ class Researcher {
       let reasoningId = crypto.randomUUID();
 
       let finalToolCalls: ToolCall[] = [];
+      let streamedText = '';
 
       for await (const partialRes of actionStream) {
+        streamedText += partialRes.contentChunk || '';
         if (partialRes.toolCallChunk.length > 0) {
           partialRes.toolCallChunk.forEach((tc) => {
             if (
@@ -160,7 +163,23 @@ class Researcher {
       }
 
       if (finalToolCalls.length === 0) {
-        break;
+        /* Some local models narrate the call as text instead of using
+           the tool-call channel; recover it rather than aborting the
+           research with empty context. */
+        finalToolCalls = parseTextActions(
+          streamedText,
+          availableTools.map((t) => t.name),
+        );
+
+        if (finalToolCalls.length > 0) {
+          console.warn(
+            'Researcher: recovered',
+            finalToolCalls.length,
+            'tool call(s) from narrated text',
+          );
+        } else {
+          break;
+        }
       }
 
       /* The prompts tell the model to emit searches and `done` in one

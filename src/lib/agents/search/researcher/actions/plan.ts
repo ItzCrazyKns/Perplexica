@@ -10,23 +10,15 @@ const schema = z.object({
 });
 
 const actionDescription = `
-Use this tool FIRST on every turn to state your plan in natural language before any other action. Keep it short, action-focused, and tailored to the current query.
-Make sure to not include reference to any tools or actions you might take, just the plan itself. The user isn't aware about tools, but they love to see your thought process.
-
-Here are some examples of good plans:
-<examples>
-- "Okay, the user wants to know the latest advancements in renewable energy. I will start by looking for recent articles and studies on this topic, then summarize the key points." -> "I have gathered enough information to provide a comprehensive answer."
-- "The user is asking about the health benefits of a Mediterranean diet. I will search for scientific studies and expert opinions on this diet, then compile the findings into a clear summary." -> "I have gathered information about the Mediterranean diet and its health benefits, I will now look up for any recent studies to ensure the information is current."
-</examples>
-
-YOU CAN NEVER CALL ANY OTHER TOOL BEFORE CALLING THIS ONE FIRST, IF YOU DO, THAT CALL WOULD BE IGNORED.
+Use this tool to narrate a short natural-language plan that the user sees while research runs. Keep it brief, action-focused, and tailored to the current query, without naming any tools.
+It is optional: if narrating gets in the way, proceed directly with information-gathering tools. Never let this tool block real research.
 `;
 
 const planAction: ResearchAction<typeof schema> = {
   name: '__reasoning_preamble',
   schema: schema,
   getToolDescription: () =>
-    'Use this FIRST on every turn to state your plan in natural language before any other action. Keep it short, action-focused, and tailored to the current query.',
+    'Optionally narrate a short natural-language plan the user sees while research runs. Never let it block information-gathering calls.',
   getDescription: () => actionDescription,
   enabled: (config) => config.mode !== 'speed',
   execute: async (input, _) => {

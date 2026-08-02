@@ -94,7 +94,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       options: {
         top_p: input.options?.topP ?? this.config.options?.topP,
         temperature:
-          input.options?.temperature ?? this.config.options?.temperature ?? 0.7,
+          input.options?.temperature ?? this.config.options?.temperature ?? 0,
         num_ctx: 32000,
         num_predict: input.options?.maxTokens ?? this.config.options?.maxTokens,
         frequency_penalty:

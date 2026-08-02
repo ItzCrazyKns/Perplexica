@@ -12,6 +12,7 @@ NOTE: BY GENERAL KNOWLEDGE WE MEAN INFORMATION THAT IS OBVIOUS, WIDELY KNOWN, OR
    - Set it to true if weather, stock, or similar widgets can fully satisfy the user's request.
    - Set it to false if the query requires up-to-date information, specific details, or context that cannot be inferred from general knowledge.
    - Set it to false if the query references or implies user-uploaded documents, for example "Summarize the content of the document".
+   - ALWAYS set it to false when the user explicitly asks to research, search, look up, verify, or find sources, or asks for "best"/"latest"/current recommendations: honoring that request requires a search even if you could answer from general knowledge.
    - ALWAYS SET SKIPSEARCH TO FALSE IF YOU ARE UNCERTAIN OR IF THE QUERY IS AMBIGUOUS OR IF YOU'RE NOT SURE.
 2. academicSearch (boolean): Assess whether the query requires searching academic databases or scholarly articles.
    - Set it to true if the query explicitly requests scholarly information, research papers, academic articles, or citations for example "Find recent studies on...", "What does the latest research say about...", or "Provide citations for..."
