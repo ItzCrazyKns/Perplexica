@@ -220,6 +220,18 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           method: 'POST',
         });
 
+        /* A restarted server no longer has the session and the answer
+           was never persisted; surface the error so the user can
+           rewrite instead of spinning on a stream that never comes. */
+        if (!res.ok) {
+          isReconnectingRef.current = false;
+          setLoading(false);
+          setMessages((prev) =>
+            setMessageStatus(prev, lastMsg.messageId, 'error'),
+          );
+          return;
+        }
+
         if (!res.body) throw new Error('No response body');
 
         const messageHandler = getMessageHandler(lastMsg);

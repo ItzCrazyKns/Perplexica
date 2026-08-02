@@ -1,49 +1,62 @@
-FROM node:24.5.0-slim AS builder
+# App-only rootless image (SearXNG runs separately; see Dockerfile for
+# the all-in-one build). Runs as UID 10001 with GID 0 so it satisfies
+# Kubernetes runAsNonRoot (numeric user) and OpenShift's random-UID
+# restricted SCC alike.
 
-RUN apt-get update && apt-get install -y python3 python3-pip sqlite3 && rm -rf /var/lib/apt/lists/*
+# ---- builder ----
+FROM registry.fedoraproject.org/fedora:44 AS builder
 
-WORKDIR /home/vane
+# Node 24 from NodeSource (Fedora 44 ships Node 22 as the default).
+RUN curl -fsSL https://rpm.nodesource.com/setup_24.x | bash - \
+ && dnf -y install nodejs python3 python3-pip make gcc-c++ git \
+ && npm install -g yarn \
+ && dnf clean all
 
+WORKDIR /build
+
+# Install deps first so they cache independently of source changes.
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile --network-timeout 600000
 
-COPY tsconfig.json next.config.mjs next-env.d.ts postcss.config.js drizzle.config.ts tailwind.config.ts ./
-COPY src ./src
-COPY public ./public
-COPY drizzle ./drizzle
+# The scraper launches chromium-headless-shell through Playwright.
+# Install it here and copy the result, rather than downloading into
+# the runtime image where it would need network and a writable HOME.
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
+RUN yarn playwright install --only-shell chromium \
+ && chmod -R a+rX /opt/pw-browsers
 
-RUN mkdir -p /home/vane/data
+# Build the Next.js standalone bundle (output: 'standalone' in next.config.mjs).
+COPY . .
 RUN yarn build
 
-FROM node:24.5.0-slim
+# ---- runtime ----
+FROM registry.fedoraproject.org/fedora:44 AS runtime
 
-RUN apt-get update && apt-get install -y python3 python3-pip sqlite3 && rm -rf /var/lib/apt/lists/*
+# System libs for headless Chromium; the browser itself comes from the
+# builder stage. DB migrations run at startup via src/instrumentation.ts.
+RUN curl -fsSL https://rpm.nodesource.com/setup_24.x | bash - \
+ && dnf -y install nodejs \
+      alsa-lib atk cups-libs libdrm mesa-libgbm \
+      libXcomposite libXdamage libXfixes libXrandr libxkbcommon \
+      nspr nss pango \
+ && dnf clean all \
+ && install -d -o 10001 -g 0 -m 0750 /home/vane \
+ && install -d -o 10001 -g 0 -m 0770 /home/vane/data
 
+# Owner=10001 + group=0 with the default COPY modes (0755 dirs / 0644
+# files) is enough for a random high UID with GID 0 in supplemental
+# groups: group 0 already reads files and traverses dirs.
 WORKDIR /home/vane
+COPY --from=builder --chown=10001:0 /build/.next/standalone ./
+COPY --from=builder --chown=10001:0 /build/.next/static ./.next/static
+COPY --from=builder --chown=10001:0 /build/public ./public
+COPY --from=builder --chown=10001:0 /build/drizzle ./drizzle
+COPY --from=builder --chown=10001:0 /opt/pw-browsers /opt/pw-browsers
 
-COPY --from=builder /home/vane/public ./public
-COPY --from=builder /home/vane/.next/static ./public/_next/static
-
-COPY --from=builder /home/vane/.next/standalone ./
-COPY --from=builder /home/vane/data ./data
-COPY drizzle ./drizzle
-
-# Shared location so the browser is usable by the non-root app user.
-ENV PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
-
-RUN yarn add playwright
-RUN yarn playwright install --with-deps --only-shell chromium \
-    && rm -rf /var/lib/apt/lists/* \
-    && chmod -R a+rX /opt/pw-browsers
-
-# Non-root app user: the Node process drives a sandbox-less Chromium,
-# so it must not run as root.
-RUN useradd --shell /bin/bash --system --create-home --home-dir /home/vane-user vane \
-    && chown -R vane:vane /home/vane
-
-USER vane
-ENV HOME=/home/vane-user
-
+USER 10001
+ENV NODE_ENV=production \
+    HOSTNAME=0.0.0.0 \
+    PORT=3000 \
+    PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
 EXPOSE 3000
-
 CMD ["node", "server.js"]
