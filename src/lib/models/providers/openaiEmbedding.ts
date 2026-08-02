@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import BaseEmbedding from '../../base/embedding';
+import BaseEmbedding from '../base/embedding';
 
 type OpenAIConfig = {
   apiKey: string;

@@ -1,14 +1,4 @@
-import z from 'zod';
-import { ResearchAction } from '../../../types';
-import { ResearchBlock } from '@/lib/types';
-import { executeSearch } from './baseSearch';
-
-const actionSchema = z.object({
-  type: z.literal('web_search'),
-  queries: z
-    .array(z.string())
-    .describe('An array of search queries to perform web searches for.'),
-});
+import { createSearchAction } from './createSearchAction';
 
 const speedModePrompt = `
 Use this tool to perform web searches based on the provided queries. This is useful when you need to gather information from the web to answer the user's questions. You can provide up to 3 queries at a time. You will have to use this every single time if this is present and relevant.
@@ -56,57 +46,21 @@ You can search for 3 queries in one go, make sure to utilize all 3 queries to ma
 If this tool is present and no other tools are more relevant, you MUST use this tool to get the needed information. You can call this tools, multiple times as needed.
 `;
 
-const webSearchAction: ResearchAction<typeof actionSchema> = {
+const webSearchAction = createSearchAction({
   name: 'web_search',
-  schema: actionSchema,
-  getToolDescription: () =>
+  toolDescription:
     "Use this tool to perform web searches based on the provided queries. This is useful when you need to gather information from the web to answer the user's questions. You can provide up to 3 queries at a time. You will have to use this every single time if this is present and relevant.",
   getDescription: (config) => {
-    let prompt = '';
-
     switch (config.mode) {
-      case 'speed':
-        prompt = speedModePrompt;
-        break;
       case 'balanced':
-        prompt = balancedModePrompt;
-        break;
+        return balancedModePrompt;
       case 'quality':
-        prompt = qualityModePrompt;
-        break;
+        return qualityModePrompt;
       default:
-        prompt = speedModePrompt;
-        break;
+        return speedModePrompt;
     }
-
-    return prompt;
   },
   enabled: (config) => config.sources.includes('web'),
-  execute: async (input, additionalConfig) => {
-    input.queries = (
-      Array.isArray(input.queries) ? input.queries : [input.queries]
-    ).slice(0, 3);
-
-    const researchBlock = additionalConfig.session.getBlock(
-      additionalConfig.researchBlockId,
-    ) as ResearchBlock | undefined;
-
-    if (!researchBlock) throw new Error('Failed to retrieve research block');
-
-    const results = await executeSearch({
-      llm: additionalConfig.llm,
-      embedding: additionalConfig.embedding,
-      mode: additionalConfig.mode,
-      queries: input.queries,
-      researchBlock: researchBlock,
-      session: additionalConfig.session,
-    });
-
-    return {
-      type: 'search_results',
-      results: results,
-    };
-  },
-};
+});
 
 export default webSearchAction;

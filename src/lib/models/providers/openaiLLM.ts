@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import BaseLLM from '../../base/llm';
+import BaseLLM from '../base/llm';
 import { zodTextFormat, zodResponseFormat } from 'openai/helpers/zod';
 import {
   GenerateObjectInput,
@@ -7,7 +7,7 @@ import {
   GenerateTextInput,
   StreamTextOutput,
   ToolCall,
-} from '../../types';
+} from '../types';
 import { parse } from 'partial-json';
 import z from 'zod';
 import {

@@ -1,11 +1,4 @@
-import z from 'zod';
-import { ResearchAction } from '../../../types';
-import { ResearchBlock } from '@/lib/types';
-import { executeSearch } from './baseSearch';
-
-const schema = z.object({
-  queries: z.array(z.string()).describe('List of academic search queries'),
-});
+import { createSearchAction } from './createSearchAction';
 
 const academicSearchDescription = `
 Use this tool to perform academic searches for scholarly articles, papers, and research studies relevant to the user's query. Provide a list of concise search queries that will help gather comprehensive academic information on the topic at hand.
@@ -19,43 +12,15 @@ For example, if the user is interested in recent advancements in renewable energ
 If this tool is present and no other tools are more relevant, you MUST use this tool to get the needed academic information.
 `;
 
-const academicSearchAction: ResearchAction<typeof schema> = {
+const academicSearchAction = createSearchAction({
   name: 'academic_search',
-  schema: schema,
-  getDescription: () => academicSearchDescription,
-  getToolDescription: () =>
+  toolDescription:
     "Use this tool to perform academic searches for scholarly articles, papers, and research studies relevant to the user's query. Provide a list of concise search queries that will help gather comprehensive academic information on the topic at hand.",
+  getDescription: () => academicSearchDescription,
   enabled: (config) =>
     config.sources.includes('academic') &&
     config.classification.classification.academicSearch === true,
-  execute: async (input, additionalConfig) => {
-    input.queries = (
-      Array.isArray(input.queries) ? input.queries : [input.queries]
-    ).slice(0, 3);
-
-    const researchBlock = additionalConfig.session.getBlock(
-      additionalConfig.researchBlockId,
-    ) as ResearchBlock | undefined;
-
-    if (!researchBlock) throw new Error('Failed to retrieve research block');
-
-    const results = await executeSearch({
-      llm: additionalConfig.llm,
-      embedding: additionalConfig.embedding,
-      mode: additionalConfig.mode,
-      queries: input.queries,
-      researchBlock: researchBlock,
-      session: additionalConfig.session,
-      searchConfig: {
-        engines: ['arxiv', 'google scholar', 'pubmed'],
-      },
-    });
-
-    return {
-      type: 'search_results',
-      results: results,
-    };
-  },
-};
+  engines: ['arxiv', 'google scholar', 'pubmed'],
+});
 
 export default academicSearchAction;
