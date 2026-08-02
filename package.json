@@ -8,7 +8,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --experimental-strip-types --test 'src/**/*.test.ts'",
+    "test": "node --import tsx --test 'src/**/*.test.ts'",
     "format:write": "prettier . --write"
   },
   "dependencies": {
@@ -68,6 +68,7 @@
     "postcss": "^8",
     "prettier": "^3.2.5",
     "tailwindcss": "^3.3.0",
+    "tsx": "^4.23.4",
     "typescript": "^5.9.3"
   },
   "optionalDependencies": {

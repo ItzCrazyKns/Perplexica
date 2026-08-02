@@ -153,7 +153,7 @@ The response from the API includes both the final message and the sources used t
 
 #### Streaming Response (stream: true)
 
-When streaming is enabled, the API returns a stream of newline-delimited JSON objects using Server-Sent Events (SSE). Each line contains a complete, valid JSON object. The response has `Content-Type: text/event-stream`.
+When streaming is enabled, the API returns a stream of newline-delimited JSON objects (NDJSON). Each line contains a complete, valid JSON object. The response has `Content-Type: application/x-ndjson`.
 
 Example of streamed response objects:
 

@@ -3,7 +3,7 @@ import { ModelWithProvider } from '@/lib/models/types';
 import SessionManager from '@/lib/session';
 import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
-import APISearchAgent from '@/lib/agents/search/api';
+import SearchAgent from '@/lib/agents/search';
 
 interface ChatRequestBody {
   optimizationMode: 'speed' | 'balanced' | 'quality';
@@ -15,6 +15,36 @@ interface ChatRequestBody {
   stream?: boolean;
   systemInstructions?: string;
 }
+
+/*
+ * Adapts the internal block protocol to this endpoint's documented
+ * wire format (response deltas, sources, done). Replaces the drifted
+ * APISearchAgent copy: same pipeline as chat, persist: false.
+ */
+const subscribeForApi = (
+  session: SessionManager,
+  handlers: {
+    onDelta: (delta: string) => void;
+    onSources: (sources: any[]) => void;
+    onEnd: () => void;
+    onError: (data: any) => void;
+  },
+): (() => void) =>
+  session.subscribe((event: string, data: any) => {
+    if (event === 'data') {
+      if (data.type === 'block' && data.block.type === 'text') {
+        handlers.onDelta(data.block.data);
+      } else if (data.type === 'appendText') {
+        handlers.onDelta(data.delta);
+      } else if (data.type === 'block' && data.block.type === 'source') {
+        handlers.onSources(data.block.data);
+      }
+    } else if (event === 'end') {
+      handlers.onEnd();
+    } else if (event === 'error') {
+      handlers.onError(data);
+    }
+  });
 
 export const POST = async (req: Request) => {
   try {
@@ -49,7 +79,7 @@ export const POST = async (req: Request) => {
 
     const session = SessionManager.createSession();
 
-    const agent = new APISearchAgent();
+    const agent = new SearchAgent();
 
     agent.searchAsync(session, {
       chatHistory: history,
@@ -64,136 +94,83 @@ export const POST = async (req: Request) => {
       followUp: body.query,
       chatId: crypto.randomUUID(),
       messageId: crypto.randomUUID(),
+      persist: false,
     });
 
     if (!body.stream) {
-      return new Promise(
-        (
-          resolve: (value: Response) => void,
-          reject: (value: Response) => void,
-        ) => {
-          let message = '';
-          let sources: any[] = [];
+      return new Promise((resolve: (value: Response) => void) => {
+        let message = '';
+        let sources: any[] = [];
 
-          session.subscribe((event: string, data: Record<string, any>) => {
-            if (event === 'data') {
-              try {
-                if (data.type === 'response') {
-                  message += data.data;
-                } else if (data.type === 'searchResults') {
-                  sources = data.data;
-                }
-              } catch (error) {
-                reject(
-                  Response.json(
-                    { message: 'Error parsing data' },
-                    { status: 500 },
-                  ),
-                );
-              }
-            }
-
-            if (event === 'end') {
-              resolve(Response.json({ message, sources }, { status: 200 }));
-            }
-
-            if (event === 'error') {
-              reject(
-                Response.json(
-                  { message: 'Search error', error: data },
-                  { status: 500 },
-                ),
-              );
-            }
-          });
-        },
-      );
+        const disconnect = subscribeForApi(session, {
+          onDelta: (delta) => {
+            message += delta;
+          },
+          onSources: (s) => {
+            sources = s;
+          },
+          onEnd: () => {
+            disconnect();
+            resolve(Response.json({ message, sources }, { status: 200 }));
+          },
+          onError: (data) => {
+            disconnect();
+            resolve(
+              Response.json(
+                { message: 'Search error', error: data },
+                { status: 500 },
+              ),
+            );
+          },
+        });
+      });
     }
 
     const encoder = new TextEncoder();
 
-    const abortController = new AbortController();
-    const { signal } = abortController;
-
     const stream = new ReadableStream({
       start(controller) {
-        let sources: any[] = [];
+        let closed = false;
+        let disconnect = () => {};
 
-        controller.enqueue(
-          encoder.encode(
-            JSON.stringify({
-              type: 'init',
-              data: 'Stream connected',
-            }) + '\n',
-          ),
-        );
-
-        signal.addEventListener('abort', () => {
-          session.removeAllListeners();
-
+        const close = () => {
+          if (closed) return;
+          closed = true;
+          disconnect();
           try {
             controller.close();
-          } catch (error) {}
+          } catch {}
+        };
+
+        const enqueue = (payload: unknown) => {
+          if (closed) return;
+          try {
+            controller.enqueue(encoder.encode(JSON.stringify(payload) + '\n'));
+          } catch {
+            close();
+          }
+        };
+
+        enqueue({ type: 'init', data: 'Stream connected' });
+
+        disconnect = subscribeForApi(session, {
+          onDelta: (delta) => enqueue({ type: 'response', data: delta }),
+          onSources: (sources) => enqueue({ type: 'sources', data: sources }),
+          onEnd: () => {
+            enqueue({ type: 'done' });
+            close();
+          },
+          onError: (data) => {
+            enqueue({ type: 'error', data });
+            close();
+          },
         });
-
-        session.subscribe((event: string, data: Record<string, any>) => {
-          if (event === 'data') {
-            if (signal.aborted) return;
-
-            try {
-              if (data.type === 'response') {
-                controller.enqueue(
-                  encoder.encode(
-                    JSON.stringify({
-                      type: 'response',
-                      data: data.data,
-                    }) + '\n',
-                  ),
-                );
-              } else if (data.type === 'searchResults') {
-                sources = data.data;
-                controller.enqueue(
-                  encoder.encode(
-                    JSON.stringify({
-                      type: 'sources',
-                      data: sources,
-                    }) + '\n',
-                  ),
-                );
-              }
-            } catch (error) {
-              controller.error(error);
-            }
-          }
-
-          if (event === 'end') {
-            if (signal.aborted) return;
-
-            controller.enqueue(
-              encoder.encode(
-                JSON.stringify({
-                  type: 'done',
-                }) + '\n',
-              ),
-            );
-            controller.close();
-          }
-
-          if (event === 'error') {
-            if (signal.aborted) return;
-
-            controller.error(data);
-          }
-        });
-      },
-      cancel() {
-        abortController.abort();
       },
     });
 
     return new Response(stream, {
       headers: {
-        'Content-Type': 'text/event-stream',
+        'Content-Type': 'application/x-ndjson',
         'Cache-Control': 'no-cache, no-transform',
         Connection: 'keep-alive',
       },

@@ -41,6 +41,8 @@ export const createSessionStream = (
     if (event === 'data') {
       if (data.type === 'block') {
         send({ type: 'block', block: data.block });
+      } else if (data.type === 'appendText') {
+        send({ type: 'appendText', blockId: data.blockId, delta: data.delta });
       } else if (data.type === 'updateBlock') {
         send({ type: 'updateBlock', blockId: data.blockId, patch: data.patch });
       } else if (data.type === 'researchComplete') {

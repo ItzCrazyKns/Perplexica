@@ -21,6 +21,9 @@ export type SearchAgentInput = {
   config: SearchAgentConfig;
   chatId: string;
   messageId: string;
+  /* False for the stateless /api/search endpoint: same pipeline and
+     stream, no messages rows. */
+  persist?: boolean;
 };
 
 export type WidgetInput = {
