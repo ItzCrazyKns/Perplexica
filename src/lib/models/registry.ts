@@ -99,6 +99,10 @@ class ModelRegistry {
     const provider = providers[type];
     if (!provider) throw new Error('Invalid provider type');
 
+    /* Validate before persisting: a rejected config must not land in
+       config.json where it would fail on every subsequent boot. */
+    provider.parseAndValidate(config);
+
     const newProvider = configManager.addModelProvider(type, name, config);
 
     const instance = createProviderInstance(
@@ -159,11 +163,13 @@ class ModelRegistry {
       name,
       config,
     );
+    /* updated.config, not the raw body: redacted secrets have been
+       resolved back to their stored values by the config manager. */
     const instance = createProviderInstance(
       providers[updated.type],
       providerId,
       name,
-      config,
+      updated.config,
     );
 
     let m: ModelList = { chat: [], embedding: [] };
@@ -186,10 +192,11 @@ class ModelRegistry {
       };
     }
 
-    this.activeProviders.push({
-      ...updated,
-      provider: instance,
-    });
+    /* Replace, not push: a duplicate id would make loadChatModel
+       resolve the stale instance. */
+    this.activeProviders = this.activeProviders.map((p) =>
+      p.id === providerId ? { ...updated, provider: instance } : p,
+    );
 
     return {
       ...updated,

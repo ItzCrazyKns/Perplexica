@@ -4,6 +4,18 @@ import { Config, ConfigModelProvider, UIConfigSections } from './types';
 import { hashObj } from '../utils/hash';
 import { getModelProvidersUIConfigSection } from '../models/providers';
 
+/*
+ * Placeholder returned instead of stored secrets. Clients that submit
+ * it back unchanged signal "keep the existing value".
+ */
+export const REDACTED_SECRET = '••••••••';
+
+const FORBIDDEN_KEY_SEGMENTS = new Set([
+  '__proto__',
+  'constructor',
+  'prototype',
+]);
+
 class ConfigManager {
   configPath: string = path.join(
     process.env.DATA_DIR || process.cwd(),
@@ -126,10 +138,12 @@ class ConfigManager {
   }
 
   private saveConfig() {
-    fs.writeFileSync(
-      this.configPath,
-      JSON.stringify(this.currentConfig, null, 2),
-    );
+    /* Temp file + rename so a crash mid-write cannot truncate the
+       config. Pid-unique name: parallel build workers each import
+       this module and would race on a shared tmp path. */
+    const tmpPath = `${this.configPath}.${process.pid}.tmp`;
+    fs.writeFileSync(tmpPath, JSON.stringify(this.currentConfig, null, 2));
+    fs.renameSync(tmpPath, this.configPath);
   }
 
   private initializeConfig() {
@@ -146,13 +160,13 @@ class ConfigManager {
         );
       } catch (err) {
         if (err instanceof SyntaxError) {
+          /* Keep the corrupt file: it may still hold recoverable API keys. */
+          const backupPath = `${this.configPath}.corrupt-${Date.now()}`;
           console.error(
-            `Error parsing config file at ${this.configPath}:`,
+            `Error parsing config file at ${this.configPath}, backing it up to ${backupPath} and loading defaults:`,
             err,
           );
-          console.log(
-            'Loading default config and overwriting the existing file.',
-          );
+          fs.copyFileSync(this.configPath, backupPath);
           fs.writeFileSync(
             this.configPath,
             JSON.stringify(this.currentConfig, null, 2),
@@ -251,22 +265,41 @@ class ConfigManager {
     return obj === undefined ? defaultValue : obj;
   }
 
-  public updateConfig(key: string, val: any) {
+  /*
+   * Only keys declared in uiConfigSections may be written: the key
+   * arrives from an unauthenticated HTTP body, so free-form paths
+   * would allow prototype pollution and arbitrary config overwrite.
+   */
+  public isAllowedConfigKey(key: string): boolean {
     const parts = key.split('.');
-    if (parts.length === 0) return;
 
-    let target: any = this.currentConfig;
-    for (let i = 0; i < parts.length - 1; i++) {
-      const part = parts[i];
-      if (target[part] === null || typeof target[part] !== 'object') {
-        target[part] = {};
-      }
+    if (parts.some((p) => FORBIDDEN_KEY_SEGMENTS.has(p))) return false;
+    if (parts.length !== 2) return false;
 
-      target = target[part];
+    const [section, fieldKey] = parts;
+
+    if (
+      section !== 'preferences' &&
+      section !== 'personalization' &&
+      section !== 'search'
+    ) {
+      return false;
     }
 
-    const finalKey = parts[parts.length - 1];
-    target[finalKey] = val;
+    return this.uiConfigSections[section].some((f) => f.key === fieldKey);
+  }
+
+  public updateConfig(key: string, val: any) {
+    if (!this.isAllowedConfigKey(key)) {
+      throw new Error(`Config key not allowed: ${key}`);
+    }
+
+    const [section, fieldKey] = key.split('.') as [
+      'preferences' | 'personalization' | 'search',
+      string,
+    ];
+
+    this.currentConfig[section][fieldKey] = val;
 
     this.saveConfig();
   }
@@ -308,8 +341,17 @@ class ConfigManager {
 
     if (!provider) throw new Error('Provider not found');
 
+    /* Redacted placeholders mean "keep the stored secret". */
+    Object.keys(config).forEach((k) => {
+      if (config[k] === REDACTED_SECRET) {
+        config[k] = provider.config[k];
+      }
+    });
+
     provider.name = name;
     provider.config = config;
+    /* Stale hashes make env-derived providers duplicate on restart. */
+    provider.hash = hashObj(config);
 
     this.saveConfig();
 
@@ -382,6 +424,39 @@ class ConfigManager {
 
   public getCurrentConfig(): Config {
     return JSON.parse(JSON.stringify(this.currentConfig));
+  }
+
+  /*
+   * For HTTP responses: same shape as getCurrentConfig but with every
+   * password-typed provider field replaced by a placeholder, so API
+   * keys never leave the server.
+   */
+  public sanitizeProvider(provider: ConfigModelProvider): ConfigModelProvider {
+    const section = this.uiConfigSections.modelProviders.find(
+      (s) => s.key === provider.type,
+    );
+
+    if (!section) return provider;
+
+    const sanitized = { ...provider.config };
+
+    section.fields.forEach((field) => {
+      if (field.type === 'password' && sanitized[field.key]) {
+        sanitized[field.key] = REDACTED_SECRET;
+      }
+    });
+
+    return { ...provider, config: sanitized };
+  }
+
+  public getSanitizedConfig(): Config {
+    const config = this.getCurrentConfig();
+
+    config.modelProviders = config.modelProviders.map((p) =>
+      this.sanitizeProvider(p),
+    );
+
+    return config;
   }
 }
 

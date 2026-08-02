@@ -1,10 +1,12 @@
 services:
   vane:
-    image: itzcrazykns1337/vane:latest
+    image: vane:local
     build:
       context: .
     ports:
-      - '3000:3000'
+      # The API has no authentication: keep it off public interfaces.
+      # Change to '3000:3000' only behind an authenticating proxy.
+      - '127.0.0.1:3000:3000'
     volumes:
       - data:/home/vane/data
     restart: unless-stopped

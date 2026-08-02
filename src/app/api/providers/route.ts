@@ -1,4 +1,5 @@
 import ModelRegistry from '@/lib/models/registry';
+import configManager from '@/lib/config';
 import { NextRequest } from 'next/server';
 
 export const GET = async (req: Request) => {
@@ -54,7 +55,7 @@ export const POST = async (req: NextRequest) => {
 
     return Response.json(
       {
-        provider: newProvider,
+        provider: configManager.sanitizeProvider(newProvider),
       },
       {
         status: 200,

@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y \
     python3-dev python3-babel python3-venv python-is-python3 \
     uwsgi uwsgi-plugin-python3 \
     git build-essential libxslt-dev zlib1g-dev libffi-dev libssl-dev \
-    curl sudo \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /home/vane
@@ -32,10 +32,13 @@ COPY --from=builder /home/vane/.next/standalone ./
 COPY --from=builder /home/vane/data ./data
 COPY drizzle ./drizzle
 
-RUN mkdir /home/vane/uploads
+# Shared location so the browser is usable by the non-root app user.
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
 
 RUN yarn add playwright
-RUN yarn playwright install --with-deps --only-shell chromium
+RUN yarn playwright install --with-deps --only-shell chromium \
+    && rm -rf /var/lib/apt/lists/* \
+    && chmod -R a+rX /opt/pw-browsers
 
 RUN useradd --shell /bin/bash --system \
     --home-dir "/usr/local/searxng" \
@@ -63,12 +66,15 @@ RUN cd "/usr/local/searxng/searxng-src" && \
 
 USER root
 
+# Non-root app user: the Node process drives a sandbox-less Chromium,
+# so it must not run as root.
+RUN useradd --shell /bin/bash --system --create-home --home-dir /home/vane-user vane \
+    && chown -R vane:vane /home/vane
+
 WORKDIR /home/vane
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 RUN sed -i 's/\r$//' ./entrypoint.sh || true
-
-RUN echo "searxng ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 EXPOSE 3000 8080
 

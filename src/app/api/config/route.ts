@@ -10,7 +10,7 @@ type SaveConfigBody = {
 
 export const GET = async (req: NextRequest) => {
   try {
-    const values = configManager.getCurrentConfig();
+    const values = configManager.getSanitizedConfig();
     const fields = configManager.getUIConfigSections();
 
     const modelRegistry = new ModelRegistry();
@@ -46,10 +46,22 @@ export const POST = async (req: NextRequest) => {
   try {
     const body: SaveConfigBody = await req.json();
 
-    if (!body.key || !body.value) {
+    /* value === undefined only: false and '' are legitimate values. */
+    if (!body.key || body.value === undefined) {
       return Response.json(
         {
           message: 'Key and value are required.',
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (!configManager.isAllowedConfigKey(body.key)) {
+      return Response.json(
+        {
+          message: 'Config key not allowed.',
         },
         {
           status: 400,

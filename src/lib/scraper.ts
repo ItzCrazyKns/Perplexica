@@ -1,6 +1,7 @@
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
 import { Mutex } from 'async-mutex';
+import { assertPublicHttpUrl, isPublicHttpUrl } from './security/urlGuard';
 
 class Scraper {
   private static browser: any | undefined;
@@ -49,6 +50,11 @@ class Scraper {
   static async scrape(
     url: string,
   ): Promise<{ content: string; title: string }> {
+    /* Scrape targets come from LLM tool calls fed by user and web
+       content: without this check any chat message can point the
+       server's browser at internal services. */
+    await assertPublicHttpUrl(url);
+
     await this.initBrowser();
 
     if (!this.browser) throw new Error('Browser not initialized');
@@ -61,6 +67,18 @@ class Scraper {
     await context.addInitScript(() => {
       Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
     });
+
+    if (process.env.VANE_ALLOW_PRIVATE_SCRAPE !== 'true') {
+      /* Redirects can hop to private hosts after the initial check. */
+      await context.route('**/*', async (route: any) => {
+        const request = route.request();
+
+        if (!request.isNavigationRequest()) return route.continue();
+
+        const ok = await isPublicHttpUrl(request.url()).catch(() => false);
+        return ok ? route.continue() : route.abort();
+      });
+    }
 
     const page = await context.newPage();
 
