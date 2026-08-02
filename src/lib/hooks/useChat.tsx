@@ -589,6 +589,24 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         }
       }
 
+      if (data.type === 'appendText') {
+        setMessages((prev) =>
+          prev.map((msg) => {
+            if (msg.messageId === messageId) {
+              return {
+                ...msg,
+                responseBlocks: msg.responseBlocks.map((block) =>
+                  block.id === data.blockId && block.type === 'text'
+                    ? { ...block, data: block.data + data.delta }
+                    : block,
+                ),
+              };
+            }
+            return msg;
+          }),
+        );
+      }
+
       if (data.type === 'updateBlock') {
         setMessages((prev) =>
           prev.map((msg) => {

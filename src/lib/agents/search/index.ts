@@ -22,19 +22,21 @@ class SearchAgent {
     } catch (err: any) {
       console.error('Search agent failed:', err);
 
-      await db
-        .update(messages)
-        .set({ status: 'error' })
-        .where(
-          and(
-            eq(messages.chatId, input.chatId),
-            eq(messages.messageId, input.messageId),
-          ),
-        )
-        .execute()
-        .catch((dbErr) =>
-          console.error('Failed to mark message as errored:', dbErr),
-        );
+      if (input.persist !== false) {
+        await db
+          .update(messages)
+          .set({ status: 'error' })
+          .where(
+            and(
+              eq(messages.chatId, input.chatId),
+              eq(messages.messageId, input.messageId),
+            ),
+          )
+          .execute()
+          .catch((dbErr) =>
+            console.error('Failed to mark message as errored:', dbErr),
+          );
+      }
 
       session.emit('error', {
         data: err?.message ?? 'An error occurred while answering.',
@@ -42,7 +44,12 @@ class SearchAgent {
     }
   }
 
-  private async run(session: SessionManager, input: SearchAgentInput) {
+  /* Insert or reset the row for this turn; on a rewrite, drop every
+     later row so history stays a prefix. */
+  private async prepareMessageRow(
+    session: SessionManager,
+    input: SearchAgentInput,
+  ) {
     const exists = await db.query.messages.findFirst({
       where: and(
         eq(messages.chatId, input.chatId),
@@ -81,6 +88,12 @@ class SearchAgent {
           ),
         )
         .execute();
+    }
+  }
+
+  private async run(session: SessionManager, input: SearchAgentInput) {
+    if (input.persist !== false) {
+      await this.prepareMessageRow(session, input);
     }
 
     const classification = await classify({
@@ -184,39 +197,27 @@ class SearchAgent {
 
         responseBlockId = block.id;
       } else {
-        const block = session.getBlock(responseBlockId) as TextBlock | null;
-
-        if (!block) {
-          continue;
-        }
-
-        block.data += chunk.contentChunk;
-
-        session.updateBlock(block.id, [
-          {
-            op: 'replace',
-            path: '/data',
-            value: block.data,
-          },
-        ]);
+        session.appendText(responseBlockId, chunk.contentChunk);
       }
     }
 
     session.emit('end', {});
 
-    await db
-      .update(messages)
-      .set({
-        status: 'completed',
-        responseBlocks: session.getAllBlocks(),
-      })
-      .where(
-        and(
-          eq(messages.chatId, input.chatId),
-          eq(messages.messageId, input.messageId),
-        ),
-      )
-      .execute();
+    if (input.persist !== false) {
+      await db
+        .update(messages)
+        .set({
+          status: 'completed',
+          responseBlocks: session.getAllBlocks(),
+        })
+        .where(
+          and(
+            eq(messages.chatId, input.chatId),
+            eq(messages.messageId, input.messageId),
+          ),
+        )
+        .execute();
+    }
   }
 }
 
