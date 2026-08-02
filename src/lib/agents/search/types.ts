@@ -2,6 +2,7 @@ import z from 'zod';
 import BaseLLM from '../../models/base/llm';
 import BaseEmbedding from '@/lib/models/base/embedding';
 import SessionManager from '@/lib/session';
+import { ResearchBudget } from './researchBudget';
 import { ChatTurnMessage, Chunk } from '@/lib/types';
 
 export type SearchSources = 'web' | 'discussions' | 'academic';
@@ -74,6 +75,10 @@ export type ActionContext = AdditionalConfig & {
   researchBlockId: string;
   fileIds: string[];
   mode: SearchAgentConfig['mode'];
+  budget: ResearchBudget;
+  /* URLs the user typed or search surfaced; scrape_url refuses
+     anything else. */
+  allowedScrapeUrls: Set<string>;
 };
 
 export type ResearcherInput = {

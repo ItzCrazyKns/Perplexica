@@ -12,6 +12,8 @@ import {
 } from '@/lib/prompts/search/extractor';
 import Scraper from '@/lib/scraper';
 import { splitText } from '@/lib/utils/splitText';
+import { ResearchBudget } from '../../../researchBudget';
+import { normalizeUrl } from '../../../urlAllowlist';
 
 export const executeSearch = async (input: {
   queries: string[];
@@ -21,6 +23,8 @@ export const executeSearch = async (input: {
   session: InstanceType<typeof SessionManager>;
   llm: BaseLLM<any>;
   embedding: BaseEmbedding<any>;
+  budget: ResearchBudget;
+  allowedScrapeUrls: Set<string>;
 }) => {
   const researchBlock = input.researchBlock;
 
@@ -48,6 +52,10 @@ export const executeSearch = async (input: {
       const res = await searchSearxng(q, {
         ...(input.searchConfig ? input.searchConfig : {}),
       });
+
+      res.results.forEach(
+        (r) => r.url && input.allowedScrapeUrls.add(normalizeUrl(r.url)),
+      );
 
       let resultChunks: Chunk[] = [];
 
@@ -189,6 +197,10 @@ export const executeSearch = async (input: {
         ...(input.searchConfig ? input.searchConfig : {}),
       });
 
+      res.results.forEach(
+        (r) => r.url && input.allowedScrapeUrls.add(normalizeUrl(r.url)),
+      );
+
       let resultChunks: Chunk[] = [];
 
       resultChunks = res.results.map((r) => {
@@ -329,15 +341,15 @@ export const executeSearch = async (input: {
 
     const extractedFacts: Chunk[] = [];
 
-
     await Promise.all(
       filteredResults.map(async (result, i) => {
         try {
-          const scrapedData = await Scraper.scrape(result.metadata.url).catch(
-            (err) => {
+          const scrapedData = await input.budget
+            .run(() => Scraper.scrape(result.metadata.url))
+            .catch((err) => {
               console.log('Error scraping data from', result.metadata.url, err);
-            },
-          );
+              return null;
+            });
 
           if (!scrapedData) return;
 
@@ -347,21 +359,23 @@ export const executeSearch = async (input: {
           await Promise.all(
             chunks.map(async (chunk) => {
               try {
-                const extractorOutput = await input.llm.generateObject<
-                  typeof extractorSchema
-                >({
-                  schema: extractorSchema,
-                  messages: [
-                    {
-                      role: 'system',
-                      content: extractorPrompt,
-                    },
-                    {
-                      role: 'user',
-                      content: `<queries>${input.queries.join(', ')}</queries>\n<scraped_data>${chunk}</scraped_data>`,
-                    },
-                  ],
-                });
+                const extractorOutput = await input.budget.run(() =>
+                  input.llm.generateObject<typeof extractorSchema>({
+                    schema: extractorSchema,
+                    messages: [
+                      {
+                        role: 'system',
+                        content: extractorPrompt,
+                      },
+                      {
+                        role: 'user',
+                        content: `<queries>${input.queries.join(', ')}</queries>\n<scraped_data>${chunk}</scraped_data>`,
+                      },
+                    ],
+                  }),
+                );
+
+                if (!extractorOutput) return;
 
                 accumulatedContent += extractorOutput.extracted_facts + '\n';
               } catch (err) {

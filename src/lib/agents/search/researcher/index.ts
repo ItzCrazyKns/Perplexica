@@ -5,6 +5,8 @@ import SessionManager from '@/lib/session';
 import { Message, ReasoningResearchBlock } from '@/lib/types';
 import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 import { ToolCall } from '@/lib/models/types';
+import { createResearchBudget } from '../researchBudget';
+import { seedAllowedUrls } from '../urlAllowlist';
 
 class Researcher {
   async research(
@@ -12,6 +14,11 @@ class Researcher {
     input: ResearcherInput,
   ): Promise<ResearcherOutput> {
     let actionOutput: ActionOutput[] = [];
+    const budget = createResearchBudget(input.config.mode);
+    const allowedScrapeUrls = seedAllowedUrls(
+      input.chatHistory,
+      input.followUp,
+    );
     let maxIteration =
       input.config.mode === 'speed'
         ? 2
@@ -57,6 +64,11 @@ class Researcher {
     ];
 
     for (let i = 0; i < maxIteration; i++) {
+      if (budget.expired()) {
+        console.warn('Research budget exhausted, answering from context');
+        break;
+      }
+
       const researcherPrompt = getResearcherPrompt(
         availableActionsDescription,
         input.config.mode,
@@ -170,6 +182,8 @@ class Researcher {
           researchBlockId: researchBlockId,
           fileIds: input.config.fileIds,
           mode: input.config.mode,
+          budget: budget,
+          allowedScrapeUrls: allowedScrapeUrls,
         });
 
         actionOutput.push(...actionResults);
