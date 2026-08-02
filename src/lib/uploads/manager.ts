@@ -94,7 +94,20 @@ class UploadManager {
         return recordedFiles.find(f => f.id === fileId) || null;
     }
 
+    /* Uploads are immutable once written, and the researcher asks for
+       the same file's chunks on every iteration; parsing megabytes of
+       embedding JSON per query was pure waste. Bounded so many large
+       uploads cannot pin unlimited memory. */
+    private static chunkCache = new Map<
+        string,
+        { content: string; embedding: number[] }[]
+    >();
+    private static CHUNK_CACHE_MAX_FILES = 32;
+
     static getFileChunks(fileId: string): { content: string; embedding: number[] }[] {
+        const cached = this.chunkCache.get(fileId);
+        if (cached) return cached;
+
         try {
             const recordedFile = this.getFile(fileId);
 
@@ -103,6 +116,12 @@ class UploadManager {
             }
 
             const contentData = JSON.parse(fs.readFileSync(recordedFile.contentPath, 'utf-8'))
+
+            if (this.chunkCache.size >= this.CHUNK_CACHE_MAX_FILES) {
+                const oldest = this.chunkCache.keys().next().value;
+                if (oldest !== undefined) this.chunkCache.delete(oldest);
+            }
+            this.chunkCache.set(fileId, contentData.chunks);
 
             return contentData.chunks;
         } catch (err) {
@@ -134,7 +153,9 @@ class UploadManager {
                     })
                 }
 
-                fs.writeFileSync(contentPath, JSON.stringify(data, null, 2));
+                /* Compact: these files carry embedding vectors and pretty
+                   printing roughly 5x'd their size. */
+                fs.writeFileSync(contentPath, JSON.stringify(data));
 
                 return contentPath;
             case 'application/pdf':
@@ -165,7 +186,7 @@ class UploadManager {
                     })
                 }
 
-                fs.writeFileSync(pdfContentPath, JSON.stringify(pdfData, null, 2));
+                fs.writeFileSync(pdfContentPath, JSON.stringify(pdfData));
 
                 return pdfContentPath;
             case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
@@ -191,7 +212,7 @@ class UploadManager {
                     })
                 }
 
-                fs.writeFileSync(docContentPath, JSON.stringify(docData, null, 2));
+                fs.writeFileSync(docContentPath, JSON.stringify(docData));
 
                 return docContentPath;
             default:

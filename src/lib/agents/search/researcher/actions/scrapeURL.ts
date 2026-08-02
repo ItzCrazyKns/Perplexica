@@ -7,6 +7,7 @@ import { ResearchAction } from '../../types';
 import { Chunk, ReadingResearchBlock } from '@/lib/types';
 import Scraper from '@/lib/scraper';
 import { splitText } from '@/lib/utils/splitText';
+import { normalizeUrl } from '../../urlAllowlist';
 
 const schema = z.object({
   urls: z.array(z.string()).describe('A list of URLs to scrape content from.'),
@@ -27,7 +28,16 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
   getDescription: () => actionDescription,
   enabled: (_) => true,
   execute: async (params, additionalConfig) => {
-    params.urls = params.urls.slice(0, 3);
+    const requested = params.urls.slice(0, 3);
+
+    /* The model's context contains scraped page text, so a page can
+       ask for any URL; only user-typed or search-surfaced ones pass. */
+    const blocked = requested.filter(
+      (url) => !additionalConfig.allowedScrapeUrls.has(normalizeUrl(url)),
+    );
+    params.urls = requested.filter((url) =>
+      additionalConfig.allowedScrapeUrls.has(normalizeUrl(url)),
+    );
 
     let readingBlockId = crypto.randomUUID();
     let readingEmitted = false;
@@ -36,12 +46,28 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
       additionalConfig.researchBlockId,
     );
 
-    const results: Chunk[] = [];
+    const results: Chunk[] = blocked.map((url) => ({
+      content: `Scraping ${url} is not permitted: only URLs the user provided or that appeared in search results may be scraped.`,
+      metadata: {
+        url,
+        title: `Blocked scrape of ${url}`,
+      },
+    }));
 
     await Promise.all(
       params.urls.map(async (url) => {
         try {
-          const scraped = await Scraper.scrape(url);
+          const scraped = await additionalConfig.budget.run(() =>
+            Scraper.scrape(url),
+          );
+
+          if (!scraped) {
+            results.push({
+              content: `Skipped ${url}: research budget exhausted.`,
+              metadata: { url, title: url },
+            });
+            return;
+          }
 
           if (
             !readingEmitted &&
@@ -114,21 +140,25 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
             try {
               await Promise.all(
                 chunks.map(async (chunk) => {
-                  const extracted = await additionalConfig.llm.generateObject<
-                    typeof extractorSchema
-                  >({
-                    messages: [
+                  const extracted = await additionalConfig.budget.run(() =>
+                    additionalConfig.llm.generateObject<typeof extractorSchema>(
                       {
-                        role: 'system',
-                        content: extractorPrompt,
+                        messages: [
+                          {
+                            role: 'system',
+                            content: extractorPrompt,
+                          },
+                          {
+                            role: 'user',
+                            content: `<queries>Summarize</queries>\n<scraped_data>${chunk}</scraped_data>`,
+                          },
+                        ],
+                        schema: extractorSchema,
                       },
-                      {
-                        role: 'user',
-                        content: `<queries>Summarize</queries>\n<scraped_data>${chunk}</scraped_data>`,
-                      },
-                    ],
-                    schema: extractorSchema,
-                  });
+                    ),
+                  );
+
+                  if (!extracted) return;
 
                   accumulatedContent += extracted.extracted_facts + '\n';
                 }),

@@ -17,9 +17,7 @@ const schema = z.object({
 export const createSearchAction = (spec: {
   name: string;
   toolDescription: string;
-  getDescription: (config: {
-    mode: SearchAgentConfig['mode'];
-  }) => string;
+  getDescription: (config: { mode: SearchAgentConfig['mode'] }) => string;
   enabled: ResearchAction<typeof schema>['enabled'];
   engines?: string[];
 }): ResearchAction<typeof schema> => ({
@@ -46,6 +44,8 @@ export const createSearchAction = (spec: {
       queries: input.queries,
       researchBlock: researchBlock,
       session: additionalConfig.session,
+      budget: additionalConfig.budget,
+      allowedScrapeUrls: additionalConfig.allowedScrapeUrls,
       ...(spec.engines ? { searchConfig: { engines: spec.engines } } : {}),
     });
 
