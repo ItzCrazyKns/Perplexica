@@ -1,7 +1,7 @@
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { File, LoaderCircle, Paperclip, Plus, Trash } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { useChat } from '@/lib/hooks/useChat';
+import { useChatSettings } from '@/lib/hooks/useChat';
 import { AnimatePresence, motion } from 'motion/react';
 import { toast } from 'sonner';
 
@@ -35,7 +35,7 @@ const variants = {
 
 const Attach = ({ variant = 'default' }: { variant?: 'default' | 'small' }) => {
   const v = variants[variant];
-  const { files, setFiles, setFileIds, fileIds } = useChat();
+  const { files, setFiles, setFileIds, fileIds } = useChatSettings();
 
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<any>();

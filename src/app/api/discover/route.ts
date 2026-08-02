@@ -1,29 +1,4 @@
-import { searchSearxng } from '@/lib/searxng';
-
-const websitesForTopic = {
-  tech: {
-    query: ['technology news', 'latest tech', 'AI', 'science and innovation'],
-    links: ['techcrunch.com', 'wired.com', 'theverge.com'],
-  },
-  finance: {
-    query: ['finance news', 'economy', 'stock market', 'investing'],
-    links: ['bloomberg.com', 'cnbc.com', 'marketwatch.com'],
-  },
-  art: {
-    query: ['art news', 'culture', 'modern art', 'cultural events'],
-    links: ['artnews.com', 'hyperallergic.com', 'theartnewspaper.com'],
-  },
-  sports: {
-    query: ['sports news', 'latest sports', 'cricket football tennis'],
-    links: ['espn.com', 'bbc.com/sport', 'skysports.com'],
-  },
-  entertainment: {
-    query: ['entertainment news', 'movies', 'TV shows', 'celebrities'],
-    links: ['hollywoodreporter.com', 'variety.com', 'deadline.com'],
-  },
-};
-
-type Topic = keyof typeof websitesForTopic;
+import { getDiscoverArticles, isDiscoverTopic } from '@/lib/discover';
 
 export const GET = async (req: Request) => {
   try {
@@ -31,50 +6,10 @@ export const GET = async (req: Request) => {
 
     const mode: 'normal' | 'preview' =
       (params.get('mode') as 'normal' | 'preview') || 'normal';
-    const topic: Topic = (params.get('topic') as Topic) || 'tech';
+    const topicParam = params.get('topic') || 'tech';
+    const topic = isDiscoverTopic(topicParam) ? topicParam : 'tech';
 
-    const selectedTopic = websitesForTopic[topic];
-
-    let data = [];
-
-    if (mode === 'normal') {
-      const seenUrls = new Set();
-
-      data = (
-        await Promise.all(
-          selectedTopic.links.flatMap((link) =>
-            selectedTopic.query.map(async (query) => {
-              return (
-                await searchSearxng(`site:${link} ${query}`, {
-                  engines: ['bing news'],
-                  pageno: 1,
-                  language: 'en',
-                })
-              ).results;
-            }),
-          ),
-        )
-      )
-        .flat()
-        .filter((item) => {
-          const url = item.url?.toLowerCase().trim();
-          if (seenUrls.has(url)) return false;
-          seenUrls.add(url);
-          return true;
-        })
-        .sort(() => Math.random() - 0.5);
-    } else {
-      data = (
-        await searchSearxng(
-          `site:${selectedTopic.links[Math.floor(Math.random() * selectedTopic.links.length)]} ${selectedTopic.query[Math.floor(Math.random() * selectedTopic.query.length)]}`,
-          {
-            engines: ['bing news'],
-            pageno: 1,
-            language: 'en',
-          },
-        )
-      ).results;
-    }
+    const data = await getDiscoverArticles(topic, mode);
 
     return Response.json(
       {

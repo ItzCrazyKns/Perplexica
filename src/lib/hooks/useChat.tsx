@@ -4,6 +4,7 @@ import { Message } from '@/components/ChatWindow';
 import { Block } from '@/lib/types';
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -13,54 +14,20 @@ import {
 import { useParams, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { getSuggestions } from '../actions';
-import { MinimalProvider } from '../models/types';
 import { getAutoMediaSearch } from '../config/clientRegistry';
-import { applyPatch } from 'rfc6902';
-import { Widget } from '@/components/ChatWindow';
 import { readNdjsonStream } from '../chat/ndjson';
 import { randomHex } from '../utils/randomHex';
+import { buildSection, Section } from '../chat/sections';
+import {
+  appendTextDelta,
+  patchBlock,
+  setMessageStatus,
+  upsertBlock,
+} from '../chat/streamEvents';
+import { resolveModelConfig } from '../chat/config';
+import { loadChat } from '../chat/loadMessages';
 
-export type Section = {
-  message: Message;
-  widgets: Widget[];
-  parsedTextBlocks: string[];
-  speechMessage: string;
-  thinkingEnded: boolean;
-  suggestions?: string[];
-};
-
-type ChatContext = {
-  messages: Message[];
-  sections: Section[];
-  chatHistory: [string, string][];
-  files: File[];
-  fileIds: string[];
-  sources: string[];
-  chatId: string | undefined;
-  optimizationMode: string;
-  isMessagesLoaded: boolean;
-  loading: boolean;
-  notFound: boolean;
-  messageAppeared: boolean;
-  isReady: boolean;
-  hasError: boolean;
-  chatModelProvider: ChatModelProvider;
-  embeddingModelProvider: EmbeddingModelProvider;
-  researchEnded: boolean;
-  setResearchEnded: (ended: boolean) => void;
-  setOptimizationMode: (mode: string) => void;
-  setSources: (sources: string[]) => void;
-  setFiles: (files: File[]) => void;
-  setFileIds: (fileIds: string[]) => void;
-  sendMessage: (
-    message: string,
-    messageId?: string,
-    rewrite?: boolean,
-  ) => Promise<void>;
-  rewrite: (messageId: string) => void;
-  setChatModelProvider: (provider: ChatModelProvider) => void;
-  setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void;
-};
+export type { Section };
 
 export interface File {
   fileName: string;
@@ -78,194 +45,94 @@ interface EmbeddingModelProvider {
   providerId: string;
 }
 
-const checkConfig = async (
-  setChatModelProvider: (provider: ChatModelProvider) => void,
-  setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void,
-  setIsConfigReady: (ready: boolean) => void,
-  setHasError: (hasError: boolean) => void,
-) => {
-  try {
-    let chatModelKey = localStorage.getItem('chatModelKey');
-    let chatModelProviderId = localStorage.getItem('chatModelProviderId');
-    let embeddingModelKey = localStorage.getItem('embeddingModelKey');
-    let embeddingModelProviderId = localStorage.getItem(
-      'embeddingModelProviderId',
-    );
-
-    const res = await fetch(`/api/providers`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!res.ok) {
-      throw new Error(
-        `Provider fetching failed with status code ${res.status}`,
-      );
-    }
-
-    const data = await res.json();
-    const providers: MinimalProvider[] = data.providers;
-
-    if (providers.length === 0) {
-      throw new Error(
-        'No chat model providers found, please configure them in the settings page.',
-      );
-    }
-
-    const chatModelProvider =
-      providers.find((p) => p.id === chatModelProviderId) ??
-      providers.find((p) => p.chatModels.length > 0);
-
-    if (!chatModelProvider) {
-      throw new Error(
-        'No chat models found, pleae configure them in the settings page.',
-      );
-    }
-
-    chatModelProviderId = chatModelProvider.id;
-
-    const chatModel =
-      chatModelProvider.chatModels.find((m) => m.key === chatModelKey) ??
-      chatModelProvider.chatModels[0];
-    chatModelKey = chatModel.key;
-
-    const embeddingModelProvider =
-      providers.find((p) => p.id === embeddingModelProviderId) ??
-      providers.find((p) => p.embeddingModels.length > 0);
-
-    if (!embeddingModelProvider) {
-      throw new Error(
-        'No embedding models found, pleae configure them in the settings page.',
-      );
-    }
-
-    embeddingModelProviderId = embeddingModelProvider.id;
-
-    const embeddingModel =
-      embeddingModelProvider.embeddingModels.find(
-        (m) => m.key === embeddingModelKey,
-      ) ?? embeddingModelProvider.embeddingModels[0];
-    embeddingModelKey = embeddingModel.key;
-
-    localStorage.setItem('chatModelKey', chatModelKey);
-    localStorage.setItem('chatModelProviderId', chatModelProviderId);
-    localStorage.setItem('embeddingModelKey', embeddingModelKey);
-    localStorage.setItem('embeddingModelProviderId', embeddingModelProviderId);
-
-    setChatModelProvider({
-      key: chatModelKey,
-      providerId: chatModelProviderId,
-    });
-
-    setEmbeddingModelProvider({
-      key: embeddingModelKey,
-      providerId: embeddingModelProviderId,
-    });
-
-    setIsConfigReady(true);
-  } catch (err: any) {
-    console.error('An error occurred while checking the configuration:', err);
-    toast.error(err.message);
-    setIsConfigReady(false);
-    setHasError(true);
-  }
+/*
+ * Split by update frequency so the input bar and settings UI do not
+ * re-render on every streamed token:
+ * - messages: changes per token
+ * - status: changes a few times per message
+ * - settings: changes on user interaction
+ * - actions: stable identities for the whole session
+ */
+type ChatMessagesContext = {
+  messages: Message[];
+  sections: Section[];
 };
 
-const loadMessages = async (
-  chatId: string,
-  setMessages: (messages: Message[]) => void,
-  setIsMessagesLoaded: (loaded: boolean) => void,
-  chatHistory: React.MutableRefObject<[string, string][]>,
-  setSources: (sources: string[]) => void,
-  setNotFound: (notFound: boolean) => void,
-  setFiles: (files: File[]) => void,
-  setFileIds: (fileIds: string[]) => void,
-) => {
-  const res = await fetch(`/api/chats/${chatId}`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (res.status === 404) {
-    setNotFound(true);
-    setIsMessagesLoaded(true);
-    return;
-  }
-
-  const data = await res.json();
-
-  const messages = data.messages as Message[];
-
-  setMessages(messages);
-
-  const history: [string, string][] = [];
-  messages.forEach((msg) => {
-    history.push(['human', msg.query]);
-
-    const textBlocks = msg.responseBlocks
-      .filter(
-        (block): block is Block & { type: 'text' } => block.type === 'text',
-      )
-      .map((block) => block.data)
-      .join('\n');
-
-    if (textBlocks) {
-      history.push(['assistant', textBlocks]);
-    }
-  });
-
-  console.debug(new Date(), 'app:messages_loaded');
-
-  if (messages.length > 0) {
-    document.title = messages[0].query;
-  }
-
-  const files = data.chat.files.map((file: any) => {
-    return {
-      fileName: file.name,
-      fileExtension: file.name.split('.').pop(),
-      fileId: file.fileId,
-    };
-  });
-
-  setFiles(files);
-  setFileIds(files.map((file: File) => file.fileId));
-
-  chatHistory.current = history;
-  setSources(data.chat.sources);
-  setIsMessagesLoaded(true);
+type ChatStatusContext = {
+  chatId: string | undefined;
+  loading: boolean;
+  isReady: boolean;
+  hasError: boolean;
+  notFound: boolean;
+  isMessagesLoaded: boolean;
+  messageAppeared: boolean;
+  researchEnded: boolean;
+  hasMessages: boolean;
 };
 
-export const chatContext = createContext<ChatContext>({
-  chatHistory: [],
-  chatId: '',
-  fileIds: [],
-  files: [],
-  sources: [],
-  hasError: false,
-  isMessagesLoaded: false,
-  isReady: false,
-  loading: false,
-  messageAppeared: false,
+type ChatSettingsContext = {
+  files: File[];
+  fileIds: string[];
+  sources: string[];
+  optimizationMode: string;
+  chatModelProvider: ChatModelProvider;
+  embeddingModelProvider: EmbeddingModelProvider;
+  setFiles: (files: File[]) => void;
+  setFileIds: (fileIds: string[]) => void;
+  setSources: (sources: string[]) => void;
+  setOptimizationMode: (mode: string) => void;
+  setChatModelProvider: (provider: ChatModelProvider) => void;
+  setEmbeddingModelProvider: (provider: EmbeddingModelProvider) => void;
+};
+
+type ChatActionsContext = {
+  sendMessage: (
+    message: string,
+    messageId?: string,
+    rewrite?: boolean,
+  ) => Promise<void>;
+  rewrite: (messageId: string) => void;
+  setResearchEnded: (ended: boolean) => void;
+  getChatHistory: () => [string, string][];
+};
+
+const messagesContext = createContext<ChatMessagesContext>({
   messages: [],
   sections: [],
+});
+
+const statusContext = createContext<ChatStatusContext>({
+  chatId: '',
+  loading: false,
+  isReady: false,
+  hasError: false,
   notFound: false,
+  isMessagesLoaded: false,
+  messageAppeared: false,
+  researchEnded: false,
+  hasMessages: false,
+});
+
+const settingsContext = createContext<ChatSettingsContext>({
+  files: [],
+  fileIds: [],
+  sources: [],
   optimizationMode: '',
   chatModelProvider: { key: '', providerId: '' },
   embeddingModelProvider: { key: '', providerId: '' },
-  researchEnded: false,
-  rewrite: () => {},
-  sendMessage: async () => {},
-  setFileIds: () => {},
   setFiles: () => {},
+  setFileIds: () => {},
   setSources: () => {},
   setOptimizationMode: () => {},
   setChatModelProvider: () => {},
   setEmbeddingModelProvider: () => {},
+});
+
+const actionsContext = createContext<ChatActionsContext>({
+  sendMessage: async () => {},
+  rewrite: () => {},
   setResearchEnded: () => {},
+  getChatHistory: () => [],
 });
 
 export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
@@ -314,92 +181,19 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
   const messagesRef = useRef<Message[]>([]);
 
+  /* Keyed by message object identity: stream events replace only the
+     target message, so every other section is a cache hit and its
+     MessageBox can bail out of re-rendering. */
+  const sectionCacheRef = useRef(new WeakMap<Message, Section>());
+
   const sections = useMemo<Section[]>(() => {
     return messages.map((msg) => {
-      const textBlocks: string[] = [];
-      let speechMessage = '';
-      let thinkingEnded = false;
-      let suggestions: string[] = [];
+      const cached = sectionCacheRef.current.get(msg);
+      if (cached) return cached;
 
-      const sourceBlocks = msg.responseBlocks.filter(
-        (block): block is Block & { type: 'source' } => block.type === 'source',
-      );
-      const sources = sourceBlocks.flatMap((block) => block.data);
-
-      const widgetBlocks = msg.responseBlocks
-        .filter((b) => b.type === 'widget')
-        .map((b) => b.data) as Widget[];
-
-      msg.responseBlocks.forEach((block) => {
-        if (block.type === 'text') {
-          let processedText = block.data;
-          const citationRegex = /\[([^\]]+)\]/g;
-          const regex = /\[(\d+)\]/g;
-
-          if (processedText.includes('<think>')) {
-            const openThinkTag = processedText.match(/<think>/g)?.length || 0;
-            const closeThinkTag =
-              processedText.match(/<\/think>/g)?.length || 0;
-
-            if (openThinkTag && !closeThinkTag) {
-              processedText += '</think> <a> </a>';
-            }
-          }
-
-          if (block.data.includes('</think>')) {
-            thinkingEnded = true;
-          }
-
-          if (sources.length > 0) {
-            processedText = processedText.replace(
-              citationRegex,
-              (_, capturedContent: string) => {
-                const numbers = capturedContent
-                  .split(',')
-                  .map((numStr) => numStr.trim());
-
-                const linksHtml = numbers
-                  .map((numStr) => {
-                    const number = parseInt(numStr);
-
-                    if (isNaN(number) || number <= 0) {
-                      return `[${numStr}]`;
-                    }
-
-                    const source = sources[number - 1];
-                    const url = source?.metadata?.url;
-
-                    if (url) {
-                      return `<citation href="${url}">${numStr}</citation>`;
-                    } else {
-                      return ``;
-                    }
-                  })
-                  .join('');
-
-                return linksHtml;
-              },
-            );
-            speechMessage += block.data.replace(regex, '');
-          } else {
-            processedText = processedText.replace(regex, '');
-            speechMessage += block.data.replace(regex, '');
-          }
-
-          textBlocks.push(processedText);
-        } else if (block.type === 'suggestion') {
-          suggestions = block.data;
-        }
-      });
-
-      return {
-        message: msg,
-        parsedTextBlocks: textBlocks,
-        speechMessage,
-        thinkingEnded,
-        suggestions,
-        widgets: widgetBlocks,
-      };
+      const section = buildSection(msg);
+      sectionCacheRef.current.set(msg, section);
+      return section;
     });
   }, [messages]);
 
@@ -440,12 +234,21 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    checkConfig(
-      setChatModelProvider,
-      setEmbeddingModelProvider,
-      setIsConfigReady,
-      setHasError,
-    );
+    resolveModelConfig()
+      .then((config) => {
+        setChatModelProvider(config.chatModelProvider);
+        setEmbeddingModelProvider(config.embeddingModelProvider);
+        setIsConfigReady(true);
+      })
+      .catch((err) => {
+        console.error(
+          'An error occurred while checking the configuration:',
+          err,
+        );
+        toast.error(err.message);
+        setIsConfigReady(false);
+        setHasError(true);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -469,16 +272,28 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       !isMessagesLoaded &&
       messages.length === 0
     ) {
-      loadMessages(
-        chatId,
-        setMessages,
-        setIsMessagesLoaded,
-        chatHistory,
-        setSources,
-        setNotFound,
-        setFiles,
-        setFileIds,
-      );
+      loadChat(chatId).then((chat) => {
+        if (chat.notFound) {
+          setNotFound(true);
+          setIsMessagesLoaded(true);
+          return;
+        }
+
+        setMessages(chat.messages);
+
+        console.debug(new Date(), 'app:messages_loaded');
+
+        if (chat.messages.length > 0) {
+          document.title = chat.messages[0].query;
+        }
+
+        setFiles(chat.files);
+        setFileIds(chat.files.map((file) => file.fileId));
+
+        chatHistory.current = chat.history;
+        setSources(chat.sources);
+        setIsMessagesLoaded(true);
+      });
     } else if (!chatId) {
       setNewChatCreated(true);
       setIsMessagesLoaded(true);
@@ -500,27 +315,11 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     } else {
       setIsReady(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMessagesLoaded, isConfigReady, newChatCreated]);
-
-  const rewrite = (messageId: string) => {
-    const index = messages.findIndex((msg) => msg.messageId === messageId);
-
-    if (index === -1) return;
-
-    setMessages((prev) => prev.slice(0, index));
-
-    chatHistory.current = chatHistory.current.slice(0, index * 2);
-
-    const messageToRewrite = messages[index];
-    sendMessage(messageToRewrite.query, messageToRewrite.messageId, true);
-  };
 
   useEffect(() => {
     if (isReady && initialMessage && isConfigReady) {
-      if (!isConfigReady) {
-        toast.error('Cannot send message before the configuration is ready');
-        return;
-      }
       sendMessage(initialMessage);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -533,13 +332,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       if (data.type === 'error') {
         toast.error(data.data);
         setLoading(false);
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.messageId === messageId
-              ? { ...msg, status: 'error' as const }
-              : msg,
-          ),
-        );
+        setMessages((prev) => setMessageStatus(prev, messageId, 'error'));
         return;
       }
 
@@ -555,31 +348,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data.type === 'block') {
-        setMessages((prev) =>
-          prev.map((msg) => {
-            if (msg.messageId === messageId) {
-              const exists = msg.responseBlocks.findIndex(
-                (b) => b.id === data.block.id,
-              );
-
-              if (exists !== -1) {
-                const existingBlocks = [...msg.responseBlocks];
-                existingBlocks[exists] = data.block;
-
-                return {
-                  ...msg,
-                  responseBlocks: existingBlocks,
-                };
-              }
-
-              return {
-                ...msg,
-                responseBlocks: [...msg.responseBlocks, data.block],
-              };
-            }
-            return msg;
-          }),
-        );
+        setMessages((prev) => upsertBlock(prev, messageId, data.block));
 
         if (
           (data.block.type === 'source' && data.block.data.length > 0) ||
@@ -591,38 +360,13 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (data.type === 'appendText') {
         setMessages((prev) =>
-          prev.map((msg) => {
-            if (msg.messageId === messageId) {
-              return {
-                ...msg,
-                responseBlocks: msg.responseBlocks.map((block) =>
-                  block.id === data.blockId && block.type === 'text'
-                    ? { ...block, data: block.data + data.delta }
-                    : block,
-                ),
-              };
-            }
-            return msg;
-          }),
+          appendTextDelta(prev, messageId, data.blockId, data.delta),
         );
       }
 
       if (data.type === 'updateBlock') {
         setMessages((prev) =>
-          prev.map((msg) => {
-            if (msg.messageId === messageId) {
-              const updatedBlocks = msg.responseBlocks.map((block) => {
-                if (block.id === data.blockId) {
-                  const updatedBlock = { ...block };
-                  applyPatch(updatedBlock, data.patch);
-                  return updatedBlock;
-                }
-                return block;
-              });
-              return { ...msg, responseBlocks: updatedBlocks };
-            }
-            return msg;
-          }),
+          patchBlock(prev, messageId, data.blockId, data.patch),
         );
       }
 
@@ -649,13 +393,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
         chatHistory.current = newHistory;
 
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.messageId === messageId
-              ? { ...msg, status: 'completed' as const }
-              : msg,
-          ),
-        );
+        setMessages((prev) => setMessageStatus(prev, messageId, 'completed'));
 
         setLoading(false);
 
@@ -675,8 +413,6 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           }, 200);
         }
 
-        // Check if there are sources and no suggestions
-
         const hasSourceBlocks = currentMsg?.responseBlocks.some(
           (block) => block.type === 'source' && block.data.length > 0,
         );
@@ -692,25 +428,15 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
             data: suggestions,
           };
 
-          setMessages((prev) =>
-            prev.map((msg) => {
-              if (msg.messageId === messageId) {
-                return {
-                  ...msg,
-                  responseBlocks: [...msg.responseBlocks, suggestionBlock],
-                };
-              }
-              return msg;
-            }),
-          );
+          setMessages((prev) => upsertBlock(prev, messageId, suggestionBlock));
         }
       }
     };
   };
 
-  const sendMessage: ChatContext['sendMessage'] = async (
-    message,
-    messageId,
+  const sendMessageImpl = async (
+    message: string,
+    messageId?: string,
     rewrite = false,
   ) => {
     if (loading || !message) return;
@@ -782,43 +508,113 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     await readNdjsonStream(res.body, getMessageHandler(newMessage));
   };
 
+  const rewriteImpl = (messageId: string) => {
+    const index = messages.findIndex((msg) => msg.messageId === messageId);
+
+    if (index === -1) return;
+
+    setMessages((prev) => prev.slice(0, index));
+
+    chatHistory.current = chatHistory.current.slice(0, index * 2);
+
+    const messageToRewrite = messages[index];
+    sendMessageImpl(messageToRewrite.query, messageToRewrite.messageId, true);
+  };
+
+  /* Latest implementations behind stable identities, so memoized
+     consumers of the actions context never re-render for them. */
+  const sendMessageRef = useRef(sendMessageImpl);
+  sendMessageRef.current = sendMessageImpl;
+  const rewriteRef = useRef(rewriteImpl);
+  rewriteRef.current = rewriteImpl;
+
+  const sendMessage = useCallback(
+    (message: string, messageId?: string, rewrite?: boolean) =>
+      sendMessageRef.current(message, messageId, rewrite),
+    [],
+  );
+
+  const rewrite = useCallback(
+    (messageId: string) => rewriteRef.current(messageId),
+    [],
+  );
+
+  const getChatHistory = useCallback(() => chatHistory.current, []);
+
+  const messagesValue = useMemo<ChatMessagesContext>(
+    () => ({ messages, sections }),
+    [messages, sections],
+  );
+
+  const statusValue = useMemo<ChatStatusContext>(
+    () => ({
+      chatId,
+      loading,
+      isReady,
+      hasError,
+      notFound,
+      isMessagesLoaded,
+      messageAppeared,
+      researchEnded,
+      hasMessages: messages.length > 0,
+    }),
+    [
+      chatId,
+      loading,
+      isReady,
+      hasError,
+      notFound,
+      isMessagesLoaded,
+      messageAppeared,
+      researchEnded,
+      messages.length > 0,
+    ],
+  );
+
+  const settingsValue = useMemo<ChatSettingsContext>(
+    () => ({
+      files,
+      fileIds,
+      sources,
+      optimizationMode,
+      chatModelProvider,
+      embeddingModelProvider,
+      setFiles,
+      setFileIds,
+      setSources,
+      setOptimizationMode,
+      setChatModelProvider,
+      setEmbeddingModelProvider,
+    }),
+    [
+      files,
+      fileIds,
+      sources,
+      optimizationMode,
+      chatModelProvider,
+      embeddingModelProvider,
+    ],
+  );
+
+  const actionsValue = useMemo<ChatActionsContext>(
+    () => ({ sendMessage, rewrite, setResearchEnded, getChatHistory }),
+    [sendMessage, rewrite, getChatHistory],
+  );
+
   return (
-    <chatContext.Provider
-      value={{
-        messages,
-        sections,
-        chatHistory: chatHistory.current,
-        files,
-        fileIds,
-        sources,
-        chatId,
-        hasError,
-        isMessagesLoaded,
-        isReady,
-        loading,
-        messageAppeared,
-        notFound,
-        optimizationMode,
-        setFileIds,
-        setFiles,
-        setSources,
-        setOptimizationMode,
-        rewrite,
-        sendMessage,
-        setChatModelProvider,
-        chatModelProvider,
-        embeddingModelProvider,
-        setEmbeddingModelProvider,
-        researchEnded,
-        setResearchEnded,
-      }}
-    >
-      {children}
-    </chatContext.Provider>
+    <actionsContext.Provider value={actionsValue}>
+      <settingsContext.Provider value={settingsValue}>
+        <statusContext.Provider value={statusValue}>
+          <messagesContext.Provider value={messagesValue}>
+            {children}
+          </messagesContext.Provider>
+        </statusContext.Provider>
+      </settingsContext.Provider>
+    </actionsContext.Provider>
   );
 };
 
-export const useChat = () => {
-  const ctx = useContext(chatContext);
-  return ctx;
-};
+export const useChatMessages = () => useContext(messagesContext);
+export const useChatStatus = () => useContext(statusContext);
+export const useChatSettings = () => useContext(settingsContext);
+export const useChatActions = () => useContext(actionsContext);

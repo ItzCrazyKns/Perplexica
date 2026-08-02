@@ -1,6 +1,6 @@
 import Select from '@/components/ui/Select';
 import { ConfigModelProvider } from '@/lib/config/types';
-import { useChat } from '@/lib/hooks/useChat';
+import { useChatSettings } from '@/lib/hooks/useChat';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -17,7 +17,7 @@ const ModelSelect = ({
       : `${localStorage.getItem('embeddingModelProviderId')}/${localStorage.getItem('embeddingModelKey')}`,
   );
   const [loading, setLoading] = useState(false);
-  const { setChatModelProvider, setEmbeddingModelProvider } = useChat();
+  const { setChatModelProvider, setEmbeddingModelProvider } = useChatSettings();
 
   const handleSave = async (newValue: string) => {
     setLoading(true);

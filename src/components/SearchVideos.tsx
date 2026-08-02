@@ -26,11 +26,11 @@ declare module 'yet-another-react-lightbox' {
 
 const Searchvideos = ({
   query,
-  chatHistory,
+  getChatHistory,
   messageId,
 }: {
   query: string;
-  chatHistory: [string, string][];
+  getChatHistory: () => [string, string][];
   messageId: string;
 }) => {
   const [videos, setVideos] = useState<Video[] | null>(null);
@@ -60,7 +60,7 @@ const Searchvideos = ({
               },
               body: JSON.stringify({
                 query: query,
-                chatHistory: chatHistory,
+                chatHistory: getChatHistory(),
                 chatModel: {
                   providerId: chatModelProvider,
                   key: chatModel,

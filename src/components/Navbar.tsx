@@ -9,7 +9,7 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
-import { useChat, Section } from '@/lib/hooks/useChat';
+import { useChatMessages, useChatStatus, Section } from '@/lib/hooks/useChat';
 import { SourceBlock } from '@/lib/types';
 
 const downloadFile = (filename: string, content: string, type: string) => {
@@ -201,7 +201,8 @@ const Navbar = () => {
   const [title, setTitle] = useState<string>('');
   const [timeAgo, setTimeAgo] = useState<string>('');
 
-  const { sections, chatId } = useChat();
+  const { sections } = useChatMessages();
+  const { chatId } = useChatStatus();
 
   useEffect(() => {
     if (sections.length > 0 && sections[0].message) {

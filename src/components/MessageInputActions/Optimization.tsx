@@ -7,7 +7,7 @@ import {
   Transition,
 } from '@headlessui/react';
 import { Fragment } from 'react';
-import { useChat } from '@/lib/hooks/useChat';
+import { useChatSettings } from '@/lib/hooks/useChat';
 import { AnimatePresence, motion } from 'motion/react';
 
 const OptimizationModes = [
@@ -37,7 +37,7 @@ const OptimizationModes = [
 ];
 
 const Optimization = () => {
-  const { optimizationMode, setOptimizationMode } = useChat();
+  const { optimizationMode, setOptimizationMode } = useChatSettings();
 
   return (
     <Popover className="relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg">

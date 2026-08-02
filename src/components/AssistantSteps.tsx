@@ -11,7 +11,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { ResearchBlock, ResearchBlockSubStep } from '@/lib/types';
-import { useChat } from '@/lib/hooks/useChat';
+import { useChatStatus } from '@/lib/hooks/useChat';
 
 const getStepIcon = (step: ResearchBlockSubStep) => {
   if (step.type === 'reasoning') {
@@ -64,7 +64,7 @@ const AssistantSteps = ({
   const [isExpanded, setIsExpanded] = useState(
     isLast && status === 'answering' ? true : false,
   );
-  const { researchEnded, loading } = useChat();
+  const { researchEnded, loading } = useChatStatus();
 
   useEffect(() => {
     if (researchEnded && isLast) {

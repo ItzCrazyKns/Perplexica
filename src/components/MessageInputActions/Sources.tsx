@@ -1,4 +1,4 @@
-import { useChat } from '@/lib/hooks/useChat';
+import { useChatSettings } from '@/lib/hooks/useChat';
 import {
   Popover,
   PopoverButton,
@@ -31,7 +31,7 @@ const sourcesList = [
 ];
 
 const Sources = () => {
-  const { sources, setSources } = useChat();
+  const { sources, setSources } = useChatSettings();
 
   return (
     <Popover className="relative">
