@@ -88,8 +88,11 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       model: this.config.model,
       messages: this.convertToOpenAIMessages(input.messages),
       tools: openaiTools.length > 0 ? openaiTools : undefined,
+      /* No hardcoded fallback: leaving it unset lets self-hosted
+         servers apply their model-tuned CLI defaults instead of being
+         overridden with 1.0 on every request. */
       temperature:
-        input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
+        input.options?.temperature ?? this.config.options?.temperature,
       top_p: input.options?.topP ?? this.config.options?.topP,
       max_completion_tokens:
         input.options?.maxTokens ?? this.config.options?.maxTokens,
@@ -160,8 +163,11 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     const response = await this.openAIClient.chat.completions.parse({
       messages: this.convertToOpenAIMessages(input.messages),
       model: this.config.model,
+      /* Structured outputs (classification, extraction, picking) want
+         determinism; at 1.0 the classifier flip-flopped skipSearch on
+         identical queries. */
       temperature:
-        input.options?.temperature ?? this.config.options?.temperature ?? 1.0,
+        input.options?.temperature ?? this.config.options?.temperature ?? 0,
       top_p: input.options?.topP ?? this.config.options?.topP,
       max_completion_tokens:
         input.options?.maxTokens ?? this.config.options?.maxTokens,
