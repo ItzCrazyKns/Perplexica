@@ -1,12 +1,16 @@
+import { z } from 'zod';
+
+const weatherBodySchema = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  measureUnit: z.enum(['Imperial', 'Metric']),
+});
+
 export const POST = async (req: Request) => {
   try {
-    const body: {
-      lat: number;
-      lng: number;
-      measureUnit: 'Imperial' | 'Metric';
-    } = await req.json();
+    const parsed = weatherBodySchema.safeParse(await req.json());
 
-    if (!body.lat || !body.lng) {
+    if (!parsed.success) {
       return Response.json(
         {
           message: 'Invalid request.',
@@ -15,10 +19,24 @@ export const POST = async (req: Request) => {
       );
     }
 
+    const body = parsed.data;
+
+    const params = new URLSearchParams({
+      latitude: String(body.lat),
+      longitude: String(body.lng),
+      current:
+        'weather_code,temperature_2m,is_day,relative_humidity_2m,wind_speed_10m',
+      timezone: 'auto',
+    });
+
+    if (body.measureUnit === 'Imperial') {
+      params.set('temperature_unit', 'fahrenheit');
+      params.set('wind_speed_unit', 'mph');
+    }
+
     const res = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${body.lat}&longitude=${body.lng}&current=weather_code,temperature_2m,is_day,relative_humidity_2m,wind_speed_10m&timezone=auto${
-        body.measureUnit === 'Metric' ? '' : '&temperature_unit=fahrenheit'
-      }${body.measureUnit === 'Metric' ? '' : '&wind_speed_unit=mph'}`,
+      `https://api.open-meteo.com/v1/forecast?${params.toString()}`,
+      { signal: AbortSignal.timeout(10000) },
     );
 
     const data = await res.json();

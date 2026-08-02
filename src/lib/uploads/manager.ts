@@ -11,6 +11,31 @@ const supportedMimeTypes = ['application/pdf', 'application/vnd.openxmlformats-o
 
 type SupportedMimeType = typeof supportedMimeTypes[number];
 
+/*
+ * The client-supplied MIME header is attacker-controlled; sniff the
+ * real type from magic bytes before handing bytes to the parsers.
+ */
+const sniffMimeType = (buffer: Buffer): SupportedMimeType | null => {
+    if (buffer.subarray(0, 5).toString('latin1') === '%PDF-') {
+        return 'application/pdf';
+    }
+
+    if (
+        buffer[0] === 0x50 &&
+        buffer[1] === 0x4b &&
+        buffer[2] === 0x03 &&
+        buffer[3] === 0x04
+    ) {
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    }
+
+    if (!buffer.subarray(0, 8192).includes(0)) {
+        return 'text/plain';
+    }
+
+    return null;
+}
+
 type UploadManagerParams = {
     embeddingModel: BaseEmbedding<any>;
 }
@@ -178,21 +203,27 @@ class UploadManager {
         const processedFiles: FileRes[] = [];
 
         await Promise.all(files.map(async (file) => {
-            if (!(supportedMimeTypes as unknown as string[]).includes(file.type)) {
-                throw new Error(`File type ${file.type} not supported`);
+            const buffer = Buffer.from(await file.arrayBuffer())
+
+            const sniffedType = sniffMimeType(buffer);
+
+            if (!sniffedType) {
+                throw new Error(`File content of ${file.name} is not a supported type`);
             }
 
             const fileId = crypto.randomBytes(16).toString('hex');
 
-            const fileExtension = file.name.split('.').pop();
+            /* Random name + fixed extension from the sniffed type: the
+               client's file name never touches the filesystem path. */
+            const fileExtension = sniffedType === 'application/pdf'
+                ? 'pdf'
+                : sniffedType === 'text/plain' ? 'txt' : 'docx';
             const fileName = `${crypto.randomBytes(16).toString('hex')}.${fileExtension}`;
             const filePath = path.join(UploadManager.uploadsDir, fileName);
 
-            const buffer = Buffer.from(await file.arrayBuffer())
-
             fs.writeFileSync(filePath, buffer);
 
-            const contentFilePath = await this.extractContentAndEmbed(filePath, file.type as SupportedMimeType);
+            const contentFilePath = await this.extractContentAndEmbed(filePath, sniffedType);
 
             const fileRecord: RecordedFile = {
                 id: fileId,

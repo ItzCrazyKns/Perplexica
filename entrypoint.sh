@@ -3,7 +3,10 @@ set -e
 
 echo "Starting SearXNG..."
 
-sudo -H -u searxng bash -c "cd /usr/local/searxng/searxng-src && export SEARXNG_SETTINGS_PATH='/etc/searxng/settings.yml' && export FLASK_APP=searx/webapp.py && /usr/local/searxng/searx-pyenv/bin/python -m flask run --host=0.0.0.0 --port=8080" &
+# Entrypoint runs as root only to drop privileges per process:
+# searxng for the search engine, vane for the Node app.
+setpriv --reuid=searxng --regid=searxng --init-groups \
+  sh -c "cd /usr/local/searxng/searxng-src && export SEARXNG_SETTINGS_PATH='/etc/searxng/settings.yml' && export FLASK_APP=searx/webapp.py && /usr/local/searxng/searx-pyenv/bin/python -m flask run --host=0.0.0.0 --port=8080" &
 SEARXNG_PID=$!
 
 echo "Waiting for SearXNG to be ready..."
@@ -29,4 +32,7 @@ fi
 cd /home/vane
 echo "Starting Vane..."
 
-exec node server.js
+chown -R vane:vane /home/vane/data
+
+export HOME=/home/vane-user
+exec setpriv --reuid=vane --regid=vane --init-groups node server.js
