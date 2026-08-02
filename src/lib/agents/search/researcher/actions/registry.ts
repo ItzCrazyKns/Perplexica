@@ -1,7 +1,7 @@
 import { Tool, ToolCall } from '@/lib/models/types';
 import {
+  ActionContext,
   ActionOutput,
-  AdditionalConfig,
   ClassifierOutput,
   ResearchAction,
   SearchAgentConfig,
@@ -15,18 +15,14 @@ class ActionRegistry {
     this.actions.set(action.name, action);
   }
 
-  static get(name: string): ResearchAction | undefined {
-    return this.actions.get(name);
-  }
-
   static getAvailableActions(config: {
     classification: ClassifierOutput;
     fileIds: string[];
     mode: SearchAgentConfig['mode'];
     sources: SearchSources[];
   }): ResearchAction[] {
-    return Array.from(
-      this.actions.values().filter((action) => action.enabled(config)),
+    return Array.from(this.actions.values()).filter((action) =>
+      action.enabled(config),
     );
   }
 
@@ -61,46 +57,67 @@ class ActionRegistry {
       .join('\n\n');
   }
 
-  static async execute(
+  private static async execute(
     name: string,
     params: any,
-    additionalConfig: AdditionalConfig & {
-      researchBlockId: string;
-      fileIds: string[];
-      mode: SearchAgentConfig['mode'];
-    },
-  ) {
+    additionalConfig: ActionContext,
+  ): Promise<ActionOutput> {
     const action = this.actions.get(name);
 
     if (!action) {
       throw new Error(`Action with name ${name} not found`);
     }
 
-    return action.execute(params, additionalConfig);
+    /* Arguments are raw LLM JSON: validate before the action indexes
+       into them, or a wrong shape throws deep inside the tool. */
+    const parsed = action.schema.safeParse(params);
+
+    if (!parsed.success) {
+      return {
+        type: 'search_results',
+        results: [
+          {
+            content: `Tool ${name} received invalid arguments: ${parsed.error.message}. Retry with arguments matching the schema.`,
+            metadata: {},
+          },
+        ],
+      };
+    }
+
+    return action.execute(parsed.data, additionalConfig);
   }
 
   static async executeAll(
     actions: ToolCall[],
-    additionalConfig: AdditionalConfig & {
-      researchBlockId: string;
-      fileIds: string[];
-      mode: SearchAgentConfig['mode'];
-    },
+    additionalConfig: ActionContext,
   ): Promise<ActionOutput[]> {
-    const results: ActionOutput[] = [];
-
-    await Promise.all(
+    /* Promise.all preserves input order, which the caller relies on to
+       pair each result with its tool_call_id. One failing tool must
+       not abort the whole research loop, so failures come back as
+       content the model can react to. */
+    return Promise.all(
       actions.map(async (actionConfig) => {
-        const output = await this.execute(
-          actionConfig.name,
-          actionConfig.arguments,
-          additionalConfig,
-        );
-        results.push(output);
+        try {
+          return await this.execute(
+            actionConfig.name,
+            actionConfig.arguments,
+            additionalConfig,
+          );
+        } catch (err: any) {
+          console.error(`Action ${actionConfig.name} failed:`, err);
+
+          return {
+            type: 'search_results',
+            results: [
+              {
+                content: `Tool ${actionConfig.name} failed: ${err?.message ?? String(err)}`,
+                metadata: {},
+              },
+            ],
+          } satisfies ActionOutput;
+        }
       }),
     );
-
-    return results;
   }
 }
 

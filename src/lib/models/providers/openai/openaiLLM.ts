@@ -158,8 +158,14 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
       stream: true,
     });
 
-    let recievedToolCalls: { name: string; id: string; arguments: string }[] =
-      [];
+    /* Keyed by the delta's index rather than positionally: some
+       OpenAI-compatible servers omit or reorder it, which made the
+       array accumulator start a fresh call on every delta so
+       arguments never assembled. */
+    const recievedToolCalls = new Map<
+      string | number,
+      { name: string; id: string; arguments: string; parsed: any }
+    >();
 
     for await (const chunk of stream) {
       if (chunk.choices && chunk.choices.length > 0) {
@@ -168,24 +174,36 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
           contentChunk: chunk.choices[0].delta.content || '',
           toolCallChunk:
             toolCalls?.map((tc) => {
-              if (!recievedToolCalls[tc.index]) {
-                const call = {
-                  name: tc.function?.name!,
-                  id: tc.id!,
-                  arguments: tc.function?.arguments || '',
-                };
-                recievedToolCalls.push(call);
-                return { ...call, arguments: parse(call.arguments || '{}') };
-              } else {
-                const existingCall = recievedToolCalls[tc.index];
-                existingCall.arguments += tc.function?.arguments || '';
-                return {
-                  ...existingCall,
-                  arguments: parse(existingCall.arguments),
-                };
-              }
+              const key = tc.index ?? tc.id ?? recievedToolCalls.size;
+
+              const existing = recievedToolCalls.get(key);
+
+              const call = existing ?? {
+                name: tc.function?.name!,
+                id: tc.id!,
+                arguments: '',
+                parsed: {},
+              };
+
+              if (!existing) recievedToolCalls.set(key, call);
+              if (tc.function?.name) call.name = tc.function.name;
+              if (tc.id) call.id = tc.id;
+
+              call.arguments += tc.function?.arguments || '';
+
+              /* Partial JSON is expected mid-stream; keep the last
+                 good parse rather than killing the whole answer. */
+              try {
+                call.parsed = parse(call.arguments || '{}');
+              } catch {}
+
+              return {
+                name: call.name,
+                id: call.id,
+                arguments: call.parsed,
+              };
             }) || [],
-          done: chunk.choices[0].finish_reason !== null,
+          done: chunk.choices[0].finish_reason != null,
           additionalInfo: {
             finishReason: chunk.choices[0].finish_reason,
           },

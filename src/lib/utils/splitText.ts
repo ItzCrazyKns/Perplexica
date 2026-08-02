@@ -12,18 +12,82 @@ export const getTokenCount = (text: string): number => {
   }
 };
 
+/*
+ * Largest prefixes of `segment` that each fit in maxTokens. The split
+ * regex is sentence based and knows nothing about CJK punctuation, so
+ * a single "segment" can be an entire document.
+ */
+const hardSplitSegment = (segment: string, maxTokens: number): string[] => {
+  const pieces: string[] = [];
+  let rest = segment;
+
+  while (rest.length > 0) {
+    /* Exponential window before the binary search: encoding the full
+       remainder per probe made CJK splits quadratic in encode cost
+       (minutes for a few thousand chars). Every probe here encodes at
+       most a couple of piece lengths. */
+    let lo = 0;
+    let hi = Math.min(rest.length, maxTokens);
+
+    while (hi < rest.length && getTokenCount(rest.slice(0, hi)) <= maxTokens) {
+      lo = hi;
+      hi = Math.min(rest.length, hi * 2);
+    }
+
+    if (getTokenCount(rest.slice(0, hi)) <= maxTokens) {
+      pieces.push(rest);
+      break;
+    }
+
+    while (lo + 1 < hi) {
+      const mid = (lo + hi) >> 1;
+      if (getTokenCount(rest.slice(0, mid)) <= maxTokens) lo = mid;
+      else hi = mid;
+    }
+
+    let cut = Math.max(lo, 1);
+
+    /* Do not strand a high surrogate at the cut. */
+    const last = rest.charCodeAt(cut - 1);
+    if (cut > 1 && last >= 0xd800 && last <= 0xdbff) cut--;
+
+    pieces.push(rest.slice(0, cut));
+    rest = rest.slice(cut);
+  }
+
+  return pieces;
+};
+
 export const splitText = (
   text: string,
   maxTokens = 512,
   overlapTokens = 64,
 ): string[] => {
-  const segments = text.split(splitRegex).filter(Boolean);
+  const rawSegments = text.split(splitRegex).filter(Boolean);
 
-  if (segments.length === 0) {
+  if (rawSegments.length === 0) {
     return [];
   }
 
-  const segmentTokenCounts = segments.map(getTokenCount);
+  /* An oversized segment would never fit a chunk, leaving chunkEnd at
+     chunkStart and looping forever. Break those up first. */
+  const segments: string[] = [];
+  const segmentTokenCounts: number[] = [];
+
+  for (const raw of rawSegments) {
+    const count = getTokenCount(raw);
+
+    if (count <= maxTokens) {
+      segments.push(raw);
+      segmentTokenCounts.push(count);
+      continue;
+    }
+
+    for (const piece of hardSplitSegment(raw, maxTokens)) {
+      segments.push(piece);
+      segmentTokenCounts.push(getTokenCount(piece));
+    }
+  }
 
   const result: string[] = [];
 
@@ -67,7 +131,8 @@ export const splitText = (
 
     result.push(overlapBeforeContent + chunkContent);
 
-    chunkStart = chunkEnd;
+    /* Never stand still, whatever the token counts say. */
+    chunkStart = chunkEnd > chunkStart ? chunkEnd : chunkStart + 1;
   }
 
   return result;

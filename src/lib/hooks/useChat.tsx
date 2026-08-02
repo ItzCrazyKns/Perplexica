@@ -18,6 +18,7 @@ import { MinimalProvider } from '../models/types';
 import { getAutoMediaSearch } from '../config/clientRegistry';
 import { applyPatch } from 'rfc6902';
 import { Widget } from '@/components/ChatWindow';
+import { readNdjsonStream } from '../chat/ndjson';
 
 export type Section = {
   message: Message;
@@ -427,32 +428,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (!res.body) throw new Error('No response body');
 
-        const reader = res.body?.getReader();
-        const decoder = new TextDecoder('utf-8');
-
-        let partialChunk = '';
-
         const messageHandler = getMessageHandler(lastMsg);
 
         try {
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-
-            partialChunk += decoder.decode(value, { stream: true });
-
-            try {
-              const messages = partialChunk.split('\n');
-              for (const msg of messages) {
-                if (!msg.trim()) continue;
-                const json = JSON.parse(msg);
-                messageHandler(json);
-              }
-              partialChunk = '';
-            } catch (error) {
-              console.warn('Incomplete JSON, waiting for next chunk...');
-            }
-          }
+          await readNdjsonStream(res.body, messageHandler);
         } finally {
           isReconnectingRef.current = false;
         }
@@ -728,6 +707,10 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     messageId = messageId ?? crypto.randomBytes(7).toString('hex');
     const backendId = crypto.randomBytes(20).toString('hex');
 
+    /* A rewrite reuses the message id, so a stale entry here would
+       swallow its messageEnd and leave the UI loading forever. */
+    handledMessageEndRef.current.delete(messageId);
+
     const newMessage: Message = {
       messageId,
       chatId: chatId!,
@@ -778,31 +761,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (!res.body) throw new Error('No response body');
 
-    const reader = res.body?.getReader();
-    const decoder = new TextDecoder('utf-8');
-
-    let partialChunk = '';
-
-    const messageHandler = getMessageHandler(newMessage);
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-
-      partialChunk += decoder.decode(value, { stream: true });
-
-      try {
-        const messages = partialChunk.split('\n');
-        for (const msg of messages) {
-          if (!msg.trim()) continue;
-          const json = JSON.parse(msg);
-          messageHandler(json);
-        }
-        partialChunk = '';
-      } catch (error) {
-        console.warn('Incomplete JSON, waiting for next chunk...');
-      }
-    }
+    await readNdjsonStream(res.body, getMessageHandler(newMessage));
   };
 
   return (

@@ -151,35 +151,42 @@ class Researcher {
         break;
       }
 
-      if (finalToolCalls[finalToolCalls.length - 1].name === 'done') {
-        break;
+      /* The prompts tell the model to emit searches and `done` in one
+         batch, so stopping at `done` must not discard its siblings. */
+      const isDone = finalToolCalls.some((tc) => tc.name === 'done');
+      const toExecute = finalToolCalls.filter((tc) => tc.name !== 'done');
+
+      if (toExecute.length > 0) {
+        agentMessageHistory.push({
+          role: 'assistant',
+          content: '',
+          tool_calls: toExecute,
+        });
+
+        const actionResults = await ActionRegistry.executeAll(toExecute, {
+          llm: input.config.llm,
+          embedding: input.config.embedding,
+          session: session,
+          researchBlockId: researchBlockId,
+          fileIds: input.config.fileIds,
+          mode: input.config.mode,
+        });
+
+        actionOutput.push(...actionResults);
+
+        actionResults.forEach((action, i) => {
+          agentMessageHistory.push({
+            role: 'tool',
+            id: toExecute[i].id,
+            name: toExecute[i].name,
+            content: JSON.stringify(action),
+          });
+        });
       }
 
-      agentMessageHistory.push({
-        role: 'assistant',
-        content: '',
-        tool_calls: finalToolCalls,
-      });
-
-      const actionResults = await ActionRegistry.executeAll(finalToolCalls, {
-        llm: input.config.llm,
-        embedding: input.config.embedding,
-        session: session,
-        researchBlockId: researchBlockId,
-        fileIds: input.config.fileIds,
-        mode: input.config.mode,
-      });
-
-      actionOutput.push(...actionResults);
-
-      actionResults.forEach((action, i) => {
-        agentMessageHistory.push({
-          role: 'tool',
-          id: finalToolCalls[i].id,
-          name: finalToolCalls[i].name,
-          content: JSON.stringify(action),
-        });
-      });
+      if (isDone) {
+        break;
+      }
     }
 
     const searchResults = actionOutput
