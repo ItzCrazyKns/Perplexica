@@ -4,11 +4,11 @@ import TextareaAutosize from 'react-textarea-autosize';
 import Sources from './MessageInputActions/Sources';
 import Optimization from './MessageInputActions/Optimization';
 import Attach from './MessageInputActions/Attach';
-import { useChat } from '@/lib/hooks/useChat';
+import { useChatActions } from '@/lib/hooks/useChat';
 import ModelSelector from './MessageInputActions/ChatModelSelector';
 
 const EmptyChatMessageInput = () => {
-  const { sendMessage } = useChat();
+  const { sendMessage } = useChatActions();
 
   /* const [copilotEnabled, setCopilotEnabled] = useState(false); */
   const [message, setMessage] = useState('');

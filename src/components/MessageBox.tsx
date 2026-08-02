@@ -20,7 +20,7 @@ import SearchImages from './SearchImages';
 import SearchVideos from './SearchVideos';
 import { useSpeech } from 'react-text-to-speech';
 import ThinkBox from './ThinkBox';
-import { useChat, Section } from '@/lib/hooks/useChat';
+import { useChatActions, useChatStatus, Section } from '@/lib/hooks/useChat';
 import Citation from './MessageRenderer/Citation';
 import AssistantSteps from './AssistantSteps';
 import { ResearchBlock } from '@/lib/types';
@@ -50,14 +50,8 @@ const MessageBox = ({
   dividerRef?: MutableRefObject<HTMLDivElement | null>;
   isLast: boolean;
 }) => {
-  const {
-    loading,
-    sendMessage,
-    rewrite,
-    messages,
-    researchEnded,
-    chatHistory,
-  } = useChat();
+  const { loading, researchEnded } = useChatStatus();
+  const { sendMessage, rewrite, getChatHistory } = useChatActions();
 
   const parsedMessage = section.parsedTextBlocks.join('\n\n');
   const speechMessage = section.speechMessage || '';
@@ -272,11 +266,11 @@ const MessageBox = ({
           <div className="lg:sticky lg:top-20 flex flex-col items-center space-y-3 w-full lg:w-3/12 z-30 h-full pb-4">
             <SearchImages
               query={section.message.query}
-              chatHistory={chatHistory}
+              getChatHistory={getChatHistory}
               messageId={section.message.messageId}
             />
             <SearchVideos
-              chatHistory={chatHistory}
+              getChatHistory={getChatHistory}
               query={section.message.query}
               messageId={section.message.messageId}
             />
@@ -287,4 +281,6 @@ const MessageBox = ({
   );
 };
 
-export default MessageBox;
+/* Sections keep identity for untouched messages, so this skips the
+   markdown re-parse for every message except the streaming one. */
+export default React.memo(MessageBox);

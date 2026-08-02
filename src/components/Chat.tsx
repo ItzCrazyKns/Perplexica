@@ -4,10 +4,11 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import MessageInput from './MessageInput';
 import MessageBox from './MessageBox';
 import MessageBoxLoading from './MessageBoxLoading';
-import { useChat } from '@/lib/hooks/useChat';
+import { useChatMessages, useChatStatus } from '@/lib/hooks/useChat';
 
 const Chat = () => {
-  const { sections, loading, messageAppeared, messages } = useChat();
+  const { sections, messages } = useChatMessages();
+  const { loading, messageAppeared } = useChatStatus();
 
   const [dividerWidth, setDividerWidth] = useState(0);
   const dividerRef = useRef<HTMLDivElement | null>(null);

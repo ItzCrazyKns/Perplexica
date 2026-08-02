@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { useEffect, useMemo, useState } from 'react';
 import { MinimalProvider } from '@/lib/models/types';
-import { useChat } from '@/lib/hooks/useChat';
+import { useChatSettings } from '@/lib/hooks/useChat';
 import { AnimatePresence, motion } from 'motion/react';
 
 const ModelSelector = () => {
@@ -13,7 +13,7 @@ const ModelSelector = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { setChatModelProvider, chatModelProvider } = useChat();
+  const { setChatModelProvider, chatModelProvider } = useChatSettings();
 
   useEffect(() => {
     const loadProviders = async () => {

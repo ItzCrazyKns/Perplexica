@@ -13,11 +13,11 @@ type Image = {
 
 const SearchImages = ({
   query,
-  chatHistory,
+  getChatHistory,
   messageId,
 }: {
   query: string;
-  chatHistory: [string, string][];
+  getChatHistory: () => [string, string][];
   messageId: string;
 }) => {
   const [images, setImages] = useState<Image[] | null>(null);
@@ -45,7 +45,7 @@ const SearchImages = ({
               },
               body: JSON.stringify({
                 query: query,
-                chatHistory: chatHistory,
+                chatHistory: getChatHistory(),
                 chatModel: {
                   providerId: chatModelProvider,
                   key: chatModel,

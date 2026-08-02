@@ -4,7 +4,7 @@ import Navbar from './Navbar';
 import Chat from './Chat';
 import EmptyChat from './EmptyChat';
 import NextError from 'next/error';
-import { useChat } from '@/lib/hooks/useChat';
+import { useChatStatus } from '@/lib/hooks/useChat';
 import SettingsButton from './Settings/SettingsButton';
 import { Block } from '@/lib/types';
 import Loader from './ui/Loader';
@@ -34,7 +34,7 @@ export interface Widget {
 }
 
 const ChatWindow = () => {
-  const { hasError, notFound, messages, isReady } = useChat();
+  const { hasError, notFound, hasMessages, isReady } = useChatStatus();
 
   if (hasError) {
     return (
@@ -56,7 +56,7 @@ const ChatWindow = () => {
       <NextError statusCode={404} />
     ) : (
       <div>
-        {messages.length > 0 ? (
+        {hasMessages ? (
           <>
             <Navbar />
             <Chat />

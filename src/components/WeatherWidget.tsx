@@ -1,7 +1,7 @@
 'use client';
 
 import { Wind } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getApproxLocation } from '@/lib/actions';
 
 const WeatherWidget = () => {
@@ -17,6 +17,14 @@ const WeatherWidget = () => {
   });
 
   const [loading, setLoading] = useState(true);
+
+  /* Resolved once per mount: each lookup costs a geolocation prompt
+     check plus a third-party reverse-geocode call. */
+  const locationRef = useRef<{
+    latitude: number;
+    longitude: number;
+    city: string;
+  } | null>(null);
 
   const getLocation = async (
     callback: (location: {
@@ -62,7 +70,11 @@ const WeatherWidget = () => {
   };
 
   const updateWeather = async () => {
-    getLocation(async (location) => {
+    const withLocation = async (location: {
+      latitude: number;
+      longitude: number;
+      city: string;
+    }) => {
       const res = await fetch(`/api/weather`, {
         method: 'POST',
         body: JSON.stringify({
@@ -91,13 +103,26 @@ const WeatherWidget = () => {
         windSpeedUnit: data.windSpeedUnit,
       });
       setLoading(false);
+    };
+
+    if (locationRef.current) {
+      await withLocation(locationRef.current);
+      return;
+    }
+
+    getLocation((location) => {
+      locationRef.current = location;
+      withLocation(location);
     });
   };
 
   useEffect(() => {
     updateWeather();
-    const intervalId = setInterval(updateWeather, 30 * 1000);
+    /* Weather does not change every 30 seconds; the old interval also
+       re-ran the geolocation and reverse-geocode lookups each tick. */
+    const intervalId = setInterval(updateWeather, 10 * 60 * 1000);
     return () => clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
