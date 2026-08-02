@@ -3,9 +3,74 @@
 import { CheckIcon, CopyIcon } from '@phosphor-icons/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTheme } from 'next-themes';
-import SyntaxHighlighter from 'react-syntax-highlighter';
+import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
 import darkTheme from './CodeBlockDarkTheme';
 import lightTheme from './CodeBlockLightTheme';
+import js from 'react-syntax-highlighter/dist/esm/languages/hljs/javascript';
+import ts from 'react-syntax-highlighter/dist/esm/languages/hljs/typescript';
+import python from 'react-syntax-highlighter/dist/esm/languages/hljs/python';
+import java from 'react-syntax-highlighter/dist/esm/languages/hljs/java';
+import c from 'react-syntax-highlighter/dist/esm/languages/hljs/c';
+import cpp from 'react-syntax-highlighter/dist/esm/languages/hljs/cpp';
+import csharp from 'react-syntax-highlighter/dist/esm/languages/hljs/csharp';
+import go from 'react-syntax-highlighter/dist/esm/languages/hljs/go';
+import rust from 'react-syntax-highlighter/dist/esm/languages/hljs/rust';
+import ruby from 'react-syntax-highlighter/dist/esm/languages/hljs/ruby';
+import php from 'react-syntax-highlighter/dist/esm/languages/hljs/php';
+import bash from 'react-syntax-highlighter/dist/esm/languages/hljs/bash';
+import json from 'react-syntax-highlighter/dist/esm/languages/hljs/json';
+import yaml from 'react-syntax-highlighter/dist/esm/languages/hljs/yaml';
+import xml from 'react-syntax-highlighter/dist/esm/languages/hljs/xml';
+import css from 'react-syntax-highlighter/dist/esm/languages/hljs/css';
+import sql from 'react-syntax-highlighter/dist/esm/languages/hljs/sql';
+import markdown from 'react-syntax-highlighter/dist/esm/languages/hljs/markdown';
+import kotlin from 'react-syntax-highlighter/dist/esm/languages/hljs/kotlin';
+import swift from 'react-syntax-highlighter/dist/esm/languages/hljs/swift';
+
+/* Light build: the root import registers all ~190 hljs languages into
+   the client bundle. Unregistered languages render unhighlighted. */
+const languages: Record<string, any> = {
+  javascript: js,
+  js,
+  jsx: js,
+  typescript: ts,
+  ts,
+  tsx: ts,
+  python,
+  py: python,
+  java,
+  c,
+  cpp,
+  'c++': cpp,
+  csharp,
+  cs: csharp,
+  go,
+  golang: go,
+  rust,
+  rs: rust,
+  ruby,
+  rb: ruby,
+  php,
+  bash,
+  sh: bash,
+  shell: bash,
+  zsh: bash,
+  json,
+  yaml,
+  yml: yaml,
+  xml,
+  html: xml,
+  css,
+  sql,
+  markdown,
+  md: markdown,
+  kotlin,
+  swift,
+};
+
+Object.entries(languages).forEach(([name, lang]) =>
+  SyntaxHighlighter.registerLanguage(name, lang),
+);
 
 const SyntaxHighlighterComponent =
   SyntaxHighlighter as unknown as React.ComponentType<any>;

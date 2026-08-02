@@ -10,7 +10,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import crypto from 'crypto';
 import { useParams, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { getSuggestions } from '../actions';
@@ -19,6 +18,7 @@ import { getAutoMediaSearch } from '../config/clientRegistry';
 import { applyPatch } from 'rfc6902';
 import { Widget } from '@/components/ChatWindow';
 import { readNdjsonStream } from '../chat/ndjson';
+import { randomHex } from '../utils/randomHex';
 
 export type Section = {
   message: Message;
@@ -482,7 +482,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     } else if (!chatId) {
       setNewChatCreated(true);
       setIsMessagesLoaded(true);
-      setChatId(crypto.randomBytes(20).toString('hex'));
+      setChatId(randomHex(20));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId, isMessagesLoaded, newChatCreated, messages.length]);
@@ -669,7 +669,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         if (hasSourceBlocks && !hasSuggestions) {
           const suggestions = await getSuggestions(newHistory);
           const suggestionBlock: Block = {
-            id: crypto.randomBytes(7).toString('hex'),
+            id: randomHex(7),
             type: 'suggestion',
             data: suggestions,
           };
@@ -704,8 +704,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       window.history.replaceState(null, '', `/c/${chatId}`);
     }
 
-    messageId = messageId ?? crypto.randomBytes(7).toString('hex');
-    const backendId = crypto.randomBytes(20).toString('hex');
+    messageId = messageId ?? randomHex(7);
+    const backendId = randomHex(20);
 
     /* A rewrite reuses the message id, so a stale entry here would
        swallow its messageEnd and leave the UI loading forever. */

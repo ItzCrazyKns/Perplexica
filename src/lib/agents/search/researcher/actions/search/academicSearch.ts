@@ -27,7 +27,6 @@ const academicSearchAction: ResearchAction<typeof schema> = {
     "Use this tool to perform academic searches for scholarly articles, papers, and research studies relevant to the user's query. Provide a list of concise search queries that will help gather comprehensive academic information on the topic at hand.",
   enabled: (config) =>
     config.sources.includes('academic') &&
-    config.classification.classification.skipSearch === false &&
     config.classification.classification.academicSearch === true,
   execute: async (input, additionalConfig) => {
     input.queries = (

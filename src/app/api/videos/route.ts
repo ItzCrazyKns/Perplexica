@@ -12,7 +12,7 @@ export const POST = async (req: Request) => {
   try {
     const body: VideoSearchBody = await req.json();
 
-    const registry = new ModelRegistry();
+    const registry = ModelRegistry.getInstance();
 
     const llm = await registry.loadChatModel(
       body.chatModel.providerId,

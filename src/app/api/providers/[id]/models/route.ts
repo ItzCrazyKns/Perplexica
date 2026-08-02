@@ -23,7 +23,7 @@ export const POST = async (
       );
     }
 
-    const registry = new ModelRegistry();
+    const registry = ModelRegistry.getInstance();
 
     await registry.addProviderModel(id, body.type, body);
 
@@ -68,7 +68,7 @@ export const DELETE = async (
       );
     }
 
-    const registry = new ModelRegistry();
+    const registry = ModelRegistry.getInstance();
 
     await registry.removeProviderModel(id, body.type, body.key);
 

@@ -31,7 +31,7 @@ export const POST = async (req: Request) => {
     body.optimizationMode = body.optimizationMode || 'speed';
     body.stream = body.stream || false;
 
-    const registry = new ModelRegistry();
+    const registry = ModelRegistry.getInstance();
 
     const [llm, embeddings] = await Promise.all([
       registry.loadChatModel(body.chatModel.providerId, body.chatModel.key),

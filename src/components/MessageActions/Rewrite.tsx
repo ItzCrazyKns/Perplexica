@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Repeat } from 'lucide-react';
+import { Repeat } from 'lucide-react';
 
 const Rewrite = ({
   rewrite,
@@ -16,5 +16,4 @@ const Rewrite = ({
     </button>
   );
 };
-1;
 export default Rewrite;

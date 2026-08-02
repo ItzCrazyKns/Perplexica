@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { UIConfigSections } from '@/lib/config/types';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import SetupConfig from './SetupConfig';
 
 const SetupWizard = ({

@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const registry = new ModelRegistry();
+    const registry = ModelRegistry.getInstance();
 
     const model = await registry.loadEmbeddingModel(embeddingModelProvider, embeddingModel);
     

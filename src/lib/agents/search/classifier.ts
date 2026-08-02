@@ -8,9 +8,6 @@ const schema = z.object({
     skipSearch: z
       .boolean()
       .describe('Indicates whether to skip the search step.'),
-    personalSearch: z
-      .boolean()
-      .describe('Indicates whether to perform a personal search.'),
     academicSearch: z
       .boolean()
       .describe('Indicates whether to perform an academic search.'),

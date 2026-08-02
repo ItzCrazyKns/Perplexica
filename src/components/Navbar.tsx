@@ -9,7 +9,6 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react';
-import jsPDF from 'jspdf';
 import { useChat, Section } from '@/lib/hooks/useChat';
 import { SourceBlock } from '@/lib/types';
 
@@ -73,7 +72,9 @@ const exportAsMarkdown = (sections: Section[], title: string) => {
   downloadFile(`${title || 'chat'}.md`, md, 'text/markdown');
 };
 
-const exportAsPDF = (sections: Section[], title: string) => {
+const exportAsPDF = async (sections: Section[], title: string) => {
+  /* jspdf is ~300 KB and only needed on export click. */
+  const { default: jsPDF } = await import('jspdf');
   const doc = new jsPDF();
   const date = new Date(
     sections[0]?.message?.createdAt || Date.now(),

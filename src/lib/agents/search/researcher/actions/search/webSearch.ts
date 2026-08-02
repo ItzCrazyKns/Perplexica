@@ -81,9 +81,7 @@ const webSearchAction: ResearchAction<typeof actionSchema> = {
 
     return prompt;
   },
-  enabled: (config) =>
-    config.sources.includes('web') &&
-    config.classification.classification.skipSearch === false,
+  enabled: (config) => config.sources.includes('web'),
   execute: async (input, additionalConfig) => {
     input.queries = (
       Array.isArray(input.queries) ? input.queries : [input.queries]
