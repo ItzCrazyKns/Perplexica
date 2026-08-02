@@ -39,3 +39,6 @@ db.sqlite
 /searxng
 
 certificates
+
+# TypeScript incremental build info
+tsconfig.tsbuildinfo
