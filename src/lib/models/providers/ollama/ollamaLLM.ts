@@ -161,17 +161,17 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
       },
     });
 
+    /* Ollama does not return tool call IDs. The index restarts at 0 in
+       every chunk, so a per-chunk index would collide across chunks
+       and the consumer, which dedupes by id, would drop calls. */
+    let toolCallSeq = 0;
+
     for await (const chunk of stream) {
       yield {
         contentChunk: chunk.message.content,
         toolCallChunk:
-          chunk.message.tool_calls?.map((tc, i) => ({
-            id: crypto
-              .createHash('sha256')
-              .update(
-                `${i}-${tc.function.name}`,
-              ) /* Ollama currently doesn't return a tool call ID so we're creating one based on the index and tool call name */
-              .digest('hex'),
+          chunk.message.tool_calls?.map((tc) => ({
+            id: `ollama-tc-${toolCallSeq++}`,
             name: tc.function.name,
             arguments: tc.function.arguments,
           })) || [],

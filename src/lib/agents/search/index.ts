@@ -8,10 +8,41 @@ import db from '@/lib/db';
 import { messages } from '@/lib/db/schema';
 import { and, eq, gt } from 'drizzle-orm';
 import { TextBlock } from '@/lib/types';
-import { getTokenCount } from '@/lib/utils/splitText';
+import { sanitizeUntrusted } from '@/lib/utils/sanitizeUntrusted';
 
 class SearchAgent {
+  /*
+   * Callers start this without awaiting, so nothing here may reject:
+   * an unhandled rejection takes the process down and leaves the
+   * client waiting on a stream that is never closed.
+   */
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
+    try {
+      await this.run(session, input);
+    } catch (err: any) {
+      console.error('Search agent failed:', err);
+
+      await db
+        .update(messages)
+        .set({ status: 'error' })
+        .where(
+          and(
+            eq(messages.chatId, input.chatId),
+            eq(messages.messageId, input.messageId),
+          ),
+        )
+        .execute()
+        .catch((dbErr) =>
+          console.error('Failed to mark message as errored:', dbErr),
+        );
+
+      session.emit('error', {
+        data: err?.message ?? 'An error occurred while answering.',
+      });
+    }
+  }
+
+  private async run(session: SessionManager, input: SearchAgentInput) {
     const exists = await db.query.messages.findFirst({
       where: and(
         eq(messages.chatId, input.chatId),
@@ -106,7 +137,7 @@ class SearchAgent {
       finalContext = searchResults?.searchFindings
         .map(
           (f, index) =>
-            `<result index=${index + 1} title=${f.metadata.title}>${f.content}</result>`,
+            `<result index=${index + 1} title=${JSON.stringify(f.metadata.title ?? '')}>${sanitizeUntrusted(f.content)}</result>`,
         )
         .join('\n');
     }

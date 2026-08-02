@@ -7,7 +7,9 @@ const dbPath = path.join(DATA_DIR, './data/db.sqlite');
 
 const db = new Database(dbPath);
 
-const migrationsFolder = path.join(DATA_DIR, 'drizzle');
+/* Migrations ship with the app, so they live next to the code rather
+   than in DATA_DIR, which points at the user's data volume. */
+const migrationsFolder = path.join(process.cwd(), 'drizzle');
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS ran_migrations (
@@ -51,7 +53,10 @@ fs.readdirSync(migrationsFolder)
       return;
     }
 
-    try {
+    /* Each migration drops and renames tables. Without a transaction a
+       crash between the two leaves the database with neither, and the
+       unrecorded migration then re-runs against missing tables. */
+    const runMigration = db.transaction(() => {
       if (migrationName === '0001') {
         const messages = db
           .prepare(
@@ -280,9 +285,15 @@ fs.readdirSync(migrationsFolder)
       db.prepare('INSERT OR IGNORE INTO ran_migrations (name) VALUES (?)').run(
         migrationName,
       );
+    });
+
+    try {
+      runMigration();
       console.log(`Applied migration: ${file}`);
     } catch (err) {
       console.error(`Failed to apply migration ${file}:`, err);
       throw err;
     }
   });
+
+db.close();

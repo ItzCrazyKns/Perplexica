@@ -3,6 +3,7 @@ import ModelRegistry from '@/lib/models/registry';
 import { ModelWithProvider } from '@/lib/models/types';
 import SearchAgent from '@/lib/agents/search';
 import SessionManager from '@/lib/session';
+import { createSessionStream } from '@/lib/sessionStream';
 import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
 import db from '@/lib/db';
@@ -74,29 +75,25 @@ const ensureChatExists = async (input: {
   query: string;
   fileIds: string[];
 }) => {
-  try {
-    const exists = await db.query.chats
-      .findFirst({
-        where: eq(chats.id, input.id),
-      })
-      .execute();
+  const exists = await db.query.chats
+    .findFirst({
+      where: eq(chats.id, input.id),
+    })
+    .execute();
 
-    if (!exists) {
-      await db.insert(chats).values({
-        id: input.id,
-        createdAt: new Date().toISOString(),
-        sources: input.sources,
-        title: input.query,
-        files: input.fileIds.map((id) => {
-          return {
-            fileId: id,
-            name: UploadManager.getFile(id)?.name || 'Uploaded File',
-          };
-        }),
-      });
-    }
-  } catch (err) {
-    console.error('Failed to check/save chat:', err);
+  if (!exists) {
+    await db.insert(chats).values({
+      id: input.id,
+      createdAt: new Date().toISOString(),
+      sources: input.sources,
+      title: input.query,
+      files: input.fileIds.map((id) => {
+        return {
+          fileId: id,
+          name: UploadManager.getFile(id)?.name || 'Uploaded File',
+        };
+      }),
+    });
   }
 };
 
@@ -149,66 +146,20 @@ export const POST = async (req: Request) => {
       }
     });
 
+    /* Awaited, and before the session exists: the agent inserts
+       messages referencing this chat, so a failure must surface as a
+       500 rather than orphaned rows or a leaked session. */
+    await ensureChatExists({
+      id: body.message.chatId,
+      sources: body.sources as SearchSources[],
+      fileIds: body.files,
+      query: body.message.content,
+    });
+
     const agent = new SearchAgent();
     const session = SessionManager.createSession();
 
-    const responseStream = new TransformStream();
-    const writer = responseStream.writable.getWriter();
-    const encoder = new TextEncoder();
-
-    const disconnect = session.subscribe((event: string, data: any) => {
-      if (event === 'data') {
-        if (data.type === 'block') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'block',
-                block: data.block,
-              }) + '\n',
-            ),
-          );
-        } else if (data.type === 'updateBlock') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'updateBlock',
-                blockId: data.blockId,
-                patch: data.patch,
-              }) + '\n',
-            ),
-          );
-        } else if (data.type === 'researchComplete') {
-          writer.write(
-            encoder.encode(
-              JSON.stringify({
-                type: 'researchComplete',
-              }) + '\n',
-            ),
-          );
-        }
-      } else if (event === 'end') {
-        writer.write(
-          encoder.encode(
-            JSON.stringify({
-              type: 'messageEnd',
-            }) + '\n',
-          ),
-        );
-        writer.close();
-        session.removeAllListeners();
-      } else if (event === 'error') {
-        writer.write(
-          encoder.encode(
-            JSON.stringify({
-              type: 'error',
-              data: data.data,
-            }) + '\n',
-          ),
-        );
-        writer.close();
-        session.removeAllListeners();
-      }
-    });
+    const response = createSessionStream(session, req.signal);
 
     agent.searchAsync(session, {
       chatHistory: history,
@@ -225,25 +176,7 @@ export const POST = async (req: Request) => {
       },
     });
 
-    ensureChatExists({
-      id: body.message.chatId,
-      sources: body.sources as SearchSources[],
-      fileIds: body.files,
-      query: body.message.content,
-    });
-
-    req.signal.addEventListener('abort', () => {
-      disconnect();
-      writer.close();
-    });
-
-    return new Response(responseStream.readable, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        Connection: 'keep-alive',
-        'Cache-Control': 'no-cache, no-transform',
-      },
-    });
+    return response;
   } catch (err) {
     console.error('An error occurred while processing chat request:', err);
     return Response.json(
