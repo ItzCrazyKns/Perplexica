@@ -4,9 +4,23 @@ import { classify } from './classifier';
 import Researcher from './researcher';
 import { getWriterPrompt } from '@/lib/prompts/search/writer';
 import { WidgetExecutor } from './widgets';
+import { sanitizeUntrusted } from '@/lib/utils/sanitizeUntrusted';
 
 class APISearchAgent {
+  /* Started without awaiting; a rejection here would otherwise be
+     unhandled and the caller's stream would never terminate. */
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
+    try {
+      await this.run(session, input);
+    } catch (err: any) {
+      console.error('API search agent failed:', err);
+      session.emit('error', {
+        data: err?.message ?? 'An error occurred while answering.',
+      });
+    }
+  }
+
+  private async run(session: SessionManager, input: SearchAgentInput) {
     const classification = await classify({
       chatHistory: input.chatHistory,
       enabledSources: input.config.sources,
@@ -28,7 +42,10 @@ class APISearchAgent {
 
     if (!classification.classification.skipSearch) {
       const researcher = new Researcher();
-      searchPromise = researcher.research(SessionManager.createSession(), {
+      /* The route's session, not a fresh one: a second session was
+         registered per request and retained for the whole TTL, and its
+         block events were never delivered to anyone. */
+      searchPromise = researcher.research(session, {
         chatHistory: input.chatHistory,
         followUp: input.followUp,
         classification: classification,
@@ -56,7 +73,7 @@ class APISearchAgent {
       searchResults?.searchFindings
         .map(
           (f, index) =>
-            `<result index=${index + 1} title=${f.metadata.title}>${f.content}</result>`,
+            `<result index=${index + 1} title=${JSON.stringify(f.metadata.title ?? '')}>${sanitizeUntrusted(f.content)}</result>`,
         )
         .join('\n') || '';
 

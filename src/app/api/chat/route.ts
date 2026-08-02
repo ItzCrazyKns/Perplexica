@@ -122,7 +122,7 @@ export const POST = async (req: Request) => {
       );
     }
 
-    const registry = new ModelRegistry();
+    const registry = ModelRegistry.getInstance();
 
     const [llm, embedding] = await Promise.all([
       registry.loadChatModel(body.chatModel.providerId, body.chatModel.key),

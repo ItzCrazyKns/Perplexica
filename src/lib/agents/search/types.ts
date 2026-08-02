@@ -52,7 +52,6 @@ export type ClassifierInput = {
 export type ClassifierOutput = {
   classification: {
     skipSearch: boolean;
-    personalSearch: boolean;
     academicSearch: boolean;
     discussionSearch: boolean;
     showWeatherWidget: boolean;

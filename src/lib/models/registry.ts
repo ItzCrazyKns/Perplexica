@@ -5,13 +5,51 @@ import { providers } from './providers';
 import { MinimalProvider, ModelList } from './types';
 import configManager from '../config';
 
+const MODEL_LIST_TTL_MS = 60_000;
+
 class ModelRegistry {
+  /* One instance per process: constructing per request re-validated
+     every provider config and refetched every model list before the
+     first token of every chat. */
+  private static instance: ModelRegistry | null = null;
+
+  static getInstance(): ModelRegistry {
+    return (this.instance ??= new ModelRegistry());
+  }
+
   activeProviders: (ConfigModelProvider & {
     provider: BaseModelProvider<any>;
   })[] = [];
 
-  constructor() {
+  private modelListCache = new Map<string, { at: number; list: ModelList }>();
+
+  private constructor() {
     this.initializeActiveProviders();
+  }
+
+  /* Wraps the instance rather than the registry call sites because
+     loadChatModel/loadEmbeddingModel re-enter getModelList inside the
+     provider; caching only in getActiveProviders would still put one
+     or two live /models calls ahead of every chat request. */
+  private withModelListCache<T extends BaseModelProvider<any>>(
+    id: string,
+    provider: T,
+  ): T {
+    const original = provider.getModelList.bind(provider);
+
+    provider.getModelList = async (): Promise<ModelList> => {
+      const cached = this.modelListCache.get(id);
+
+      if (cached && Date.now() - cached.at < MODEL_LIST_TTL_MS) {
+        return cached.list;
+      }
+
+      const list = await original();
+      this.modelListCache.set(id, { at: Date.now(), list });
+      return list;
+    };
+
+    return provider;
   }
 
   private initializeActiveProviders() {
@@ -24,7 +62,10 @@ class ModelRegistry {
 
         this.activeProviders.push({
           ...p,
-          provider: createProviderInstance(provider, p.id, p.name, p.config),
+          provider: this.withModelListCache(
+            p.id,
+            createProviderInstance(provider, p.id, p.name, p.config),
+          ),
         });
       } catch (err) {
         console.error(
@@ -105,11 +146,14 @@ class ModelRegistry {
 
     const newProvider = configManager.addModelProvider(type, name, config);
 
-    const instance = createProviderInstance(
-      provider,
+    const instance = this.withModelListCache(
       newProvider.id,
-      newProvider.name,
-      newProvider.config,
+      createProviderInstance(
+        provider,
+        newProvider.id,
+        newProvider.name,
+        newProvider.config,
+      ),
     );
 
     let m: ModelList = { chat: [], embedding: [] };
@@ -146,6 +190,7 @@ class ModelRegistry {
 
   async removeProvider(providerId: string): Promise<void> {
     configManager.removeModelProvider(providerId);
+    this.modelListCache.delete(providerId);
     this.activeProviders = this.activeProviders.filter(
       (p) => p.id !== providerId,
     );
@@ -165,11 +210,15 @@ class ModelRegistry {
     );
     /* updated.config, not the raw body: redacted secrets have been
        resolved back to their stored values by the config manager. */
-    const instance = createProviderInstance(
-      providers[updated.type],
+    this.modelListCache.delete(providerId);
+    const instance = this.withModelListCache(
       providerId,
-      name,
-      updated.config,
+      createProviderInstance(
+        providers[updated.type],
+        providerId,
+        name,
+        updated.config,
+      ),
     );
 
     let m: ModelList = { chat: [], embedding: [] };
@@ -212,6 +261,9 @@ class ModelRegistry {
     model: any,
   ): Promise<any> {
     const addedModel = configManager.addProviderModel(providerId, type, model);
+    /* The cached list would hide the new model from loadChatModel
+       until the TTL lapses. */
+    this.modelListCache.delete(providerId);
     return addedModel;
   }
 
@@ -221,6 +273,7 @@ class ModelRegistry {
     modelKey: string,
   ): Promise<void> {
     configManager.removeProviderModel(providerId, type, modelKey);
+    this.modelListCache.delete(providerId);
     return;
   }
 }

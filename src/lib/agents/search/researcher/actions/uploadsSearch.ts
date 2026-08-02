@@ -12,10 +12,7 @@ const schema = z.object({
 
 const uploadsSearchAction: ResearchAction<typeof schema> = {
   name: 'uploads_search',
-  enabled: (config) =>
-    (config.classification.classification.personalSearch &&
-      config.fileIds.length > 0) ||
-    config.fileIds.length > 0,
+  enabled: (config) => config.fileIds.length > 0,
   schema,
   getToolDescription: () =>
     `Use this tool to perform searches over the user's uploaded files. This is useful when you need to gather information from the user's documents to answer their questions. You can provide up to 3 queries at a time. You will have to use this every single time if this is present and relevant.`,

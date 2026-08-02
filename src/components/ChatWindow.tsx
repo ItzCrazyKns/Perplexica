@@ -5,7 +5,7 @@ import Chat from './Chat';
 import EmptyChat from './EmptyChat';
 import NextError from 'next/error';
 import { useChat } from '@/lib/hooks/useChat';
-import SettingsButtonMobile from './Settings/SettingsButtonMobile';
+import SettingsButton from './Settings/SettingsButton';
 import { Block } from '@/lib/types';
 import Loader from './ui/Loader';
 
@@ -40,7 +40,7 @@ const ChatWindow = () => {
     return (
       <div className="relative">
         <div className="absolute w-full flex flex-row items-center justify-end mr-5 mt-5">
-          <SettingsButtonMobile />
+          <SettingsButton variant="mobile" />
         </div>
         <div className="flex flex-col items-center justify-center min-h-screen">
           <p className="dark:text-white/70 text-black/70 text-sm">

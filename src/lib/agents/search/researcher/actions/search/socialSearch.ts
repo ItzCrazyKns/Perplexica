@@ -27,7 +27,6 @@ const socialSearchAction: ResearchAction<typeof schema> = {
     "Use this tool to perform social media searches for relevant posts, discussions, and trends related to the user's query. Provide a list of concise search queries that will help gather comprehensive social media information on the topic at hand.",
   enabled: (config) =>
     config.sources.includes('discussions') &&
-    config.classification.classification.skipSearch === false &&
     config.classification.classification.discussionSearch === true,
   execute: async (input, additionalConfig) => {
     input.queries = (

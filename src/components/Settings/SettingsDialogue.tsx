@@ -8,16 +8,14 @@ import {
   Sliders,
   ToggleRight,
 } from 'lucide-react';
-import Preferences from './Sections/Preferences';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import Loader from '../ui/Loader';
 import { cn } from '@/lib/utils';
 import Models from './Sections/Models/Section';
-import SearchSection from './Sections/Search';
 import Select from '@/components/ui/Select';
-import Personalization from './Sections/Personalization';
+import ConfigSection from './Sections/ConfigSection';
 
 const sections = [
   {
@@ -25,7 +23,7 @@ const sections = [
     name: 'Preferences',
     description: 'Customize your application preferences.',
     icon: Sliders,
-    component: Preferences,
+    component: ConfigSection,
     dataAdd: 'preferences',
   },
   {
@@ -33,7 +31,7 @@ const sections = [
     name: 'Personalization',
     description: 'Customize the behavior and tone of the model.',
     icon: ToggleRight,
-    component: Personalization,
+    component: ConfigSection,
     dataAdd: 'personalization',
   },
   {
@@ -49,7 +47,7 @@ const sections = [
     name: 'Search',
     description: 'Manage search settings.',
     icon: Search,
-    component: SearchSection,
+    component: ConfigSection,
     dataAdd: 'search',
   },
 ];
@@ -206,6 +204,7 @@ const SettingsDialogue = ({
                       <selectedSection.component
                         fields={config.fields[selectedSection.dataAdd]}
                         values={config.values[selectedSection.dataAdd]}
+                        dataAdd={selectedSection.dataAdd}
                       />
                     </div>
                   </div>

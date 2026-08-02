@@ -1,26 +1,40 @@
-import { cn } from '@/lib/utils';
-import {
-  Popover,
-  PopoverButton,
-  PopoverPanel,
-  Transition,
-} from '@headlessui/react';
-import {
-  CopyPlus,
-  File,
-  Link,
-  LoaderCircle,
-  Paperclip,
-  Plus,
-  Trash,
-} from 'lucide-react';
-import { Fragment, useRef, useState } from 'react';
+import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
+import { File, LoaderCircle, Paperclip, Plus, Trash } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { useChat } from '@/lib/hooks/useChat';
-import { AnimatePresence } from 'motion/react';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import { toast } from 'sonner';
 
-const Attach = () => {
+/* One component for both input bars; the former AttachSmall differed
+   only in icon size and popover anchoring. */
+const variants = {
+  default: {
+    iconSize: 16,
+    trigger:
+      'active:border-none hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg focus:outline-none headless-open:text-black dark:headless-open:text-white text-black/50 dark:text-white/50 active:scale-95 transition duration-200 hover:text-black dark:hover:text-white',
+    loader:
+      'active:border-none hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg focus:outline-none text-black/50 dark:text-white/50 transition duration-200',
+    popover: 'relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg',
+    panel: 'absolute z-10 w-64 md:w-[350px] right-0',
+    panelInner: 'origin-top-right',
+    attachButton:
+      'flex items-center justify-center active:border-none hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg focus:outline-none headless-open:text-black dark:headless-open:text-white text-black/50 dark:text-white/50 active:scale-95 transition duration-200 hover:text-black dark:hover:text-white',
+  },
+  small: {
+    iconSize: 20,
+    trigger:
+      'flex flex-row items-center justify-between space-x-1 p-1 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary active:scale-95 transition duration-200 hover:text-black dark:hover:text-white',
+    loader: 'flex flex-row items-center justify-between space-x-1 p-1 ',
+    popover: 'max-w-[15rem] md:max-w-md lg:max-w-lg',
+    panel: 'absolute z-10 w-64 md:w-[350px] bottom-14',
+    panelInner: 'origin-bottom-left',
+    attachButton:
+      'flex flex-row items-center space-x-1 text-black/50 dark:text-white/50 rounded-xl hover:bg-light-secondary dark:hover:bg-dark-secondary transition duration-200 hover:text-black dark:hover:text-white p-1',
+  },
+} as const;
+
+const Attach = ({ variant = 'default' }: { variant?: 'default' | 'small' }) => {
+  const v = variants[variant];
   const { files, setFiles, setFileIds, fileIds } = useChat();
 
   const [loading, setLoading] = useState(false);
@@ -83,31 +97,25 @@ const Attach = () => {
   };
 
   return loading ? (
-    <div className="active:border-none hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg focus:outline-none text-black/50 dark:text-white/50 transition duration-200">
-      <LoaderCircle size={16} className="text-sky-500 animate-spin" />
+    <div className={v.loader}>
+      <LoaderCircle size={v.iconSize} className="text-sky-500 animate-spin" />
     </div>
   ) : files.length > 0 ? (
-    <Popover className="relative w-full max-w-[15rem] md:max-w-md lg:max-w-lg">
+    <Popover className={v.popover}>
       {({ open }) => (
         <>
-          <PopoverButton
-            type="button"
-            className="active:border-none hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg focus:outline-none headless-open:text-black dark:headless-open:text-white text-black/50 dark:text-white/50 active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
-          >
-            <File size={16} className="text-sky-500" />
+          <PopoverButton type="button" className={v.trigger}>
+            <File size={v.iconSize} className="text-sky-500" />
           </PopoverButton>
           <AnimatePresence>
             {open && (
-              <PopoverPanel
-                className="absolute z-10 w-64 md:w-[350px] right-0"
-                static
-              >
+              <PopoverPanel className={v.panel} static>
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.1, ease: 'easeOut' }}
-                  className="origin-top-right bg-light-primary dark:bg-dark-primary border rounded-md border-light-200 dark:border-dark-200 w-full max-h-[200px] md:max-h-none overflow-y-auto flex flex-col"
+                  className={`${v.panelInner} bg-light-primary dark:bg-dark-primary border rounded-md border-light-200 dark:border-dark-200 w-full max-h-[200px] md:max-h-none overflow-y-auto flex flex-col`}
                 >
                   <div className="flex flex-row items-center justify-between px-3 py-2">
                     <h4 className="text-black/70 dark:text-white/70 text-sm">
@@ -178,9 +186,7 @@ const Attach = () => {
     <button
       type="button"
       onClick={() => fileInputRef.current.click()}
-      className={cn(
-        'flex items-center justify-center active:border-none hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg focus:outline-none headless-open:text-black dark:headless-open:text-white text-black/50 dark:text-white/50 active:scale-95 transition duration-200 hover:text-black dark:hover:text-white',
-      )}
+      className={v.attachButton}
     >
       <input
         type="file"
@@ -190,7 +196,7 @@ const Attach = () => {
         multiple
         hidden
       />
-      <Paperclip size={16} />
+      <Paperclip size={v.iconSize} />
     </button>
   );
 };

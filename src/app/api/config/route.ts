@@ -13,7 +13,7 @@ export const GET = async (req: NextRequest) => {
     const values = configManager.getSanitizedConfig();
     const fields = configManager.getUIConfigSections();
 
-    const modelRegistry = new ModelRegistry();
+    const modelRegistry = ModelRegistry.getInstance();
     const modelProviders = await modelRegistry.getActiveProviders();
 
     values.modelProviders = values.modelProviders.map(
