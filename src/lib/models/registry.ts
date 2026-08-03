@@ -76,10 +76,12 @@ class ModelRegistry {
   }
 
   async getActiveProviders() {
-    const providers: MinimalProvider[] = [];
-
-    await Promise.all(
-      this.activeProviders.map(async (p) => {
+    /* Promise.all result order, not push-on-completion: the client
+       falls back to the first provider with embedding models, and
+       completion order made the instant local transformers provider
+       win over configured remote ones on every deploy. */
+    return Promise.all(
+      this.activeProviders.map(async (p): Promise<MinimalProvider> => {
         let m: ModelList = { chat: [], embedding: [] };
 
         try {
@@ -100,16 +102,14 @@ class ModelRegistry {
           };
         }
 
-        providers.push({
+        return {
           id: p.id,
           name: p.name,
           chatModels: m.chat,
           embeddingModels: m.embedding,
-        });
+        };
       }),
     );
-
-    return providers;
   }
 
   async loadChatModel(providerId: string, modelName: string) {

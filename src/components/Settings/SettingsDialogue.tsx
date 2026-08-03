@@ -92,7 +92,10 @@ const SettingsDialogue = ({
 
       fetchConfig();
     }
-  }, [isOpen]);
+    /* activeSection dep: fields save immediately, but sections remount
+       from this cached config; without a refetch a tab switch shows
+       pre-save values and the change looks lost. */
+  }, [isOpen, activeSection]);
 
   return (
     <Dialog
