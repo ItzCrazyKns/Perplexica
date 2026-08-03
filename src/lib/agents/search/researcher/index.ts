@@ -8,7 +8,7 @@ import { ToolCall } from '@/lib/models/types';
 import { parseTextActions } from './textActionFallback';
 import { withInactivityTimeout } from '@/lib/utils/streamTimeout';
 import { createResearchBudget } from '../researchBudget';
-import { seedAllowedUrls } from '../urlAllowlist';
+import { seedAllowedUrls, extractUserUrls } from '../urlAllowlist';
 
 class Researcher {
   async research(
@@ -64,6 +64,46 @@ class Researcher {
         `,
       },
     ];
+
+    /* URLs the user pasted are a deterministic scrape signal; running
+       them in code before consulting the model removes the dependency
+       on the model emitting a native tool call, which small local
+       models fail in creative ways ('Summary: <url>' chats returned
+       empty context whenever that happened). */
+    const pastedUrls = extractUserUrls(input.followUp).slice(0, 3);
+
+    if (pastedUrls.length > 0) {
+      const preCall: ToolCall = {
+        id: 'pre-scrape-0',
+        name: 'scrape_url',
+        arguments: { urls: pastedUrls },
+      };
+
+      const preResults = await ActionRegistry.executeAll([preCall], {
+        llm: input.config.llm,
+        embedding: input.config.embedding,
+        session: session,
+        researchBlockId: researchBlockId,
+        fileIds: input.config.fileIds,
+        mode: input.config.mode,
+        budget: budget,
+        allowedScrapeUrls: allowedScrapeUrls,
+      });
+
+      actionOutput.push(...preResults);
+
+      agentMessageHistory.push({
+        role: 'assistant',
+        content: '',
+        tool_calls: [preCall],
+      });
+      agentMessageHistory.push({
+        role: 'tool',
+        id: preCall.id,
+        name: preCall.name,
+        content: JSON.stringify(preResults[0]),
+      });
+    }
 
     let budgetHit = false;
 

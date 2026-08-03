@@ -19,6 +19,9 @@ export const normalizeUrl = (raw: string): string => {
 
 const URL_REGEX = /https?:\/\/[^\s"'<>)\]]+/gi;
 
+export const extractUserUrls = (text: string): string[] =>
+  Array.from(new Set(text.match(URL_REGEX) ?? []));
+
 /* Only user turns count: assistant turns quote scraped content. */
 export const seedAllowedUrls = (
   chatHistory: ChatTurnMessage[],

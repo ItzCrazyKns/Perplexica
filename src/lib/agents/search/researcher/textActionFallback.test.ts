@@ -51,6 +51,16 @@ test('multiple distinct narrated calls parse in order, duplicates collapse', () 
   assert.deepEqual(calls[1].arguments, { urls: ['https://x.example/p'] });
 });
 
+test('parses the function_name XML variant', () => {
+  const calls = parseTextActions(
+    '<function_calls>\n<function>\n<function_name>scrape_url</function_name>\n<function_parameters>\n{"urls": ["https://example.com/a"]}\n</function_parameters>\n</function>\n</function_calls>',
+    TOOLS,
+  );
+
+  assert.equal(calls.length, 1);
+  assert.deepEqual(calls[0].arguments, { urls: ['https://example.com/a'] });
+});
+
 test('prose without arguments yields nothing', () => {
   assert.deepEqual(
     parseTextActions(
