@@ -116,15 +116,13 @@ const fetchArticles = async (topic: DiscoverTopic): Promise<any[]> => {
 
   const seenUrls = new Set();
 
-  /* duckduckgo news appends a numeric id segment to article URLs
-     (theregister.com/.../slug/5281331); clicking through to a
-     Summary chat then scrapes a 404. Strip it for that engine only. */
+  /* News aggregator engines (bing news AND duckduckgo news) append a
+     numeric article-id segment to URLs (theregister.com/.../slug/5281331);
+     clicking through to a Summary chat then scrapes a 404. A trailing
+     all-digit path segment of 6+ digits is not a real path on any of
+     the curated sites, so strip it unconditionally. */
   const cleanUrl = (item: any): any => {
-    const engines = item.engines || [item.engine];
-    if (
-      engines?.some((e: string) => e?.includes('duckduckgo')) &&
-      /\/\d{6,}\/?$/.test(item.url || '')
-    ) {
+    if (/\/\d{6,}\/?$/.test(item.url || '')) {
       return { ...item, url: item.url.replace(/\/\d{6,}\/?$/, '') };
     }
     return item;
