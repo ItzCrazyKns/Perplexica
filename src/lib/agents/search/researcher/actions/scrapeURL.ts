@@ -57,9 +57,17 @@ const scrapeURLAction: ResearchAction<typeof schema> = {
     await Promise.all(
       params.urls.map(async (url) => {
         try {
-          const scraped = await additionalConfig.budget.run(() =>
-            Scraper.scrape(url),
-          );
+          const scraped = await additionalConfig.budget
+            .run(() => Scraper.scrape(url))
+            .catch(async (err) => {
+              /* News aggregators append a numeric id segment that
+                 404s; retry once without it. */
+              const stripped = url.replace(/\/\d{6,}\/?$/, '');
+              if (stripped === url) throw err;
+              return additionalConfig.budget.run(() =>
+                Scraper.scrape(stripped),
+              );
+            });
 
           if (!scraped) {
             results.push({
