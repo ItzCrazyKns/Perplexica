@@ -15,6 +15,7 @@ interface SearxngSearchResult {
   thumbnail?: string;
   content?: string;
   author?: string;
+  publishedDate?: string;
   iframe_src?: string;
 }
 
