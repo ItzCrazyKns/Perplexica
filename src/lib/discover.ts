@@ -15,10 +15,24 @@ const websitesForTopic: Record<
   string,
   { query: string[]; us: string[]; eu: string[] }
 > = {
+  /* Curated for this fork's operator: infra and Linux depth, AI
+     models, open source, EU digital policy; consumer-startup outlets
+     dropped. Every site verified to index through the SearXNG news
+     category (phoronix, lwn, servethehome, tomshardware do not). */
   tech: {
-    query: ['technology news', 'latest tech', 'AI', 'science and innovation'],
-    us: ['techcrunch.com', 'wired.com', 'theverge.com'],
-    eu: ['thenextweb.com', 'theregister.com', 'sifted.eu'],
+    query: [
+      'open source software',
+      'Linux',
+      'AI models LLM',
+      'cloud infrastructure Kubernetes',
+    ],
+    us: ['arstechnica.com', 'zdnet.com', 'venturebeat.com'],
+    eu: [
+      'theregister.com',
+      'heise.de',
+      'euractiv.com',
+      'siliconrepublic.com',
+    ],
   },
   finance: {
     query: ['finance news', 'economy', 'stock market', 'investing'],
@@ -102,6 +116,20 @@ const fetchArticles = async (topic: DiscoverTopic): Promise<any[]> => {
 
   const seenUrls = new Set();
 
+  /* duckduckgo news appends a numeric id segment to article URLs
+     (theregister.com/.../slug/5281331); clicking through to a
+     Summary chat then scrapes a 404. Strip it for that engine only. */
+  const cleanUrl = (item: any): any => {
+    const engines = item.engines || [item.engine];
+    if (
+      engines?.some((e: string) => e?.includes('duckduckgo')) &&
+      /\/\d{6,}\/?$/.test(item.url || '')
+    ) {
+      return { ...item, url: item.url.replace(/\/\d{6,}\/?$/, '') };
+    }
+    return item;
+  };
+
   const results = (
     await Promise.all(
       pairs.map(async ({ link, query }) => {
@@ -124,6 +152,7 @@ const fetchArticles = async (topic: DiscoverTopic): Promise<any[]> => {
     )
   )
     .flat()
+    .map(cleanUrl)
     .filter((item) => {
       const url = item.url?.toLowerCase().trim();
       if (seenUrls.has(url)) return false;
