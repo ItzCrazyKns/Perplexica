@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import {
   BookCopy,
   Disc3,
+  Repeat,
   Volume2,
   StopCircle,
   Layers3,
@@ -150,6 +151,21 @@ const MessageBox = ({
                 </span>
               </div>
             )}
+
+          {section.message.status === 'error' && (
+            <div className="flex flex-row items-center justify-between gap-3 p-3 rounded-lg border border-red-400/40 bg-red-500/10">
+              <span className="text-sm text-black/70 dark:text-white/70">
+                This answer failed or was interrupted.
+              </span>
+              <button
+                onClick={() => rewrite(section.message.messageId)}
+                className="flex flex-row items-center gap-1.5 text-sm font-medium text-black dark:text-white px-3 py-1.5 rounded-md bg-light-secondary dark:bg-dark-secondary hover:opacity-70 active:scale-95 transition duration-200"
+              >
+                <Repeat size={14} />
+                Retry
+              </button>
+            </div>
+          )}
 
           {section.widgets.length > 0 && <Renderer widgets={section.widgets} />}
 

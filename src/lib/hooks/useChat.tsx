@@ -238,6 +238,12 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
         try {
           await readNdjsonStream(res.body, messageHandler);
+        } catch (err) {
+          console.error('Reconnect stream failed:', err);
+          setLoading(false);
+          setMessages((prev) =>
+            setMessageStatus(prev, lastMsg.messageId, 'error'),
+          );
         } finally {
           isReconnectingRef.current = false;
         }
@@ -481,43 +487,53 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
     const messageIndex = messages.findIndex((m) => m.messageId === messageId);
 
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        content: message,
-        message: {
-          messageId: messageId,
-          chatId: chatId!,
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           content: message,
-        },
-        chatId: chatId!,
-        files: fileIds,
-        sources: sources,
-        optimizationMode: optimizationMode,
-        history: rewrite
-          ? chatHistory.current.slice(
-              0,
-              messageIndex === -1 ? undefined : messageIndex,
-            )
-          : chatHistory.current,
-        chatModel: {
-          key: chatModelProvider.key,
-          providerId: chatModelProvider.providerId,
-        },
-        embeddingModel: {
-          key: embeddingModelProvider.key,
-          providerId: embeddingModelProvider.providerId,
-        },
-        systemInstructions: localStorage.getItem('systemInstructions'),
-      }),
-    });
+          message: {
+            messageId: messageId,
+            chatId: chatId!,
+            content: message,
+          },
+          chatId: chatId!,
+          files: fileIds,
+          sources: sources,
+          optimizationMode: optimizationMode,
+          history: rewrite
+            ? chatHistory.current.slice(
+                0,
+                messageIndex === -1 ? undefined : messageIndex,
+              )
+            : chatHistory.current,
+          chatModel: {
+            key: chatModelProvider.key,
+            providerId: chatModelProvider.providerId,
+          },
+          embeddingModel: {
+            key: embeddingModelProvider.key,
+            providerId: embeddingModelProvider.providerId,
+          },
+          systemInstructions: localStorage.getItem('systemInstructions'),
+        }),
+      });
 
-    if (!res.body) throw new Error('No response body');
+      if (!res.ok) throw new Error(`Request failed with status ${res.status}`);
+      if (!res.body) throw new Error('No response body');
 
-    await readNdjsonStream(res.body, getMessageHandler(newMessage));
+      await readNdjsonStream(res.body, getMessageHandler(newMessage));
+    } catch (err: any) {
+      /* Network drop or server death mid-stream: without this the
+         spinner never stops and nothing is surfaced. */
+      console.error('sendMessage failed:', err);
+      toast.error('Connection lost while answering. You can retry.');
+      setLoading(false);
+      setMessages((prev) => setMessageStatus(prev, messageId!, 'error'));
+    }
   };
 
   const rewriteImpl = (messageId: string) => {

@@ -10,6 +10,7 @@ import { and, eq, gt } from 'drizzle-orm';
 import { TextBlock } from '@/lib/types';
 import { sanitizeUntrusted } from '@/lib/utils/sanitizeUntrusted';
 import { createToolCallXmlFilter } from '@/lib/utils/stripToolCallXml';
+import { withInactivityTimeout } from '@/lib/utils/streamTimeout';
 
 class SearchAgent {
   /*
@@ -205,7 +206,11 @@ class SearchAgent {
       }
     };
 
-    for await (const chunk of answerStream) {
+    for await (const chunk of withInactivityTimeout(
+      answerStream,
+      120_000,
+      'Answer stream',
+    )) {
       emitAnswerText(xmlFilter.write(chunk.contentChunk || ''));
     }
 

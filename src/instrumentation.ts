@@ -7,6 +7,7 @@ export const register = async () => {
     await import('./lib/db/migrate');
     console.log('Database migrations completed successfully');
 
+    await import('./lib/db/startupSweep');
     await import('./lib/config/index');
   }
 };
