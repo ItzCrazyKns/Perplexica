@@ -30,6 +30,7 @@ class ConfigManager {
     modelProviders: [],
     search: {
       searxngURL: '',
+      discoverRegion: 'global',
     },
   };
   uiConfigSections: UIConfigSections = {
@@ -124,6 +125,21 @@ class ConfigManager {
         default: '',
         scope: 'server',
         env: 'SEARXNG_API_URL',
+      },
+      {
+        name: 'Discover region',
+        key: 'discoverRegion',
+        type: 'select',
+        required: false,
+        description: 'Which news sources the Discover tab draws from',
+        default: 'global',
+        options: [
+          { name: 'Global (EU + US)', value: 'global' },
+          { name: 'Europe', value: 'eu' },
+          { name: 'United States', value: 'us' },
+        ],
+        scope: 'server',
+        env: 'DISCOVER_REGION',
       },
     ],
   };
