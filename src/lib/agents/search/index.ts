@@ -11,6 +11,10 @@ import { TextBlock } from '@/lib/types';
 import { sanitizeUntrusted } from '@/lib/utils/sanitizeUntrusted';
 import { createToolCallXmlFilter } from '@/lib/utils/stripToolCallXml';
 import { withInactivityTimeout } from '@/lib/utils/streamTimeout';
+import { detectSummaryIntent } from './summarize';
+import { ActionRegistry } from './researcher/actions';
+import { createResearchBudget } from './researchBudget';
+import { seedAllowedUrls } from './urlAllowlist';
 
 class SearchAgent {
   /*
@@ -93,9 +97,83 @@ class SearchAgent {
     }
   }
 
+  /* Scrape the pasted article(s) and return writer context, or null
+     if nothing could be fetched (caller falls back to full research).
+     Emits the research/source blocks the UI expects. */
+  private async summarizeContext(
+    session: SessionManager,
+    input: SearchAgentInput,
+    urls: string[],
+  ): Promise<string | null> {
+    const researchBlockId = crypto.randomUUID();
+    session.emitBlock({
+      id: researchBlockId,
+      type: 'research',
+      data: { subSteps: [] },
+    });
+
+    const results = await ActionRegistry.executeAll(
+      [{ id: 'summary-scrape-0', name: 'scrape_url', arguments: { urls } }],
+      {
+        llm: input.config.llm,
+        embedding: input.config.embedding,
+        session: session,
+        researchBlockId: researchBlockId,
+        fileIds: input.config.fileIds,
+        mode: input.config.mode,
+        budget: createResearchBudget(input.config.mode),
+        allowedScrapeUrls: seedAllowedUrls(input.chatHistory, input.followUp),
+      },
+    );
+
+    const output = results[0];
+    const findings =
+      output?.type === 'search_results'
+        ? output.results.filter(
+            (f) =>
+              f.content &&
+              !/^(Error scraping|Blocked scrape)/.test(f.metadata?.title ?? '') &&
+              !/^(Failed to fetch|Skipped |Scraping )/.test(f.content),
+          )
+        : [];
+
+    if (findings.length === 0) return null;
+
+    session.emitBlock({
+      id: crypto.randomUUID(),
+      type: 'source',
+      data: findings,
+    });
+
+    session.emit('data', { type: 'researchComplete' });
+
+    const articles = findings
+      .map(
+        (f, index) =>
+          `<result index=${index + 1} title=${JSON.stringify(f.metadata?.title ?? '')}>${sanitizeUntrusted(f.content)}</result>`,
+      )
+      .join('\n');
+
+    return `<search_results note="The user asked for a summary of the linked page(s); this is their full extracted content. Summarize it faithfully and cite it.">\n${articles}\n</search_results>`;
+  }
+
   private async run(session: SessionManager, input: SearchAgentInput) {
     if (input.persist !== false) {
       await this.prepareMessageRow(session, input);
+    }
+
+    /* A summary request for a link is a focused task: no classifier,
+       no widgets, no search fan-out that buries the article under
+       loosely related results. Full research is the fallback when the
+       page cannot be fetched. */
+    const summaryUrls = detectSummaryIntent(input.followUp);
+    const summaryContext = summaryUrls
+      ? await this.summarizeContext(session, input, summaryUrls)
+      : null;
+
+    if (summaryContext) {
+      await this.writeAnswer(session, input, summaryContext);
+      return;
     }
 
     const classification = await classify({
@@ -165,8 +243,16 @@ class SearchAgent {
 
     const finalContextWithWidgets = `<search_results note="These are the search results and assistant can cite these">\n${finalContext}\n</search_results>\n<widgets_result noteForAssistant="Its output is already showed to the user, assistant can use this information to answer the query but do not CITE this as a souce">\n${widgetContext}\n</widgets_result>`;
 
+    await this.writeAnswer(session, input, finalContextWithWidgets);
+  }
+
+  private async writeAnswer(
+    session: SessionManager,
+    input: SearchAgentInput,
+    context: string,
+  ) {
     const writerPrompt = getWriterPrompt(
-      finalContextWithWidgets,
+      context,
       input.config.systemInstructions,
       input.config.mode,
     );
@@ -186,6 +272,7 @@ class SearchAgent {
     });
 
     let responseBlockId = '';
+    let rawLength = 0;
     const xmlFilter = createToolCallXmlFilter();
 
     const emitAnswerText = (text: string) => {
@@ -211,10 +298,23 @@ class SearchAgent {
       120_000,
       'Answer stream',
     )) {
+      rawLength += (chunk.contentChunk || '').length;
       emitAnswerText(xmlFilter.write(chunk.contentChunk || ''));
     }
 
     emitAnswerText(xmlFilter.flush());
+
+    /* A run that streams nothing visible must fail loudly (the retry
+       banner picks it up), not complete with a blank answer. Happens
+       when the model answers entirely in tool-call syntax. */
+    if (!responseBlockId) {
+      console.warn(
+        `Writer produced no visible answer (raw stream length ${rawLength})`,
+      );
+      throw new Error(
+        'The model returned an empty answer. Please retry.',
+      );
+    }
 
     session.emit('end', {});
 
