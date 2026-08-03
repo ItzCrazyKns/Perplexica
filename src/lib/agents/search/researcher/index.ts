@@ -6,6 +6,7 @@ import { Message, ReasoningResearchBlock } from '@/lib/types';
 import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 import { ToolCall } from '@/lib/models/types';
 import { parseTextActions } from './textActionFallback';
+import { withInactivityTimeout } from '@/lib/utils/streamTimeout';
 import { createResearchBudget } from '../researchBudget';
 import { seedAllowedUrls } from '../urlAllowlist';
 
@@ -64,9 +65,12 @@ class Researcher {
       },
     ];
 
+    let budgetHit = false;
+
     for (let i = 0; i < maxIteration; i++) {
       if (budget.expired()) {
         console.warn('Research budget exhausted, answering from context');
+        budgetHit = true;
         break;
       }
 
@@ -97,7 +101,11 @@ class Researcher {
       let finalToolCalls: ToolCall[] = [];
       let streamedText = '';
 
-      for await (const partialRes of actionStream) {
+      for await (const partialRes of withInactivityTimeout(
+        actionStream,
+        120_000,
+        'Researcher stream',
+      )) {
         streamedText += partialRes.contentChunk || '';
         if (partialRes.toolCallChunk.length > 0) {
           partialRes.toolCallChunk.forEach((tc) => {
@@ -220,6 +228,14 @@ class Researcher {
       if (isDone) {
         break;
       }
+    }
+
+    if (budgetHit) {
+      session.emitBlock({
+        id: crypto.randomUUID(),
+        type: 'text',
+        data: '*Research was cut short by the time budget; the answer uses what was gathered so far.*',
+      });
     }
 
     const searchResults = actionOutput
