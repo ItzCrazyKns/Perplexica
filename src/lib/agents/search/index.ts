@@ -137,7 +137,15 @@ class SearchAgent {
           )
         : [];
 
-    if (findings.length === 0) return null;
+    const totalContent = findings.reduce(
+      (n, f) => n + (f.content?.length ?? 0),
+      0,
+    );
+
+    /* Bot walls and cookie pages scrape 'successfully' with a few
+       hundred chars of chrome; summarizing that helps nobody, so let
+       full research look the topic up instead. */
+    if (findings.length === 0 || totalContent < 500) return null;
 
     session.emitBlock({
       id: crypto.randomUUID(),
@@ -272,8 +280,6 @@ class SearchAgent {
     });
 
     let responseBlockId = '';
-    let rawLength = 0;
-    const xmlFilter = createToolCallXmlFilter();
 
     const emitAnswerText = (text: string) => {
       if (!text) return;
@@ -293,27 +299,44 @@ class SearchAgent {
       }
     };
 
-    for await (const chunk of withInactivityTimeout(
-      answerStream,
-      120_000,
-      'Answer stream',
-    )) {
-      rawLength += (chunk.contentChunk || '').length;
-      emitAnswerText(xmlFilter.write(chunk.contentChunk || ''));
+    /* An all-tool-XML answer (filtered to nothing) is sampling
+       variance on local models; one extra roll converts most of them.
+       Only after the retry does it fail into the retry banner. */
+    for (let attempt = 0; attempt < 2 && !responseBlockId; attempt++) {
+      const stream =
+        attempt === 0
+          ? answerStream
+          : input.config.llm.streamText({
+              messages: [
+                { role: 'system', content: writerPrompt },
+                ...input.chatHistory,
+                { role: 'user', content: input.followUp },
+              ],
+            });
+
+      let rawLength = 0;
+      const xmlFilter = createToolCallXmlFilter();
+
+      for await (const chunk of withInactivityTimeout(
+        stream,
+        120_000,
+        'Answer stream',
+      )) {
+        rawLength += (chunk.contentChunk || '').length;
+        emitAnswerText(xmlFilter.write(chunk.contentChunk || ''));
+      }
+
+      emitAnswerText(xmlFilter.flush());
+
+      if (!responseBlockId) {
+        console.warn(
+          `Writer attempt ${attempt + 1} produced no visible answer (raw stream length ${rawLength})`,
+        );
+      }
     }
 
-    emitAnswerText(xmlFilter.flush());
-
-    /* A run that streams nothing visible must fail loudly (the retry
-       banner picks it up), not complete with a blank answer. Happens
-       when the model answers entirely in tool-call syntax. */
     if (!responseBlockId) {
-      console.warn(
-        `Writer produced no visible answer (raw stream length ${rawLength})`,
-      );
-      throw new Error(
-        'The model returned an empty answer. Please retry.',
-      );
+      throw new Error('The model returned an empty answer. Please retry.');
     }
 
     session.emit('end', {});
