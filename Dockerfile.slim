@@ -36,7 +36,7 @@ FROM registry.fedoraproject.org/fedora:44 AS runtime
 # builder stage. DB migrations run at startup via src/instrumentation.ts.
 RUN curl -fsSL https://rpm.nodesource.com/setup_24.x | bash - \
  && dnf -y install nodejs \
-      alsa-lib atk cups-libs libdrm mesa-libgbm \
+      alsa-lib atk at-spi2-atk at-spi2-core cups-libs libdrm mesa-libgbm \
       libXcomposite libXdamage libXfixes libXrandr libxkbcommon \
       nspr nss pango \
  && dnf clean all \
@@ -52,6 +52,11 @@ COPY --from=builder --chown=10001:0 /build/.next/static ./.next/static
 COPY --from=builder --chown=10001:0 /build/public ./public
 COPY --from=builder --chown=10001:0 /build/drizzle ./drizzle
 COPY --from=builder --chown=10001:0 /opt/pw-browsers /opt/pw-browsers
+
+# Launch gate: a missing shared library must fail the build, not
+# surface as silent scrape failures in production.
+RUN /opt/pw-browsers/chromium_headless_shell-*/chrome-headless-shell-linux64/chrome-headless-shell \
+      --no-sandbox --disable-gpu --dump-dom about:blank > /dev/null
 
 USER 10001
 ENV NODE_ENV=production \

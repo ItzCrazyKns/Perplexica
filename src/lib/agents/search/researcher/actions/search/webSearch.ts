@@ -6,6 +6,7 @@ You are currently on speed mode, meaning you would only get to call this tool on
 
 Your queries should be very targeted and specific to the information you need, avoid broad or generic queries.
 Your queries shouldn't be sentences but rather keywords that are SEO friendly and can be used to search the web for information.
+Never quote long exact phrases (article titles, full sentences): search engines match the individual words and return stopword garbage. Use a few distinctive keywords instead.
 
 For example, if the user is asking about the features of a new technology, you might use queries like "GPT-5.1 features", "GPT-5.1 release date", "GPT-5.1 improvements" rather than a broad query like "Tell me about GPT-5.1".
 
@@ -20,6 +21,7 @@ You can call this tool several times if needed to gather enough information.
 Start initially with broader queries to get an overview, then narrow down with more specific queries based on the results you receive.
 
 Your queries shouldn't be sentences but rather keywords that are SEO friendly and can be used to search the web for information.
+Never quote long exact phrases (article titles, full sentences): search engines match the individual words and return stopword garbage. Use a few distinctive keywords instead.
 
 For example, if the user asks about Tesla: first invoke this tool with broad queries ("Tesla", "Tesla latest news", "Tesla stock price"); after reviewing the results, invoke it again with narrower queries ("Tesla Q2 2025 earnings", "Tesla new model 2025", "Tesla stock analysis"); then finish.
 
@@ -35,6 +37,7 @@ Start initially with broader queries to get an overview, then narrow down with m
 Never stop before at least 5-6 iterations of searches unless the user question is very simple.
 
 Your queries shouldn't be sentences but rather keywords that are SEO friendly and can be used to search the web for information.
+Never quote long exact phrases (article titles, full sentences): search engines match the individual words and return stopword garbage. Use a few distinctive keywords instead.
 
 You can search for 3 queries in one go, make sure to utilize all 3 queries to maximize the information you can gather. If a question is simple, then split your queries to cover different aspects or related topics to get a comprehensive understanding.
 If this tool is present and no other tools are more relevant, you MUST use this tool to get the needed information. You can call this tools, multiple times as needed.
