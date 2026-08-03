@@ -54,8 +54,15 @@ export const resolveModelConfig = async (): Promise<{
     chatModelProvider.chatModels[0];
   chatModelKey = chatModel.key;
 
+  /* The built-in Transformers provider is the zero-config last
+     resort; when real embedding providers exist, prefer them. */
   const embeddingModelProvider =
     providers.find((p) => p.id === embeddingModelProviderId) ??
+    providers.find(
+      (p) =>
+        p.embeddingModels.length > 0 &&
+        p.name.toLowerCase() !== 'transformers',
+    ) ??
     providers.find((p) => p.embeddingModels.length > 0);
 
   if (!embeddingModelProvider) {
