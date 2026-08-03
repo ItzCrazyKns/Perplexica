@@ -188,7 +188,11 @@ class SearchAgent {
         session,
         input,
         summaryContext,
-        'Summarize the article provided in the context, faithfully and with citations.',
+        /* The forced opening makes a tool-syntax first token
+           structurally impossible; without it short or partial
+           articles still flipped the model into fetch mode (0/1 vs
+           3/3 prose, measured). */
+        'Summarize the article provided in the context, faithfully and with citations. Begin your answer with the words: Based on the article',
       );
       return;
     }
