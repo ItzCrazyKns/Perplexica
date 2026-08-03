@@ -180,7 +180,16 @@ class SearchAgent {
       : null;
 
     if (summaryContext) {
-      await this.writeAnswer(session, input, summaryContext);
+      /* The URL must not appear in the writer's user turn: local
+         models pattern-match it into 'I should fetch this' and emit
+         tool syntax instead of using the article already in context
+         (0/3 prose with the URL present, 3/3 without). */
+      await this.writeAnswer(
+        session,
+        input,
+        summaryContext,
+        'Summarize the article provided in the context, faithfully and with citations.',
+      );
       return;
     }
 
@@ -254,10 +263,22 @@ class SearchAgent {
     await this.writeAnswer(session, input, finalContextWithWidgets);
   }
 
+  /* Answers opening with bare tool arguments ({"query": ...}) or an
+     unknown tool tag are failed attempts, not answers; they carry no
+     XML markers, so the stream filter passes them. */
+  private looksLikeToolAttempt(head: string): boolean {
+    const t = head.trimStart();
+    return (
+      (t.startsWith('{') && /"(query|queries|urls|plan)"/.test(t)) ||
+      /^<[a-z_]*\b(tool|function|call)/i.test(t)
+    );
+  }
+
   private async writeAnswer(
     session: SessionManager,
     input: SearchAgentInput,
     context: string,
+    userMessage?: string,
   ) {
     const writerPrompt = getWriterPrompt(
       context,
@@ -265,19 +286,11 @@ class SearchAgent {
       input.config.mode,
     );
 
-    const answerStream = input.config.llm.streamText({
-      messages: [
-        {
-          role: 'system',
-          content: writerPrompt,
-        },
-        ...input.chatHistory,
-        {
-          role: 'user',
-          content: input.followUp,
-        },
-      ],
-    });
+    const writerMessages = [
+      { role: 'system' as const, content: writerPrompt },
+      ...input.chatHistory,
+      { role: 'user' as const, content: userMessage ?? input.followUp },
+    ];
 
     let responseBlockId = '';
 
@@ -299,23 +312,39 @@ class SearchAgent {
       }
     };
 
-    /* An all-tool-XML answer (filtered to nothing) is sampling
-       variance on local models; one extra roll converts most of them.
-       Only after the retry does it fail into the retry banner. */
+    /* Tool-syntax answers are sampling variance on local models; one
+       extra roll converts most of them. The first 200 chars are
+       buffered so a bad attempt is discarded before anything reaches
+       the client, keeping the retry invisible. */
     for (let attempt = 0; attempt < 2 && !responseBlockId; attempt++) {
-      const stream =
-        attempt === 0
-          ? answerStream
-          : input.config.llm.streamText({
-              messages: [
-                { role: 'system', content: writerPrompt },
-                ...input.chatHistory,
-                { role: 'user', content: input.followUp },
-              ],
-            });
+      const stream = input.config.llm.streamText({ messages: writerMessages });
 
       let rawLength = 0;
+      let pending = '';
+      let decided = false;
+      let discardAttempt = false;
       const xmlFilter = createToolCallXmlFilter();
+
+      const push = (text: string) => {
+        if (discardAttempt) return;
+
+        if (decided) {
+          emitAnswerText(text);
+          return;
+        }
+
+        pending += text;
+
+        if (pending.length >= 200) {
+          decided = true;
+          if (this.looksLikeToolAttempt(pending)) {
+            discardAttempt = true;
+          } else {
+            emitAnswerText(pending);
+          }
+          pending = '';
+        }
+      };
 
       for await (const chunk of withInactivityTimeout(
         stream,
@@ -323,14 +352,22 @@ class SearchAgent {
         'Answer stream',
       )) {
         rawLength += (chunk.contentChunk || '').length;
-        emitAnswerText(xmlFilter.write(chunk.contentChunk || ''));
+        push(xmlFilter.write(chunk.contentChunk || ''));
       }
 
-      emitAnswerText(xmlFilter.flush());
+      push(xmlFilter.flush());
+
+      if (!decided && !discardAttempt && pending) {
+        if (this.looksLikeToolAttempt(pending)) {
+          discardAttempt = true;
+        } else {
+          emitAnswerText(pending);
+        }
+      }
 
       if (!responseBlockId) {
         console.warn(
-          `Writer attempt ${attempt + 1} produced no visible answer (raw stream length ${rawLength})`,
+          `Writer attempt ${attempt + 1} produced no usable answer (raw stream length ${rawLength}${discardAttempt ? ', tool-syntax attempt discarded' : ''})`,
         );
       }
     }
