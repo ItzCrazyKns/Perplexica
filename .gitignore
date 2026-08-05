@@ -39,3 +39,6 @@ db.sqlite
 /searxng
 
 certificates
+
+next-env.d.ts
+pnpm-workspace.yaml
