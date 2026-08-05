@@ -45,8 +45,7 @@ Want to know more about its architecture and how it works? You can read it [here
 Vane's development is powered by the generous support of our sponsors. Their contributions help keep this project free, open-source, and accessible to everyone.
 
 <div align="center">
-  
-  
+
 <a href="https://www.warp.dev/perplexica">
   <img alt="Warp Terminal" src=".assets/sponsers/warp.png" width="100%">
 </a>

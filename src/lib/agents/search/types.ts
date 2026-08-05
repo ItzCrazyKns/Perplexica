@@ -95,9 +95,7 @@ export type ReasoningResearchAction = {
 };
 
 export type ActionOutput =
-  | SearchActionOutput
-  | DoneActionOutput
-  | ReasoningResearchAction;
+  SearchActionOutput | DoneActionOutput | ReasoningResearchAction;
 
 export interface ResearchAction<
   TSchema extends z.ZodObject<any> = z.ZodObject<any>,

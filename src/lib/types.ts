@@ -26,10 +26,7 @@ export type ToolMessage = {
 export type ChatTurnMessage = UserMessage | AssistantMessage;
 
 export type Message =
-  | UserMessage
-  | AssistantMessage
-  | SystemMessage
-  | ToolMessage;
+  UserMessage | AssistantMessage | SystemMessage | ToolMessage;
 
 export type Chunk = {
   content: string;
@@ -116,8 +113,4 @@ export type ResearchBlock = {
 };
 
 export type Block =
-  | TextBlock
-  | SourceBlock
-  | SuggestionBlock
-  | WidgetBlock
-  | ResearchBlock;
+  TextBlock | SourceBlock | SuggestionBlock | WidgetBlock | ResearchBlock;

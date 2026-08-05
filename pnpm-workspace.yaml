@@ -1,0 +1,11 @@
+allowBuilds:
+  '@google/genai': true
+  better-sqlite3: true
+  core-js: true
+  es5-ext: true
+  esbuild: true
+  onnxruntime-node: true
+  protobufjs: true
+  sharp: true
+  tesseract.js: true
+  unrs-resolver: true
