@@ -67,7 +67,7 @@
     "@types/turndown": "^5.0.6",
     "autoprefixer": "^10.0.1",
     "drizzle-kit": "^0.18.1",
-    "eslint": "^9",
+    "eslint": "^8.57.0",
     "eslint-config-next": "^16.2.2",
     "node-addon-api": "^8.0.0",
     "node-gyp": "^10.0.0",
@@ -79,8 +79,5 @@
   },
   "optionalDependencies": {
     "@napi-rs/canvas": "^0.1.87"
-  },
-  "overrides": {
-    "file-type": "16.5.4"
   }
 }
