@@ -30,6 +30,8 @@ Want to know more about its architecture and how it works? You can read it [here
 
 📄 **File uploads** - Upload documents and ask questions about them. PDFs, text files, images - Vane understands them all.
 
+🗂️ **Notion connector** - Connect your Notion workspace and reference your own pages in any conversation with `@Notion 頁面名` or the page picker. Read page content and query databases through OAuth — per-conversation, never global.
+
 🌐 **Search specific domains** - Limit your search to specific websites when you know where to look. Perfect for technical documentation or research papers.
 
 💡 **Smart suggestions** - Get intelligent search suggestions as you type, helping you formulate better queries.
@@ -210,6 +212,67 @@ If you're encountering a Lemonade connection error, it is likely due to the back
    - Make sure your Lemonade server is running and accessible on the configured port (default is 8000).
    - Verify that Lemonade is configured to accept connections from all interfaces (`0.0.0.0`), not just localhost (`127.0.0.1`).
    - Ensure that the port (default is 8000) is not blocked by your firewall.
+
+## 🗂️ Notion Connector
+
+Connect your Notion workspace and ask questions about your own pages — Perplexity-style. Reference a page in any conversation with `@Notion 頁面名` or pick one from the page selector, and Vane reads it through your Notion connection.
+
+> **Current status:** read support — `notion_search`, `notion_get_page`, `notion_query_database`. Writing to Notion (create / update / append with a batched confirmation card) ships in a follow-up PR.
+
+### How it works
+
+- **OAuth, not tokens in .env** — you authorize via Notion's OAuth flow and the access token is encrypted at rest (AES-256-GCM, keyed by `NOTION_TOKEN_KEY`). No `NOTION_TOKEN=secret_xxx` anywhere.
+- **Per-conversation scope** — Notion is never enabled globally. Each conversation chooses which authorized pages to use; if you don't `@Notion`, Vane won't ask about it.
+- **Authorized pages only** — the connection requests only read / insert / update content capabilities, and only the pages you share with the integration can be searched.
+
+### 1. Create a Notion integration
+
+1. Go to [developers.notion.so](https://developers.notion.so) → **My integrations** → **New integration**.
+2. Choose **Public integration** (OAuth) and give it a name.
+3. Under **Capabilities**, check:
+   - ☑ Read content
+   - ☑ Insert content
+   - ☑ Update content
+   - Leave read/insert comments and user information unchecked.
+4. In **Redirect URIs**, add:
+
+   ```
+   http://localhost:3000/api/notion/callback
+   ```
+
+   (replace the host/port with your Vane URL if Vane is not on localhost)
+5. Copy the **OAuth client ID** and **OAuth client secret**.
+
+### 2. Set environment variables
+
+```bash
+NOTION_CLIENT_ID=your_client_id
+NOTION_CLIENT_SECRET=your_client_secret
+NOTION_TOKEN_KEY=a_long_random_secret_for_encrypting_tokens
+```
+
+`NOTION_TOKEN_KEY` encrypts the OAuth token at rest — use a long random string and keep it stable across restarts, otherwise the stored token can no longer be decrypted.
+
+### 3. Connect in Settings
+
+1. Open Vane → **Settings** → **Notion**.
+2. Click **Connect** — you'll be taken to Notion to authorize and choose which pages to share.
+3. When you return, Vane shows your workspace name and the connection is ready.
+
+### 4. Use @Notion in a conversation
+
+- Type `@Notion 頁面名` in a message, or open the Notion picker next to the input and select pages/databases.
+- Selected pages appear as chips in the chat — they apply to that conversation only.
+- Vane fuzzy-matches the name you typed against your pages; if nothing matches, it lists candidates and asks you to confirm — it never silently reads a different page.
+- No connection yet? Vane shows a one-time hint and won't ask again.
+
+### Troubleshooting
+
+| Symptom | Fix |
+| --- | --- |
+| Connect button disabled | `NOTION_CLIENT_ID` / `NOTION_CLIENT_SECRET` not set |
+| "Stored token cannot be decrypted" | `NOTION_TOKEN_KEY` changed — disconnect and reconnect |
+| Pages don't show up | Share the pages with your integration (integration Settings → Connections), then reconnect |
 
 ## Using as a Search Engine
 
