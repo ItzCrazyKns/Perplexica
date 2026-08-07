@@ -40,10 +40,27 @@ export function getClientCredentials(): ClientCredentials | null {
  * Notion will reject as a mismatched redirect. Deployments override it
  * with `NOTION_REDIRECT_URI` (the exact string registered in the Notion
  * integration, e.g. http://localhost:3100/api/notion/callback).
+ *
+ * When the override is unset, fall back to the `Host` header, which a
+ * Docker port-mapping (`-p 3100:3000`) preserves from the browser, so
+ * the derived origin is correct even without the env var.
  */
 export function getPublicOrigin(req: Request): string {
   const override = process.env.NOTION_REDIRECT_URI;
-  return override ? new URL(override).origin : new URL(req.url).origin;
+  if (override) return new URL(override).origin;
+
+  const host = req.headers.get('host');
+  if (host) {
+    const forwardedProto = req.headers.get('x-forwarded-proto');
+    const proto = forwardedProto
+      ? forwardedProto.includes(':')
+        ? forwardedProto
+        : `${forwardedProto}:`
+      : new URL(req.url).protocol;
+    return `${proto}//${host}`;
+  }
+
+  return new URL(req.url).origin;
 }
 
 /** The OAuth callback URL as seen by the browser (and Notion). */

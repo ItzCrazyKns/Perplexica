@@ -77,6 +77,28 @@ describe('getPublicOrigin / getRedirectUri', () => {
       'http://localhost:3100/api/notion/callback',
     );
   });
+
+  it('falls back to the Host header when the override is unset (Docker)', () => {
+    // Docker port-mapping preserves the browser's Host header while
+    // req.url stays the container's internal address.
+    const req = new Request('http://11cd2ac559ad:3000/api/notion/auth', {
+      headers: { host: 'localhost:3100' },
+    });
+    expect(getPublicOrigin(req)).toBe('http://localhost:3100');
+    expect(getRedirectUri(req)).toBe(
+      'http://localhost:3100/api/notion/callback',
+    );
+  });
+
+  it('prefers x-forwarded-proto over req.url scheme when behind a TLS proxy', () => {
+    const req = new Request('http://11cd2ac559ad:3000/api/notion/auth', {
+      headers: {
+        host: 'vane.example.com',
+        'x-forwarded-proto': 'https',
+      },
+    });
+    expect(getPublicOrigin(req)).toBe('https://vane.example.com');
+  });
 });
 
 describe('exchangeCodeForToken', () => {
