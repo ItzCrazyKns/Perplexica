@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
 import { Block } from '../types';
 import { SearchSources } from '../agents/search/types';
+import { AuthorizedPage } from '../connectors/notion/types';
 
 export const messages = sqliteTable('messages', {
   id: integer('id').primaryKey(),
@@ -34,6 +35,9 @@ export const chats = sqliteTable('chats', {
     .default(sql`'[]'`),
   files: text('files', { mode: 'json' })
     .$type<DBFile[]>()
+    .default(sql`'[]'`),
+  notionPages: text('notion_pages', { mode: 'json' })
+    .$type<AuthorizedPage[]>()
     .default(sql`'[]'`),
 });
 

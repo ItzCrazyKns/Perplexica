@@ -5,6 +5,7 @@ import SearchAgent from '@/lib/agents/search';
 import SessionManager from '@/lib/session';
 import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
+import { AuthorizedPage } from '@/lib/connectors/notion/types';
 import db from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import { chats } from '@/lib/db/schema';
@@ -42,6 +43,16 @@ const bodySchema = z.object({
     .optional()
     .default([]),
   files: z.array(z.string()).optional().default([]),
+  notionPages: z
+    .array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        type: z.enum(['page', 'database']),
+      }),
+    )
+    .optional()
+    .default([]),
   chatModel: chatModelSchema,
   embeddingModel: embeddingModelSchema,
   systemInstructions: z.string().nullable().optional().default(''),
@@ -73,6 +84,7 @@ const ensureChatExists = async (input: {
   sources: SearchSources[];
   query: string;
   fileIds: string[];
+  notionPages: AuthorizedPage[];
 }) => {
   try {
     const exists = await db.query.chats
@@ -93,7 +105,18 @@ const ensureChatExists = async (input: {
             name: UploadManager.getFile(id)?.name || 'Uploaded File',
           };
         }),
+        notionPages: input.notionPages,
       });
+    } else {
+      // Keep per-chat sources and Notion pages in sync with the latest message.
+      await db
+        .update(chats)
+        .set({
+          sources: input.sources,
+          notionPages: input.notionPages,
+        })
+        .where(eq(chats.id, input.id))
+        .execute();
     }
   } catch (err) {
     console.error('Failed to check/save chat:', err);
@@ -230,6 +253,7 @@ export const POST = async (req: Request) => {
       sources: body.sources as SearchSources[],
       fileIds: body.files,
       query: body.message.content,
+      notionPages: body.notionPages as AuthorizedPage[],
     });
 
     req.signal.addEventListener('abort', () => {
