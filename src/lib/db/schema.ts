@@ -36,3 +36,12 @@ export const chats = sqliteTable('chats', {
     .$type<DBFile[]>()
     .default(sql`'[]'`),
 });
+
+export const notionConnections = sqliteTable('notion_connections', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  workspaceId: text('workspace_id').notNull(),
+  workspaceName: text('workspace_name').notNull(),
+  encryptedToken: text('encrypted_token').notNull(),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});
