@@ -11,6 +11,7 @@ import {
   buildNotConnectedResult,
   buildApiErrorResult,
   buildGenericErrorResult,
+  emitResultsSubstep,
 } from './results';
 
 const schema = z.object({
@@ -73,12 +74,21 @@ const notionSearchAction: ResearchAction<typeof schema> = {
         );
       } catch (err) {
         if (err instanceof NotionNotConnectedError) {
-          return buildNotConnectedResult();
+          return emitResultsSubstep(
+            additionalConfig,
+            buildNotConnectedResult(),
+          );
         }
         if (err instanceof NotionApiError) {
-          return buildApiErrorResult(err, 'notion_search');
+          return emitResultsSubstep(
+            additionalConfig,
+            buildApiErrorResult(err, 'notion_search'),
+          );
         }
-        return buildGenericErrorResult(err);
+        return emitResultsSubstep(
+          additionalConfig,
+          buildGenericErrorResult(err),
+        );
       }
     }
 

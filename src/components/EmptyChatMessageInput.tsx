@@ -77,6 +77,7 @@ const EmptyChatMessageInput = () => {
                 <span className="max-w-[140px] truncate">{page.title}</span>
                 <button
                   type="button"
+                  aria-label={`Remove ${page.title}`}
                   onClick={() =>
                     setNotionPages(notionPages.filter((p) => p.id !== page.id))
                   }

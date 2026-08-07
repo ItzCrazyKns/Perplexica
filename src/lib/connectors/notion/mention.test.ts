@@ -63,6 +63,23 @@ describe('parseNotionMentions', () => {
     expect(cleaned).toBe('@Notionally 是一個字');
     expect(names).toEqual([]);
   });
+
+  it('consumes only the whitespace left by the marker, not the whole message', () => {
+    const { cleaned, names } = parseNotionMentions(
+      '用 @Notion 會議筆記  幫我總結',
+    );
+    // Marker + following spaces collapse to one space; other runs untouched.
+    expect(cleaned).toBe('用 會議筆記  幫我總結');
+    expect(names).toEqual(['會議筆記  幫我總結']);
+  });
+
+  it('does not collapse intentional newlines after the mention', () => {
+    const { cleaned, names } = parseNotionMentions(
+      '用 @Notion 會議筆記\n\n第二段',
+    );
+    expect(cleaned).toBe('用 會議筆記\n\n第二段');
+    expect(names).toEqual(['會議筆記']);
+  });
 });
 
 describe('resolveMention', () => {

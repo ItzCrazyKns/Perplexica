@@ -100,9 +100,17 @@ const Notion = () => {
                       <div className="flex flex-row items-center justify-between px-2 py-1.5">
                         <div className="relative flex-1 mr-2">
                           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-black/40 dark:text-white/40" />
+                          {/* The picker lives inside the chat form. The form's
+                              keydown handler preventDefaults Enter and sends the
+                              message, so stopping propagation would leave the
+                              native implicit submit un-prevented — block both. */}
                           <input
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') e.preventDefault();
+                              e.stopPropagation();
+                            }}
                             placeholder="搜尋頁面…"
                             className="w-full rounded-md border border-light-200 dark:border-dark-200 bg-transparent pl-7 pr-2 py-1.5 text-xs text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus:outline-none focus:border-sky-500/50"
                           />

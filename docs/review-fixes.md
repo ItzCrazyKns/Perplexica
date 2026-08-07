@@ -8,18 +8,18 @@
 
 - **審查者**：`cubic-dev-ai[bot]`（自動 AI 審查，非人類 maintainer）。目前**尚未有任何人類 review**。
 - **Comments 總數**：48 則，橫跨兩個 review run（對 `633e5c0` 與 `d78d82f`）。
-- **已處理**：21 則（P1 × 12、P2 × 9）——`d78d82f` 10 則 + P1 第二輪 6 則 + P2 第三輪 5 則。
-- **待處理**：P2 × 22、P3 × 4。
+- **已處理**：29 則（P1 × 12、P2 × 17）——`d78d82f` 10 則 + P1 第二輪 6 則 + P2 第三輪 5 則 + P2 第四輪 8 則。
+- **待處理**：P2 × 14、P3 × 4。
 - **誤報/過時**：2 則（`#37` 全誤報、`#9` 部分誤報，無需處理）。
 
-| 類別            | 數量                                               | 狀態                                    |
-| --------------- | -------------------------------------------------- | --------------------------------------- |
-| P1 已修         | 12                                                 | ✅ `d78d82f` + P1 待辦六條修復 commit   |
-| P1 待辦         | 0                                                  | —                                       |
-| P2 已修         | 9                                                  | ✅ `d78d82f` + P2 高價值五項修復 commit |
-| P2 待辦         | 22                                                 | ⏳ 部分可併入 PR2                       |
-| P3 待辦         | 4                                                  | ⏳ 低優先                               |
-| bot 誤報 / 過時 | 2（`#37` 全誤報、`#9` 部分誤報，重複計入 P1 已修） | —                                       |
+| 類別            | 數量                                               | 狀態                                       |
+| --------------- | -------------------------------------------------- | ------------------------------------------ |
+| P1 已修         | 12                                                 | ✅ `d78d82f` + P1 待辦六條修復 commit      |
+| P1 待辦         | 0                                                  | —                                          |
+| P2 已修         | 17                                                 | ✅ `d78d82f` + P2 高價值 + 小項修復 commit |
+| P2 待辦         | 14                                                 | ⏳ 部分可併入 PR2                          |
+| P3 待辦         | 4                                                  | ⏳ 低優先                                  |
+| bot 誤報 / 過時 | 2（`#37` 全誤報、`#9` 部分誤報，重複計入 P1 已修） | —                                          |
 
 ---
 
@@ -69,26 +69,31 @@
 | 35  | `api/chat/route.ts`              | `ensureChatExists` 每則訊息覆寫 `sources`/`notionPages`；request 沒帶 sources（default `[]`）會清掉已選來源                     | 只有 request 確實攜帶時才更新                                |
 | 36  | `MessageInputActions/Notion.tsx` | 未連接時開 picker → **無限 refetch**（`fetchPages` 開頭 `setNotConnected(false)` + effect 條件 flip-flop；`opened` 永不 reset） | 只在 popover 首次開啟時 fetch 一次（ref 或 open transition） |
 
+## ✅ P2 — 已修復（第四輪，小項七條 + 追蹤補正一項）
+
+| #   | 位置                             | 問題                                                           | 修法                                                                                       |
+| --- | -------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| 13  | `Settings/Sections/Notion.tsx`   | 文案宣稱「可讀寫」，但寫入在 PR2                               | 改 read-only 文案（connected/configured 兩段皆更新）                                       |
+| 29  | `EmptyChatMessageInput.tsx`      | 頁面移除按鈕無 aria-label                                      | 加 `aria-label={`Remove ${page.title}`}`                                                   |
+| 30  | `MessageInputActions/Notion.tsx` | picker 內 Enter 會送出表單                                     | 搜尋 input `onKeyDown` stopPropagation                                                     |
+| 32  | `mention.ts`                     | `.replace(/\s{2,}/g,' ')` 吃掉全文多餘空白（含 markdown 換行） | 只收斂 marker 旁的空白（`[ \t]*`），全文換行/多空白保留 + 兩個測試                         |
+| 34  | `api/notion/pages/route.ts`      | 401/403 回 502，UI 顯示泛用錯誤                                | 映射到 409（disconnected）讓 UI 給 reconnect 路徑                                          |
+| 42  | `AssistantSteps.tsx`             | 失敗的 notion search 被算成 1 個成功結果                       | 排除 `Notion:` sentinel 結果；全 sentinel 時顯示「Notion search finished」                 |
+| 43  | `actions/notion/results.ts`      | error 回傳後 Research Progress 卡在「Searching Notion」        | `emitResultsSubstep`：error 時發終止 `notion_search_results` substep（search/read 全路徑） |
+| 31  | `fuzzy.ts`                       | 長 partial prefix 可能高於 exact-match 100 分（追蹤補正）      | 已在第二輪 `#24` 一併修復（leading 分數 cap 89），此為追蹤補正                             |
+
 ## ⏳ P2 — 待辦
 
 | 2 | `token.ts` | `setAuthTag` 接受短 GCM tag，篡改 token 可能被接受 | 要求 16-byte tag 長度 |
 | 11 | `auth.ts` | 無法解密的 connection 被歸類為 `NotionNotConnectedError`，caller 無法區分 | 讓 `NotionTokenError` 或獨立 decryption error 穿透 |
 | 12 | `api/notion/auth/route.ts` | 單一 cookie slot：第二次授權會覆蓋第一次的 state | state-keyed cookies 或 server-side state |
-| 13 | `Settings/Sections/Notion.tsx` | 文案宣稱「可讀寫」，但寫入在 PR2 | 改 read-only 文案 |
 | 14 | `Settings/Sections/Notion.tsx` | `/api/notion/status` 失敗時無限轉圈 | 分離 error/loading state，提供 retry |
 | 19 | `ChatWindow.tsx` | 清 query params 時把 `?q=` 等 deep link 狀態也清掉 | 只刪 `notion` param |
 | 20 | `Settings/Sections/Notion.tsx` | 連接後整個 Settings dialog 被導航毀掉，回來落在首頁 | 新分頁開 OAuth + poll，或回跳保留 dialog |
 | 23 | `api/notion/status/route.ts` | 未認證即可讀 workspaceId/Name | 限 origin 或只回 boolean `connected` |
 | 27 | `useChat.tsx` | 純 `@Notion` 送出後 content 為空 → 400 + 卡住的 composer | client 端拒絕空 `finalContent.trim()` |
 | 28 | `useChat.tsx` | 未解析到頁面的 `@Notion` 啟動只作用於當次 POST，未持久化 | 啟動狀態獨立於 selected pages 持久化 |
-| 29 | `EmptyChatMessageInput.tsx` | 頁面移除按鈕無 aria-label | 加 `aria-label={Remove ${page.title}}` |
-| 30 | `EmptyChatMessageInput.tsx`/`Notion.tsx` | picker 內 Enter 會送出表單 | stopPropagation 或只綁 textarea |
-| 31 | `fuzzy.ts` | 長 partial prefix 可能高於 exact-match 100 分 | leading 分數 cap 在 89 |
-| 32 | `mention.ts` | `.replace(/\s{2,}/g,' ')` 吃掉全文多餘空白（含 markdown 換行） | 只收斂因剝離 marker 產生的空白 |
 | 33 | `mention.ts` | 模糊 hint 低信心也直接綁定第一個結果 | 需要 unambiguous/high-confidence 才綁定，否則交由再確認 |
-| 34 | `api/notion/pages/route.ts` | 401/403 回 502，UI 顯示泛用錯誤 | 映射到 409（disconnected）讓 UI 給 reconnect 路徑 |
-| 42 | `AssistantSteps.tsx` | 失敗的 notion search 被算成 1 個成功結果 | 排除 sentinel 或顯示 distinct 標題 |
-| 43 | `actions/notion/results.ts` | error 回傳後 Research Progress 卡在「Searching Notion」 | error 時發終止 substep |
 | 44 | `researcher/index.ts` | researcher 直接 import db singleton，測試/其他 caller 依賴真實 DB | 透過 `ResearcherInput`/`SearchAgentConfig` 注入（tools 已 DI；剩下 researcher 層） |
 | 46 | `search.ts` | `data_source` 只讀 `name`，若 API 給 `title` 會顯示 Untitled | 同時讀 `title`（fallback `name`） |
 | 47 | `pages.ts` | 截斷復原的 subtree 文字全部附在文末，失去原始順序 | 依 `unknown_block_ids` 在 markdown 中的位置原位重建 |
@@ -171,6 +176,24 @@ Thanks for the thorough review. Here's where things stand:
   per-chat selection.
 - The picker fetches once per popover open; the not-connected
   infinite-refetch loop is gone.
+
+**P2s — fixed in the fourth round (smaller items)**
+
+- Settings copy is now read-only (writing ships with PR2).
+- The page-remove button has an aria-label, and the picker's search
+  input stops Enter from submitting the chat form.
+- Mention cleanup only collapses whitespace left by the `@Notion`
+  marker — intentional newlines (Markdown breaks) and other space runs
+  are preserved.
+- `/api/notion/pages` maps 401/403 to a 409 "disconnected" response so
+  the UI shows a clear reconnect path.
+- Research Progress no longer counts error sentinels as found pages
+  (they render as "Notion search finished"), and error results emit a
+  terminal substep so the UI never stays stuck on "Searching Notion".
+
+**Still open:** 14 P2 + 4 P3 items are tracked in `docs/review-fixes.md`
+(token tag length, OAuth multi-state cookies, status error/retry UI,
+researcher DB injection, deep-link handling, and more).
 ```
 
 ---
@@ -180,4 +203,5 @@ Thanks for the thorough review. Here's where things stand:
 - `d78d82f` — fix(notion): align read connector with the current Notion API（P1 ×6 + P2 ×4）
 - P1 待辦六條修復 commit — fix(notion): enforce connection invariant, fuzzy conflicts, and per-conversation read scope（P1 ×6）
 - P2 高價值四項修復 commit — fix(notion): prevent source wipe, picker refetch loop, and OAuth CSRF gaps（P2 ×5）
+- P2 小項七條修復 commit — fix(notion): polish read-only copy, a11y, mention whitespace, and progress error states（P2 ×7 + 追蹤補正 #31）
 - 剩餘 P2/P3 → 併入 PR2 或後續 PR

@@ -1,5 +1,10 @@
 import { NotionApiError } from '@/lib/connectors/notion';
-import type { SearchActionOutput } from '../../../types';
+import type {
+  AdditionalConfig,
+  SearchActionOutput,
+  SearchAgentConfig,
+} from '../../../types';
+import type { ResearchBlock } from '@/lib/types';
 
 /**
  * Shared friendly error results for the notion tools. Actions never throw
@@ -68,4 +73,42 @@ export function buildGenericErrorResult(err: unknown): SearchActionOutput {
       },
     ],
   };
+}
+
+type ExecuteConfig = AdditionalConfig & {
+  researchBlockId: string;
+  fileIds: string[];
+  mode: SearchAgentConfig['mode'];
+};
+
+/**
+ * Emits a terminal `notion_search_results` substep for an error result,
+ * so the Research Progress UI doesn't stay stuck on "Searching Notion".
+ * Returns the result unchanged so callers can `return emitResultsSubstep(...)`.
+ */
+export function emitResultsSubstep(
+  additionalConfig: ExecuteConfig,
+  result: SearchActionOutput,
+): SearchActionOutput {
+  const researchBlock = additionalConfig.session.getBlock(
+    additionalConfig.researchBlockId,
+  ) as ResearchBlock | undefined;
+
+  if (researchBlock && researchBlock.type === 'research') {
+    researchBlock.data.subSteps.push({
+      id: crypto.randomUUID(),
+      type: 'notion_search_results',
+      results: result.results,
+    });
+
+    additionalConfig.session.updateBlock(additionalConfig.researchBlockId, [
+      {
+        op: 'replace',
+        path: '/data/subSteps',
+        value: researchBlock.data.subSteps,
+      },
+    ]);
+  }
+
+  return result;
 }

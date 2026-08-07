@@ -12,8 +12,17 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { ResearchBlock, ResearchBlockSubStep } from '@/lib/types';
+import { ResearchBlock, ResearchBlockSubStep, Chunk } from '@/lib/types';
 import { useChat } from '@/lib/hooks/useChat';
+
+// The notion actions emit sentinel results (title prefixed "Notion:") on
+// error/edge paths — never count or render them as real pages found.
+// The sentinel titles are a closed set (not connected / failed / not
+// authorized / no matching page), so the prefix is a deliberate,
+// documented tradeoff: a user page literally titled "Notion: …" would
+// also be filtered here.
+const isNotionSentinel = (result: Chunk) =>
+  String(result.metadata?.title ?? '').startsWith('Notion:');
 
 const getStepIcon = (step: ResearchBlockSubStep) => {
   if (step.type === 'reasoning') {
@@ -57,7 +66,10 @@ const getStepTitle = (
     const queries = Array.isArray(step.queries) ? step.queries : [];
     return `Searching Notion${queries.length ? ` for "${queries[0]}"` : ''}`;
   } else if (step.type === 'notion_search_results') {
-    return `Found ${step.results.length} ${step.results.length === 1 ? 'page' : 'pages'}`;
+    const found = step.results.filter((r) => !isNotionSentinel(r)).length;
+    return found === 0
+      ? 'Notion search finished'
+      : `Found ${found} ${found === 1 ? 'page' : 'pages'}`;
   }
 
   return 'Processing';
@@ -281,21 +293,28 @@ const AssistantSteps = ({
                         )}
 
                       {step.type === 'notion_search_results' &&
-                        step.results.length > 0 && (
+                        step.results.filter((r) => !isNotionSentinel(r))
+                          .length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mt-1.5">
-                            {step.results.slice(0, 4).map((result, idx) => {
-                              const title = result.metadata.title || 'Untitled';
+                            {step.results
+                              .filter((r) => !isNotionSentinel(r))
+                              .slice(0, 4)
+                              .map((result, idx) => {
+                                const title =
+                                  result.metadata.title || 'Untitled';
 
-                              return (
-                                <span
-                                  key={idx}
-                                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-light-100 dark:bg-dark-100 text-black/70 dark:text-white/70 border border-light-200 dark:border-dark-200"
-                                >
-                                  <BookOpen className="w-3 h-3 flex-shrink-0" />
-                                  <span className="line-clamp-1">{title}</span>
-                                </span>
-                              );
-                            })}
+                                return (
+                                  <span
+                                    key={idx}
+                                    className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-light-100 dark:bg-dark-100 text-black/70 dark:text-white/70 border border-light-200 dark:border-dark-200"
+                                  >
+                                    <BookOpen className="w-3 h-3 flex-shrink-0" />
+                                    <span className="line-clamp-1">
+                                      {title}
+                                    </span>
+                                  </span>
+                                );
+                              })}
                           </div>
                         )}
                     </div>

@@ -14,6 +14,7 @@ import {
   buildApiErrorResult,
   buildGenericErrorResult,
   buildUnauthorizedResult,
+  emitResultsSubstep,
 } from './results';
 
 const getPageSchema = z.object({
@@ -47,16 +48,22 @@ const notionGetPageAction: ResearchAction<typeof getPageSchema> = {
       );
     } catch (err) {
       if (err instanceof NotionNotConnectedError) {
-        return buildNotConnectedResult();
+        return emitResultsSubstep(additionalConfig, buildNotConnectedResult());
       }
       if (err instanceof NotionApiError) {
-        return buildApiErrorResult(err, 'notion_get_page');
+        return emitResultsSubstep(
+          additionalConfig,
+          buildApiErrorResult(err, 'notion_get_page'),
+        );
       }
-      return buildGenericErrorResult(err);
+      return emitResultsSubstep(additionalConfig, buildGenericErrorResult(err));
     }
 
     if (!page || page.type !== 'page') {
-      return buildUnauthorizedResult('notion_get_page');
+      return emitResultsSubstep(
+        additionalConfig,
+        buildUnauthorizedResult('notion_get_page'),
+      );
     }
 
     const title = page.title;
@@ -66,12 +73,15 @@ const notionGetPageAction: ResearchAction<typeof getPageSchema> = {
       markdown = await getPageMarkdown(additionalConfig.notionDb, input.pageId);
     } catch (err) {
       if (err instanceof NotionNotConnectedError) {
-        return buildNotConnectedResult();
+        return emitResultsSubstep(additionalConfig, buildNotConnectedResult());
       }
       if (err instanceof NotionApiError) {
-        return buildApiErrorResult(err, 'notion_get_page');
+        return emitResultsSubstep(
+          additionalConfig,
+          buildApiErrorResult(err, 'notion_get_page'),
+        );
       }
-      return buildGenericErrorResult(err);
+      return emitResultsSubstep(additionalConfig, buildGenericErrorResult(err));
     }
 
     const result = {
@@ -137,16 +147,22 @@ const notionQueryDatabaseAction: ResearchAction<typeof queryDatabaseSchema> = {
       );
     } catch (err) {
       if (err instanceof NotionNotConnectedError) {
-        return buildNotConnectedResult();
+        return emitResultsSubstep(additionalConfig, buildNotConnectedResult());
       }
       if (err instanceof NotionApiError) {
-        return buildApiErrorResult(err, 'notion_query_database');
+        return emitResultsSubstep(
+          additionalConfig,
+          buildApiErrorResult(err, 'notion_query_database'),
+        );
       }
-      return buildGenericErrorResult(err);
+      return emitResultsSubstep(additionalConfig, buildGenericErrorResult(err));
     }
 
     if (!page || page.type !== 'database') {
-      return buildUnauthorizedResult('notion_query_database');
+      return emitResultsSubstep(
+        additionalConfig,
+        buildUnauthorizedResult('notion_query_database'),
+      );
     }
 
     let entries;
@@ -157,12 +173,15 @@ const notionQueryDatabaseAction: ResearchAction<typeof queryDatabaseSchema> = {
       );
     } catch (err) {
       if (err instanceof NotionNotConnectedError) {
-        return buildNotConnectedResult();
+        return emitResultsSubstep(additionalConfig, buildNotConnectedResult());
       }
       if (err instanceof NotionApiError) {
-        return buildApiErrorResult(err, 'notion_query_database');
+        return emitResultsSubstep(
+          additionalConfig,
+          buildApiErrorResult(err, 'notion_query_database'),
+        );
       }
-      return buildGenericErrorResult(err);
+      return emitResultsSubstep(additionalConfig, buildGenericErrorResult(err));
     }
 
     const results = entries.map((entry) => ({

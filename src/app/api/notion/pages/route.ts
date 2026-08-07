@@ -19,6 +19,14 @@ export const GET = async () => {
       );
     }
     if (err instanceof NotionApiError) {
+      // 401/403 means the stored token is bad or revoked — the UI treats
+      // this as disconnected so the user gets a clear reconnect path.
+      if (err.status === 401 || err.status === 403) {
+        return NextResponse.json(
+          { notConnected: true, message: err.message },
+          { status: 409 },
+        );
+      }
       return NextResponse.json({ message: err.message }, { status: 502 });
     }
     console.error('Failed to list Notion pages:', err);
