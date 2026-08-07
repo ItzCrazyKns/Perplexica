@@ -7,6 +7,8 @@ import {
   ChevronDown,
   ChevronUp,
   BookSearch,
+  BookOpen,
+  Files,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
@@ -23,6 +25,10 @@ const getStepIcon = (step: ResearchBlockSubStep) => {
     step.type === 'upload_search_results'
   ) {
     return <FileText className="w-4 h-4" />;
+  } else if (step.type === 'notion_searching') {
+    return <BookOpen className="w-4 h-4" />;
+  } else if (step.type === 'notion_search_results') {
+    return <Files className="w-4 h-4" />;
   } else if (step.type === 'reading') {
     return <BookSearch className="w-4 h-4" />;
   }
@@ -47,6 +53,11 @@ const getStepTitle = (
     return 'Scanning your uploaded documents';
   } else if (step.type === 'upload_search_results') {
     return `Reading ${step.results.length} ${step.results.length === 1 ? 'document' : 'documents'}`;
+  } else if (step.type === 'notion_searching') {
+    const queries = Array.isArray(step.queries) ? step.queries : [];
+    return `Searching Notion${queries.length ? ` for "${queries[0]}"` : ''}`;
+  } else if (step.type === 'notion_search_results') {
+    return `Found ${step.results.length} ${step.results.length === 1 ? 'page' : 'pages'}`;
   }
 
   return 'Processing';
@@ -249,6 +260,40 @@ const AssistantSteps = ({
                                     </p>
                                   </div>
                                 </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                      {step.type === 'notion_searching' &&
+                        Array.isArray(step.queries) &&
+                        step.queries.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-1.5">
+                            {step.queries.map((query, idx) => (
+                              <span
+                                key={idx}
+                                className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-light-100 dark:bg-dark-100 text-black/70 dark:text-white/70 border border-light-200 dark:border-dark-200"
+                              >
+                                {query}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                      {step.type === 'notion_search_results' &&
+                        step.results.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mt-1.5">
+                            {step.results.slice(0, 4).map((result, idx) => {
+                              const title = result.metadata.title || 'Untitled';
+
+                              return (
+                                <span
+                                  key={idx}
+                                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium bg-light-100 dark:bg-dark-100 text-black/70 dark:text-white/70 border border-light-200 dark:border-dark-200"
+                                >
+                                  <BookOpen className="w-3 h-3 flex-shrink-0" />
+                                  <span className="line-clamp-1">{title}</span>
+                                </span>
                               );
                             })}
                           </div>

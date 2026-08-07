@@ -6,6 +6,11 @@ import scrapeURLAction from './scrapeURL';
 import socialSearchAction from './search/socialSearch';
 import uploadsSearchAction from './uploadsSearch';
 import webSearchAction from './search/webSearch';
+import {
+  notionSearchAction,
+  notionGetPageAction,
+  notionQueryDatabaseAction,
+} from './notion';
 
 ActionRegistry.register(webSearchAction);
 ActionRegistry.register(doneAction);
@@ -14,5 +19,8 @@ ActionRegistry.register(scrapeURLAction);
 ActionRegistry.register(uploadsSearchAction);
 ActionRegistry.register(academicSearchAction);
 ActionRegistry.register(socialSearchAction);
+ActionRegistry.register(notionSearchAction);
+ActionRegistry.register(notionGetPageAction);
+ActionRegistry.register(notionQueryDatabaseAction);
 
 export { ActionRegistry };

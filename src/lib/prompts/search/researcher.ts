@@ -1,11 +1,13 @@
 import BaseEmbedding from '@/lib/models/base/embedding';
 import UploadStore from '@/lib/uploads/store';
+import type { AuthorizedPage } from '@/lib/connectors/notion/types';
 
 const getSpeedPrompt = (
   actionDesc: string,
   i: number,
   maxIteration: number,
   fileDesc: string,
+  notionPagesDesc: string,
 ) => {
   const today = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
@@ -83,6 +85,15 @@ const getSpeedPrompt = (
   </user_uploaded_files>`
       : ''
   }
+  ${
+    notionPagesDesc.length > 0
+      ? `<notion_pages>
+  The user has selected the following Notion pages/databases for this conversation:
+  ${notionPagesDesc}
+  When the user's request concerns these pages, use the notion tools to search and read them.
+  </notion_pages>`
+      : ''
+  }
   `;
 };
 
@@ -91,6 +102,7 @@ const getBalancedPrompt = (
   i: number,
   maxIteration: number,
   fileDesc: string,
+  notionPagesDesc: string,
 ) => {
   const today = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
@@ -184,6 +196,15 @@ const getBalancedPrompt = (
   </user_uploaded_files>`
       : ''
   }
+  ${
+    notionPagesDesc.length > 0
+      ? `<notion_pages>
+  The user has selected the following Notion pages/databases for this conversation:
+  ${notionPagesDesc}
+  When the user's request concerns these pages, use the notion tools to search and read them.
+  </notion_pages>`
+      : ''
+  }
   `;
 };
 
@@ -192,6 +213,7 @@ const getQualityPrompt = (
   i: number,
   maxIteration: number,
   fileDesc: string,
+  notionPagesDesc: string,
 ) => {
   const today = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
@@ -314,6 +336,15 @@ const getQualityPrompt = (
   </user_uploaded_files>`
       : ''
   }
+  ${
+    notionPagesDesc.length > 0
+      ? `<notion_pages>
+  The user has selected the following Notion pages/databases for this conversation:
+  ${notionPagesDesc}
+  When the user's request concerns these pages, use the notion tools to search and read them.
+  </notion_pages>`
+      : ''
+  }
   `;
 };
 
@@ -323,6 +354,7 @@ export const getResearcherPrompt = (
   i: number,
   maxIteration: number,
   fileIds: string[],
+  notionPages: AuthorizedPage[] = [],
 ) => {
   let prompt = '';
 
@@ -335,18 +367,49 @@ export const getResearcherPrompt = (
     )
     .join('\n');
 
+  const notionPagesDesc = notionPages
+    .map(
+      (page) =>
+        `<page type="${page.type}" id="${page.id}">${page.title}</page>`,
+    )
+    .join('\n');
+
   switch (mode) {
     case 'speed':
-      prompt = getSpeedPrompt(actionDesc, i, maxIteration, fileDesc);
+      prompt = getSpeedPrompt(
+        actionDesc,
+        i,
+        maxIteration,
+        fileDesc,
+        notionPagesDesc,
+      );
       break;
     case 'balanced':
-      prompt = getBalancedPrompt(actionDesc, i, maxIteration, fileDesc);
+      prompt = getBalancedPrompt(
+        actionDesc,
+        i,
+        maxIteration,
+        fileDesc,
+        notionPagesDesc,
+      );
       break;
     case 'quality':
-      prompt = getQualityPrompt(actionDesc, i, maxIteration, fileDesc);
+      prompt = getQualityPrompt(
+        actionDesc,
+        i,
+        maxIteration,
+        fileDesc,
+        notionPagesDesc,
+      );
       break;
     default:
-      prompt = getSpeedPrompt(actionDesc, i, maxIteration, fileDesc);
+      prompt = getSpeedPrompt(
+        actionDesc,
+        i,
+        maxIteration,
+        fileDesc,
+        notionPagesDesc,
+      );
       break;
   }
 

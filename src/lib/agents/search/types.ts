@@ -3,8 +3,10 @@ import BaseLLM from '../../models/base/llm';
 import BaseEmbedding from '@/lib/models/base/embedding';
 import SessionManager from '@/lib/session';
 import { ChatTurnMessage, Chunk } from '@/lib/types';
+import type { AuthorizedPage } from '@/lib/connectors/notion/types';
+import type { NotionConnectionDb } from '@/lib/connectors/notion/store';
 
-export type SearchSources = 'web' | 'discussions' | 'academic';
+export type SearchSources = 'web' | 'discussions' | 'academic' | 'notion';
 
 export type SearchAgentConfig = {
   sources: SearchSources[];
@@ -13,6 +15,8 @@ export type SearchAgentConfig = {
   embedding: BaseEmbedding<any>;
   mode: 'speed' | 'balanced' | 'quality';
   systemInstructions: string;
+  /** Pages/databases selected for this conversation via @Notion (ADR-0001). */
+  notionPages?: AuthorizedPage[];
 };
 
 export type SearchAgentInput = {
@@ -66,6 +70,10 @@ export type AdditionalConfig = {
   llm: BaseLLM<any>;
   embedding: BaseEmbedding<any>;
   session: SessionManager;
+  /** Notion connection database, injected so actions stay testable. */
+  notionDb: NotionConnectionDb;
+  /** Pages/databases selected for this conversation (ADR-0001). */
+  notionPages: AuthorizedPage[];
 };
 
 export type ResearcherInput = {

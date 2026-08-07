@@ -245,6 +245,7 @@ export const POST = async (req: Request) => {
         mode: body.optimizationMode,
         fileIds: body.files,
         systemInstructions: body.systemInstructions || 'None',
+        notionPages: body.notionPages as AuthorizedPage[],
       },
     });
 
