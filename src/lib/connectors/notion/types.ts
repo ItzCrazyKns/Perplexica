@@ -21,3 +21,10 @@ export interface UpsertNotionConnection {
   workspaceName: string;
   encryptedToken: string;
 }
+
+/** A page or database the workspace owner shared with the connection. */
+export interface AuthorizedPage {
+  id: string;
+  title: string;
+  type: 'page' | 'database';
+}

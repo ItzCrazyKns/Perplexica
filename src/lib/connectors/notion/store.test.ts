@@ -1,9 +1,4 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import fs from 'fs';
-import path from 'path';
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import * as schema from '@/lib/db/schema';
 import { notionConnections } from '@/lib/db/schema';
 import {
   getConnection,
@@ -11,29 +6,7 @@ import {
   deleteConnection,
   type NotionConnectionDb,
 } from './store';
-
-const MIGRATION_SQL = fs.readFileSync(
-  path.resolve(process.cwd(), 'drizzle/0003_notion_connections.sql'),
-  'utf-8',
-);
-
-function createDb(): NotionConnectionDb {
-  const sqlite = new Database(':memory:');
-  // Run the actual migration file so the test verifies the real schema.
-  sqlite.exec(
-    MIGRATION_SQL.split('--> statement-breakpoint')
-      .map((stmt) =>
-        stmt
-          .split(/\r?\n/)
-          .filter((line) => !line.trim().startsWith('-->'))
-          .join('\n')
-          .trim(),
-      )
-      .filter(Boolean)
-      .join(';\n'),
-  );
-  return drizzle(sqlite, { schema });
-}
+import { createDb } from './test-utils';
 
 describe('connection store', () => {
   let db: NotionConnectionDb;
