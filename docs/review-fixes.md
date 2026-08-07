@@ -9,16 +9,15 @@
 - **審查者**：`cubic-dev-ai[bot]`（自動 AI 審查，非人類 maintainer）。目前**尚未有任何人類 review**。
 - **Comments 總數**：48 則，橫跨兩個 review run（對 `633e5c0` 與 `d78d82f`）。
 - **已處理**：29 則（P1 × 12、P2 × 17）——`d78d82f` 10 則 + P1 第二輪 6 則 + P2 第三輪 5 則 + P2 第四輪 8 則。
-- **待處理**：P2 × 14、P3 × 4。
+- **待處理**：P2 × 14、P3 × 4 — **全部併入 PR2**，拆分為 tickets `08`–`11`（見下方處置對照）。
 - **誤報/過時**：2 則（`#37` 全誤報、`#9` 部分誤報，無需處理）。
 
 | 類別            | 數量                                               | 狀態                                       |
 | --------------- | -------------------------------------------------- | ------------------------------------------ |
 | P1 已修         | 12                                                 | ✅ `d78d82f` + P1 待辦六條修復 commit      |
-| P1 待辦         | 0                                                  | —                                          |
-| P2 已修         | 17                                                 | ✅ `d78d82f` + P2 高價值 + 小項修復 commit |
-| P2 待辦         | 14                                                 | ⏳ 部分可併入 PR2                          |
-| P3 待辦         | 4                                                  | ⏳ 低優先                                  |
+| P1 待辦         | 0                                                  | —                                          || P2 已修         | 17                                                 | ✅ `d78d82f` + P2 高價值 + 小項修復 commit |
+| P2 待辦         | 14                                                 | ⏳ 併入 PR2 tickets `08`–`10`          |
+| P3 待辦         | 4                                                  | ⏳ 併入 PR2 ticket `11`                |
 | bot 誤報 / 過時 | 2（`#37` 全誤報、`#9` 部分誤報，重複計入 P1 已修） | —                                          |
 
 ---
@@ -108,6 +107,15 @@
 | 39  | `mention.ts`                     | `NAME_BOUNDARY` 含 `.` `,` `，`，`@Notion v1.0 規劃` 會被截成 `v1` |
 | 45  | `actions/notion/actions.test.ts` | `mockFetchOnce` 實際是 `mockResolvedValue`（所有呼叫），命名誤導   |
 
+## 📦 剩餘項目處置 — 併入 PR2（`.scratch/notion-connector/issues/`）
+
+| 新 ticket  | 涵蓋的 review comments  | 內容                                   |
+| ---------- | ----------------------- | -------------------------------------- |
+| `08`       | P2 `#2` `#11` `#12`     | Connection & OAuth hardening（GCM tag 長度、decryption 錯誤區分、OAuth 多 state） |
+| `09`       | P2 `#14` `#19` `#20` `#23` `#27` `#28` `#33` | Connection UI & composer polish（status retry、deep-link、Settings 保留、bare mention、binding 信心門檻） |
+| `10`       | P2 `#44` `#46` `#47` `#48` | Read-path correctness（researcher DI、data_source title、subtree 原位重建、unsupported blocks） |
+| `11`       | P3 `#3` `#38` `#39` `#45` | Cleanup & P3s（ADR 用詞、schema notNull、NAME_BOUNDARY、測試命名） |
+
 ## 🚫 bot 誤報 / 過時（無需處理）
 
 | #         | 位置          | 內容                                                                                    | 為何不處理                                                                                                                                                              |
@@ -191,9 +199,13 @@ Thanks for the thorough review. Here's where things stand:
   (they render as "Notion search finished"), and error results emit a
   terminal substep so the UI never stays stuck on "Searching Notion".
 
-**Still open:** 14 P2 + 4 P3 items are tracked in `docs/review-fixes.md`
-(token tag length, OAuth multi-state cookies, status error/retry UI,
-researcher DB injection, deep-link handling, and more).
+**Remaining items:** all 14 P2 + 4 P3 comments are now folded into PR2
+as tickets 08–11 in `.scratch/notion-connector/issues/` (token tag
+length + decryption error separation + OAuth multi-state → 08; status
+error/retry UI, deep-link handling, Settings preservation, bare
+mention guard, mention confidence gate → 09; researcher DB injection,
+data_source titles, truncated-page ordering → 10; cleanup/P3s → 11).
+They ship with the write PR.
 ```
 
 ---
@@ -204,4 +216,4 @@ researcher DB injection, deep-link handling, and more).
 - P1 待辦六條修復 commit — fix(notion): enforce connection invariant, fuzzy conflicts, and per-conversation read scope（P1 ×6）
 - P2 高價值四項修復 commit — fix(notion): prevent source wipe, picker refetch loop, and OAuth CSRF gaps（P2 ×5）
 - P2 小項七條修復 commit — fix(notion): polish read-only copy, a11y, mention whitespace, and progress error states（P2 ×7 + 追蹤補正 #31）
-- 剩餘 P2/P3 → 併入 PR2 或後續 PR
+- 剩餘 P2 ×14 + P3 ×4 → 併入 PR2 tickets `08`–`11`（`.scratch/notion-connector/issues/`）
