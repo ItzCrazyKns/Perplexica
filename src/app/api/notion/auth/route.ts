@@ -31,6 +31,10 @@ export const GET = async (req: Request) => {
     state,
   });
 
+  console.log(
+    `[notion-auth] redirect_uri=${redirectUri} authorize_url=${authorizeUrl}`,
+  );
+
   const res = NextResponse.redirect(authorizeUrl);
   res.cookies.set('notion_oauth_state', state, {
     httpOnly: true,
