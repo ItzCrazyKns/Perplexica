@@ -193,8 +193,8 @@ describe('notion_get_page', () => {
       status: 200,
       json: async () => ({
         markdown: '# Agenda\n\nDiscuss Q3 plans',
-        has_more: false,
-        next_cursor: null,
+        truncated: false,
+        unknown_block_ids: [],
       }),
     });
     vi.stubGlobal('fetch', fetchMock);
@@ -207,7 +207,7 @@ describe('notion_get_page', () => {
     )) as SearchActionOutput;
 
     expect(fetchMock.mock.calls[0][0]).toBe(
-      'https://api.notion.com/v1/pages/p1/content/markdown',
+      'https://api.notion.com/v1/pages/p1/markdown',
     );
     expect(output.results[0].content).toContain('Discuss Q3 plans');
     expect(output.results[0].metadata.title).toBe('Meeting Notes');

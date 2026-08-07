@@ -9,6 +9,12 @@ export { fuzzyMatchPages };
 /**
  * Listing and searching Authorized Pages.
  *
+ * Under the current Notion API (Notion-Version 2026-03-11) search
+ * returns `page` and `data_source` objects; databases are represented
+ * by their data sources. `data_source` results map to our domain type
+ * `type: 'database'`, and their id is the data source id that the
+ * data-sources query endpoint accepts.
+ *
  * Fuzzy matching lives in the pure `./fuzzy` module so the client can
  * use it too; a miss returns no candidates so the conversation can ask
  * the user to re-confirm.
@@ -16,12 +22,13 @@ export { fuzzyMatchPages };
 
 interface NotionSearchResult {
   id: string;
-  object: 'page' | 'database';
+  object: 'page' | 'database' | 'data_source';
   properties?: Record<
     string,
     { type?: string; title?: { plain_text: string }[] }
   >;
   title?: { plain_text: string }[];
+  name?: string | { plain_text: string }[];
 }
 
 interface NotionSearchResponse {
@@ -31,6 +38,11 @@ interface NotionSearchResponse {
 }
 
 function extractTitle(result: NotionSearchResult): string {
+  if (result.object === 'data_source') {
+    if (typeof result.name === 'string') return result.name;
+    return (result.name ?? []).map((t) => t.plain_text).join('');
+  }
+
   if (result.object === 'database') {
     return (result.title ?? []).map((t) => t.plain_text).join('');
   }
@@ -47,7 +59,9 @@ function toAuthorizedPage(result: NotionSearchResult): AuthorizedPage {
   return {
     id: result.id,
     title: extractTitle(result) || 'Untitled',
-    type: result.object,
+    // `data_source` (and legacy `database`) results are databases for
+    // the user; the id is what the data-sources query endpoint accepts.
+    type: result.object === 'page' ? 'page' : 'database',
   };
 }
 
@@ -61,21 +75,48 @@ function requireToken(db: NotionConnectionDb): string {
   return token;
 }
 
+async function collectSearchResults(
+  token: string,
+  body: Record<string, unknown>,
+): Promise<NotionSearchResult[]> {
+  const results: NotionSearchResult[] = [];
+  let cursor: string | undefined;
+  let hasMore = true;
+
+  while (hasMore) {
+    const options: RequestOptions = {
+      token,
+      method: 'POST',
+      body: {
+        ...body,
+        page_size: 100,
+        ...(cursor ? { start_cursor: cursor } : {}),
+      },
+    };
+
+    const response = await request<NotionSearchResponse>('/search', options);
+    results.push(...response.results);
+
+    hasMore = response.has_more === true;
+    cursor = response.next_cursor ?? undefined;
+
+    // Defensive: never loop on a missing cursor.
+    if (hasMore && !cursor) break;
+  }
+
+  return results;
+}
+
 export async function listAuthorizedPages(
   db: NotionConnectionDb,
 ): Promise<AuthorizedPage[]> {
   const token = requireToken(db);
-  const options: RequestOptions = {
-    token,
-    method: 'POST',
-    body: {
-      filter: { value: 'page_or_database', property: 'object' },
-      page_size: 100,
-    },
-  };
 
-  const response = await request<NotionSearchResponse>('/search', options);
-  return response.results.map(toAuthorizedPage);
+  const results = await collectSearchResults(token, {
+    filter: { value: 'page_or_data_source', property: 'object' },
+  });
+
+  return results.map(toAuthorizedPage);
 }
 
 export async function searchNotionPages(
@@ -83,15 +124,8 @@ export async function searchNotionPages(
   query: string,
 ): Promise<AuthorizedPage[]> {
   const token = requireToken(db);
-  const options: RequestOptions = {
-    token,
-    method: 'POST',
-    body: {
-      query,
-      page_size: 20,
-    },
-  };
 
-  const response = await request<NotionSearchResponse>('/search', options);
-  return response.results.map(toAuthorizedPage);
+  const results = await collectSearchResults(token, { query });
+
+  return results.map(toAuthorizedPage);
 }
