@@ -293,8 +293,9 @@ const AssistantSteps = ({
                         )}
 
                       {step.type === 'notion_search_results' &&
-                        step.results.filter((r) => !isNotionSentinel(r))
-                          .length > 0 && (
+                        step.results.length > 0 &&
+                        (step.results.filter((r) => !isNotionSentinel(r))
+                          .length > 0 ? (
                           <div className="flex flex-wrap gap-1.5 mt-1.5">
                             {step.results
                               .filter((r) => !isNotionSentinel(r))
@@ -316,7 +317,13 @@ const AssistantSteps = ({
                                 );
                               })}
                           </div>
-                        )}
+                        ) : (
+                          // All results are error sentinels — surface the
+                          // actual message instead of hiding it.
+                          <p className="text-xs text-black/60 dark:text-white/60 mt-0.5">
+                            {step.results[0].content}
+                          </p>
+                        ))}
                     </div>
                   </motion.div>
                 );

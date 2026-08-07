@@ -102,14 +102,18 @@ const Notion = () => {
                           <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-black/40 dark:text-white/40" />
                           {/* The picker lives inside the chat form. The form's
                               keydown handler preventDefaults Enter and sends the
-                              message, so stopping propagation would leave the
-                              native implicit submit un-prevented — block both. */}
+                              message, so Enter here must preventDefault (else the
+                              native implicit submit fires) AND stopPropagation.
+                              Other keys (Escape to close the popover, etc.) must
+                              keep bubbling — only Enter is intercepted. */}
                           <input
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             onKeyDown={(e) => {
-                              if (e.key === 'Enter') e.preventDefault();
-                              e.stopPropagation();
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }
                             }}
                             placeholder="搜尋頁面…"
                             className="w-full rounded-md border border-light-200 dark:border-dark-200 bg-transparent pl-7 pr-2 py-1.5 text-xs text-black/80 dark:text-white/80 placeholder:text-black/40 dark:placeholder:text-white/40 focus:outline-none focus:border-sky-500/50"

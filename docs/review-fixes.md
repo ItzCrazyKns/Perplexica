@@ -7,17 +7,18 @@
 ## 狀態摘要
 
 - **審查者**：`cubic-dev-ai[bot]`（自動 AI 審查，非人類 maintainer）。目前**尚未有任何人類 review**。
-- **Comments 總數**：48 則，橫跨兩個 review run（對 `633e5c0` 與 `d78d82f`）。
-- **已處理**：29 則（P1 × 12、P2 × 17）——`d78d82f` 10 則 + P1 第二輪 6 則 + P2 第三輪 5 則 + P2 第四輪 8 則。
-- **待處理**：P2 × 14、P3 × 4 — **全部併入 PR2**，拆分為 tickets `08`–`11`（見下方處置對照）。
+- **Comments 總數**：55 則，橫跨三個 review run（`633e5c0`、`d78d82f`、`4b3c8d29`）。
+- **已處理**：36 則（P1 × 12、P2 × 23、P3 × 1）——`d78d82f` 10 則 + P1 第二輪 6 則 + P2 第三輪 5 則 + P2 第四輪 8 則 + 第五輪 7 則。
+- **待處理**：P2 × 14、P3 × 3 — **全部併入 PR2**，拆分為 tickets `08`–`11`（見下方處置對照）。
 - **誤報/過時**：2 則（`#37` 全誤報、`#9` 部分誤報，無需處理）。
 
 | 類別            | 數量                                               | 狀態                                       |
 | --------------- | -------------------------------------------------- | ------------------------------------------ |
 | P1 已修         | 12                                                 | ✅ `d78d82f` + P1 待辦六條修復 commit      |
-| P1 待辦         | 0                                                  | —                                          || P2 已修         | 17                                                 | ✅ `d78d82f` + P2 高價值 + 小項修復 commit |
-| P2 待辦         | 14                                                 | ⏳ 併入 PR2 tickets `08`–`10`          |
-| P3 待辦         | 4                                                  | ⏳ 併入 PR2 ticket `11`                |
+| P1 待辦         | 0                                                  | —                                          |
+| P2 已修         | 23                                                 | ✅ 前述 + 第五輪 6 則                      |
+| P2 待辦         | 14                                                 | ⏳ 併入 PR2 tickets `08`–`10`              |
+| P3 待辦         | 3                                                  | ⏳ 併入 PR2 ticket `11`（第五輪已修 1 則） |
 | bot 誤報 / 過時 | 2（`#37` 全誤報、`#9` 部分誤報，重複計入 P1 已修） | —                                          |
 
 ---
@@ -71,15 +72,26 @@
 ## ✅ P2 — 已修復（第四輪，小項七條 + 追蹤補正一項）
 
 | #   | 位置                             | 問題                                                           | 修法                                                                                       |
-| --- | -------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| --- | -------------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | --- | --- | ---------- | --------------------------------------------------------- | -------------------------------------------------------------- |
 | 13  | `Settings/Sections/Notion.tsx`   | 文案宣稱「可讀寫」，但寫入在 PR2                               | 改 read-only 文案（connected/configured 兩段皆更新）                                       |
 | 29  | `EmptyChatMessageInput.tsx`      | 頁面移除按鈕無 aria-label                                      | 加 `aria-label={`Remove ${page.title}`}`                                                   |
 | 30  | `MessageInputActions/Notion.tsx` | picker 內 Enter 會送出表單                                     | 搜尋 input `onKeyDown` stopPropagation                                                     |
 | 32  | `mention.ts`                     | `.replace(/\s{2,}/g,' ')` 吃掉全文多餘空白（含 markdown 換行） | 只收斂 marker 旁的空白（`[ \t]*`），全文換行/多空白保留 + 兩個測試                         |
 | 34  | `api/notion/pages/route.ts`      | 401/403 回 502，UI 顯示泛用錯誤                                | 映射到 409（disconnected）讓 UI 給 reconnect 路徑                                          |
 | 42  | `AssistantSteps.tsx`             | 失敗的 notion search 被算成 1 個成功結果                       | 排除 `Notion:` sentinel 結果；全 sentinel 時顯示「Notion search finished」                 |
-| 43  | `actions/notion/results.ts`      | error 回傳後 Research Progress 卡在「Searching Notion」        | `emitResultsSubstep`：error 時發終止 `notion_search_results` substep（search/read 全路徑） |
-| 31  | `fuzzy.ts`                       | 長 partial prefix 可能高於 exact-match 100 分（追蹤補正）      | 已在第二輪 `#24` 一併修復（leading 分數 cap 89），此為追蹤補正                             |
+| 43  | `actions/notion/results.ts`      | error 回傳後 Research Progress 卡在「Searching Notion」        | `emitResultsSubstep`：error 時發終止 `notion_search_results` substep（search/read 全路徑） |     | 31  | `fuzzy.ts` | 長 partial prefix 可能高於 exact-match 100 分（追蹤補正） | 已在第二輪 `#24` 一併修復（leading 分數 cap 89），此為追蹤補正 |
+
+## ✅ 第五輪（bot 第三輪 review `4b3c8d29`，7 則全數）
+
+| 位置                               | 嚴重度 | 問題                                                                                  | 修法                                                                      |
+| ---------------------------------- | ------ | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `actions/notion/read.ts`           | P2     | read 錯誤顯示成「Notion search finished」，具體錯誤被 Research Progress 藏起來        | `notion_search_results` 全 sentinel 時直接顯示 sentinel 的 `content`      |
+| `.scratch/…/resolve-pr-threads.sh` | P2     | 安裝 gh 不等於有 jq（macOS 預設沒有），script 會先失敗                                | 改用 gh 內建 `--jq`（gojq），零外部依賴                                   |
+| `.scratch/…/resolve-pr-threads.sh` | P2     | >100 threads 時只處理第一頁，其餘未 resolve 卻報成功                                  | `hasNextPage`/`endCursor` 手動分頁                                        |
+| `api/notion/pages/route.ts`        | P2     | 401（token 被 revoke）後 Settings 仍顯示已連接，picker 的 reconnect 沒有 Connect 動作 | 401 時 server 端 `deleteConnection`，Settings/status 一致並直接給 Connect |
+| `api/notion/pages/route.ts`        | P2     | 所有 403 都被當成未連接（有效 credential 只是沒權限）                                 | 只映射 401 → 409；403 走 API error（502）                                 |
+| `MessageInputActions/Notion.tsx`   | P2     | 所有按鍵都 stopPropagation，Escape 關閉 popover 等冒泡行為全被擋                      | 只對 Enter 做 preventDefault + stopPropagation                            |
+| `docs/review-fixes.md`             | P3     | 摘要表格 `P1 待辦`/`P2 已修` 兩列被合併成一列，GitHub markdown 渲染壞掉               | 拆回兩行                                                                  |
 
 ## ⏳ P2 — 待辦
 
@@ -109,12 +121,12 @@
 
 ## 📦 剩餘項目處置 — 併入 PR2（`.scratch/notion-connector/issues/`）
 
-| 新 ticket  | 涵蓋的 review comments  | 內容                                   |
-| ---------- | ----------------------- | -------------------------------------- |
-| `08`       | P2 `#2` `#11` `#12`     | Connection & OAuth hardening（GCM tag 長度、decryption 錯誤區分、OAuth 多 state） |
-| `09`       | P2 `#14` `#19` `#20` `#23` `#27` `#28` `#33` | Connection UI & composer polish（status retry、deep-link、Settings 保留、bare mention、binding 信心門檻） |
-| `10`       | P2 `#44` `#46` `#47` `#48` | Read-path correctness（researcher DI、data_source title、subtree 原位重建、unsupported blocks） |
-| `11`       | P3 `#3` `#38` `#39` `#45` | Cleanup & P3s（ADR 用詞、schema notNull、NAME_BOUNDARY、測試命名） |
+| 新 ticket | 涵蓋的 review comments                       | 內容                                                                                                      |
+| --------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `08`      | P2 `#2` `#11` `#12`                          | Connection & OAuth hardening（GCM tag 長度、decryption 錯誤區分、OAuth 多 state）                         |
+| `09`      | P2 `#14` `#19` `#20` `#23` `#27` `#28` `#33` | Connection UI & composer polish（status retry、deep-link、Settings 保留、bare mention、binding 信心門檻） |
+| `10`      | P2 `#44` `#46` `#47` `#48`                   | Read-path correctness（researcher DI、data_source title、subtree 原位重建、unsupported blocks）           |
+| `11`      | P3 `#3` `#38` `#39` `#45`                    | Cleanup & P3s（ADR 用詞、schema notNull、NAME_BOUNDARY、測試命名）                                        |
 
 ## 🚫 bot 誤報 / 過時（無需處理）
 
@@ -199,7 +211,20 @@ Thanks for the thorough review. Here's where things stand:
   (they render as "Notion search finished"), and error results emit a
   terminal substep so the UI never stays stuck on "Searching Notion".
 
-**Remaining items:** all 14 P2 + 4 P3 comments are now folded into PR2
+**Third bot run (`4b3c8d29`) — 7 new comments, all fixed**
+
+- Read-action errors no longer masquerade as "Notion search finished":
+  an all-sentinel progress step now shows the actual error text.
+- The resolve script no longer needs an external `jq` (gh's built-in
+  filter) and paginates past 100 threads.
+- A 401 (revoked token) now clears the stored connection server-side,
+  so Settings agrees it's disconnected and offers Connect; a 403
+  (valid credential, no access) stays a real API error instead of
+  masquerading as "not connected".
+- The picker input intercepts Enter only — Escape and other keys keep
+  bubbling.
+
+**Remaining items:** all 14 P2 + 3 P3 comments are now folded into PR2
 as tickets 08–11 in `.scratch/notion-connector/issues/` (token tag
 length + decryption error separation + OAuth multi-state → 08; status
 error/retry UI, deep-link handling, Settings preservation, bare
@@ -216,4 +241,5 @@ They ship with the write PR.
 - P1 待辦六條修復 commit — fix(notion): enforce connection invariant, fuzzy conflicts, and per-conversation read scope（P1 ×6）
 - P2 高價值四項修復 commit — fix(notion): prevent source wipe, picker refetch loop, and OAuth CSRF gaps（P2 ×5）
 - P2 小項七條修復 commit — fix(notion): polish read-only copy, a11y, mention whitespace, and progress error states（P2 ×7 + 追蹤補正 #31）
-- 剩餘 P2 ×14 + P3 ×4 → 併入 PR2 tickets `08`–`11`（`.scratch/notion-connector/issues/`）
+- 第五輪修復 commit — fix(notion): address third bot run（P2 ×6 + P3 ×1，含 script 分頁/jq、401/403 分流、Enter-only 攔截、sentinel 錯誤顯示）
+- 剩餘 P2 ×14 + P3 ×3 → 併入 PR2 tickets `08`–`11`（`.scratch/notion-connector/issues/`）
