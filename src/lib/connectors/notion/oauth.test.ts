@@ -3,6 +3,8 @@ import {
   buildAuthorizeUrl,
   exchangeCodeForToken,
   getClientCredentials,
+  getPublicOrigin,
+  getRedirectUri,
   NotionOAuthError,
 } from './oauth';
 import { NOTION_API_VERSION } from './client';
@@ -11,6 +13,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   delete process.env.NOTION_CLIENT_ID;
   delete process.env.NOTION_CLIENT_SECRET;
+  delete process.env.NOTION_REDIRECT_URI;
 });
 
 describe('buildAuthorizeUrl', () => {
@@ -52,6 +55,27 @@ describe('getClientCredentials', () => {
     });
     delete process.env.NOTION_CLIENT_ID;
     delete process.env.NOTION_CLIENT_SECRET;
+  });
+});
+
+describe('getPublicOrigin / getRedirectUri', () => {
+  it('derives from req.url when no override is set (local dev)', () => {
+    const req = new Request('http://localhost:3000/api/notion/auth');
+    expect(getPublicOrigin(req)).toBe('http://localhost:3000');
+    expect(getRedirectUri(req)).toBe(
+      'http://localhost:3000/api/notion/callback',
+    );
+  });
+
+  it('uses NOTION_REDIRECT_URI when set (Docker port-mapping)', () => {
+    // In Docker, req.url carries the container's internal address.
+    const req = new Request('http://751169bff0dc:3000/api/notion/auth');
+    process.env.NOTION_REDIRECT_URI =
+      'http://localhost:3100/api/notion/callback';
+    expect(getPublicOrigin(req)).toBe('http://localhost:3100');
+    expect(getRedirectUri(req)).toBe(
+      'http://localhost:3100/api/notion/callback',
+    );
   });
 });
 

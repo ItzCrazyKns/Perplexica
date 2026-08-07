@@ -3,6 +3,8 @@ import crypto from 'crypto';
 import {
   buildAuthorizeUrl,
   getClientCredentials,
+  getPublicOrigin,
+  getRedirectUri,
 } from '@/lib/connectors/notion/oauth';
 
 export const runtime = 'nodejs';
@@ -22,7 +24,7 @@ export const GET = async (req: Request) => {
   }
 
   const state = crypto.randomBytes(16).toString('hex');
-  const redirectUri = new URL('/api/notion/callback', req.url).toString();
+  const redirectUri = getRedirectUri(req);
   const authorizeUrl = buildAuthorizeUrl({
     clientId: credentials.clientId,
     redirectUri,
@@ -33,7 +35,7 @@ export const GET = async (req: Request) => {
   res.cookies.set('notion_oauth_state', state, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: new URL(req.url).protocol === 'https:',
+    secure: new URL(getPublicOrigin(req)).protocol === 'https:',
     maxAge: 600,
     path: '/',
   });

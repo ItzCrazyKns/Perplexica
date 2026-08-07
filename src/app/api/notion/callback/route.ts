@@ -4,6 +4,8 @@ import db from '@/lib/db';
 import {
   exchangeCodeForToken,
   getClientCredentials,
+  getPublicOrigin,
+  getRedirectUri,
 } from '@/lib/connectors/notion/oauth';
 import { upsertConnection } from '@/lib/connectors/notion/store';
 import { encryptToken } from '@/lib/connectors/notion/token';
@@ -12,7 +14,9 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const redirectHome = (req: Request, status: string) => {
-  const res = NextResponse.redirect(new URL(`/?notion=${status}`, req.url));
+  const res = NextResponse.redirect(
+    new URL(`/?notion=${status}`, getPublicOrigin(req)),
+  );
   res.cookies.set('notion_oauth_state', '', {
     httpOnly: true,
     maxAge: 0,
@@ -51,7 +55,7 @@ export const GET = async (req: Request) => {
   }
 
   try {
-    const redirectUri = new URL('/api/notion/callback', req.url).toString();
+    const redirectUri = getRedirectUri(req);
     const token = await exchangeCodeForToken({
       clientId: credentials.clientId,
       clientSecret: credentials.clientSecret,

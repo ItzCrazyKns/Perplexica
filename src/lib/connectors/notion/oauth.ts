@@ -33,6 +33,24 @@ export function getClientCredentials(): ClientCredentials | null {
   return { clientId, clientSecret };
 }
 
+/**
+ * Resolve the public origin of the app. Behind Docker port-mapping or a
+ * reverse proxy, `req.url` reflects the container's internal address
+ * (e.g. http://<container-id>:3000), which the browser cannot reach and
+ * Notion will reject as a mismatched redirect. Deployments override it
+ * with `NOTION_REDIRECT_URI` (the exact string registered in the Notion
+ * integration, e.g. http://localhost:3100/api/notion/callback).
+ */
+export function getPublicOrigin(req: Request): string {
+  const override = process.env.NOTION_REDIRECT_URI;
+  return override ? new URL(override).origin : new URL(req.url).origin;
+}
+
+/** The OAuth callback URL as seen by the browser (and Notion). */
+export function getRedirectUri(req: Request): string {
+  return `${getPublicOrigin(req)}/api/notion/callback`;
+}
+
 export function buildAuthorizeUrl(input: {
   clientId: string;
   redirectUri: string;

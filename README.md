@@ -181,7 +181,6 @@ If you're encountering an Ollama connection error, it is likely due to the backe
 
 1. **Check your Ollama API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
-
    - **Windows:** Use `http://host.docker.internal:11434`
    - **Mac:** Use `http://host.docker.internal:11434`
    - **Linux:** Use `http://<private_ip_of_host>:11434`
@@ -189,7 +188,6 @@ If you're encountering an Ollama connection error, it is likely due to the backe
    Adjust the port number if you're using a different one.
 
 3. **Linux Users - Expose Ollama to Network:**
-
    - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0:11434"`. (Change the port number if you are using a different one.) Then reload the systemd manager configuration with `systemctl daemon-reload`, and restart Ollama by `systemctl restart ollama`. For more information see [Ollama docs](https://github.com/ollama/ollama/blob/main/docs/faq.md#setting-environment-variables-on-linux)
 
    - Ensure that the port (default is 11434) is not blocked by your firewall.
@@ -200,7 +198,6 @@ If you're encountering a Lemonade connection error, it is likely due to the back
 
 1. **Check your Lemonade API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
-
    - **Windows:** Use `http://host.docker.internal:8000`
    - **Mac:** Use `http://host.docker.internal:8000`
    - **Linux:** Use `http://<private_ip_of_host>:8000`
@@ -208,7 +205,6 @@ If you're encountering a Lemonade connection error, it is likely due to the back
    Adjust the port number if you're using a different one.
 
 3. **Ensure Lemonade Server is Running:**
-
    - Make sure your Lemonade server is running and accessible on the configured port (default is 8000).
    - Verify that Lemonade is configured to accept connections from all interfaces (`0.0.0.0`), not just localhost (`127.0.0.1`).
    - Ensure that the port (default is 8000) is not blocked by your firewall.
@@ -241,6 +237,7 @@ Connect your Notion workspace and ask questions about your own pages — Perplex
    ```
 
    (replace the host/port with your Vane URL if Vane is not on localhost)
+
 5. Copy the **OAuth client ID** and **OAuth client secret**.
 
 ### 2. Set environment variables
@@ -249,6 +246,11 @@ Connect your Notion workspace and ask questions about your own pages — Perplex
 NOTION_CLIENT_ID=your_client_id
 NOTION_CLIENT_SECRET=your_client_secret
 NOTION_TOKEN_KEY=a_long_random_secret_for_encrypting_tokens
+# Optional: override the OAuth callback URL when running behind Docker
+# port-mapping or a reverse proxy, where the app cannot detect the
+# browser-facing address (must match the redirect URI registered in the
+# Notion integration exactly):
+# NOTION_REDIRECT_URI=http://localhost:3100/api/notion/callback
 ```
 
 `NOTION_TOKEN_KEY` encrypts the OAuth token at rest — use a long random string and keep it stable across restarts, otherwise the stored token can no longer be decrypted.
@@ -268,11 +270,11 @@ NOTION_TOKEN_KEY=a_long_random_secret_for_encrypting_tokens
 
 ### Troubleshooting
 
-| Symptom | Fix |
-| --- | --- |
-| Connect button disabled | `NOTION_CLIENT_ID` / `NOTION_CLIENT_SECRET` not set |
-| "Stored token cannot be decrypted" | `NOTION_TOKEN_KEY` changed — disconnect and reconnect |
-| Pages don't show up | Share the pages with your integration (integration Settings → Connections), then reconnect |
+| Symptom                            | Fix                                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------------ |
+| Connect button disabled            | `NOTION_CLIENT_ID` / `NOTION_CLIENT_SECRET` not set                                        |
+| "Stored token cannot be decrypted" | `NOTION_TOKEN_KEY` changed — disconnect and reconnect                                      |
+| Pages don't show up                | Share the pages with your integration (integration Settings → Connections), then reconnect |
 
 ## Using as a Search Engine
 
