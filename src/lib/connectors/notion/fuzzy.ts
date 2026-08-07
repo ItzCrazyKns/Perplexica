@@ -32,15 +32,28 @@ function scorePage(title: string, query: string, queryWords: string[]): number {
   if (title.startsWith(query)) return 90;
 
   const titleWords = title.split(/\s+/);
+  const overlap = Math.min(queryWords.length, titleWords.length);
   let leadingMatches = 0;
-  for (let i = 0; i < Math.min(queryWords.length, titleWords.length); i++) {
+  for (let i = 0; i < overlap; i++) {
     if (titleWords[i].startsWith(queryWords[i])) {
       leadingMatches++;
     } else {
       break; // Leading words must match in order.
     }
   }
-  if (leadingMatches > 0) return 60 + leadingMatches * 10;
+
+  // A partial overlap with a conflicting word means the user meant a
+  // different page ("Meeting Budget" is not "Meeting Notes") — stay
+  // unresolved so the user can confirm, even if a word is contained.
+  if (leadingMatches > 0 && leadingMatches < overlap) return 0;
+
+  // A leading match requires every overlapping word to match in order;
+  // extra trailing query words are allowed ("Meeting Notes 2026" still
+  // matches "Meeting Notes"). Capped below the exact/prefix tiers so an
+  // exact title always wins.
+  if (leadingMatches > 0) {
+    return Math.min(89, 60 + leadingMatches * 10);
+  }
 
   if (queryWords.some((word) => title.includes(word))) return 30;
 

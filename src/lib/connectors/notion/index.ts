@@ -33,6 +33,8 @@ export {
   listAuthorizedPages,
   searchNotionPages,
   fuzzyMatchPages,
+  filterAuthorizedPages,
+  resolveAuthorizedPage,
 } from './search';
 export { getPageMarkdown } from './pages';
 export { queryDatabase, type DatabaseEntry } from './databases';

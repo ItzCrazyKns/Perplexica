@@ -45,6 +45,19 @@ export function buildApiErrorResult(
   };
 }
 
+export function buildUnauthorizedResult(toolName: string): SearchActionOutput {
+  return {
+    type: 'search_results',
+    results: [
+      {
+        content:
+          'The requested page is not shared with the Notion connection or was not selected in this conversation. Ask the user to select the page before reading it — never read a page that was not authorized.',
+        metadata: { title: `Notion: ${toolName} not authorized`, url: '' },
+      },
+    ],
+  };
+}
+
 export function buildGenericErrorResult(err: unknown): SearchActionOutput {
   return {
     type: 'search_results',

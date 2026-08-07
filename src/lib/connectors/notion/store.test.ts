@@ -53,6 +53,36 @@ describe('connection store', () => {
     expect(rows[0].encryptedToken).toBe('v1.b');
   });
 
+  it('enforces the single-row invariant at the database level', () => {
+    db.insert(notionConnections)
+      .values({
+        workspaceId: 'ws_1',
+        workspaceName: 'First',
+        encryptedToken: 'v1.a',
+        createdAt: 't1',
+        updatedAt: 't1',
+      })
+      .run();
+
+    // A second raw insert must violate the `singleton` unique index
+    // (migration 0005), not silently create a second row.
+    expect(() =>
+      db
+        .insert(notionConnections)
+        .values({
+          workspaceId: 'ws_2',
+          workspaceName: 'Second',
+          encryptedToken: 'v1.b',
+          createdAt: 't2',
+          updatedAt: 't2',
+        })
+        .run(),
+    ).toThrow();
+
+    const rows = db.select().from(notionConnections).all();
+    expect(rows).toHaveLength(1);
+  });
+
   it('deletes the connection and reports success', () => {
     upsertConnection(db, {
       workspaceId: 'ws_1',

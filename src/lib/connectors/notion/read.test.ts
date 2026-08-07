@@ -5,6 +5,8 @@ import {
   listAuthorizedPages,
   searchNotionPages,
   fuzzyMatchPages,
+  filterAuthorizedPages,
+  resolveAuthorizedPage,
 } from './search';
 import { getPageMarkdown } from './pages';
 import { queryDatabase } from './databases';
@@ -190,6 +192,36 @@ describe('fuzzy page search', () => {
     const ids = fuzzyMatchPages(mixed, 'quarter').map((p) => p.id);
     // "quarterly" starts with "quarter" → leading match (a) beats containment (b).
     expect(ids).toEqual(['a', 'b']);
+  });
+
+  it('stays unresolved when an overlapping word conflicts', () => {
+    // "Meeting Budget" must not resolve to "Meeting Notes": the second
+    // overlapping word conflicts, so the user is asked to confirm.
+    const pages: AuthorizedPage[] = [
+      { id: '1', title: 'Meeting Notes', type: 'page' },
+      { id: '2', title: 'Meeting Agenda Q3', type: 'page' },
+    ];
+    expect(fuzzyMatchPages(pages, 'Meeting Budget')).toEqual([]);
+    expect(fuzzyMatchPages(pages, 'meet budg')).toEqual([]);
+  });
+
+  it('allows extra trailing query words after a full leading match', () => {
+    const pages: AuthorizedPage[] = [
+      { id: '1', title: 'Meeting Notes', type: 'page' },
+    ];
+    const ids = fuzzyMatchPages(pages, 'Meeting Notes 2026').map((p) => p.id);
+    expect(ids).toEqual(['1']);
+  });
+
+  it('never lets a partial leading match outrank an exact title', () => {
+    const pages: AuthorizedPage[] = [
+      { id: '1', title: 'Meeting Notes', type: 'page' },
+      { id: '2', title: 'Meeting Notes Draft', type: 'page' },
+    ];
+    // Both words of the query are leading prefixes of "Meeting Notes Draft",
+    // but the exact title must still rank first.
+    const ids = fuzzyMatchPages(pages, 'Meeting Notes').map((p) => p.id);
+    expect(ids[0]).toBe('1');
   });
 });
 
@@ -457,6 +489,66 @@ describe('database query', () => {
     expect(JSON.parse(fetchMock.mock.calls[1][1].body).start_cursor).toBe(
       'cur2',
     );
+  });
+});
+
+describe('authorized page resolution', () => {
+  const authorized: AuthorizedPage[] = [
+    { id: 'p1', title: 'Meeting Notes', type: 'page' },
+    { id: 'ds1', title: 'Tasks DB', type: 'database' },
+  ];
+
+  function mockAuthorizedSearch() {
+    mockFetchOnce({
+      results: [
+        {
+          id: 'p1',
+          object: 'page',
+          properties: {
+            Name: { type: 'title', title: [{ plain_text: 'Meeting Notes' }] },
+          },
+        },
+        { id: 'ds1', object: 'data_source', name: 'Tasks DB' },
+      ],
+      has_more: false,
+      next_cursor: null,
+    });
+  }
+
+  it('filterAuthorizedPages keeps only shared pages, with server titles', async () => {
+    mockAuthorizedSearch();
+
+    const result = await filterAuthorizedPages(db, [
+      { id: 'p1', title: 'Spoofed Title', type: 'page' },
+      { id: 'ghost', title: 'Not shared', type: 'page' },
+    ]);
+
+    // Server-side title wins; unshared ids are dropped.
+    expect(result).toEqual([
+      { id: 'p1', title: 'Meeting Notes', type: 'page' },
+    ]);
+  });
+
+  it('resolveAuthorizedPage prefers conversation-attached pages without an API call', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const page = await resolveAuthorizedPage(db, 'p1', authorized);
+    expect(page).toEqual({ id: 'p1', title: 'Meeting Notes', type: 'page' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('resolveAuthorizedPage falls back to the authorized set', async () => {
+    mockAuthorizedSearch();
+
+    const page = await resolveAuthorizedPage(db, 'ds1', []);
+    expect(page).toEqual({ id: 'ds1', title: 'Tasks DB', type: 'database' });
+  });
+
+  it('resolveAuthorizedPage returns null for unshared ids', async () => {
+    mockAuthorizedSearch();
+
+    await expect(resolveAuthorizedPage(db, 'ghost', [])).resolves.toBeNull();
   });
 });
 

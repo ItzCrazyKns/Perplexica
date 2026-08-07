@@ -120,6 +120,7 @@ const Notion = () => {
                         </div>
                         {notionPages.length > 0 && (
                           <button
+                            type="button"
                             onClick={() => setNotionPages([])}
                             className="flex items-center space-x-1 text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition duration-200"
                           >

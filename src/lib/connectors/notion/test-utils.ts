@@ -11,29 +11,36 @@ export const TEST_TOKEN_KEY = 'test-token-key-12345';
 export const TEST_ACCESS_TOKEN = 'secret_test_access_token_abc123';
 
 /**
- * Builds an in-memory database from the real migration file so tests
+ * Builds an in-memory database from the real migration files so tests
  * exercise the actual schema. Note: sets NOTION_TOKEN_KEY as a side
  * effect when creating a connected DB.
  */
 export function createDb(): NotionConnectionDb {
   const sqlite = new Database(':memory:');
-  const migrationSql = fs.readFileSync(
-    path.resolve(process.cwd(), 'drizzle/0003_notion_connections.sql'),
-    'utf-8',
-  );
-  sqlite.exec(
-    migrationSql
-      .split('--> statement-breakpoint')
-      .map((stmt) =>
-        stmt
-          .split(/\r?\n/)
-          .filter((line) => !line.trim().startsWith('-->'))
-          .join('\n')
-          .trim(),
-      )
-      .filter(Boolean)
-      .join(';\n'),
-  );
+
+  for (const file of [
+    'drizzle/0003_notion_connections.sql',
+    'drizzle/0005_notion_connections_singleton.sql',
+  ]) {
+    const migrationSql = fs.readFileSync(
+      path.resolve(process.cwd(), file),
+      'utf-8',
+    );
+    sqlite.exec(
+      migrationSql
+        .split('--> statement-breakpoint')
+        .map((stmt) =>
+          stmt
+            .split(/\r?\n/)
+            .filter((line) => !line.trim().startsWith('-->'))
+            .join('\n')
+            .trim(),
+        )
+        .filter(Boolean)
+        .join(';\n'),
+    );
+  }
+
   return drizzle(sqlite, { schema });
 }
 

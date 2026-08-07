@@ -129,3 +129,44 @@ export async function searchNotionPages(
 
   return results.map(toAuthorizedPage);
 }
+
+/**
+ * Server-side authorization: returns only the requested pages that are
+ * genuinely shared with the connection, remapped to the server's own
+ * title/type data (callers can't spoof titles or smuggle in ids). Used
+ * by the chat route before persisting caller-supplied page ids.
+ */
+export async function filterAuthorizedPages(
+  db: NotionConnectionDb,
+  requested: AuthorizedPage[],
+): Promise<AuthorizedPage[]> {
+  if (requested.length === 0) return [];
+
+  const authorized = await listAuthorizedPages(db);
+  const byId = new Map(authorized.map((page) => [page.id, page]));
+
+  const result: AuthorizedPage[] = [];
+  for (const req of requested) {
+    const real = byId.get(req.id);
+    if (real) result.push(real);
+  }
+  return result;
+}
+
+/**
+ * Resolves a page id to its authorized entry (from the conversation's
+ * attached pages first, then the full authorized set). Returns null when
+ * the id is not shared with the connection — used by the agent tools to
+ * enforce the per-conversation scope before reading (ADR-0001).
+ */
+export async function resolveAuthorizedPage(
+  db: NotionConnectionDb,
+  pageId: string,
+  attached: AuthorizedPage[] = [],
+): Promise<AuthorizedPage | null> {
+  const inAttached = attached.find((page) => page.id === pageId);
+  if (inAttached) return inAttached;
+
+  const authorized = await listAuthorizedPages(db);
+  return authorized.find((page) => page.id === pageId) ?? null;
+}

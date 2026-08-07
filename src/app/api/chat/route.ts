@@ -6,6 +6,10 @@ import SessionManager from '@/lib/session';
 import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
 import { AuthorizedPage } from '@/lib/connectors/notion/types';
+import {
+  filterAuthorizedPages,
+  NotionNotConnectedError,
+} from '@/lib/connectors/notion';
 import db from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import { chats } from '@/lib/db/schema';
@@ -139,6 +143,23 @@ export const POST = async (req: Request) => {
     const body = parseBody.data as Body;
     const { message } = body;
 
+    // Server-side validation: only persist pages genuinely shared with
+    // the OAuth connection (ADR-0001). Best-effort — on Notion API
+    // errors we keep the caller's pages and let the agent tools re-verify
+    // per read before touching the connector.
+    let notionPages = body.notionPages as AuthorizedPage[];
+    if (notionPages.length > 0) {
+      try {
+        notionPages = await filterAuthorizedPages(db, notionPages);
+      } catch (err) {
+        if (err instanceof NotionNotConnectedError) {
+          notionPages = [];
+        } else {
+          console.error('Failed to validate Notion pages:', err);
+        }
+      }
+    }
+
     if (message.content === '') {
       return Response.json(
         {
@@ -245,7 +266,7 @@ export const POST = async (req: Request) => {
         mode: body.optimizationMode,
         fileIds: body.files,
         systemInstructions: body.systemInstructions || 'None',
-        notionPages: body.notionPages as AuthorizedPage[],
+        notionPages,
       },
     });
 
@@ -254,7 +275,7 @@ export const POST = async (req: Request) => {
       sources: body.sources as SearchSources[],
       fileIds: body.files,
       query: body.message.content,
-      notionPages: body.notionPages as AuthorizedPage[],
+      notionPages,
     });
 
     req.signal.addEventListener('abort', () => {

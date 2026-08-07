@@ -274,13 +274,39 @@ describe('notion_query_database', () => {
 
     const output = (await notionQueryDatabaseAction.execute(
       { databaseId: 'd1' },
-      makeConfig(),
+      makeConfig({
+        notionPages: [{ id: 'd1', title: 'Projects DB', type: 'database' }],
+      }),
     )) as SearchActionOutput;
 
     expect(output.results).toHaveLength(2);
     expect(output.results[0].metadata.title).toBe('Build Notion connector');
     expect(output.results[0].content).toContain('Status: In progress');
     expect(output.results[1].content).toContain('Status: Done');
+  });
+
+  it('refuses to query a database that was not selected or authorized', async () => {
+    // The authorized set contains only a page; 'd1' is not shared.
+    mockFetchOnce({
+      results: [
+        {
+          id: 'p1',
+          object: 'page',
+          properties: {
+            Name: { type: 'title', title: [{ plain_text: 'Meeting Notes' }] },
+          },
+        },
+      ],
+      has_more: false,
+      next_cursor: null,
+    });
+
+    const output = (await notionQueryDatabaseAction.execute(
+      { databaseId: 'd1' },
+      makeConfig(),
+    )) as SearchActionOutput;
+
+    expect(output.results[0].content).toMatch(/not shared|not authorized/i);
   });
 
   it('returns a friendly not-connected result instead of throwing', async () => {

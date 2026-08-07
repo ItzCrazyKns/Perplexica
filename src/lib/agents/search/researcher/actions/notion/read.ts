@@ -4,13 +4,16 @@ import { ResearchBlock } from '@/lib/types';
 import {
   getPageMarkdown,
   queryDatabase,
+  resolveAuthorizedPage,
   NotionApiError,
   NotionNotConnectedError,
+  type AuthorizedPage,
 } from '@/lib/connectors/notion';
 import {
   buildNotConnectedResult,
   buildApiErrorResult,
   buildGenericErrorResult,
+  buildUnauthorizedResult,
 } from './results';
 
 const getPageSchema = z.object({
@@ -32,9 +35,31 @@ const notionGetPageAction: ResearchAction<typeof getPageSchema> = {
   `,
   enabled: (config) => config.sources.includes('notion'),
   execute: async (input, additionalConfig) => {
-    const attached = additionalConfig.notionPages;
-    const page = attached.find((p) => p.id === input.pageId);
-    const title = page?.title ?? 'Notion page';
+    // Enforce the per-conversation scope (ADR-0001): only read pages
+    // selected in this conversation or verified against the authorized
+    // set — never an arbitrary id the model may have invented.
+    let page: AuthorizedPage | null;
+    try {
+      page = await resolveAuthorizedPage(
+        additionalConfig.notionDb,
+        input.pageId,
+        additionalConfig.notionPages,
+      );
+    } catch (err) {
+      if (err instanceof NotionNotConnectedError) {
+        return buildNotConnectedResult();
+      }
+      if (err instanceof NotionApiError) {
+        return buildApiErrorResult(err, 'notion_get_page');
+      }
+      return buildGenericErrorResult(err);
+    }
+
+    if (!page || page.type !== 'page') {
+      return buildUnauthorizedResult('notion_get_page');
+    }
+
+    const title = page.title;
 
     let markdown: string;
     try {
@@ -101,6 +126,29 @@ const notionQueryDatabaseAction: ResearchAction<typeof queryDatabaseSchema> = {
   `,
   enabled: (config) => config.sources.includes('notion'),
   execute: async (input, additionalConfig) => {
+    // Per-conversation scope: only databases selected in this
+    // conversation or verified against the authorized set.
+    let page: AuthorizedPage | null;
+    try {
+      page = await resolveAuthorizedPage(
+        additionalConfig.notionDb,
+        input.databaseId,
+        additionalConfig.notionPages,
+      );
+    } catch (err) {
+      if (err instanceof NotionNotConnectedError) {
+        return buildNotConnectedResult();
+      }
+      if (err instanceof NotionApiError) {
+        return buildApiErrorResult(err, 'notion_query_database');
+      }
+      return buildGenericErrorResult(err);
+    }
+
+    if (!page || page.type !== 'database') {
+      return buildUnauthorizedResult('notion_query_database');
+    }
+
     let entries;
     try {
       entries = await queryDatabase(

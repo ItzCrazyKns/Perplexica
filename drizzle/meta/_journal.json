@@ -36,6 +36,13 @@
       "when": 1786078239117,
       "tag": "0004_notion_pages_on_chats",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1786081349319,
+      "tag": "0005_notion_connections_singleton",
+      "breakpoints": true
     }
   ]
 }

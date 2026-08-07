@@ -25,30 +25,29 @@ export const upsertConnection = (
   db: NotionConnectionDb,
   input: UpsertNotionConnection,
 ): NotionConnection => {
-  const existing = getConnection(db);
   const now = new Date().toISOString();
 
-  if (existing) {
-    db.update(notionConnections)
-      .set({
+  // Conflict-safe: the `singleton` unique index (migration 0005) turns
+  // a second insert into an update, so concurrent OAuth flows can never
+  // create a second connection row.
+  db.insert(notionConnections)
+    .values({
+      workspaceId: input.workspaceId,
+      workspaceName: input.workspaceName,
+      encryptedToken: input.encryptedToken,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: notionConnections.singleton,
+      set: {
         workspaceId: input.workspaceId,
         workspaceName: input.workspaceName,
         encryptedToken: input.encryptedToken,
         updatedAt: now,
-      })
-      .where(eq(notionConnections.id, existing.id))
-      .run();
-  } else {
-    db.insert(notionConnections)
-      .values({
-        workspaceId: input.workspaceId,
-        workspaceName: input.workspaceName,
-        encryptedToken: input.encryptedToken,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .run();
-  }
+      },
+    })
+    .run();
 
   return getConnection(db)!;
 };
