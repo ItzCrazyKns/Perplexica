@@ -89,8 +89,11 @@ async function fetchBlocksAsText(
   }
 
   return parts.join('\n');
-}function blockToText(block: NotionBlock): string {
-  const content = (block as unknown as Record<string, { rich_text?: RichText[] }>)[block.type];
+}
+function blockToText(block: NotionBlock): string {
+  const content = (
+    block as unknown as Record<string, { rich_text?: RichText[] }>
+  )[block.type];
   if (content && Array.isArray(content.rich_text)) {
     return content.rich_text.map((t) => t.plain_text).join('');
   }

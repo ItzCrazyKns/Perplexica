@@ -22,6 +22,14 @@ export {
   request,
 } from './client';
 export {
+  getClientCredentials,
+  buildAuthorizeUrl,
+  exchangeCodeForToken,
+  NotionOAuthError,
+  type ClientCredentials,
+  type TokenExchangeResult,
+} from './oauth';
+export {
   listAuthorizedPages,
   searchNotionPages,
   fuzzyMatchPages,

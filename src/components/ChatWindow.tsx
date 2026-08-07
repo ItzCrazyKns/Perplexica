@@ -8,6 +8,8 @@ import { useChat } from '@/lib/hooks/useChat';
 import SettingsButtonMobile from './Settings/SettingsButtonMobile';
 import { Block } from '@/lib/types';
 import Loader from './ui/Loader';
+import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 export interface BaseMessage {
   chatId: string;
@@ -35,6 +37,18 @@ export interface Widget {
 
 const ChatWindow = () => {
   const { hasError, notFound, messages, isReady } = useChat();
+
+  useEffect(() => {
+    const status = new URLSearchParams(window.location.search).get('notion');
+    if (status) {
+      if (status === 'connected') {
+        toast.success('Notion connected.');
+      } else {
+        toast.error('Failed to connect Notion.');
+      }
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
 
   if (hasError) {
     return (
