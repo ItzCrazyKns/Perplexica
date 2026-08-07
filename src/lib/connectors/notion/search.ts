@@ -107,16 +107,33 @@ async function collectSearchResults(
   return results;
 }
 
+// The 2026-03-11 API filters by a single object value and requires
+// `in_trash`; there is no longer a combined "page or data source" value,
+// so list both separately and merge.
+const PAGE_FILTER = {
+  property: 'object',
+  value: 'page',
+  in_trash: false,
+} as const;
+const DATA_SOURCE_FILTER = {
+  property: 'object',
+  value: 'data_source',
+  in_trash: false,
+} as const;
+
 export async function listAuthorizedPages(
   db: NotionConnectionDb,
 ): Promise<AuthorizedPage[]> {
   const token = requireToken(db);
 
-  const results = await collectSearchResults(token, {
-    filter: { value: 'page_or_data_source', property: 'object' },
+  const pageResults = await collectSearchResults(token, {
+    filter: PAGE_FILTER,
+  });
+  const dataSourceResults = await collectSearchResults(token, {
+    filter: DATA_SOURCE_FILTER,
   });
 
-  return results.map(toAuthorizedPage);
+  return [...pageResults, ...dataSourceResults].map(toAuthorizedPage);
 }
 
 export async function searchNotionPages(

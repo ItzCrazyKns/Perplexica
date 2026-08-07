@@ -73,48 +73,85 @@ describe('client', () => {
 });
 
 describe('authorized pages', () => {
-  it('lists pages and data sources, extracting titles from both shapes', async () => {
-    mockFetchOnce({
-      results: [
-        {
-          id: 'p1',
-          object: 'page',
-          properties: {
-            Name: { type: 'title', title: [{ plain_text: 'Meeting Notes' }] },
-          },
-        },
-        {
-          id: 'd1',
-          object: 'database',
-          title: [{ plain_text: 'Projects DB' }],
-        },
-        {
-          id: 'ds1',
-          object: 'data_source',
-          name: 'Meeting Tasks',
-        },
-        {
-          id: 'p2',
-          object: 'page',
-          properties: { Other: { type: 'rich_text', rich_text: [] } },
-        },
-      ],
-      has_more: false,
-      next_cursor: null,
-    });
+  it('lists pages and data sources with two filtered searches', async () => {
+    const fetchMock = vi
+      .fn()
+      // First request: pages only.
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          results: [
+            {
+              id: 'p1',
+              object: 'page',
+              properties: {
+                Name: {
+                  type: 'title',
+                  title: [{ plain_text: 'Meeting Notes' }],
+                },
+              },
+            },
+            {
+              id: 'p2',
+              object: 'page',
+              properties: { Other: { type: 'rich_text', rich_text: [] } },
+            },
+          ],
+          has_more: false,
+          next_cursor: null,
+        }),
+      })
+      // Second request: data sources only (legacy `database` shape too).
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          results: [
+            {
+              id: 'd1',
+              object: 'database',
+              title: [{ plain_text: 'Projects DB' }],
+            },
+            {
+              id: 'ds1',
+              object: 'data_source',
+              name: 'Meeting Tasks',
+            },
+          ],
+          has_more: false,
+          next_cursor: null,
+        }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
 
     const pages = await listAuthorizedPages(db);
     expect(pages).toEqual([
       { id: 'p1', title: 'Meeting Notes', type: 'page' },
+      { id: 'p2', title: 'Untitled', type: 'page' },
       { id: 'd1', title: 'Projects DB', type: 'database' },
       { id: 'ds1', title: 'Meeting Tasks', type: 'database' },
-      { id: 'p2', title: 'Untitled', type: 'page' },
     ]);
+
+    // Each request uses the current filter and carries in_trash.
+    const body1 = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(body1.filter).toEqual({
+      property: 'object',
+      value: 'page',
+      in_trash: false,
+    });
+    const body2 = JSON.parse(fetchMock.mock.calls[1][1].body);
+    expect(body2.filter).toEqual({
+      property: 'object',
+      value: 'data_source',
+      in_trash: false,
+    });
   });
 
-  it('follows has_more and next_cursor to collect every authorized page', async () => {
+  it('follows has_more and next_cursor within each filtered search', async () => {
     const fetchMock = vi
       .fn()
+      // Pages: first page + cursor continuation.
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
@@ -136,6 +173,24 @@ describe('authorized pages', () => {
         ok: true,
         status: 200,
         json: async () => ({
+          results: [
+            {
+              id: 'p2',
+              object: 'page',
+              properties: {
+                Name: { type: 'title', title: [{ plain_text: 'Second page' }] },
+              },
+            },
+          ],
+          has_more: false,
+          next_cursor: null,
+        }),
+      })
+      // Data sources.
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
           results: [{ id: 'ds1', object: 'data_source', name: 'Second' }],
           has_more: false,
           next_cursor: null,
@@ -144,7 +199,7 @@ describe('authorized pages', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     const pages = await listAuthorizedPages(db);
-    expect(pages.map((p) => p.id)).toEqual(['p1', 'ds1']);
+    expect(pages.map((p) => p.id)).toEqual(['p1', 'p2', 'ds1']);
     // The second request carries the cursor in its body.
     const [, init2] = fetchMock.mock.calls[1];
     expect(JSON.parse(init2.body).start_cursor).toBe('cur1');
@@ -499,20 +554,38 @@ describe('authorized page resolution', () => {
   ];
 
   function mockAuthorizedSearch() {
-    mockFetchOnce({
-      results: [
-        {
-          id: 'p1',
-          object: 'page',
-          properties: {
-            Name: { type: 'title', title: [{ plain_text: 'Meeting Notes' }] },
-          },
-        },
-        { id: 'ds1', object: 'data_source', name: 'Tasks DB' },
-      ],
-      has_more: false,
-      next_cursor: null,
-    });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          results: [
+            {
+              id: 'p1',
+              object: 'page',
+              properties: {
+                Name: {
+                  type: 'title',
+                  title: [{ plain_text: 'Meeting Notes' }],
+                },
+              },
+            },
+          ],
+          has_more: false,
+          next_cursor: null,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          results: [{ id: 'ds1', object: 'data_source', name: 'Tasks DB' }],
+          has_more: false,
+          next_cursor: null,
+        }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
   }
 
   it('filterAuthorizedPages keeps only shared pages, with server titles', async () => {
