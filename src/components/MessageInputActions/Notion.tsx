@@ -44,15 +44,6 @@ const Notion = () => {
     }
   }, []);
 
-  const [opened, setOpened] = useState(false);
-
-  // Fetch lazily the first time the popover is opened.
-  useEffect(() => {
-    if (opened && (pages.length === 0 || notConnected)) {
-      fetchPages();
-    }
-  }, [opened, pages.length, notConnected, fetchPages]);
-
   const togglePage = (page: AuthorizedPage) => {
     const selected = notionPages.some((p) => p.id === page.id);
     setNotionPages(
@@ -68,10 +59,8 @@ const Notion = () => {
     <Popover className="relative">
       {({ open }) => (
         <>
-          <PopoverButton
-            onClick={() => setOpened(true)}
-            className="relative flex items-center justify-center active:border-none hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg focus:outline-none text-black/50 dark:text-white/50 active:scale-95 transition duration-200 hover:text-black dark:hover:text-white"
-          >
+          <FetchOnOpen open={open} onFetch={fetchPages} />
+          <PopoverButton className="relative flex items-center justify-center active:border-none hover:bg-light-200 hover:dark:bg-dark-200 p-2 rounded-lg focus:outline-none text-black/50 dark:text-white/50 active:scale-95 transition duration-200 hover:text-black dark:hover:text-white">
             <SiNotion
               size={16}
               className={notionPages.length > 0 ? 'text-sky-500' : ''}
@@ -180,6 +169,25 @@ const Notion = () => {
       )}
     </Popover>
   );
+};
+
+/**
+ * Fetches exactly once per popover open transition. Keyed on the
+ * headless-ui `open` flag (not on pages/notConnected), so a failed or
+ * not-connected load can never retrigger itself in a loop.
+ */
+const FetchOnOpen = ({
+  open,
+  onFetch,
+}: {
+  open: boolean;
+  onFetch: () => void;
+}) => {
+  useEffect(() => {
+    if (open) onFetch();
+  }, [open, onFetch]);
+
+  return null;
 };
 
 export default Notion;

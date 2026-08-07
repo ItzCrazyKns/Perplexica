@@ -26,15 +26,22 @@ export const GET = async (req: Request) => {
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
 
+  // CSRF check first — on success AND on the error path: an attacker who
+  // cannot supply the matching state must not be able to abort an
+  // in-progress authorization by hitting `?error=...`.
+  const cookieStore = await cookies();
+  const expectedState = cookieStore.get('notion_oauth_state')?.value;
+
+  if (!state || !expectedState || state !== expectedState) {
+    return redirectHome(req, 'error');
+  }
+
+  // Notion echoes the state back, so a legitimate denial carries it too.
   if (url.searchParams.get('error')) {
     return redirectHome(req, 'error');
   }
 
-  // CSRF check: the state must match the cookie set by /api/notion/auth.
-  const cookieStore = await cookies();
-  const expectedState = cookieStore.get('notion_oauth_state')?.value;
-
-  if (!code || !state || !expectedState || state !== expectedState) {
+  if (!code) {
     return redirectHome(req, 'error');
   }
 

@@ -12,14 +12,14 @@
 - **待處理**：P1 × 6、P2 × 27、P3 × 4。
 - **誤報/過時**：2 則（無需處理）。
 
-| 類別            | 數量                                               | 狀態                                  |
-| --------------- | -------------------------------------------------- | ------------------------------------- |
-| P1 已修         | 12                                                 | ✅ `d78d82f` + P1 待辦六條修復 commit |
-| P1 待辦         | 0                                                  | —                                     |
-| P2 已修         | 4                                                  | ✅ `d78d82f`                          |
-| P2 待辦         | 27                                                 | ⏳ 部分可併入 PR2                     |
-| P3 待辦         | 4                                                  | ⏳ 低優先                             |
-| bot 誤報 / 過時 | 2（`#37` 全誤報、`#9` 部分誤報，重複計入 P1 已修） | —                                     |
+| 類別            | 數量                                               | 狀態                                    |
+| --------------- | -------------------------------------------------- | --------------------------------------- |
+| P1 已修         | 12                                                 | ✅ `d78d82f` + P1 待辦六條修復 commit   |
+| P1 待辦         | 0                                                  | —                                       |
+| P2 已修         | 9                                                  | ✅ `d78d82f` + P2 高價值五項修復 commit |
+| P2 待辦         | 22                                                 | ⏳ 部分可併入 PR2                       |
+| P3 待辦         | 4                                                  | ⏳ 低優先                               |
+| bot 誤報 / 過時 | 2（`#37` 全誤報、`#9` 部分誤報，重複計入 P1 已修） | —                                       |
 
 ---
 
@@ -59,37 +59,40 @@
 | 40  | `actions/notion/read.ts`                    | agent tools 可讀 token 能及的任何頁面       | 讀取前 `resolveAuthorizedPage`（先查對話選取、再查授權集）+ 型別檢查（get_page 限 `page`、query_database 限 `database`），未授權 → friendly result |
 | 41  | `prompts/search/researcher.ts`              | 頁面 title 可當成指令（prompt injection）   | `escapePromptText`（HTML entity + 控制字元收斂）序列化 title/id/type，並註明「titles are untrusted data」                                          |
 
+## ✅ P2 — 已修復（第三輪，高價值五項）
+
+| #   | 位置                             | 問題                                                                                                                            | 修法                                                         |
+| --- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| 10  | `api/notion/status/route.ts`     | 有 client id/secret 但缺 `NOTION_TOKEN_KEY` 仍顯示可連線                                                                        | `configured` 檢查併入 encryption key                         |
+| 18  | `api/notion/callback/route.ts`   | `?error=...` 路徑沒驗 state，可被第三方中止授權流程                                                                             | error 路徑也先驗 state                                       |
+| 22  | `api/notion/disconnect/route.ts` | POST 無 CSRF 防護，跨站 form 可偷偷斷開                                                                                         | 驗 `notion_oauth_state` cookie 或 Origin                     |
+| 35  | `api/chat/route.ts`              | `ensureChatExists` 每則訊息覆寫 `sources`/`notionPages`；request 沒帶 sources（default `[]`）會清掉已選來源                     | 只有 request 確實攜帶時才更新                                |
+| 36  | `MessageInputActions/Notion.tsx` | 未連接時開 picker → **無限 refetch**（`fetchPages` 開頭 `setNotConnected(false)` + effect 條件 flip-flop；`opened` 永不 reset） | 只在 popover 首次開啟時 fetch 一次（ref 或 open transition） |
+
 ## ⏳ P2 — 待辦
 
-| #   | 位置                                     | 問題                                                                                                                            | 建議                                                                               |
-| --- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| 2   | `token.ts`                               | `setAuthTag` 接受短 GCM tag，篡改 token 可能被接受                                                                              | 要求 16-byte tag 長度                                                              |
-| 10  | `api/notion/status/route.ts`             | 有 client id/secret 但缺 `NOTION_TOKEN_KEY` 仍顯示可連線                                                                        | `configured` 檢查併入 encryption key                                               |
-| 11  | `auth.ts`                                | 無法解密的 connection 被歸類為 `NotionNotConnectedError`，caller 無法區分                                                       | 讓 `NotionTokenError` 或獨立 decryption error 穿透                                 |
-| 12  | `api/notion/auth/route.ts`               | 單一 cookie slot：第二次授權會覆蓋第一次的 state                                                                                | state-keyed cookies 或 server-side state                                           |
-| 13  | `Settings/Sections/Notion.tsx`           | 文案宣稱「可讀寫」，但寫入在 PR2                                                                                                | 改 read-only 文案                                                                  |
-| 14  | `Settings/Sections/Notion.tsx`           | `/api/notion/status` 失敗時無限轉圈                                                                                             | 分離 error/loading state，提供 retry                                               |
-| 18  | `api/notion/callback/route.ts`           | `?error=...` 路徑沒驗 state，可被第三方中止授權流程                                                                             | error 路徑也先驗 state                                                             |
-| 19  | `ChatWindow.tsx`                         | 清 query params 時把 `?q=` 等 deep link 狀態也清掉                                                                              | 只刪 `notion` param                                                                |
-| 20  | `Settings/Sections/Notion.tsx`           | 連接後整個 Settings dialog 被導航毀掉，回來落在首頁                                                                             | 新分頁開 OAuth + poll，或回跳保留 dialog                                           |
-| 22  | `api/notion/disconnect/route.ts`         | POST 無 CSRF 防護，跨站 form 可偷偷斷開                                                                                         | 驗 `notion_oauth_state` cookie 或 Origin                                           |
-| 23  | `api/notion/status/route.ts`             | 未認證即可讀 workspaceId/Name                                                                                                   | 限 origin 或只回 boolean `connected`                                               |
-| 27  | `useChat.tsx`                            | 純 `@Notion` 送出後 content 為空 → 400 + 卡住的 composer                                                                        | client 端拒絕空 `finalContent.trim()`                                              |
-| 28  | `useChat.tsx`                            | 未解析到頁面的 `@Notion` 啟動只作用於當次 POST，未持久化                                                                        | 啟動狀態獨立於 selected pages 持久化                                               |
-| 29  | `EmptyChatMessageInput.tsx`              | 頁面移除按鈕無 aria-label                                                                                                       | 加 `aria-label={Remove ${page.title}}`                                             |
-| 30  | `EmptyChatMessageInput.tsx`/`Notion.tsx` | picker 內 Enter 會送出表單                                                                                                      | stopPropagation 或只綁 textarea                                                    |
-| 31  | `fuzzy.ts`                               | 長 partial prefix 可能高於 exact-match 100 分                                                                                   | leading 分數 cap 在 89                                                             |
-| 32  | `mention.ts`                             | `.replace(/\s{2,}/g,' ')` 吃掉全文多餘空白（含 markdown 換行）                                                                  | 只收斂因剝離 marker 產生的空白                                                     |
-| 33  | `mention.ts`                             | 模糊 hint 低信心也直接綁定第一個結果                                                                                            | 需要 unambiguous/high-confidence 才綁定，否則交由再確認                            |
-| 34  | `api/notion/pages/route.ts`              | 401/403 回 502，UI 顯示泛用錯誤                                                                                                 | 映射到 409（disconnected）讓 UI 給 reconnect 路徑                                  |
-| 35  | `api/chat/route.ts`                      | `ensureChatExists` 每則訊息覆寫 `sources`/`notionPages`；request 沒帶 sources（default `[]`）會清掉已選來源                     | 只有 request 確實攜帶時才更新                                                      |
-| 36  | `MessageInputActions/Notion.tsx`         | 未連接時開 picker → **無限 refetch**（`fetchPages` 開頭 `setNotConnected(false)` + effect 條件 flip-flop；`opened` 永不 reset） | 只在 popover 首次開啟時 fetch 一次（ref 或 open transition）                       |
-| 42  | `AssistantSteps.tsx`                     | 失敗的 notion search 被算成 1 個成功結果                                                                                        | 排除 sentinel 或顯示 distinct 標題                                                 |
-| 43  | `actions/notion/results.ts`              | error 回傳後 Research Progress 卡在「Searching Notion」                                                                         | error 時發終止 substep                                                             |
-| 44  | `researcher/index.ts`                    | researcher 直接 import db singleton，測試/其他 caller 依賴真實 DB                                                               | 透過 `ResearcherInput`/`SearchAgentConfig` 注入（tools 已 DI；剩下 researcher 層） |
-| 46  | `search.ts`                              | `data_source` 只讀 `name`，若 API 給 `title` 會顯示 Untitled                                                                    | 同時讀 `title`（fallback `name`）                                                  |
-| 47  | `pages.ts`                               | 截斷復原的 subtree 文字全部附在文末，失去原始順序                                                                               | 依 `unknown_block_ids` 在 markdown 中的位置原位重建                                |
-| 48  | `pages.ts`                               | `truncated=false` 但存在 unsupported blocks 時會跳過其 `unknown_block_ids`                                                      | 獨立於 truncation flag 處理 unknown ids，unsupported type 走 blocks fallback       |
+| 2 | `token.ts` | `setAuthTag` 接受短 GCM tag，篡改 token 可能被接受 | 要求 16-byte tag 長度 |
+| 11 | `auth.ts` | 無法解密的 connection 被歸類為 `NotionNotConnectedError`，caller 無法區分 | 讓 `NotionTokenError` 或獨立 decryption error 穿透 |
+| 12 | `api/notion/auth/route.ts` | 單一 cookie slot：第二次授權會覆蓋第一次的 state | state-keyed cookies 或 server-side state |
+| 13 | `Settings/Sections/Notion.tsx` | 文案宣稱「可讀寫」，但寫入在 PR2 | 改 read-only 文案 |
+| 14 | `Settings/Sections/Notion.tsx` | `/api/notion/status` 失敗時無限轉圈 | 分離 error/loading state，提供 retry |
+| 19 | `ChatWindow.tsx` | 清 query params 時把 `?q=` 等 deep link 狀態也清掉 | 只刪 `notion` param |
+| 20 | `Settings/Sections/Notion.tsx` | 連接後整個 Settings dialog 被導航毀掉，回來落在首頁 | 新分頁開 OAuth + poll，或回跳保留 dialog |
+| 23 | `api/notion/status/route.ts` | 未認證即可讀 workspaceId/Name | 限 origin 或只回 boolean `connected` |
+| 27 | `useChat.tsx` | 純 `@Notion` 送出後 content 為空 → 400 + 卡住的 composer | client 端拒絕空 `finalContent.trim()` |
+| 28 | `useChat.tsx` | 未解析到頁面的 `@Notion` 啟動只作用於當次 POST，未持久化 | 啟動狀態獨立於 selected pages 持久化 |
+| 29 | `EmptyChatMessageInput.tsx` | 頁面移除按鈕無 aria-label | 加 `aria-label={Remove ${page.title}}` |
+| 30 | `EmptyChatMessageInput.tsx`/`Notion.tsx` | picker 內 Enter 會送出表單 | stopPropagation 或只綁 textarea |
+| 31 | `fuzzy.ts` | 長 partial prefix 可能高於 exact-match 100 分 | leading 分數 cap 在 89 |
+| 32 | `mention.ts` | `.replace(/\s{2,}/g,' ')` 吃掉全文多餘空白（含 markdown 換行） | 只收斂因剝離 marker 產生的空白 |
+| 33 | `mention.ts` | 模糊 hint 低信心也直接綁定第一個結果 | 需要 unambiguous/high-confidence 才綁定，否則交由再確認 |
+| 34 | `api/notion/pages/route.ts` | 401/403 回 502，UI 顯示泛用錯誤 | 映射到 409（disconnected）讓 UI 給 reconnect 路徑 |
+| 42 | `AssistantSteps.tsx` | 失敗的 notion search 被算成 1 個成功結果 | 排除 sentinel 或顯示 distinct 標題 |
+| 43 | `actions/notion/results.ts` | error 回傳後 Research Progress 卡在「Searching Notion」 | error 時發終止 substep |
+| 44 | `researcher/index.ts` | researcher 直接 import db singleton，測試/其他 caller 依賴真實 DB | 透過 `ResearcherInput`/`SearchAgentConfig` 注入（tools 已 DI；剩下 researcher 層） |
+| 46 | `search.ts` | `data_source` 只讀 `name`，若 API 給 `title` 會顯示 Untitled | 同時讀 `title`（fallback `name`） |
+| 47 | `pages.ts` | 截斷復原的 subtree 文字全部附在文末，失去原始順序 | 依 `unknown_block_ids` 在 markdown 中的位置原位重建 |
+| 48 | `pages.ts` | `truncated=false` 但存在 unsupported blocks 時會跳過其 `unknown_block_ids` | 獨立於 truncation flag 處理 unknown ids，unsupported type 走 blocks fallback |
 
 ## ⏳ P3 — 待辦
 
@@ -150,14 +153,24 @@ Thanks for the thorough review. Here's where things stand:
   set, and `notion_get_page`/`notion_query_database` refuse anything
   unselected or unshared.
 - Page titles are escaped and marked as untrusted data before entering
-  the researcher prompt, closing the injection hole.
+  the researcher prompt, closing the injection hole.**Still open:**
+- P2/P3: 22 P2 + 4 P3 items are tracked in `docs/review-fixes.md`
+  (token tag length, OAuth multi-state cookies, status error/retry UI,
+  settings copy, deep-link handling, and more).
 
-**Still open:**
+**P2s — fixed in the third round**
 
-- P2/P3: 27 P2 + 4 P3 items are tracked in `docs/review-fixes.md`
-  (token tag length, `NOTION_TOKEN_KEY` in the configured check, OAuth
-  multi-state cookies, callback/disconnect CSRF, status error/retry UI,
-  picker infinite-refetch loop, and more).
+- `/api/notion/status` now reports `configured: false` when
+  `NOTION_TOKEN_KEY` is missing.
+- The OAuth callback validates the CSRF state on the error path too,
+  so a third party can no longer abort an in-progress authorization.
+- `/api/notion/disconnect` rejects cross-origin POSTs (Origin/Referer
+  same-origin check).
+- The chat API no longer defaults omitted `sources`/`notionPages` to
+  `[]` — a message that omits them can no longer wipe the persisted
+  per-chat selection.
+- The picker fetches once per popover open; the not-connected
+  infinite-refetch loop is gone.
 ```
 
 ---
@@ -166,4 +179,5 @@ Thanks for the thorough review. Here's where things stand:
 
 - `d78d82f` — fix(notion): align read connector with the current Notion API（P1 ×6 + P2 ×4）
 - P1 待辦六條修復 commit — fix(notion): enforce connection invariant, fuzzy conflicts, and per-conversation read scope（P1 ×6）
+- P2 高價值四項修復 commit — fix(notion): prevent source wipe, picker refetch loop, and OAuth CSRF gaps（P2 ×5）
 - 剩餘 P2/P3 → 併入 PR2 或後續 PR

@@ -41,7 +41,10 @@ const bodySchema = z.object({
   optimizationMode: z.enum(['speed', 'balanced', 'quality'], {
     message: 'Optimization mode must be one of: speed, balanced, quality',
   }),
-  sources: z.array(z.string()).optional().default([]),
+  // sources / notionPages are optional WITHOUT a default: an omitted
+  // field must not be confused with an explicit empty list (it would
+  // wipe the chat's persisted selection on every message).
+  sources: z.array(z.string()).optional(),
   history: z
     .array(z.tuple([z.string(), z.string()]))
     .optional()
@@ -55,8 +58,7 @@ const bodySchema = z.object({
         type: z.enum(['page', 'database']),
       }),
     )
-    .optional()
-    .default([]),
+    .optional(),
   chatModel: chatModelSchema,
   embeddingModel: embeddingModelSchema,
   systemInstructions: z.string().nullable().optional().default(''),
@@ -85,10 +87,10 @@ const safeValidateBody = (data: unknown) => {
 
 const ensureChatExists = async (input: {
   id: string;
-  sources: SearchSources[];
+  sources?: SearchSources[];
   query: string;
   fileIds: string[];
-  notionPages: AuthorizedPage[];
+  notionPages?: AuthorizedPage[];
 }) => {
   try {
     const exists = await db.query.chats
@@ -101,7 +103,7 @@ const ensureChatExists = async (input: {
       await db.insert(chats).values({
         id: input.id,
         createdAt: new Date().toISOString(),
-        sources: input.sources,
+        sources: input.sources ?? [],
         title: input.query,
         files: input.fileIds.map((id) => {
           return {
@@ -109,18 +111,26 @@ const ensureChatExists = async (input: {
             name: UploadManager.getFile(id)?.name || 'Uploaded File',
           };
         }),
-        notionPages: input.notionPages,
+        notionPages: input.notionPages ?? [],
       });
     } else {
-      // Keep per-chat sources and Notion pages in sync with the latest message.
-      await db
-        .update(chats)
-        .set({
-          sources: input.sources,
-          notionPages: input.notionPages,
-        })
-        .where(eq(chats.id, input.id))
-        .execute();
+      // Keep per-chat sources / Notion pages in sync — but only for
+      // fields the request actually carried, so an omitted field never
+      // wipes the persisted selection (e.g. a message sent before the
+      // chat state has loaded).
+      const update: Partial<typeof chats.$inferInsert> = {};
+      if (input.sources !== undefined) update.sources = input.sources;
+      if (input.notionPages !== undefined) {
+        update.notionPages = input.notionPages;
+      }
+
+      if (Object.keys(update).length > 0) {
+        await db
+          .update(chats)
+          .set(update)
+          .where(eq(chats.id, input.id))
+          .execute();
+      }
     }
   } catch (err) {
     console.error('Failed to check/save chat:', err);
@@ -143,11 +153,13 @@ export const POST = async (req: Request) => {
     const body = parseBody.data as Body;
     const { message } = body;
 
+    const sources = (body.sources ?? []) as SearchSources[];
+    let notionPages = (body.notionPages ?? []) as AuthorizedPage[];
+
     // Server-side validation: only persist pages genuinely shared with
     // the OAuth connection (ADR-0001). Best-effort — on Notion API
     // errors we keep the caller's pages and let the agent tools re-verify
     // per read before touching the connector.
-    let notionPages = body.notionPages as AuthorizedPage[];
     if (notionPages.length > 0) {
       try {
         notionPages = await filterAuthorizedPages(db, notionPages);
@@ -262,7 +274,7 @@ export const POST = async (req: Request) => {
       config: {
         llm,
         embedding: embedding,
-        sources: body.sources as SearchSources[],
+        sources,
         mode: body.optimizationMode,
         fileIds: body.files,
         systemInstructions: body.systemInstructions || 'None',
@@ -272,7 +284,7 @@ export const POST = async (req: Request) => {
 
     ensureChatExists({
       id: body.message.chatId,
-      sources: body.sources as SearchSources[],
+      sources,
       fileIds: body.files,
       query: body.message.content,
       notionPages,
