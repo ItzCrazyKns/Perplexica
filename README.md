@@ -92,7 +92,11 @@ This will pull and start the Vane container with the bundled SearxNG search engi
 
 **Note**: The image includes both Vane and SearxNG, so no additional setup is required — no `SEARXNG_API_URL` needed (SearxNG listens on `localhost:8080` inside the container). The `-v` flags create persistent volumes for your data and uploaded files.
 
-**Notion connector**: to use `@Notion 頁面名`, add your integration credentials with `-e NOTION_CLIENT_ID=... -e NOTION_CLIENT_SECRET=... -e NOTION_TOKEN_KEY=...` (or an `--env-file`). See the [Notion Connector](#-notion-connector) section below for how to create the integration and choose the encryption key.
+**With the Notion connector** — to use `@Notion 頁面名`, run with your integration credentials (replace the `YOUR_NOTION_*` values; see the [Notion Connector](#-notion-connector) section below for how to create the integration and choose the encryption key):
+
+```bash
+docker run -d -p 3000:3000 -e NOTION_CLIENT_ID=YOUR_NOTION_CLIENT_ID -e NOTION_CLIENT_SECRET=YOUR_NOTION_CLIENT_SECRET -e NOTION_TOKEN_KEY=YOUR_NOTION_TOKEN_KEY -v vane-data:/home/vane/data --name vane penny13692018/vane:latest
+```
 
 #### Using Vane with Your Own SearxNG Instance
 
