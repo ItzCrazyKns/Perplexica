@@ -73,9 +73,14 @@ const Notion = () => {
           </PopoverButton>
           <AnimatePresence>
             {open && (
+              /* Floating-UI anchoring (auto flip + shift): the follow-up
+                 input bar sits at the bottom edge of the viewport, so a
+                 hard-coded "absolute right-0" panel would render off-screen.
+                 anchor keeps it visible no matter which layout it's in. */
               <PopoverPanel
                 static
-                className="absolute z-10 w-64 md:w-[300px] right-0"
+                anchor={{ to: 'bottom end', gap: '8px' }}
+                className="z-10 w-64 md:w-[300px]"
               >
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}

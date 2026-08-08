@@ -627,29 +627,189 @@ describe('authorized page resolution', () => {
 
 describe('searchNotionPages', () => {
   it('searches pages by query text, mapping data sources to databases', async () => {
-    mockFetchOnce({
-      results: [
-        {
-          id: 'p1',
-          object: 'page',
-          properties: {
-            Name: { type: 'title', title: [{ plain_text: 'Meeting Notes' }] },
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        results: [
+          {
+            id: 'p1',
+            object: 'page',
+            properties: {
+              Name: { type: 'title', title: [{ plain_text: 'Meeting Notes' }] },
+            },
           },
-        },
-        {
-          id: 'ds1',
-          object: 'data_source',
-          name: 'Meeting Tasks',
-        },
-      ],
-      has_more: false,
-      next_cursor: null,
+          {
+            id: 'ds1',
+            object: 'data_source',
+            name: 'Meeting Tasks',
+          },
+        ],
+        has_more: false,
+        next_cursor: null,
+      }),
     });
+    vi.stubGlobal('fetch', fetchMock);
 
     const pages = await searchNotionPages(db, 'meeting');
     expect(pages).toEqual([
       { id: 'p1', title: 'Meeting Notes', type: 'page' },
       { id: 'ds1', title: 'Meeting Tasks', type: 'database' },
+    ]);
+    // A strong title match was found on the first pass — no retry.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries with a whitespace-stripped query when CJK spaces hide the exact title', async () => {
+    const fetchMock = vi
+      .fn()
+      // Raw (spaced) query: Notion ranks an incidental content match first.
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          results: [
+            {
+              id: 'wrong',
+              object: 'page',
+              properties: {
+                Name: {
+                  type: 'title',
+                  title: [
+                    { plain_text: '2026-06-29筆記 UX設計思維與產品開發流程' },
+                  ],
+                },
+              },
+            },
+          ],
+          has_more: false,
+          next_cursor: null,
+        }),
+      })
+      // Stripped query: the exact-title page surfaces.
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          results: [
+            {
+              id: 'exact',
+              object: 'page',
+              properties: {
+                Name: {
+                  type: 'title',
+                  title: [{ plain_text: '塔羅牌App開發BDD架構' }],
+                },
+              },
+            },
+          ],
+          has_more: false,
+          next_cursor: null,
+        }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const pages = await searchNotionPages(db, '塔羅牌 App 開發 BDD 架構');
+    // The exact-title page must come first despite Notion ranking the
+    // content match above it on the raw query; the incidental content
+    // match is preserved below it (never dropped, never promoted).
+    expect(pages.map((p) => p.id)).toEqual(['exact', 'wrong']);
+    expect(pages[0].title).toBe('塔羅牌App開發BDD架構');
+    // Second request re-searched with the whitespace-stripped variant.
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).query).toBe(
+      '塔羅牌App開發BDD架構',
+    );
+  });
+
+  it('does not let the listing fallback swallow legitimate weak matches', async () => {
+    // A query like "UX" only matches titles by word-containment (score 30
+    // — below the strong threshold). The API returns those pages; the
+    // fallback listing finds nothing stronger, so the weak matches must
+    // still be returned, not replaced by an empty result.
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          results: [
+            {
+              id: 'ux1',
+              object: 'page',
+              properties: {
+                Name: {
+                  type: 'title',
+                  title: [
+                    { plain_text: '2026-06-29筆記 UX設計思維與產品開發流程' },
+                  ],
+                },
+              },
+            },
+          ],
+          has_more: false,
+          next_cursor: null,
+        }),
+      })
+      // Fallback listing: pages filter (empty), data sources filter (empty).
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ results: [], has_more: false, next_cursor: null }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ results: [], has_more: false, next_cursor: null }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const pages = await searchNotionPages(db, 'UX');
+    expect(pages.map((p) => p.id)).toEqual(['ux1']);
+  });
+
+  it('falls back to the authorized set when the API search misses the page', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ results: [], has_more: false, next_cursor: null }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ results: [], has_more: false, next_cursor: null }),
+      })
+      // Listing: the pages-filtered search returns the page the API
+      // full-text search missed.
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          results: [
+            {
+              id: 'p1',
+              object: 'page',
+              properties: {
+                Name: { type: 'title', title: [{ plain_text: 'Meeting Notes' }] },
+              },
+            },
+          ],
+          has_more: false,
+          next_cursor: null,
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ results: [], has_more: false, next_cursor: null }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const pages = await searchNotionPages(db, 'Meeting Note');
+    expect(pages).toEqual([
+      { id: 'p1', title: 'Meeting Notes', type: 'page' },
     ]);
   });
 });

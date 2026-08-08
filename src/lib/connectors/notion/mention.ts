@@ -1,4 +1,4 @@
-import { fuzzyMatchPages } from './fuzzy';
+import { fuzzyMatchPages, stripSurroundingQuotes } from './fuzzy';
 import type { AuthorizedPage } from './types';
 
 /**
@@ -40,7 +40,10 @@ export function parseNotionMentions(content: string): {
         boundaryIndex === -1 ? rest : rest.slice(0, boundaryIndex)
       ).trim();
 
-      if (hint) names.push(hint);
+      const cleanedHint = stripSurroundingQuotes(hint);
+      // A hint of only quote characters strips to '' — don't let an empty
+      // name through (it would render as a "找不到頁面「」" toast).
+      if (cleanedHint) names.push(cleanedHint);
 
       return ''; // Strip the marker only; the hint text stays in the message.
     })

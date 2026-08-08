@@ -2,7 +2,13 @@ import type { NotionConnectionDb } from './store';
 import { NotionNotConnectedError, getAccessToken } from './auth';
 import { request, type RequestOptions } from './client';
 import type { AuthorizedPage } from './types';
-import { fuzzyMatchPages } from './fuzzy';
+import {
+  fuzzyMatchPages,
+  fuzzyRankPages,
+  FUZZY_STRONG_SCORE,
+  stripSurroundingQuotes,
+  type FuzzyPageMatch,
+} from './fuzzy';
 
 export { fuzzyMatchPages };
 
@@ -142,9 +148,52 @@ export async function searchNotionPages(
 ): Promise<AuthorizedPage[]> {
   const token = requireToken(db);
 
-  const results = await collectSearchResults(token, { query });
+  const cleaned = stripSurroundingQuotes(query).trim();
+  if (!cleaned) return [];
 
-  return results.map(toAuthorizedPage);
+  // Notion's full-text search tokenizes the query: a CJK title without
+  // spaces ("塔羅牌App開發BDD架構") is a single token, so user-typed spaces
+  // ("塔羅牌 App 開發 BDD 架構") can rank an incidental content match above
+  // the exact-title page — or miss the page entirely. Search the raw
+  // query, re-rank results by title similarity, retry with a
+  // whitespace-stripped variant when nothing matches the title strongly,
+  // and finally fall back to the deterministic local match over the
+  // authorized set (the same match the UI picker selection uses).
+  const byId = new Map<string, AuthorizedPage>();
+
+  await collectSearchResultsInto(byId, token, { query: cleaned });
+  let ranked = fuzzyRankPages([...byId.values()], cleaned);
+
+  const normalized = cleaned.replace(/\s+/g, '');
+  if (!hasStrongTitleMatch(ranked) && normalized !== cleaned) {
+    await collectSearchResultsInto(byId, token, { query: normalized });
+    ranked = fuzzyRankPages([...byId.values()], cleaned);
+  }
+
+  if (!hasStrongTitleMatch(ranked)) {
+    const listed = await listAuthorizedPages(db);
+    const local = fuzzyRankPages(listed, cleaned);
+    if (local.some((match) => match.score >= FUZZY_STRONG_SCORE)) {
+      return local.map((match) => match.page);
+    }
+  }
+
+  return ranked.map((match) => match.page);
+}
+
+function hasStrongTitleMatch(ranked: FuzzyPageMatch[]): boolean {
+  return ranked.some((match) => match.score >= FUZZY_STRONG_SCORE);
+}
+
+async function collectSearchResultsInto(
+  byId: Map<string, AuthorizedPage>,
+  token: string,
+  body: Record<string, unknown>,
+): Promise<void> {
+  for (const result of await collectSearchResults(token, body)) {
+    const page = toAuthorizedPage(result);
+    if (!byId.has(page.id)) byId.set(page.id, page);
+  }
 }
 
 /**

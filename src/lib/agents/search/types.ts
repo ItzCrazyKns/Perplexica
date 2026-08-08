@@ -51,6 +51,8 @@ export type ClassifierInput = {
   enabledSources: SearchSources[];
   query: string;
   chatHistory: ChatTurnMessage[];
+  /** Pages/databases selected for this conversation (ADR-0001). */
+  notionPages?: AuthorizedPage[];
 };
 
 export type ClassifierOutput = {

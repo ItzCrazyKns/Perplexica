@@ -57,6 +57,7 @@ class SearchAgent {
       enabledSources: input.config.sources,
       query: input.followUp,
       llm: input.config.llm,
+      notionPages: input.config.notionPages,
     });
 
     const widgetPromise = WidgetExecutor.executeAll({

@@ -266,21 +266,31 @@ export const POST = async (req: Request) => {
       }
     });
 
-    agent.searchAsync(session, {
-      chatHistory: history,
-      followUp: message.content,
-      chatId: body.message.chatId,
-      messageId: body.message.messageId,
-      config: {
-        llm,
-        embedding: embedding,
-        sources,
-        mode: body.optimizationMode,
-        fileIds: body.files,
-        systemInstructions: body.systemInstructions || 'None',
-        notionPages,
-      },
-    });
+    agent
+      .searchAsync(session, {
+        chatHistory: history,
+        followUp: message.content,
+        chatId: body.message.chatId,
+        messageId: body.message.messageId,
+        config: {
+          llm,
+          embedding: embedding,
+          sources,
+          mode: body.optimizationMode,
+          fileIds: body.files,
+          systemInstructions: body.systemInstructions || 'None',
+          notionPages,
+        },
+      })
+      .catch((err: unknown) => {
+        // Fire-and-forget by design: without this, an early failure in the
+        // agent (classify, db, LLM) leaves the response stream open forever
+        // and the UI stuck on "answering" with no content.
+        console.error('Agent search failed:', err);
+        session.emit('error', {
+          data: 'Something went wrong while processing your request. Please try again.',
+        });
+      });
 
     ensureChatExists({
       id: body.message.chatId,

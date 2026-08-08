@@ -38,6 +38,23 @@ describe('parseNotionMentions', () => {
     expect(names).toEqual(['會議筆記']);
   });
 
+  it('strips surrounding quotes from the name hint', () => {
+    const { cleaned, names } = parseNotionMentions(
+      '用 @Notion "會議筆記"，幫我總結',
+    );
+    // Only the marker is stripped; the quoted text stays in the message.
+    expect(cleaned).toBe('用 "會議筆記"，幫我總結');
+    expect(names).toEqual(['會議筆記']);
+  });
+
+  it('strips corner brackets from the name hint', () => {
+    const { cleaned, names } = parseNotionMentions(
+      '用 @Notion 「會議筆記」，幫我總結',
+    );
+    expect(cleaned).toBe('用 「會議筆記」，幫我總結');
+    expect(names).toEqual(['會議筆記']);
+  });
+
   it('handles multiple mentions', () => {
     const { cleaned, names } = parseNotionMentions(
       '@Notion Meeting Notes 和 @Notion 產品路線圖 的重點？',
@@ -92,5 +109,38 @@ describe('resolveMention', () => {
 
   it('returns null when nothing matches', () => {
     expect(resolveMention(pages, 'xyzzy')).toBeNull();
+  });
+
+  it('resolves a name wrapped in quotes or corner brackets', () => {
+    const cjk: AuthorizedPage[] = [
+      { id: 't1', title: '塔羅牌App開發BDD架構', type: 'page' },
+    ];
+    expect(resolveMention(cjk, '"塔羅牌App開發BDD架構"')?.id).toBe('t1');
+    expect(resolveMention(cjk, '「塔羅牌App開發BDD架構」')?.id).toBe('t1');
+    expect(resolveMention(cjk, '『塔羅牌App開發BDD架構』')?.id).toBe('t1');
+    expect(resolveMention(pages, '"Meeting Notes"')?.id).toBe('p1');
+  });
+
+  it('resolves a quoted name with trailing hint text', () => {
+    // A boundary after the closing quote leaves a stray quote mid-hint.
+    expect(resolveMention(pages, '"Meeting Notes" 和')?.id).toBe('p1');
+  });
+
+  it('does not create a match from a quote-only token', () => {
+    // A quote-only word must not vacuously satisfy leading-word matching
+    // (''.startsWith is always true) and let a conflicting word slip
+    // through: "Meeting \" Notes" must NOT match "Meeting Budget".
+    const budget: AuthorizedPage[] = [
+      { id: 'b1', title: 'Meeting Budget', type: 'page' },
+    ];
+    expect(resolveMention(budget, 'Meeting " Notes')?.id).toBeUndefined();
+    expect(resolveMention(pages, '"')?.id).toBeUndefined();
+    expect(resolveMention(pages, '""')?.id).toBeUndefined();
+  });
+
+  it('drops a hint that strips to only quotes', () => {
+    const { cleaned, names } = parseNotionMentions('@Notion ""');
+    expect(cleaned).toBe('""');
+    expect(names).toEqual([]);
   });
 });
