@@ -31,7 +31,7 @@ From the user's perspective:
 13. As a user, I want Vane to append new content to a page I named, so that notes can grow from a conversation.
 14. As a user, I want Vane to update a page I named, so that existing notes can be corrected or extended.
 15. As a user, I want Vane to create a new page as a child of a page I specified, so that notes land where I want them.
-16. As a user, I want Vane to create a new page at the top level of the workspace when I ask, so that a brand-new topic can start a new top-level page.
+16. As a user, I want Vane to create a brand-new page when I ask, placed as a child of a page I specify or, where the integration supports it, at the top level of the workspace; if top-level creation is unsupported, Vane asks me for an authorized parent page instead.
 17. As a user, I want all writes in one response grouped into a single confirmation card, so that I am not prompted per page.
 18. As a user, I want the confirmation card to offer create-duplicate / write-into-existing / cancel when a same-named page exists, so that name collisions never surprise me.
 19. As a user, I want to be able to reject a confirmation card, so that nothing is written without my approval.
