@@ -18,7 +18,10 @@ import type { AuthorizedPage } from './types';
 // swallow the next paragraph into the name hint.
 const MENTION_TOKEN = /@Notion\b[ \t]*/gi;
 // Punctuation, another mention, or end of line bounds the name hint.
-const NAME_BOUNDARY = /[，。！？；、,.!?;@\n]/;
+// ASCII `.` and `,` only bound when followed by whitespace or the end of
+// the string, so version-like hints (`@Notion v1.0 規劃`) and names with
+// embedded periods (`@Notion meeting.notes`) are not truncated mid-name.
+const NAME_BOUNDARY = /[，。！？；、!?;@\n]|[.,](?=\s|$)/;
 
 export function hasNotionMention(content: string): boolean {
   // Fresh, non-global regex: global .test() is stateful and would keep

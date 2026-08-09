@@ -38,3 +38,13 @@ export {
 } from './search';
 export { getPageMarkdown } from './pages';
 export { queryDatabase, type DatabaseEntry } from './databases';
+export {
+  appendPageContent,
+  createPage,
+  updatePageContent,
+  contentToBlocks,
+  pageUrl,
+  WorkspaceParentUnsupportedError,
+  type CreatePageInput,
+  type UpdatePageInput,
+} from './write';

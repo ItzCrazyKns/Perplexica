@@ -161,11 +161,37 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     let recievedToolCalls: { name: string; id: string; arguments: string }[] =
       [];
 
+    // Thinking models (e.g. LM Studio Qwen3) stream their answer in
+    // `delta.reasoning_content` and keep `delta.content` empty. Buffer the
+    // reasoning and prefer real content: once `content` deltas arrive the
+    // thinking is discarded; if the stream ends with no content at all,
+    // surface the buffered reasoning so the caller gets an answer instead
+    // of an empty response (same reasoning-content fallback as
+    // generateObject).
+    let bufferedReasoning = '';
+    let emittedAnyContent = false;
+
     for await (const chunk of stream) {
       if (chunk.choices && chunk.choices.length > 0) {
-        const toolCalls = chunk.choices[0].delta.tool_calls;
+        const delta = chunk.choices[0].delta as {
+          content?: string | null;
+          reasoning_content?: string | null;
+          tool_calls?: {
+            index: number;
+            id?: string;
+            function?: { name?: string; arguments?: string };
+          }[];
+        };
+        const toolCalls = delta.tool_calls;
+        const contentChunk = delta.content || '';
+        if (contentChunk) {
+          emittedAnyContent = true;
+          bufferedReasoning = '';
+        } else if (delta.reasoning_content) {
+          bufferedReasoning += delta.reasoning_content;
+        }
         yield {
-          contentChunk: chunk.choices[0].delta.content || '',
+          contentChunk,
           toolCallChunk:
             toolCalls?.map((tc) => {
               if (!recievedToolCalls[tc.index]) {
@@ -192,6 +218,15 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         };
       }
     }
+
+    if (!emittedAnyContent && bufferedReasoning) {
+      yield {
+        contentChunk: bufferedReasoning,
+        toolCallChunk: [],
+        done: true,
+        additionalInfo: { finishReason: 'stop' },
+      };
+    }
   }
 
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
@@ -214,9 +249,22 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
 
     if (response.choices && response.choices.length > 0) {
       try {
+        // LM Studio serves thinking models (e.g. Qwen3) with the answer
+        // in `reasoning_content` and an empty `content` when a structured
+        // response format is requested — fall back to it so the
+        // classifier works with reasoning models.
+        const message = response.choices[0].message as {
+          content?: string | null;
+          reasoning_content?: string | null;
+        };
+        // `content` is an empty string (not null) for LM Studio thinking
+        // models, so a nullish coalesce would keep it — use truthy `||`.
+        const raw = message.content || message.reasoning_content;
+        if (!raw) throw new Error('Empty response content');
+
         return input.schema.parse(
           JSON.parse(
-            repairJson(response.choices[0].message.content!, {
+            repairJson(raw, {
               extractJson: true,
             }) as string,
           ),

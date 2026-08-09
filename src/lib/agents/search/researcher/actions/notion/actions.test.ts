@@ -14,7 +14,7 @@ let db: NotionConnectionDb;
 let session: SessionManager;
 let researchBlockId: string;
 
-function mockFetchOnce(body: unknown, status = 200) {
+function mockFetch(body: unknown, status = 200) {
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue({
@@ -126,7 +126,7 @@ describe('notion_search', () => {
   });
 
   it('falls back to the Notion API search when no attached page matches', async () => {
-    mockFetchOnce({
+    mockFetch({
       results: [
         {
           id: 'x9',
@@ -153,7 +153,7 @@ describe('notion_search', () => {
   });
 
   it('returns candidate pages and asks the user when nothing matches', async () => {
-    mockFetchOnce({ results: [], has_more: false, next_cursor: null });
+    mockFetch({ results: [], has_more: false, next_cursor: null });
 
     const output = (await notionSearchAction.execute(
       { query: 'xyzzy' },
@@ -214,7 +214,7 @@ describe('notion_get_page', () => {
   });
 
   it('surfaces inaccessible pages as a friendly message', async () => {
-    mockFetchOnce({ code: 'object_not_found', message: 'nope' }, 404);
+    mockFetch({ code: 'object_not_found', message: 'nope' }, 404);
 
     const output = (await notionGetPageAction.execute(
       { pageId: 'p1' },
@@ -250,7 +250,7 @@ describe('notion_get_page', () => {
 
 describe('notion_query_database', () => {
   it('flattens database rows into findings', async () => {
-    mockFetchOnce({
+    mockFetch({
       results: [
         {
           id: 'row1',
@@ -287,7 +287,7 @@ describe('notion_query_database', () => {
 
   it('refuses to query a database that was not selected or authorized', async () => {
     // The authorized set contains only a page; 'd1' is not shared.
-    mockFetchOnce({
+    mockFetch({
       results: [
         {
           id: 'p1',

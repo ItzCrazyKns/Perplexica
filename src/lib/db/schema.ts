@@ -43,7 +43,8 @@ export const chats = sqliteTable('chats', {
     .default(sql`'[]'`),
   notionPages: text('notion_pages', { mode: 'json' })
     .$type<AuthorizedPage[]>()
-    .default(sql`'[]'`),
+    .notNull()
+    .default(sql`'[]'`), // Matches migration 0004 (`NOT NULL`).
 });
 
 export const notionConnections = sqliteTable(

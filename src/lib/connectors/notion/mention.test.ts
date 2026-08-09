@@ -97,6 +97,18 @@ describe('parseNotionMentions', () => {
     expect(cleaned).toBe('用 會議筆記\n\n第二段');
     expect(names).toEqual(['會議筆記']);
   });
+
+  it('keeps version-like hints intact (dot does not truncate)', () => {
+    const { cleaned, names } = parseNotionMentions('用 @Notion v1.0 規劃');
+    expect(names).toEqual(['v1.0 規劃']);
+  });
+
+  it('bounds the hint at a period followed by whitespace', () => {
+    const { cleaned, names } = parseNotionMentions(
+      '請讀 @Notion Meeting Notes. Then summarize',
+    );
+    expect(names).toEqual(['Meeting Notes']);
+  });
 });
 
 describe('resolveMention', () => {

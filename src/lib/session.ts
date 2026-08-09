@@ -59,6 +59,37 @@ class SessionManager {
     return this.blocks.get(blockId);
   }
 
+  private pendingDecisions = new Map<string, (decision: any) => void>();
+
+  /**
+   * Pauses the response pipeline until {@link resolveDecision} is called
+   * for this block (an interactive, awaitable block — ADR-0003), or the
+   * timeout elapses, in which case it resolves with an automatic reject.
+   */
+  waitForDecision(blockId: string, timeoutMs = 15 * 60 * 1000): Promise<any> {
+    return new Promise((resolve) => {
+      this.pendingDecisions.set(blockId, resolve);
+
+      const timer = setTimeout(() => {
+        if (this.pendingDecisions.has(blockId)) {
+          this.pendingDecisions.delete(blockId);
+          resolve({ action: 'reject', reason: 'timeout' });
+        }
+      }, timeoutMs);
+      // Do not keep the process alive just because a decision is pending.
+      if (typeof timer.unref === 'function') timer.unref();
+    });
+  }
+
+  /** Resolves a pending decision. Returns false when none is pending. */
+  resolveDecision(blockId: string, decision: any): boolean {
+    const resolve = this.pendingDecisions.get(blockId);
+    if (!resolve) return false;
+    this.pendingDecisions.delete(blockId);
+    resolve(decision);
+    return true;
+  }
+
   updateBlock(blockId: string, patch: any[]) {
     const block = this.blocks.get(blockId);
 

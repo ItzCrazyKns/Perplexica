@@ -10,6 +10,9 @@ import {
   notionSearchAction,
   notionGetPageAction,
   notionQueryDatabaseAction,
+  notionAppendContentAction,
+  notionUpdatePageAction,
+  notionCreatePageAction,
 } from './notion';
 
 ActionRegistry.register(webSearchAction);
@@ -22,5 +25,8 @@ ActionRegistry.register(socialSearchAction);
 ActionRegistry.register(notionSearchAction);
 ActionRegistry.register(notionGetPageAction);
 ActionRegistry.register(notionQueryDatabaseAction);
+ActionRegistry.register(notionAppendContentAction);
+ActionRegistry.register(notionUpdatePageAction);
+ActionRegistry.register(notionCreatePageAction);
 
 export { ActionRegistry };

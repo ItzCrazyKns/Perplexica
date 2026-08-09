@@ -2,6 +2,7 @@ import { ResearcherOutput, SearchAgentInput } from './types';
 import SessionManager from '@/lib/session';
 import { classify } from './classifier';
 import Researcher from './researcher';
+import { runWriteConfirmation } from './writes/confirmation';
 import { getWriterPrompt } from '@/lib/prompts/search/writer';
 import { WidgetExecutor } from './widgets';
 import db from '@/lib/db';
@@ -100,6 +101,14 @@ class SearchAgent {
       type: 'researchComplete',
     });
 
+    // If the agent staged Notion writes, pause for the user's approval
+    // (one card per response) before the writer answers (ADR-0003).
+    const writeOutcome = await runWriteConfirmation({
+      session,
+      notionDb: db,
+      notionPages: input.config.notionPages ?? [],
+    });
+
     let finalContext =
       '<Query to be answered without searching; Search not made>';
 
@@ -118,7 +127,7 @@ class SearchAgent {
       })
       .join('\n-------------\n');
 
-    const finalContextWithWidgets = `<search_results note="These are the search results and assistant can cite these">\n${finalContext}\n</search_results>\n<widgets_result noteForAssistant="Its output is already showed to the user, assistant can use this information to answer the query but do not CITE this as a souce">\n${widgetContext}\n</widgets_result>`;
+    const finalContextWithWidgets = `<search_results note="These are the search results and assistant can cite these">\n${finalContext}\n</search_results>\n<widgets_result noteForAssistant="Its output is already showed to the user, assistant can use this information to answer the query but do not CITE this as a souce">\n${widgetContext}\n</widgets_result>\n${writeOutcome.context}`;
 
     const writerPrompt = getWriterPrompt(
       finalContextWithWidgets,

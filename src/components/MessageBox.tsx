@@ -23,7 +23,8 @@ import ThinkBox from './ThinkBox';
 import { useChat, Section } from '@/lib/hooks/useChat';
 import Citation from './MessageRenderer/Citation';
 import AssistantSteps from './AssistantSteps';
-import { ResearchBlock } from '@/lib/types';
+import WriteConfirmation from './WriteConfirmation';
+import { ResearchBlock, WriteConfirmationBlock } from '@/lib/types';
 import Renderer from './Widgets/Renderer';
 import CodeBlock from './MessageRenderer/CodeBlock';
 
@@ -141,6 +142,15 @@ const MessageBox = ({
                   isLast={isLast}
                 />
               </div>
+            ))}
+
+          {section.message.responseBlocks
+            .filter(
+              (block): block is WriteConfirmationBlock =>
+                block.type === 'writeConfirmation',
+            )
+            .map((block) => (
+              <WriteConfirmation key={block.id} block={block} />
             ))}
 
           {isLast &&
