@@ -117,7 +117,8 @@ const notionAppendContentAction: ResearchAction<typeof appendSchema> = {
 
   Only write to pages the user explicitly named or selected in this conversation.
   `,
-  enabled: (config) => config.sources.includes('notion'),
+  enabled: (config) =>
+    config.allowWrites !== false && config.sources.includes('notion'),
   execute: async (input, additionalConfig) => {
     const authorized = await authorizeTarget(
       { id: input.pageId, mustBePage: true },
@@ -169,7 +170,8 @@ const notionUpdatePageAction: ResearchAction<typeof updateSchema> = {
 
   Only write to pages the user explicitly named or selected in this conversation.
   `,
-  enabled: (config) => config.sources.includes('notion'),
+  enabled: (config) =>
+    config.allowWrites !== false && config.sources.includes('notion'),
   execute: async (input, additionalConfig) => {
     const authorized = await authorizeTarget(
       { id: input.pageId, mustBePage: true },
@@ -224,14 +226,18 @@ const notionCreatePageAction: ResearchAction<typeof createSchema> = {
 
   Never create a page under a parent the user did not name or select in this conversation.
   `,
-  enabled: (config) => config.sources.includes('notion'),
+  enabled: (config) =>
+    config.allowWrites !== false && config.sources.includes('notion'),
   execute: async (input, additionalConfig) => {
     let parent: { id: string | null; title: string } = {
       id: null,
       title: 'Workspace top level',
     };
 
-    if (input.parentId) {
+    // Only `undefined` means "top level"; an empty supplied id must go
+    // through authorization so it is rejected instead of silently
+    // creating at the workspace root.
+    if (input.parentId !== undefined) {
       const authorized = await authorizeTarget(
         { id: input.parentId, mustBePage: true },
         additionalConfig,

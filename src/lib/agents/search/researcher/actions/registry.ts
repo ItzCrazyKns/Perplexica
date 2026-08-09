@@ -24,6 +24,7 @@ class ActionRegistry {
     fileIds: string[];
     mode: SearchAgentConfig['mode'];
     sources: SearchSources[];
+    allowWrites?: boolean;
   }): ResearchAction[] {
     return Array.from(
       this.actions.values().filter((action) => action.enabled(config)),
@@ -35,6 +36,7 @@ class ActionRegistry {
     fileIds: string[];
     mode: SearchAgentConfig['mode'];
     sources: SearchSources[];
+    allowWrites?: boolean;
   }): Tool[] {
     const availableActions = this.getAvailableActions(config);
 
@@ -50,6 +52,7 @@ class ActionRegistry {
     fileIds: string[];
     mode: SearchAgentConfig['mode'];
     sources: SearchSources[];
+    allowWrites?: boolean;
   }): string {
     const availableActions = this.getAvailableActions(config);
 

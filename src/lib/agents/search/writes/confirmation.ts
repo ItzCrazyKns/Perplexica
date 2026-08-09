@@ -150,8 +150,9 @@ async function executeOne(
 
     // create — the only kind with a collision choice.
     if (resolution === 'write-into-existing' && item.collision) {
+      // Append only — "write into existing" must not rename the page to
+      // the proposed create title, as the card promises.
       await updatePageContent(db, item.collision.existingId, {
-        title: write.title,
         content: write.content,
       });
       return {
@@ -269,15 +270,17 @@ export async function runWriteConfirmation(input: {
 
   const resolutions = decision.resolutions ?? {};
 
-  const results = await Promise.all(
-    items.map((item) => {
-      const write = staged[Number(item.id)];
-      const resolution = item.collision
-        ? (resolutions[item.id] ?? 'cancel')
-        : undefined;
-      return executeOne(input.notionDb, item, write, resolution);
-    }),
-  );
+  // Sequential on purpose: parallel writes to the same page can land in a
+  // different order than the confirmed batch (appended content would be
+  // reordered). Staging order is the batch order.
+  const results: ExecutedResult[] = [];
+  for (const item of items) {
+    const write = staged[Number(item.id)];
+    const resolution = item.collision
+      ? (resolutions[item.id] ?? 'cancel')
+      : undefined;
+    results.push(await executeOne(input.notionDb, item, write, resolution));
+  }
 
   items.forEach((item, index) => {
     item.result = results[index];

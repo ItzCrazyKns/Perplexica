@@ -1,12 +1,38 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import SessionManager from '@/lib/session';
 import { getStagedWrites } from '@/lib/agents/search/writes/staging';
+import * as notion from '@/lib/connectors/notion';
 import type { AdditionalConfig, SearchActionOutput } from '../../../types';
 import {
   notionAppendContentAction,
   notionUpdatePageAction,
   notionCreatePageAction,
 } from './write';
+
+// The barrel re-exports resolveAuthorizedPage/listAuthorizedPages from a
+// submodule. Rebuild resolveAuthorizedPage on top of a mocked empty
+// authorized list, preserving the real attached-pages shortcut, so the
+// "not authorized" path resolves to null instead of hitting the fake db.
+vi.mock('@/lib/connectors/notion', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/connectors/notion')>();
+  const listAuthorizedPages = vi.fn().mockResolvedValue([]);
+  return {
+    ...actual,
+    listAuthorizedPages,
+    resolveAuthorizedPage: vi.fn(
+      async (
+        _db: unknown,
+        pageId: string,
+        attached: { id: string }[] = [],
+      ) => {
+        const inAttached = attached.find((page) => page.id === pageId);
+        if (inAttached) return inAttached;
+        const authorized = (await listAuthorizedPages()) as { id: string }[];
+        return authorized.find((page) => page.id === pageId) ?? null;
+      },
+    ),
+  };
+});
 
 const attachedPages = [
   { id: 'p1', title: 'Meeting Notes', type: 'page' as const },
@@ -89,13 +115,35 @@ describe('notion_append_content', () => {
 
   it('refuses a page that was not selected or authorized', async () => {
     const { additionalConfig } = makeConfig([]);
+    // With nothing attached, resolveAuthorizedPage falls back to the
+    // authorized list (mocked empty) so the "not authorized" path is
+    // exercised — not the not-connected path.
 
     const output = (await notionAppendContentAction.execute(
       { pageId: 'unknown', content: 'x' },
       additionalConfig,
     )) as SearchActionOutput;
 
-    expect(output.results[0].content).toMatch(/failed|not shared|not authorized/i);
+    expect(notion.listAuthorizedPages).toHaveBeenCalled();
+    expect(getStagedWrites(additionalConfig.session)).toHaveLength(0);
+    expect(output.results[0].content).toMatch(/not shared|not authorized/i);
+  });
+
+  it('is not offered when writes are disabled (no confirmation flow)', () => {
+    expect(
+      notionAppendContentAction.enabled({
+        ...enabledConfig,
+        sources: ['notion'],
+        allowWrites: false,
+      }),
+    ).toBe(false);
+    expect(
+      notionCreatePageAction.enabled({
+        ...enabledConfig,
+        sources: ['notion'],
+        allowWrites: false,
+      }),
+    ).toBe(false);
   });
 });
 
@@ -136,6 +184,18 @@ describe('notion_create_page', () => {
         content: 'body',
       },
     ]);
+  });
+
+  it('rejects an empty parentId instead of creating at the top level', async () => {
+    const { session, additionalConfig } = makeConfig([]);
+
+    const output = (await notionCreatePageAction.execute(
+      { title: 'Fresh', content: 'body', parentId: '' },
+      additionalConfig,
+    )) as SearchActionOutput;
+
+    expect(getStagedWrites(session)).toHaveLength(0);
+    expect(output.results[0].content).toMatch(/not shared|not authorized/i);
   });
 
   it('stages a create under an attached parent page', async () => {

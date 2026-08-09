@@ -75,9 +75,9 @@ const Notion = ({
               </h4>
               <p className="text-[11px] lg:text-xs text-black/50 dark:text-white/50">
                 {status.connected
-                  ? 'Connected. Read notes from chat with @Notion (writing arrives in a later update).'
+                  ? 'Connected. Ask Vane to save notes with @Notion — writes are staged and applied only after you approve the confirmation card.'
                   : status.configured
-                    ? 'Connect your Notion workspace to read notes in chat.'
+                    ? 'Connect your Notion workspace to read and write notes in chat.'
                     : 'Set NOTION_CLIENT_ID and NOTION_CLIENT_SECRET in the environment to enable the Notion connection.'}
               </p>
             </div>

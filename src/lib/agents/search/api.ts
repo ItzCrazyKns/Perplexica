@@ -32,7 +32,9 @@ class APISearchAgent {
         chatHistory: input.chatHistory,
         followUp: input.followUp,
         classification: classification,
-        config: input.config,
+        // No confirmation flow on this path (private session, streaming
+        // API) — hide the write tools so staged writes can never dangle.
+        config: { ...input.config, allowWrites: false },
       });
     }
 

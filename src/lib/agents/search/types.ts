@@ -17,6 +17,12 @@ export type SearchAgentConfig = {
   systemInstructions: string;
   /** Pages/databases selected for this conversation via @Notion (ADR-0001). */
   notionPages?: AuthorizedPage[];
+  /**
+   * False hides the Notion write tools. The /api/search path uses a
+   * private researcher session with no confirmation flow, so writes must
+   * not be offered there (they could never be approved).
+   */
+  allowWrites?: boolean;
 };
 
 export type SearchAgentInput = {
@@ -121,6 +127,7 @@ export interface ResearchAction<
     fileIds: string[];
     mode: SearchAgentConfig['mode'];
     sources: SearchSources[];
+    allowWrites?: boolean;
   }) => boolean;
   execute: (
     params: z.infer<TSchema>,

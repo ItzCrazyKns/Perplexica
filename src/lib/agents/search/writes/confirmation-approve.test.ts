@@ -140,8 +140,8 @@ describe('runWriteConfirmation (approve path)', () => {
 
     expect(mockedCreate).not.toHaveBeenCalled();
     expect(mockedUpdate).toHaveBeenCalledTimes(1);
+    // "write into existing" appends only — it must not rename the page.
     expect(mockedUpdate).toHaveBeenCalledWith(expect.anything(), 'p9', {
-      title: 'Existing',
       content: 'body',
     });
   });

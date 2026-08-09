@@ -219,7 +219,7 @@ If you're encountering a Lemonade connection error, it is likely due to the back
 
 Connect your Notion workspace and ask questions about your own pages — Perplexity-style. Reference a page in any conversation with `@Notion 頁面名` or pick one from the page selector, and Vane reads it through your Notion connection.
 
-> **Current status:** read support — `notion_search`, `notion_get_page`, `notion_query_database`. Writing to Notion (create / update / append with a batched confirmation card) ships in a follow-up PR.
+> **Current status:** read + write support — `notion_search`, `notion_get_page`, `notion_query_database`, plus write tools (`notion_append_content`, `notion_update_page`, `notion_create_page`). Writes are staged and executed only after you approve a single confirmation card.
 
 ### How it works
 

@@ -88,7 +88,9 @@ describe('runWriteConfirmation (reject path)', () => {
       content: 'x',
     });
 
-    // The db is never touched on the reject path; a fake is fine here.
+    // listAuthorizedPages runs before the decision, but its error is
+    // swallowed by the try/catch inside runWriteConfirmation, so a fake
+    // db is fine here.
     const outcomePromise = runWriteConfirmation({
       session,
       notionDb: {} as never,
