@@ -1,3 +1,20 @@
+# Build & Push Docker Images — Penny13692018/Vane fork
+#
+# Pushes to `penny13692018/vane` (not the upstream `itzcrazykns1337/vane`).
+# Triggers:
+#   - push to master          -> latest / full-latest / main (full), slim-latest (slim)
+#   - push to canary          -> canary (full), slim-canary (slim)
+#   - push to feat/** feature -> <branch-with-dashes> (full), <branch>-slim (slim)
+#   - release tag vX.Y.Z      -> vX.Y.Z / full-vX.Y.Z (full), slim-vX.Y.Z (slim)
+#
+# Required repository secrets (Settings -> Secrets and variables -> Actions):
+#   DOCKER_USERNAME  your Docker Hub username (e.g. penny13692018)
+#   DOCKER_PASSWORD  a Docker Hub access token with Read & Write permission
+#
+# The arm64 image is built with QEMU emulation on ubuntu-latest so the workflow
+# runs on any GitHub account. If your plan provides ARM-hosted runners, switch
+# the build-arm64 job to `runs-on: ubuntu-24.04-arm` for much faster builds.
+
 name: Build & Push Docker Images
 
 on:
@@ -5,12 +22,19 @@ on:
     branches:
       - master
       - canary
+      - 'feat/**'
+      - 'feature/**'
   release:
     types: [published]
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-amd64:
     runs-on: ubuntu-latest
+    timeout-minutes: 240
     strategy:
       matrix:
         variant:
@@ -20,65 +44,45 @@ jobs:
             dockerfile: Dockerfile.slim
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           install: true
 
       - name: Log in to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Extract version from release tag
-        if: github.event_name == 'release'
-        id: version
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
-      - name: Build and push AMD64 Docker image (master)
-        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+      - name: Compute tag suffix
         run: |
-          DOCKERFILE=${{ matrix.variant.dockerfile }}
-          VARIANT=${{ matrix.variant.name }}
-          docker buildx build --platform linux/amd64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/vane:${VARIANT}-amd64 \
-            --cache-to=type=inline \
-            --provenance false \
-            -f $DOCKERFILE \
-            -t itzcrazykns1337/vane:${VARIANT}-amd64 \
-            --push .
+          if [ "$GITHUB_EVENT_NAME" = "release" ]; then
+            echo "suffix=-${GITHUB_REF#refs/tags/}" >> "$GITHUB_ENV"
+          elif [ "$GITHUB_REF_NAME" = "master" ]; then
+            echo "suffix=" >> "$GITHUB_ENV"
+          else
+            echo "suffix=-${GITHUB_REF_NAME//\//-}" >> "$GITHUB_ENV"
+          fi
 
-      - name: Build and push AMD64 Canary Docker image
-        if: github.ref == 'refs/heads/canary' && github.event_name == 'push'
+      - name: Build and push AMD64 Docker image
         run: |
-          DOCKERFILE=${{ matrix.variant.dockerfile }}
           VARIANT=${{ matrix.variant.name }}
-          docker buildx build --platform linux/amd64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/vane:${VARIANT}-canary-amd64 \
-            --cache-to=type=inline \
-            --provenance false \
-            -f $DOCKERFILE \
-            -t itzcrazykns1337/vane:${VARIANT}-canary-amd64 \
-            --push .
-
-      - name: Build and push AMD64 release Docker image
-        if: github.event_name == 'release'
-        run: |
           DOCKERFILE=${{ matrix.variant.dockerfile }}
-          VARIANT=${{ matrix.variant.name }}
+          TAG="penny13692018/vane:${VARIANT}${suffix}-amd64"
           docker buildx build --platform linux/amd64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
-            --cache-to=type=inline \
+            --cache-from=type=registry,ref="${TAG}" \
+            --cache-to=type=inline,mode=max \
             --provenance false \
-            -f $DOCKERFILE \
-            -t itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
+            -f "$DOCKERFILE" \
+            -t "$TAG" \
             --push .
 
   build-arm64:
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
     strategy:
       matrix:
         variant:
@@ -88,130 +92,101 @@ jobs:
             dockerfile: Dockerfile.slim
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           install: true
 
       - name: Log in to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Extract version from release tag
-        if: github.event_name == 'release'
-        id: version
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
-      - name: Build and push ARM64 Docker image (master)
-        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+      - name: Compute tag suffix
         run: |
-          DOCKERFILE=${{ matrix.variant.dockerfile }}
-          VARIANT=${{ matrix.variant.name }}
-          docker buildx build --platform linux/arm64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/vane:${VARIANT}-arm64 \
-            --cache-to=type=inline \
-            --provenance false \
-            -f $DOCKERFILE \
-            -t itzcrazykns1337/vane:${VARIANT}-arm64 \
-            --push .
+          if [ "$GITHUB_EVENT_NAME" = "release" ]; then
+            echo "suffix=-${GITHUB_REF#refs/tags/}" >> "$GITHUB_ENV"
+          elif [ "$GITHUB_REF_NAME" = "master" ]; then
+            echo "suffix=" >> "$GITHUB_ENV"
+          else
+            echo "suffix=-${GITHUB_REF_NAME//\//-}" >> "$GITHUB_ENV"
+          fi
 
-      - name: Build and push ARM64 Canary Docker image
-        if: github.ref == 'refs/heads/canary' && github.event_name == 'push'
+      - name: Build and push ARM64 Docker image
         run: |
-          DOCKERFILE=${{ matrix.variant.dockerfile }}
           VARIANT=${{ matrix.variant.name }}
-          docker buildx build --platform linux/arm64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/vane:${VARIANT}-canary-arm64 \
-            --cache-to=type=inline \
-            --provenance false \
-            -f $DOCKERFILE \
-            -t itzcrazykns1337/vane:${VARIANT}-canary-arm64 \
-            --push .
-
-      - name: Build and push ARM64 release Docker image
-        if: github.event_name == 'release'
-        run: |
           DOCKERFILE=${{ matrix.variant.dockerfile }}
-          VARIANT=${{ matrix.variant.name }}
+          TAG="penny13692018/vane:${VARIANT}${suffix}-arm64"
           docker buildx build --platform linux/arm64 \
-            --cache-from=type=registry,ref=itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64 \
-            --cache-to=type=inline \
+            --cache-from=type=registry,ref="${TAG}" \
+            --cache-to=type=inline,mode=max \
             --provenance false \
-            -f $DOCKERFILE \
-            -t itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64 \
+            -f "$DOCKERFILE" \
+            -t "$TAG" \
             --push .
 
   manifest:
     needs: [build-amd64, build-arm64]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       matrix:
         variant: [full, slim]
     steps:
       - name: Log in to DockerHub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Extract version from release tag
-        if: github.event_name == 'release'
-        id: version
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
-      - name: Create and push manifest for main
-        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+      - name: Create and push multi-arch manifests
         run: |
+          set -euo pipefail
           VARIANT=${{ matrix.variant }}
-          docker manifest create itzcrazykns1337/vane:${VARIANT}-latest \
-            --amend itzcrazykns1337/vane:${VARIANT}-amd64 \
-            --amend itzcrazykns1337/vane:${VARIANT}-arm64
-          docker manifest push itzcrazykns1337/vane:${VARIANT}-latest
 
-          if [ "$VARIANT" = "full" ]; then
-            docker manifest create itzcrazykns1337/vane:latest \
-              --amend itzcrazykns1337/vane:${VARIANT}-amd64 \
-              --amend itzcrazykns1337/vane:${VARIANT}-arm64
-            docker manifest push itzcrazykns1337/vane:latest
-
-            docker manifest create itzcrazykns1337/vane:main \
-              --amend itzcrazykns1337/vane:${VARIANT}-amd64 \
-              --amend itzcrazykns1337/vane:${VARIANT}-arm64
-            docker manifest push itzcrazykns1337/vane:main
+          if [ "$GITHUB_EVENT_NAME" = "release" ]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+            SUFFIX="-${VERSION}"
+            if [ "$VARIANT" = "full" ]; then
+              MAIN_TAGS=("${VERSION}" "full-${VERSION}")
+            else
+              MAIN_TAGS=("slim-${VERSION}")
+            fi
+          elif [ "$GITHUB_REF_NAME" = "master" ]; then
+            SUFFIX=""
+            if [ "$VARIANT" = "full" ]; then
+              MAIN_TAGS=("latest" "full-latest" "main")
+            else
+              MAIN_TAGS=("slim-latest")
+            fi
+          elif [ "$GITHUB_REF_NAME" = "canary" ]; then
+            SUFFIX="-canary"
+            if [ "$VARIANT" = "full" ]; then
+              MAIN_TAGS=("canary")
+            else
+              MAIN_TAGS=("slim-canary")
+            fi
+          else
+            BRANCH="${GITHUB_REF_NAME//\//-}"
+            SUFFIX="-${BRANCH}"
+            if [ "$VARIANT" = "full" ]; then
+              MAIN_TAGS=("${BRANCH}")
+            else
+              MAIN_TAGS=("${BRANCH}-slim")
+            fi
           fi
 
-      - name: Create and push manifest for canary
-        if: github.ref == 'refs/heads/canary' && github.event_name == 'push'
-        run: |
-          VARIANT=${{ matrix.variant }}
-          docker manifest create itzcrazykns1337/vane:${VARIANT}-canary \
-            --amend itzcrazykns1337/vane:${VARIANT}-canary-amd64 \
-            --amend itzcrazykns1337/vane:${VARIANT}-canary-arm64
-          docker manifest push itzcrazykns1337/vane:${VARIANT}-canary
+          AMD="penny13692018/vane:${VARIANT}${SUFFIX}-amd64"
+          ARM="penny13692018/vane:${VARIANT}${SUFFIX}-arm64"
 
-          if [ "$VARIANT" = "full" ]; then
-            docker manifest create itzcrazykns1337/vane:canary \
-              --amend itzcrazykns1337/vane:${VARIANT}-canary-amd64 \
-              --amend itzcrazykns1337/vane:${VARIANT}-canary-arm64
-            docker manifest push itzcrazykns1337/vane:canary
-          fi
-
-      - name: Create and push manifest for releases
-        if: github.event_name == 'release'
-        run: |
-          VARIANT=${{ matrix.variant }}
-          docker manifest create itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }} \
-            --amend itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
-            --amend itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64
-          docker manifest push itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}
-
-          if [ "$VARIANT" = "full" ]; then
-            docker manifest create itzcrazykns1337/vane:${{ env.RELEASE_VERSION }} \
-              --amend itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-amd64 \
-              --amend itzcrazykns1337/vane:${VARIANT}-${{ env.RELEASE_VERSION }}-arm64
-            docker manifest push itzcrazykns1337/vane:${{ env.RELEASE_VERSION }}
-          fi
+          for TAG in "${MAIN_TAGS[@]}"; do
+            echo "Creating manifest penny13692018/vane:${TAG} from ${AMD} + ${ARM}"
+            docker manifest create "penny13692018/vane:${TAG}" --amend "$AMD" --amend "$ARM"
+            docker manifest push "penny13692018/vane:${TAG}"
+          done

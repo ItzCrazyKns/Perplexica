@@ -113,6 +113,30 @@ docker run -d -p 3000:3000 -e SEARXNG_API_URL=http://your-searxng-url:8080 -v va
 
 Replace `http://your-searxng-url:8080` with your actual SearxNG URL. Then configure your AI provider settings in the setup screen at http://localhost:3000.
 
+#### Automatic Image Builds (Fork Maintainers)
+
+This fork publishes the `penny13692018/vane` images automatically from GitHub Actions (`.github/workflows/docker-build.yaml`). Pushing to the branches below triggers a multi-arch (amd64 + arm64) build and pushes the tags listed:
+
+| Push to                 | Tags pushed (full image)                        | Tags pushed (slim image)      |
+| ----------------------- | ----------------------------------------------- | ----------------------------- |
+| `master`                | `latest`, `full-latest`, `main`                 | `slim-latest`                 |
+| `canary`                | `canary`                                        | `slim-canary`                 |
+| `feat/*` / `feature/*`  | `<branch-with-dashes>`, e.g. `feat-notion-write` | `<branch>-slim`               |
+| Release tag `vX.Y.Z`    | `vX.Y.Z`, `full-vX.Y.Z`                         | `slim-vX.Y.Z`                 |
+
+For this to work, do the following **once** on GitHub:
+
+1. **Enable Actions** — forks usually come with Actions disabled. Go to **Settings → Actions → General → Allow all actions and reusable workflows**.
+2. **Add two repository secrets** — in **Settings → Secrets and variables → Actions → New repository secret**:
+   - `DOCKER_USERNAME` — your Docker Hub username, e.g. `penny13692018`.
+   - `DOCKER_PASSWORD` — a Docker Hub **access token** (not your account password), created at Docker Hub → **Account Settings → Security → New Access Token** with **Read & Write** permission.
+
+**Notes**
+
+- The arm64 image is built with QEMU emulation on a standard `ubuntu-latest` runner, so the **first** build of a branch is slow (the full image compiles SearxNG from source). Later pushes reuse the registry build cache (the `*-amd64` / `*-arm64` tags), so only changed layers are rebuilt.
+- To test a feature branch locally before it reaches `master`, pull its branch tag, e.g. `docker pull penny13692018/vane:feat-notion-write`.
+- If your GitHub plan provides ARM-hosted runners, you can switch the arm64 job to `runs-on: ubuntu-24.04-arm` in `.github/workflows/docker-build.yaml` for much faster builds.
+
 #### Advanced Setup (Building from Source)
 
 If you prefer to build from source or need more control:
