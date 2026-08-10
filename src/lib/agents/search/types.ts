@@ -101,6 +101,17 @@ export type SearchActionOutput = {
   results: Chunk[];
 };
 
+/**
+ * A write the agent staged for later approval (ADR-0003). Stays in the
+ * researcher's tool history so the LLM sees it was only staged, but is
+ * never surfaced as a user-facing source block — the confirmation card is
+ * the only place the user should see staged writes.
+ */
+export type StagedWriteOutput = {
+  type: 'staged_write';
+  results: Chunk[];
+};
+
 export type DoneActionOutput = {
   type: 'done';
 };
@@ -112,6 +123,7 @@ export type ReasoningResearchAction = {
 
 export type ActionOutput =
   | SearchActionOutput
+  | StagedWriteOutput
   | DoneActionOutput
   | ReasoningResearchAction;
 

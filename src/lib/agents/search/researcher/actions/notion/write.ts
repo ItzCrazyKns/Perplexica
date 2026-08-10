@@ -1,5 +1,9 @@
 import z from 'zod';
-import { ResearchAction, SearchActionOutput } from '../../../types';
+import {
+  ResearchAction,
+  SearchActionOutput,
+  StagedWriteOutput,
+} from '../../../types';
 import {
   resolveAuthorizedPage,
   NotionApiError,
@@ -76,9 +80,12 @@ async function authorizeTarget(
   return { ok: true, page };
 }
 
-function stagedResult(content: string): SearchActionOutput {
+function stagedResult(content: string): StagedWriteOutput {
+  // Not `search_results`: staged writes must never surface as user-facing
+  // source blocks. The researcher LLM still sees this via its tool
+  // history; the confirmation card is the only user-facing presentation.
   return {
-    type: 'search_results',
+    type: 'staged_write',
     results: [
       {
         content,

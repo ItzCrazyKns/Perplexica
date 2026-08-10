@@ -2,7 +2,11 @@ import { describe, it, expect, vi } from 'vitest';
 import SessionManager from '@/lib/session';
 import { getStagedWrites } from '@/lib/agents/search/writes/staging';
 import * as notion from '@/lib/connectors/notion';
-import type { AdditionalConfig, SearchActionOutput } from '../../../types';
+import type {
+  AdditionalConfig,
+  SearchActionOutput,
+  StagedWriteOutput,
+} from '../../../types';
 import {
   notionAppendContentAction,
   notionUpdatePageAction,
@@ -99,8 +103,11 @@ describe('notion_append_content', () => {
     const output = (await notionAppendContentAction.execute(
       { pageId: 'p1', content: 'hello world' },
       additionalConfig,
-    )) as SearchActionOutput;
+    )) as StagedWriteOutput;
 
+    // Staged writes must not surface as user-facing search results; the
+    // confirmation card is their only presentation.
+    expect(output.type).toBe('staged_write');
     expect(output.results[0].content).toContain('Staged');
     expect(output.results[0].content).toContain('Meeting Notes');
 

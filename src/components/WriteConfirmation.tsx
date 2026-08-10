@@ -1,7 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Check, PenLine, Plus, ShieldCheck, X } from 'lucide-react';
+import {
+  Check,
+  Clock,
+  PenLine,
+  Plus,
+  ShieldCheck,
+  X,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import type {
   WriteConfirmationBlock,
@@ -116,6 +123,12 @@ const WriteConfirmation = ({ block }: { block: WriteConfirmationBlock }) => {
             Notion 寫入確認
             {pending ? `（${writes.length} 個操作）` : ''}
           </span>
+          {pending && (
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+              <Clock className="w-3.5 h-3.5" />
+              等待確認中
+            </span>
+          )}
         </div>
         {status === 'approved' && (
           <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
@@ -240,6 +253,14 @@ const WriteConfirmation = ({ block }: { block: WriteConfirmationBlock }) => {
           );
         })}
       </div>
+
+      {pending && (
+        <div className="p-3 pb-0 -mb-1">
+          <p className="text-xs text-black/60 dark:text-white/60">
+            以下操作尚未執行。按下「全部執行」才會寫入 Notion,按「取消」則不會寫入任何內容。
+          </p>
+        </div>
+      )}
 
       {pending && (
         <div className="flex items-center gap-2 p-3 border-t border-light-200 dark:border-dark-200">
