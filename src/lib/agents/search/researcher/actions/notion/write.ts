@@ -80,6 +80,18 @@ async function authorizeTarget(
   return { ok: true, page };
 }
 
+function buildBlankContentResult(tool: string): SearchActionOutput {
+  return {
+    type: 'search_results',
+    results: [
+      {
+        content: `${tool} was not staged: the content was blank or whitespace-only. Ask the user for the content to save and retry.`,
+        metadata: { title: 'Notion: blank write rejected', url: '' },
+      },
+    ],
+  };
+}
+
 function stagedResult(content: string): StagedWriteOutput {
   // Not `search_results`: staged writes must never surface as user-facing
   // source blocks. The researcher LLM still sees this via its tool
@@ -133,6 +145,10 @@ const notionAppendContentAction: ResearchAction<typeof appendSchema> = {
     );
     if (!authorized.ok) return authorized.result;
 
+    if (!input.content.trim()) {
+      return buildBlankContentResult('notion_append_content');
+    }
+
     stageWrite(additionalConfig.session, {
       kind: 'append',
       target: { id: authorized.page.id, title: authorized.page.title },
@@ -185,6 +201,10 @@ const notionUpdatePageAction: ResearchAction<typeof updateSchema> = {
       additionalConfig,
     );
     if (!authorized.ok) return authorized.result;
+
+    if (!input.content.trim() && !input.title?.trim()) {
+      return buildBlankContentResult('notion_update_page');
+    }
 
     stageWrite(additionalConfig.session, {
       kind: 'update',
@@ -251,6 +271,10 @@ const notionCreatePageAction: ResearchAction<typeof createSchema> = {
       );
       if (!authorized.ok) return authorized.result;
       parent = { id: authorized.page.id, title: authorized.page.title };
+    }
+
+    if (!input.title.trim()) {
+      return buildBlankContentResult('notion_create_page');
     }
 
     stageWrite(additionalConfig.session, {

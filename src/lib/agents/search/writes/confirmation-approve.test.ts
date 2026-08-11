@@ -110,6 +110,40 @@ describe('runWriteConfirmation (approve path)', () => {
     expect(outcome.context).toContain('[OK] Create');
   });
 
+  it('does not treat a same-named database as a write-into-existing target', async () => {
+    // listAuthorizedPages is mocked at module level to return only pages;
+    // simulate a data source in the conversation selection instead.
+    const session = SessionManager.createSession();
+    stageWrite(session, {
+      kind: 'create',
+      parent: { id: null, title: 'Workspace top level' },
+      title: 'Existing DB',
+      content: 'body',
+    });
+
+    const outcomePromise = runWriteConfirmation({
+      session,
+      notionDb: {} as never,
+      notionPages: [
+        { id: 'db1', title: 'Existing DB', type: 'database' },
+      ],
+    });
+    const block = await waitForConfirmationBlock(session);
+
+    // No collision: a data source cannot receive a page-content write.
+    expect(block.data.writes[0].collision).toBeUndefined();
+
+    session.resolveDecision(block.id, { action: 'approve' });
+    await outcomePromise;
+
+    expect(mockedCreate).toHaveBeenCalledTimes(1);
+    expect(mockedCreate).toHaveBeenCalledWith(expect.anything(), {
+      parentId: null,
+      title: 'Existing DB',
+      content: 'body',
+    });
+  });
+
   it('write-into-existing resolution targets the existing page instead of creating', async () => {
     const session = SessionManager.createSession();
     stageWrite(session, {

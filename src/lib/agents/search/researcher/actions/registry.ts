@@ -90,18 +90,19 @@ class ActionRegistry {
       mode: SearchAgentConfig['mode'];
     },
   ): Promise<ActionOutput[]> {
+    // Sequential on purpose: staged writes must land in the same order as
+    // the model's tool calls (appends to the same page would otherwise be
+    // reordered), and caller code pairs results with tool calls by index.
     const results: ActionOutput[] = [];
 
-    await Promise.all(
-      actions.map(async (actionConfig) => {
-        const output = await this.execute(
-          actionConfig.name,
-          actionConfig.arguments,
-          additionalConfig,
-        );
-        results.push(output);
-      }),
-    );
+    for (const actionConfig of actions) {
+      const output = await this.execute(
+        actionConfig.name,
+        actionConfig.arguments,
+        additionalConfig,
+      );
+      results.push(output);
+    }
 
     return results;
   }

@@ -54,13 +54,13 @@ From the user's perspective:
 - **Classifier reuse.** The existing personal-search classification path is the natural hook for triggering Notion tools; reuse it rather than adding a new parallel classifier branch.
 - **Read transport.** Prefer Notion's markdown content endpoints for page reads so retrieved text fits LLM context cheaply; use block endpoints where markdown is unavailable.
 - **Naming.** UI shows "Notion"; conceptual docs say "Notion Connection"; the code-level source key is `'notion'`.
-- **Testing seam.** A single new seam: unit tests for the connector domain module against a mocked HTTP boundary, using vitest (new devDependency; the repo currently has no test infrastructure). Test script added to package.json.
+- **Testing seam.** Unit tests for the connector domain module against a mocked HTTP boundary, using the vitest setup already in the repo (test script in package.json, existing Notion test files).
 
 ## Testing Decisions
 
 - A good test asserts external behavior only: given a mocked Notion API response, the connector returns the parsed result; given a typed page name, fuzzy matching resolves the intended page; given a plaintext token and the key, the encrypted round-trip restores it; given an authorization code, the OAuth exchange issues the correct request and stores the token. No test touches implementation internals.
 - Module under test: the connector domain module (client, token, fuzzy search, OAuth exchange).
-- Prior art: none — these are the first tests in the repository; the vitest setup itself is new and minimal (one config, one script, mocked fetch).
+- Prior art: the vitest infrastructure and the existing Notion test files (read.test.ts, oauth.test.ts, token.test.ts, …) established in PR1; these tests extend that same pattern.
 
 ## Out of Scope
 

@@ -70,6 +70,10 @@ export function detectWriteCollisions(
 ): Map<number, { existingId: string; existingTitle: string }> {
   const byTitle = new Map<string, AuthorizedPage>();
   for (const page of knownPages) {
+    // Only real pages can be the target of "write into existing" — a
+    // same-named data source would send a page-content write using a
+    // database id and fail.
+    if (page.type !== 'page') continue;
     const key = normalizeTitle(page.title);
     if (!byTitle.has(key)) byTitle.set(key, page);
   }

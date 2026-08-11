@@ -74,7 +74,7 @@ jobs:
           TAG="penny13692018/vane:${VARIANT}${suffix}-amd64"
           docker buildx build --platform linux/amd64 \
             --cache-from=type=registry,ref="${TAG}" \
-            --cache-to=type=inline,mode=max \
+            --cache-to=type=inline \
             --provenance false \
             -f "$DOCKERFILE" \
             -t "$TAG" \
@@ -125,7 +125,7 @@ jobs:
           TAG="penny13692018/vane:${VARIANT}${suffix}-arm64"
           docker buildx build --platform linux/arm64 \
             --cache-from=type=registry,ref="${TAG}" \
-            --cache-to=type=inline,mode=max \
+            --cache-to=type=inline \
             --provenance false \
             -f "$DOCKERFILE" \
             -t "$TAG" \

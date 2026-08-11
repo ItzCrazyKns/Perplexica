@@ -120,6 +120,19 @@ describe('notion_append_content', () => {
     ]);
   });
 
+  it('rejects blank or whitespace-only content without staging', async () => {
+    const { session, additionalConfig } = makeConfig();
+
+    const output = (await notionAppendContentAction.execute(
+      { pageId: 'p1', content: '   ' },
+      additionalConfig,
+    )) as SearchActionOutput;
+
+    expect(getStagedWrites(session)).toHaveLength(0);
+    expect(output.type).toBe('search_results');
+    expect(output.results[0].content).toMatch(/blank/i);
+  });
+
   it('refuses a page that was not selected or authorized', async () => {
     const { additionalConfig } = makeConfig([]);
     // With nothing attached, resolveAuthorizedPage falls back to the
@@ -155,6 +168,19 @@ describe('notion_append_content', () => {
 });
 
 describe('notion_update_page', () => {
+  it('rejects an update with neither content nor a title', async () => {
+    const { session, additionalConfig } = makeConfig();
+
+    const output = (await notionUpdatePageAction.execute(
+      { pageId: 'p1', content: '  ' },
+      additionalConfig,
+    )) as SearchActionOutput;
+
+    expect(getStagedWrites(session)).toHaveLength(0);
+    expect(output.type).toBe('search_results');
+    expect(output.results[0].content).toMatch(/blank/i);
+  });
+
   it('stages an update with an optional new title', async () => {
     const { session, additionalConfig } = makeConfig();
 
@@ -191,6 +217,18 @@ describe('notion_create_page', () => {
         content: 'body',
       },
     ]);
+  });
+
+  it('rejects a blank title without staging', async () => {
+    const { session, additionalConfig } = makeConfig();
+
+    const output = (await notionCreatePageAction.execute(
+      { title: '  ', content: 'body' },
+      additionalConfig,
+    )) as SearchActionOutput;
+
+    expect(getStagedWrites(session)).toHaveLength(0);
+    expect(output.results[0].content).toMatch(/blank/i);
   });
 
   it('rejects an empty parentId instead of creating at the top level', async () => {
