@@ -90,18 +90,42 @@ class ActionRegistry {
       mode: SearchAgentConfig['mode'];
     },
   ): Promise<ActionOutput[]> {
-    // Sequential on purpose: staged writes must land in the same order as
-    // the model's tool calls (appends to the same page would otherwise be
-    // reordered), and caller code pairs results with tool calls by index.
-    const results: ActionOutput[] = [];
+    // Staged writes (stagesWrite actions) must land in the same order as
+    // the model's tool calls — appends to the same page would otherwise
+    // be reordered in the confirmation batch — so they run sequentially.
+    // Every other action is independent and runs concurrently: serializing
+    // search/read calls would add latency equal to the sum of their
+    // remote round trips. Caller code still pairs results with tool calls
+    // by index, so results are collected into a pre-sized array.
+    const results: ActionOutput[] = new Array(actions.length);
+    const stagedWrites: number[] = [];
+    const independent: number[] = [];
 
-    for (const actionConfig of actions) {
-      const output = await this.execute(
-        actionConfig.name,
-        actionConfig.arguments,
+    actions.forEach((actionConfig, index) => {
+      const action = this.actions.get(actionConfig.name);
+      if (action?.stagesWrite) {
+        stagedWrites.push(index);
+      } else {
+        independent.push(index);
+      }
+    });
+
+    await Promise.all(
+      independent.map(async (index) => {
+        results[index] = await this.execute(
+          actions[index].name,
+          actions[index].arguments,
+          additionalConfig,
+        );
+      }),
+    );
+
+    for (const index of stagedWrites) {
+      results[index] = await this.execute(
+        actions[index].name,
+        actions[index].arguments,
         additionalConfig,
       );
-      results.push(output);
     }
 
     return results;

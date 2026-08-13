@@ -92,6 +92,18 @@ function buildBlankContentResult(tool: string): SearchActionOutput {
   };
 }
 
+function buildBlankTitleResult(tool: string): SearchActionOutput {
+  return {
+    type: 'search_results',
+    results: [
+      {
+        content: `${tool} was not staged: the page title was blank or whitespace-only. Ask the user for the page title and retry.`,
+        metadata: { title: 'Notion: blank title rejected', url: '' },
+      },
+    ],
+  };
+}
+
 function stagedResult(content: string): StagedWriteOutput {
   // Not `search_results`: staged writes must never surface as user-facing
   // source blocks. The researcher LLM still sees this via its tool
@@ -138,6 +150,7 @@ const notionAppendContentAction: ResearchAction<typeof appendSchema> = {
   `,
   enabled: (config) =>
     config.allowWrites !== false && config.sources.includes('notion'),
+  stagesWrite: true,
   execute: async (input, additionalConfig) => {
     const authorized = await authorizeTarget(
       { id: input.pageId, mustBePage: true },
@@ -195,6 +208,7 @@ const notionUpdatePageAction: ResearchAction<typeof updateSchema> = {
   `,
   enabled: (config) =>
     config.allowWrites !== false && config.sources.includes('notion'),
+  stagesWrite: true,
   execute: async (input, additionalConfig) => {
     const authorized = await authorizeTarget(
       { id: input.pageId, mustBePage: true },
@@ -202,14 +216,17 @@ const notionUpdatePageAction: ResearchAction<typeof updateSchema> = {
     );
     if (!authorized.ok) return authorized.result;
 
-    if (!input.content.trim() && !input.title?.trim()) {
+    const title = input.title?.trim();
+    if (!input.content.trim() && !title) {
       return buildBlankContentResult('notion_update_page');
     }
 
     stageWrite(additionalConfig.session, {
       kind: 'update',
       target: { id: authorized.page.id, title: authorized.page.title },
-      ...(input.title ? { title: input.title } : {}),
+      // A whitespace-only optional title would be staged truthy and clear
+      // the page title on approval — omit/normalize it here.
+      ...(title ? { title } : {}),
       content: input.content,
     });
 
@@ -255,6 +272,7 @@ const notionCreatePageAction: ResearchAction<typeof createSchema> = {
   `,
   enabled: (config) =>
     config.allowWrites !== false && config.sources.includes('notion'),
+  stagesWrite: true,
   execute: async (input, additionalConfig) => {
     let parent: { id: string | null; title: string } = {
       id: null,
@@ -274,7 +292,7 @@ const notionCreatePageAction: ResearchAction<typeof createSchema> = {
     }
 
     if (!input.title.trim()) {
-      return buildBlankContentResult('notion_create_page');
+      return buildBlankTitleResult('notion_create_page');
     }
 
     stageWrite(additionalConfig.session, {

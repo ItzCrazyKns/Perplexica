@@ -198,6 +198,36 @@ describe('notion_update_page', () => {
       },
     ]);
   });
+
+  it('omits a whitespace-only optional title instead of clearing the page title', async () => {
+    const { session, additionalConfig } = makeConfig();
+
+    await notionUpdatePageAction.execute(
+      { pageId: 'p1', title: '   ', content: 'new body' },
+      additionalConfig,
+    );
+
+    // The raw truthy title must not be staged: it would overwrite the
+    // page title with whitespace on approval.
+    expect(getStagedWrites(session)).toEqual([
+      {
+        kind: 'update',
+        target: { id: 'p1', title: 'Meeting Notes' },
+        content: 'new body',
+      },
+    ]);
+  });
+
+  it('normalizes a padded optional title before staging', async () => {
+    const { session, additionalConfig } = makeConfig();
+
+    await notionUpdatePageAction.execute(
+      { pageId: 'p1', title: '  Renamed  ', content: 'new body' },
+      additionalConfig,
+    );
+
+    expect(getStagedWrites(session)[0]).toMatchObject({ title: 'Renamed' });
+  });
 });
 
 describe('notion_create_page', () => {
@@ -219,7 +249,7 @@ describe('notion_create_page', () => {
     ]);
   });
 
-  it('rejects a blank title without staging', async () => {
+  it('rejects a blank title with a title-specific message without staging', async () => {
     const { session, additionalConfig } = makeConfig();
 
     const output = (await notionCreatePageAction.execute(
@@ -228,7 +258,10 @@ describe('notion_create_page', () => {
     )) as SearchActionOutput;
 
     expect(getStagedWrites(session)).toHaveLength(0);
-    expect(output.results[0].content).toMatch(/blank/i);
+    // Title-specific validation text: the user supplied content, so the
+    // rejection must point at the title, not the content.
+    expect(output.results[0].content).toMatch(/title/i);
+    expect(output.results[0].content).not.toMatch(/content was blank/i);
   });
 
   it('rejects an empty parentId instead of creating at the top level', async () => {

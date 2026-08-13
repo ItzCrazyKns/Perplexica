@@ -141,6 +141,13 @@ export interface ResearchAction<
     sources: SearchSources[];
     allowWrites?: boolean;
   }) => boolean;
+  /**
+   * Whether this action stages a write for later batch approval
+   * (ADR-0003). Staged writes must land in the same order as the model's
+   * tool calls, so `executeAll` serializes these while running every
+   * other (independent) action concurrently.
+   */
+  stagesWrite?: boolean;
   execute: (
     params: z.infer<TSchema>,
     additionalConfig: AdditionalConfig & {
