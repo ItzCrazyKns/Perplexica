@@ -181,6 +181,7 @@ If you're encountering an Ollama connection error, it is likely due to the backe
 
 1. **Check your Ollama API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
+
    - **Windows:** Use `http://host.docker.internal:11434`
    - **Mac:** Use `http://host.docker.internal:11434`
    - **Linux:** Use `http://<private_ip_of_host>:11434`
@@ -188,9 +189,10 @@ If you're encountering an Ollama connection error, it is likely due to the backe
    Adjust the port number if you're using a different one.
 
 3. **Linux Users - Expose Ollama to Network:**
-   - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0:11434"`. (Change the port number if you are using a different one.) Then reload the systemd manager configuration with `systemctl daemon-reload`, and restart Ollama by `systemctl restart ollama`.
 
-   - Ensure that the port (default is 11434) is not blocked by your firewall. For more information, see the [Ollama environment-variable documentation](https://docs.ollama.com/faq#setting-environment-variables-on-linux).
+   - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0:11434"`. (Change the port number if you are using a different one.) Then reload the systemd manager configuration with `systemctl daemon-reload`, and restart Ollama by `systemctl restart ollama`. For more information see [Ollama docs](https://github.com/ollama/ollama/blob/main/docs/faq.md#setting-environment-variables-on-linux)
+
+   - Ensure that the port (default is 11434) is not blocked by your firewall.
 
 #### Lemonade Connection Errors
 
@@ -198,6 +200,7 @@ If you're encountering a Lemonade connection error, it is likely due to the back
 
 1. **Check your Lemonade API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
+
    - **Windows:** Use `http://host.docker.internal:8000`
    - **Mac:** Use `http://host.docker.internal:8000`
    - **Linux:** Use `http://<private_ip_of_host>:8000`
@@ -205,6 +208,7 @@ If you're encountering a Lemonade connection error, it is likely due to the back
    Adjust the port number if you're using a different one.
 
 3. **Ensure Lemonade Server is Running:**
+
    - Make sure your Lemonade server is running and accessible on the configured port (default is 8000).
    - Verify that Lemonade is configured to accept connections from all interfaces (`0.0.0.0`), not just localhost (`127.0.0.1`).
    - Ensure that the port (default is 8000) is not blocked by your firewall.
