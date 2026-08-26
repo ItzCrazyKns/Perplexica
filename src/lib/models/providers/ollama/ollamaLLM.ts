@@ -14,7 +14,8 @@ import { Message } from '@/lib/types';
 import { repairJson } from '@toolsycc/json-repair';
 
 type OllamaConfig = {
-  baseURL: string;
+  baseURL?: string;
+  baseUrl?: string;
   model: string;
   options?: GenerateOptions;
 };
@@ -37,7 +38,7 @@ class OllamaLLM extends BaseLLM<OllamaConfig> {
     super(config);
 
     this.ollamaClient = new Ollama({
-      host: this.config.baseURL || 'http://localhost:11434',
+      host: this.config.baseURL || this.config.baseUrl || 'http://localhost:11434',
     });
   }
 
