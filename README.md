@@ -26,6 +26,8 @@ Want to know more about its architecture and how it works? You can read it [here
 
 🔍 **Web search powered by SearxNG** - Access multiple search engines while keeping your identity private. Support for Tavily and Exa coming soon for even better results.
 
+𝕏 **Optional X search powered by Xquik** - Set `XQUIK_API_KEY` to add current public X posts to discussion searches. Follow the [Xquik quickstart](https://docs.xquik.com/quickstart) to create an API key. Enabling it sends discussion queries to the closed-source hosted service and may use Xquik credits. Xquik is an independent third-party service. Not affiliated with X Corp. "Twitter" and "X" are trademarks of X Corp.
+
 📷 **Image and video search** - Find visual content alongside text results. Search isn't limited to just articles anymore.
 
 📄 **File uploads** - Upload documents and ask questions about them. PDFs, text files, images - Vane understands them all.
