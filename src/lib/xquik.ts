@@ -39,6 +39,7 @@ export const searchXquik = async (
       Accept: 'application/json',
       'x-api-key': apiKey,
     },
+    redirect: 'error',
     signal: AbortSignal.timeout(10000),
   });
 
