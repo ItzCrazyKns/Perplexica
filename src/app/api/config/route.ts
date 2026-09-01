@@ -8,6 +8,36 @@ type SaveConfigBody = {
   value: string;
 };
 
+function isPrivateOrMetadataUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname;
+
+    if (
+      hostname === 'localhost' ||
+      hostname === '0.0.0.0' ||
+      hostname === '::1' ||
+      hostname === 'metadata.google.internal' ||
+      hostname.endsWith('.internal') ||
+      hostname.startsWith('127.') ||
+      hostname.startsWith('169.254.') ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('192.168.') ||
+      /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname) ||
+      /^(fc|fd)[0-9a-f]{2}:/i.test(hostname) ||
+      hostname.startsWith('fe80:')
+    ) {
+      return true;
+    }
+
+    return false;
+  } catch {
+    return true;
+  }
+}
+
+const URL_CONFIG_KEYS = ['search.searxngURL'];
+
 export const GET = async (req: NextRequest) => {
   try {
     const values = configManager.getCurrentConfig();
@@ -50,6 +80,17 @@ export const POST = async (req: NextRequest) => {
       return Response.json(
         {
           message: 'Key and value are required.',
+        },
+        {
+          status: 400,
+        },
+      );
+    }
+
+    if (URL_CONFIG_KEYS.includes(body.key) && isPrivateOrMetadataUrl(body.value)) {
+      return Response.json(
+        {
+          message: 'URL points to a private or internal address. This is not allowed.',
         },
         {
           status: 400,
