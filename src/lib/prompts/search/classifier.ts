@@ -10,11 +10,14 @@ NOTE: BY GENERAL KNOWLEDGE WE MEAN INFORMATION THAT IS OBVIOUS, WIDELY KNOWN, OR
    - Set it to true if the query is straightforward, factual, or can be answered based on general knowledge.
    - Set it to true for writing tasks or greeting messages that do not require external information.
    - Set it to true if weather, stock, or similar widgets can fully satisfy the user's request.
-   - Set it to false if the query requires up-to-date information, specific details, or context that cannot be inferred from general knowledge.
+   - Set it to false if the query requires up-to-date information, specific details, or context that cannot be inferred from general knowledge, or if it references the user's uploaded documents or Notion pages.
+   - Set it to false when <selected_notion_pages> is present in the user message and the query concerns them (see <selected_notion_pages> below) — a page selection makes the query refer to the user's own content even when the text only says "this page" or "my notes".
    - ALWAYS SET SKIPSEARCH TO FALSE IF YOU ARE UNCERTAIN OR IF THE QUERY IS AMBIGUOUS OR IF YOU'RE NOT SURE.
-2. personalSearch (boolean): Determine if the query requires searching through user uploaded documents.
+2. personalSearch (boolean): Determine if the query requires searching through user uploaded documents or the user's connected Notion pages.
    - Set it to true if the query explicitly references or implies the need to access user-uploaded documents for example "Determine the key points from the document I uploaded about..." or "Who is the author?", "Summarize the content of the document"
-   - Set it to false if the query does not reference user-uploaded documents or if the information can be obtained through general web search.
+   - Set it to true if the query references the user's Notion pages or databases, for example "用 @Notion 讀《會議筆記》", "Summarize my Notion notes", "What's in my Notion database?"
+   - Set it to true when <selected_notion_pages> is present in the user message and the query concerns them, even if the query does not name a page explicitly — the selection is the reference (e.g. "Can you see this page?" with selected pages).
+   - Set it to false if the query does not reference user-uploaded documents or Notion pages, or if the information can be obtained through general web search.
    - ALWAYS SET PERSONALSEARCH TO FALSE IF YOU ARE UNCERTAIN OR IF THE QUERY IS AMBIGUOUS OR IF YOU'RE NOT SURE. AND SET SKIPSEARCH TO FALSE AS WELL.
 3. academicSearch (boolean): Assess whether the query requires searching academic databases or scholarly articles.
    - Set it to true if the query explicitly requests scholarly information, research papers, academic articles, or citations for example "Find recent studies on...", "What does the latest research say about...", or "Provide citations for..."
@@ -36,6 +39,14 @@ NOTE: BY GENERAL KNOWLEDGE WE MEAN INFORMATION THAT IS OBVIOUS, WIDELY KNOWN, OR
    - Set it to true for queries like "What is 25% of 80?" or "Convert 100 USD to EUR" or "Calculate the square root of 256" or "What is 2 * 3 + 5?" or other mathematical expressions.
    - If it can fully answer the user query without needing additional search, set skipSearch to true as well.
 </labels>
+
+<enabled_sources>
+The user message contains an <enabled_sources> section listing the search sources available in this conversation (for example web, academic, discussions, notion). If "notion" is listed, the user's connected Notion workspace is searchable — account for it when deciding personalSearch.
+</enabled_sources>
+
+<selected_notion_pages>
+When the user message contains a <selected_notion_pages> section, the user has explicitly attached those Notion pages/databases to this conversation as context. Queries that refer to "this page", "my notes", "the selected page", or the content of the selection concern those pages even without naming one. In that case set personalSearch to true and skipSearch to false so the pages are actually searched and read. Do NOT classify meta-questions like "Can you see this page?" as skipSearch when pages are selected.
+</selected_notion_pages>
 
 <standalone_followup>
 For the standalone follow up, you have to generate a self contained, context independant reformulation of the user's query.

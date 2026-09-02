@@ -7,19 +7,19 @@ To update Vane to the latest version, follow these steps:
 Simply pull the latest image and restart your container:
 
 ```bash
-docker pull itzcrazykns1337/vane:latest
+docker pull penny13692018/vane:latest
 docker stop vane
 docker rm vane
-docker run -d -p 3000:3000 -v vane-data:/home/vane/data --name vane itzcrazykns1337/vane:latest
+docker run -d -p 3000:3000 -v vane-data:/home/vane/data --name vane penny13692018/vane:latest
 ```
 
 For slim version:
 
 ```bash
-docker pull itzcrazykns1337/vane:slim-latest
+docker pull penny13692018/vane:slim-latest
 docker stop vane
 docker rm vane
-docker run -d -p 3000:3000 -e SEARXNG_API_URL=http://your-searxng-url:8080 -v vane-data:/home/vane/data --name vane itzcrazykns1337/vane:slim-latest
+docker run -d -p 3000:3000 -e SEARXNG_API_URL=http://your-searxng-url:8080 -v vane-data:/home/vane/data --name vane penny13692018/vane:slim-latest
 ```
 
 Once updated, go to http://localhost:3000 and verify the latest changes. Your settings are preserved automatically.

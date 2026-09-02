@@ -99,13 +99,27 @@ export type UploadSearchResultsResearchBlock = {
   results: Chunk[];
 };
 
+export type NotionSearchingResearchBlock = {
+  id: string;
+  type: 'notion_searching';
+  queries: string[];
+};
+
+export type NotionSearchResultsResearchBlock = {
+  id: string;
+  type: 'notion_search_results';
+  results: Chunk[];
+};
+
 export type ResearchBlockSubStep =
   | ReasoningResearchBlock
   | SearchingResearchBlock
   | SearchResultsResearchBlock
   | ReadingResearchBlock
   | UploadSearchingResearchBlock
-  | UploadSearchResultsResearchBlock;
+  | UploadSearchResultsResearchBlock
+  | NotionSearchingResearchBlock
+  | NotionSearchResultsResearchBlock;
 
 export type ResearchBlock = {
   id: string;
