@@ -28,7 +28,7 @@ const MajorNewsCard = ({
         </div>
         <div className="flex flex-col justify-center flex-1 py-4">
           <h2
-            className="text-3xl font-light mb-3 leading-tight line-clamp-3 group-hover:text-cyan-500 dark:group-hover:text-cyan-300 transition duration-200"
+            className="text-3xl font-light mb-3 leading-tight line-clamp-3 text-black dark:text-white group-hover:text-cyan-500 dark:group-hover:text-cyan-300 transition duration-200"
             style={{ fontFamily: 'PP Editorial, serif' }}
           >
             {item.title}
@@ -42,7 +42,7 @@ const MajorNewsCard = ({
       <>
         <div className="flex flex-col justify-center flex-1 py-4">
           <h2
-            className="text-3xl font-light mb-3 leading-tight line-clamp-3 group-hover:text-cyan-500 dark:group-hover:text-cyan-300 transition duration-200"
+            className="text-3xl font-light mb-3 leading-tight line-clamp-3 text-black dark:text-white group-hover:text-cyan-500 dark:group-hover:text-cyan-300 transition duration-200"
             style={{ fontFamily: 'PP Editorial, serif' }}
           >
             {item.title}

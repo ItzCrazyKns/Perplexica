@@ -32,7 +32,7 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
           href={source.metadata.url}
           target="_blank"
         >
-          <p className="dark:text-white text-xs overflow-hidden whitespace-nowrap text-ellipsis">
+          <p className="text-black dark:text-white text-xs overflow-hidden whitespace-nowrap text-ellipsis">
             {source.metadata.title}
           </p>
           <div className="flex flex-row items-center justify-between">
@@ -108,7 +108,7 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
                 leaveTo="opacity-0 scale-95"
               >
                 <DialogPanel className="w-full max-w-md transform rounded-2xl bg-light-secondary dark:bg-dark-secondary border border-light-200 dark:border-dark-200 p-6 text-left align-middle shadow-xl transition-all">
-                  <DialogTitle className="text-lg font-medium leading-6 dark:text-white">
+                  <DialogTitle className="text-lg font-medium leading-6 text-black dark:text-white">
                     Sources
                   </DialogTitle>
                   <div className="grid grid-cols-2 gap-2 overflow-auto max-h-[300px] mt-2 pr-2">
@@ -119,7 +119,7 @@ const MessageSources = ({ sources }: { sources: Chunk[] }) => {
                         href={source.metadata.url}
                         target="_blank"
                       >
-                        <p className="dark:text-white text-xs overflow-hidden whitespace-nowrap text-ellipsis">
+                        <p className="text-black dark:text-white text-xs overflow-hidden whitespace-nowrap text-ellipsis">
                           {source.metadata.title}
                         </p>
                         <div className="flex flex-row items-center justify-between">

@@ -20,6 +20,10 @@ class ConfigManager {
       searxngURL: '',
     },
   };
+  /* Cached parse of the persisted config, keyed by file mtime. Lets repeated
+  reads (e.g. isSetupComplete on every layout render) avoid blocking disk
+  I/O while still picking up writes made by other Next.js route bundles. */
+  private persistedCache: { mtimeMs: number; config: Config } | null = null;
   uiConfigSections: UIConfigSections = {
     preferences: [
       {
@@ -126,10 +130,88 @@ class ConfigManager {
   }
 
   private saveConfig() {
+    /* If the persisted config cannot be read, its contents are unknown.
+    Overwriting it with the in-memory snapshot could silently destroy newer
+    settings (or another bundle's updates), so let the error propagate and
+    abort the write. Route handlers wrap these calls and map the failure to
+    their existing 500 response. */
+    const latest = this.readPersistedConfig();
+    /* Other Next.js bundles may have marked setup complete after this
+    instance last loaded the config. Never downgrade true -> false. */
+    this.currentConfig.setupComplete =
+      latest.setupComplete || this.currentConfig.setupComplete;
+
     fs.writeFileSync(
       this.configPath,
       JSON.stringify(this.currentConfig, null, 2),
     );
+
+    /* Invalidate the mtime-keyed cache: filesystems with coarse timestamp
+    granularity can report the same mtimeMs for successive writes, which would
+    make the stale cached snapshot look current. */
+    this.persistedCache = null;
+  }
+
+  private normalizeConfig(raw: any): Config {
+    const isRecord = (v: any): v is Record<string, any> =>
+      v !== null && typeof v === 'object' && !Array.isArray(v);
+
+    /* Spread the raw object first so unknown persisted top-level fields
+    (e.g. written by a newer version or generic settings) survive the
+    normalize -> syncFromDisk -> saveConfig round trip, instead of being
+    dropped by a fixed literal on the next mutation. Known keys are still
+    validated below. */
+    return {
+      ...(isRecord(raw) ? raw : {}),
+      version: raw.version ?? this.configVersion,
+      setupComplete: raw.setupComplete === true,
+      preferences: isRecord(raw.preferences) ? raw.preferences : {},
+      personalization: isRecord(raw.personalization) ? raw.personalization : {},
+      modelProviders: Array.isArray(raw.modelProviders)
+        ? raw.modelProviders
+        : [],
+      search: isRecord(raw.search)
+        ? {
+            searxngURL: '',
+            ...raw.search,
+          }
+        : { searxngURL: '' },
+    };
+  }
+
+  private parseConfigFromDisk(): Config {
+    const raw = JSON.parse(fs.readFileSync(this.configPath, 'utf-8'));
+    return this.normalizeConfig(raw);
+  }
+
+  private readPersistedConfig(): Config {
+    const stat = fs.statSync(this.configPath);
+
+    if (this.persistedCache && this.persistedCache.mtimeMs === stat.mtimeMs) {
+      return this.persistedCache.config;
+    }
+
+    const config = this.parseConfigFromDisk();
+    this.persistedCache = { mtimeMs: stat.mtimeMs, config };
+    return config;
+  }
+
+  /* Refresh in-memory state from disk before mutating so writes never
+  serialize a stale copy (e.g. dropping providers added by other bundles or
+  resetting setupComplete to false). Read failures propagate: mutating a
+  snapshot while the persisted file is unreadable risks overwriting newer
+  state, so callers surface the error instead.
+
+  The cache is cleared before reading so synchronization always starts from
+  the actual file bytes: a mutation that aborts without writing (e.g. an
+  unknown provider id) used to leave the mtime-keyed entry in place, and on a
+  coarse-timestamp filesystem another bundle's write can report the same
+  mtimeMs and be shadowed by that stale cached snapshot. The result is also
+  cloned so in-place mutations made by callers cannot poison the shared
+  persistedCache object when a subsequent writeFileSync fails. */
+  private syncFromDisk() {
+    this.persistedCache = null;
+    this.currentConfig = JSON.parse(JSON.stringify(this.readPersistedConfig()));
   }
 
   private initializeConfig() {
@@ -255,6 +337,8 @@ class ConfigManager {
     const parts = key.split('.');
     if (parts.length === 0) return;
 
+    this.syncFromDisk();
+
     let target: any = this.currentConfig;
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i];
@@ -272,6 +356,8 @@ class ConfigManager {
   }
 
   public addModelProvider(type: string, name: string, config: any) {
+    this.syncFromDisk();
+
     const newModelProvider: ConfigModelProvider = {
       id: crypto.randomUUID(),
       name,
@@ -289,6 +375,7 @@ class ConfigManager {
   }
 
   public removeModelProvider(id: string) {
+    this.syncFromDisk();
     const index = this.currentConfig.modelProviders.findIndex(
       (p) => p.id === id,
     );
@@ -302,6 +389,7 @@ class ConfigManager {
   }
 
   public async updateModelProvider(id: string, name: string, config: any) {
+    this.syncFromDisk();
     const provider = this.currentConfig.modelProviders.find((p) => {
       return p.id === id;
     });
@@ -321,6 +409,7 @@ class ConfigManager {
     type: 'embedding' | 'chat',
     model: any,
   ) {
+    this.syncFromDisk();
     const provider = this.currentConfig.modelProviders.find(
       (p) => p.id === providerId,
     );
@@ -345,6 +434,7 @@ class ConfigManager {
     type: 'embedding' | 'chat',
     modelKey: string,
   ) {
+    this.syncFromDisk();
     const provider = this.currentConfig.modelProviders.find(
       (p) => p.id === providerId,
     );
@@ -365,10 +455,20 @@ class ConfigManager {
   }
 
   public isSetupComplete() {
-    return this.currentConfig.setupComplete;
+    /* Route handlers and pages are bundled separately by Next.js, so this
+    module-level singleton is a different instance in layout.tsx than in
+    /api/config/setup-complete. Read directly from disk (never from the
+    mtime-keyed cache) so the wizard is dismissed once the API route marks
+    setup as complete: cache keys can collide when the filesystem reports the
+    same mtimeMs for successive writes. This is a correctness-critical read,
+    so the per-request parse is intentional. Read/parse failures propagate so
+    a corrupted config surfaces as a server error instead of silently
+    rendering the setup wizard. */
+    return this.parseConfigFromDisk().setupComplete === true;
   }
 
   public markSetupComplete() {
+    this.syncFromDisk();
     if (!this.currentConfig.setupComplete) {
       this.currentConfig.setupComplete = true;
     }
