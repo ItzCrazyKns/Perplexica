@@ -161,30 +161,50 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
     let recievedToolCalls: { name: string; id: string; arguments: string }[] =
       [];
 
+    const parseToolArguments = (argumentsText: string) => {
+      if (!argumentsText.trim()) return {};
+
+      try {
+        return parse(argumentsText);
+      } catch (err) {
+        // Some OpenAI-compatible providers stream an empty or partial arguments
+        // chunk before the full JSON arrives. Keep streaming instead of failing.
+        return {};
+      }
+    };
+
     for await (const chunk of stream) {
       if (chunk.choices && chunk.choices.length > 0) {
         const toolCalls = chunk.choices[0].delta.tool_calls;
         yield {
           contentChunk: chunk.choices[0].delta.content || '',
           toolCallChunk:
-            toolCalls?.map((tc) => {
-              if (!recievedToolCalls[tc.index]) {
-                const call = {
-                  name: tc.function?.name!,
-                  id: tc.id!,
-                  arguments: tc.function?.arguments || '',
-                };
-                recievedToolCalls.push(call);
-                return { ...call, arguments: parse(call.arguments || '{}') };
-              } else {
+            toolCalls
+              ?.map((tc) => {
                 const existingCall = recievedToolCalls[tc.index];
+
+                if (!existingCall) {
+                  if (!tc.id || !tc.function?.name) return undefined;
+
+                  const call = {
+                    name: tc.function.name,
+                    id: tc.id,
+                    arguments: tc.function.arguments || '',
+                  };
+                  recievedToolCalls[tc.index] = call;
+                  return {
+                    ...call,
+                    arguments: parseToolArguments(call.arguments),
+                  };
+                }
+
                 existingCall.arguments += tc.function?.arguments || '';
                 return {
                   ...existingCall,
-                  arguments: parse(existingCall.arguments),
+                  arguments: parseToolArguments(existingCall.arguments),
                 };
-              }
-            }) || [],
+              })
+              .filter((tc) => tc !== undefined) || [],
           done: chunk.choices[0].finish_reason !== null,
           additionalInfo: {
             finishReason: chunk.choices[0].finish_reason,
