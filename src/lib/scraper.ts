@@ -13,17 +13,25 @@ class Scraper {
   private static async initBrowser() {
     await this.browserMutex.runExclusive(async () => {
       if (!this.browser) {
-        const { chromium } = await import('playwright');
-        this.browser = await chromium.launch({
+        const browserType = process.env.SCRAPER_BROWSER_TYPE || 'chromium';
+        const playwright = await import('playwright');
+        const engine = playwright[browserType as 'chromium' | 'firefox' | 'webkit'];
+        const executablePath = process.env.SCRAPER_EXECUTABLE_PATH;
+        this.browser = await engine.launch({
           headless: true,
-          channel: 'chromium-headless-shell',
-          args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--disable-blink-features=AutomationControlled',
-          ],
+          ...(browserType === 'chromium'
+            ? {
+                channel: 'chromium-headless-shell',
+                args: [
+                  '--no-sandbox',
+                  '--disable-setuid-sandbox',
+                  '--disable-dev-shm-usage',
+                  '--disable-gpu',
+                  '--disable-blink-features=AutomationControlled',
+                ],
+              }
+            : {}),
+          ...(executablePath ? { executablePath } : {}),
         });
       }
 
