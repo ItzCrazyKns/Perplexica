@@ -255,9 +255,19 @@ class ConfigManager {
     const parts = key.split('.');
     if (parts.length === 0) return;
 
+    // Prevent prototype pollution by checking for restricted keys in any part of the path
+    const isRestricted = parts.some(
+      (part) =>
+        part === '__proto__' ||
+        part === 'constructor' ||
+        part === 'prototype',
+    );
+    if (isRestricted) return;
+
     let target: any = this.currentConfig;
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i];
+
       if (target[part] === null || typeof target[part] !== 'object') {
         target[part] = {};
       }
