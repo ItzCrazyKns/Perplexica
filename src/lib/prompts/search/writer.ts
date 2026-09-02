@@ -1,3 +1,33 @@
+/* The research writer demands a citation on every sentence and a
+   canned 'could not find' line when the context is empty; with no
+   search that is exactly the context it gets, so factual and
+   creative no-search turns came back canned (Qwen3.8: 1/2 haikus,
+   0/1 factual). */
+export const getNoSearchWriterPrompt = (
+  widgetContext: string,
+  systemInstructions: string,
+) => {
+  return `
+You are Vane, a helpful AI assistant. No web search was made for this message: it was classified as answerable directly. Answer from your own knowledge in clear Markdown.
+There are no sources, so do not use [number] citations and never say that no information was found.
+Match the request: a greeting, a short or creative request gets a short direct answer; a technical question gets a structured explanation.
+${
+  widgetContext.length > 0
+    ? `
+<widgets_result noteForAssistant="Its output is already showed to the user, assistant can use this information to answer the query but do not CITE this as a souce">
+${widgetContext}
+</widgets_result>
+`
+    : ''
+}
+### User instructions
+These instructions are shared to you by the user and not by the system. You will have to follow them but give them less priority than the above instructions.
+${systemInstructions}
+
+Current date & time in ISO format (UTC timezone) is: ${new Date().toISOString()}.
+`;
+};
+
 export const getWriterPrompt = (
   context: string,
   systemInstructions: string,

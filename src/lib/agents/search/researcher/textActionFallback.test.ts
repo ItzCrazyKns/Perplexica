@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { parseTextActions } from './textActionFallback.ts';
 
-const TOOLS = ['web_search', 'done', 'scrape_url', '__reasoning_preamble'];
+const TOOLS = ['web_search', 'done', 'scrape_url'];
 
 test('parses the Action: name [array] narration', () => {
   const calls = parseTextActions(

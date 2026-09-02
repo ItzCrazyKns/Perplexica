@@ -135,8 +135,11 @@ class Researcher {
 
       const block = session.getBlock(researchBlockId);
 
-      let reasoningEmitted = false;
-      let reasoningId = crypto.randomUUID();
+      /* Prose the model emits before its calls is the plan the research
+         block shows. A dedicated narration tool did this before, but
+         local models answered it with pseudo-tags instead of native
+         calls (see the prompt header); free text costs nothing. */
+      let narrationId = '';
 
       let finalToolCalls: ToolCall[] = [];
       let streamedText = '';
@@ -147,56 +150,40 @@ class Researcher {
         'Researcher stream',
       )) {
         streamedText += partialRes.contentChunk || '';
+
+        const narration = streamedText.trim();
+
+        if (
+          narration.length > 0 &&
+          !/[<{]/.test(narration) &&
+          block &&
+          block.type === 'research'
+        ) {
+          if (!narrationId) {
+            narrationId = crypto.randomUUID();
+            block.data.subSteps.push({
+              id: narrationId,
+              type: 'reasoning',
+              reasoning: narration,
+            });
+          } else {
+            const step = block.data.subSteps.find(
+              (s) => s.id === narrationId,
+            ) as ReasoningResearchBlock | undefined;
+            if (step) step.reasoning = narration;
+          }
+
+          session.updateBlock(researchBlockId, [
+            {
+              op: 'replace',
+              path: '/data/subSteps',
+              value: block.data.subSteps,
+            },
+          ]);
+        }
+
         if (partialRes.toolCallChunk.length > 0) {
           partialRes.toolCallChunk.forEach((tc) => {
-            if (
-              tc.name === '__reasoning_preamble' &&
-              tc.arguments['plan'] &&
-              !reasoningEmitted &&
-              block &&
-              block.type === 'research'
-            ) {
-              reasoningEmitted = true;
-
-              block.data.subSteps.push({
-                id: reasoningId,
-                type: 'reasoning',
-                reasoning: tc.arguments['plan'],
-              });
-
-              session.updateBlock(researchBlockId, [
-                {
-                  op: 'replace',
-                  path: '/data/subSteps',
-                  value: block.data.subSteps,
-                },
-              ]);
-            } else if (
-              tc.name === '__reasoning_preamble' &&
-              tc.arguments['plan'] &&
-              reasoningEmitted &&
-              block &&
-              block.type === 'research'
-            ) {
-              const subStepIndex = block.data.subSteps.findIndex(
-                (step: any) => step.id === reasoningId,
-              );
-
-              if (subStepIndex !== -1) {
-                const subStep = block.data.subSteps[
-                  subStepIndex
-                ] as ReasoningResearchBlock;
-                subStep.reasoning = tc.arguments['plan'];
-                session.updateBlock(researchBlockId, [
-                  {
-                    op: 'replace',
-                    path: '/data/subSteps',
-                    value: block.data.subSteps,
-                  },
-                ]);
-              }
-            }
-
             const existingIndex = finalToolCalls.findIndex(
               (ftc) => ftc.id === tc.id,
             );

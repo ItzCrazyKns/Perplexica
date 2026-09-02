@@ -8,6 +8,13 @@ import UploadStore from '@/lib/uploads/store';
  * 0/4 with the old prompt vs 2/2 with this shape against the same
  * server. Keep prompts lean, direct second person, and describe tool
  * use abstractly.
+ *
+ * Same family, second shape (Qwen3.8-27B): a narration pseudo-tool
+ * named __reasoning_preamble made the model answer with bare tags
+ * (<__reasoning_preamble>, <web_search>) and no native call, 0/6 in
+ * balanced and quality; without that tool it narrates one line of
+ * prose and calls web_search natively, 4/4. The narration is what
+ * the research block shows as the plan now.
  */
 
 const filesSection = (fileDesc: string) =>
@@ -61,7 +68,7 @@ Iteration ${i + 1} of ${maxIteration}: act efficiently.
 
 Your knowledge is outdated. Default to the web_search tool with up to 3 targeted queries whenever information may be missing or stale, even for seemingly basic facts.
 
-Cadence for this turn: optionally call the __reasoning_preamble tool with a short natural-language plan (no tool names in it), then make your information-gathering calls, then finish with the done tool. If narrating gets in the way, skip it and search directly: information-gathering always has priority.
+Cadence for this turn: make your information-gathering calls, then finish with the done tool. Information-gathering always has priority.
 Use at most 6 tool calls in total. Aim for at least two information-gathering calls unless the question is trivial or prior results already cover it. Start broad, then narrow based on what the results show.
 
 <available_tools>
@@ -90,7 +97,7 @@ Iteration ${i + 1} of ${maxIteration}: use every iteration wisely.
 Your knowledge is outdated. Always ground answers with the available tools.
 This is deep research: cover multiple angles: definition, features or capabilities, comparisons with alternatives, recent news, expert opinions, use cases, and limitations or critiques.
 
-Loop for this turn: optionally call the __reasoning_preamble tool to reflect on previous results and state the next step (natural language, no tool names), then an information-gathering call, and repeat. If narrating gets in the way, skip it: information-gathering always has priority. Aim for 4-7 information-gathering calls across different angles, at most 10 tool calls total, then finish with the done tool.
+Loop for this turn: make an information-gathering call, review the results, then the next call, and repeat. Aim for 4-7 information-gathering calls across different angles, at most 10 tool calls total, then finish with the done tool.
 If results hint at interesting sub-topics, follow up on them. Search for both positive and critical viewpoints.
 
 <available_tools>

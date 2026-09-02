@@ -2,7 +2,10 @@ import { ResearcherOutput, SearchAgentInput } from './types';
 import SessionManager from '@/lib/session';
 import { classify } from './classifier';
 import Researcher from './researcher';
-import { getWriterPrompt } from '@/lib/prompts/search/writer';
+import {
+  getNoSearchWriterPrompt,
+  getWriterPrompt,
+} from '@/lib/prompts/search/writer';
 import { WidgetExecutor } from './widgets';
 import db from '@/lib/db';
 import { messages } from '@/lib/db/schema';
@@ -132,7 +135,9 @@ class SearchAgent {
         ? output.results.filter(
             (f) =>
               f.content &&
-              !/^(Error scraping|Blocked scrape)/.test(f.metadata?.title ?? '') &&
+              !/^(Error scraping|Blocked scrape)/.test(
+                f.metadata?.title ?? '',
+              ) &&
               !/^(Failed to fetch|Skipped |Scraping )/.test(f.content),
           )
         : [];
@@ -187,7 +192,11 @@ class SearchAgent {
       await this.writeAnswer(
         session,
         input,
-        summaryContext,
+        getWriterPrompt(
+          summaryContext,
+          input.config.systemInstructions,
+          input.config.mode,
+        ),
         /* The forced opening makes a tool-syntax first token
            structurally impossible; without it short or partial
            articles still flipped the model into fetch mode (0/1 vs
@@ -244,27 +253,39 @@ class SearchAgent {
       type: 'researchComplete',
     });
 
-    let finalContext =
-      '<Query to be answered without searching; Search not made>';
-
-    if (searchResults) {
-      finalContext = searchResults?.searchFindings
-        .map(
-          (f, index) =>
-            `<result index=${index + 1} title=${JSON.stringify(f.metadata.title ?? '')}>${sanitizeUntrusted(f.content)}</result>`,
-        )
-        .join('\n');
-    }
-
     const widgetContext = widgetOutputs
       .map((o) => {
         return `<result>${o.llmContext}</result>`;
       })
       .join('\n-------------\n');
 
+    if (!searchResults) {
+      await this.writeAnswer(
+        session,
+        input,
+        getNoSearchWriterPrompt(widgetContext, input.config.systemInstructions),
+      );
+      return;
+    }
+
+    const finalContext = searchResults.searchFindings
+      .map(
+        (f, index) =>
+          `<result index=${index + 1} title=${JSON.stringify(f.metadata.title ?? '')}>${sanitizeUntrusted(f.content)}</result>`,
+      )
+      .join('\n');
+
     const finalContextWithWidgets = `<search_results note="These are the search results and assistant can cite these">\n${finalContext}\n</search_results>\n<widgets_result noteForAssistant="Its output is already showed to the user, assistant can use this information to answer the query but do not CITE this as a souce">\n${widgetContext}\n</widgets_result>`;
 
-    await this.writeAnswer(session, input, finalContextWithWidgets);
+    await this.writeAnswer(
+      session,
+      input,
+      getWriterPrompt(
+        finalContextWithWidgets,
+        input.config.systemInstructions,
+        input.config.mode,
+      ),
+    );
   }
 
   /* Answers opening with bare tool arguments ({"query": ...}) or an
@@ -281,15 +302,9 @@ class SearchAgent {
   private async writeAnswer(
     session: SessionManager,
     input: SearchAgentInput,
-    context: string,
+    writerPrompt: string,
     userMessage?: string,
   ) {
-    const writerPrompt = getWriterPrompt(
-      context,
-      input.config.systemInstructions,
-      input.config.mode,
-    );
-
     const writerMessages = [
       { role: 'system' as const, content: writerPrompt },
       ...input.chatHistory,
