@@ -50,26 +50,36 @@ export const executeSearch = async (input: {
       try {
         const queryEmbedding = (await input.embedding.embedText([q]))[0];
 
-        resultChunks = (
-          await Promise.all(
-            res.results.map(async (r) => {
-              const content = r.content || r.title;
-              const chunkEmbedding = (
-                await input.embedding.embedText([content])
-              )[0];
+        const allChunks = await Promise.all(
+          res.results.map(async (r) => {
+            const content = r.content || r.title;
+            const chunkEmbedding = (
+              await input.embedding.embedText([content])
+            )[0];
 
-              return {
-                content,
-                metadata: {
-                  title: r.title,
-                  url: r.url,
-                  similarity: computeSimilarity(queryEmbedding, chunkEmbedding),
-                  embedding: chunkEmbedding,
-                },
-              };
-            }),
-          )
-        ).filter((c) => c.metadata.similarity > 0.5);
+            return {
+              content,
+              metadata: {
+                title: r.title,
+                url: r.url,
+                similarity: computeSimilarity(queryEmbedding, chunkEmbedding),
+                embedding: chunkEmbedding,
+              },
+            };
+          }),
+        );
+
+        resultChunks = allChunks.filter((c) => c.metadata.similarity > 0.5);
+
+        // If the similarity filter removed all results, fall back to the
+        // top results sorted by similarity so external SearXNG instances
+        // where `number_of_results` may be 0 but `results` is non-empty
+        // still produce useful output.
+        if (resultChunks.length === 0 && allChunks.length > 0) {
+          resultChunks = allChunks
+            .sort((a, b) => b.metadata.similarity - a.metadata.similarity)
+            .slice(0, 10);
+        }
       } catch (err) {
         resultChunks = res.results.map((r) => {
           const content = r.content || r.title;
