@@ -113,6 +113,33 @@ class ConfigManager {
         scope: 'server',
         env: 'SEARXNG_API_URL',
       },
+      {
+        name: 'Search provider',
+        key: 'provider',
+        type: 'select',
+        required: false,
+        description:
+          'Choose the web search backend. SearXNG (default) or You.com.',
+        default: 'searxng',
+        options: [
+          { name: 'SearXNG', value: 'searxng' },
+          { name: 'You.com', value: 'youcom' },
+        ],
+        scope: 'server',
+        env: 'SEARCH_PROVIDER',
+      },
+      {
+        name: 'You.com API Key',
+        key: 'youcomApiKey',
+        type: 'password',
+        required: false,
+        description:
+          'Your You.com API key (required when the search provider is set to You.com).',
+        placeholder: 'your-ydc-api-key',
+        default: '',
+        scope: 'server',
+        env: 'YDC_API_KEY',
+      },
     ],
   };
 
