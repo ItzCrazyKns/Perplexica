@@ -64,6 +64,7 @@ const Page = () => {
                 ? 'Loading…'
                 : `${chats.length} ${chats.length === 1 ? 'chat' : 'chats'}`}
             </span>
+            <DeleteAllChats setChats={setChats} />
           </div>
         </div>
       </div>
@@ -143,13 +144,6 @@ const Page = () => {
                         setChats={setChats}
                       />
                     </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2 text-black/70 dark:text-white/70">
-                    <span className="inline-flex items-center gap-1 text-xs">
-                      <ClockIcon size={14} />
-                      {formatTimeDifference(new Date(), chat.createdAt)} Ago
-                    </span>
 
                     {sourcesLabel && (
                       <span className="inline-flex items-center gap-1 text-xs border border-black/20 dark:border-white/20 rounded-full px-2 py-0.5">
