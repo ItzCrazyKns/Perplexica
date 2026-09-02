@@ -1,7 +1,13 @@
 import { sql } from 'drizzle-orm';
-import { text, integer, sqliteTable } from 'drizzle-orm/sqlite-core';
+import {
+  text,
+  integer,
+  sqliteTable,
+  uniqueIndex,
+} from 'drizzle-orm/sqlite-core';
 import { Block } from '../types';
 import { SearchSources } from '../agents/search/types';
+import { AuthorizedPage } from '../connectors/notion/types';
 
 export const messages = sqliteTable('messages', {
   id: integer('id').primaryKey(),
@@ -35,4 +41,24 @@ export const chats = sqliteTable('chats', {
   files: text('files', { mode: 'json' })
     .$type<DBFile[]>()
     .default(sql`'[]'`),
+  notionPages: text('notion_pages', { mode: 'json' })
+    .$type<AuthorizedPage[]>()
+    .notNull()
+    .default(sql`'[]'`), // Matches migration 0004 (`NOT NULL`).
 });
+
+export const notionConnections = sqliteTable(
+  'notion_connections',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    workspaceId: text('workspace_id').notNull(),
+    workspaceName: text('workspace_name').notNull(),
+    encryptedToken: text('encrypted_token').notNull(),
+    // Constant column: the unique index below enforces the single-row
+    // invariant at the database level, not just in the store.
+    singleton: integer('singleton').notNull().default(1),
+    createdAt: text('created_at').notNull(),
+    updatedAt: text('updated_at').notNull(),
+  },
+  (table) => [uniqueIndex('notion_connections_singleton').on(table.singleton)],
+);

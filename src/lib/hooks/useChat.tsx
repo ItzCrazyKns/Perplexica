@@ -15,6 +15,13 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { getSuggestions } from '../actions';
 import { MinimalProvider } from '../models/types';
+import { fuzzyMatchPages } from '@/lib/connectors/notion/fuzzy';
+import {
+  hasNotionMention,
+  parseNotionMentions,
+  resolveMention,
+} from '@/lib/connectors/notion/mention';
+import type { AuthorizedPage } from '@/lib/connectors/notion/types';
 import { getAutoMediaSearch } from '../config/clientRegistry';
 import { applyPatch } from 'rfc6902';
 import { Widget } from '@/components/ChatWindow';
@@ -51,6 +58,8 @@ type ChatContext = {
   setSources: (sources: string[]) => void;
   setFiles: (files: File[]) => void;
   setFileIds: (fileIds: string[]) => void;
+  notionPages: AuthorizedPage[];
+  setNotionPages: (pages: AuthorizedPage[]) => void;
   sendMessage: (
     message: string,
     messageId?: string,
@@ -177,6 +186,7 @@ const loadMessages = async (
   setIsMessagesLoaded: (loaded: boolean) => void,
   chatHistory: React.MutableRefObject<[string, string][]>,
   setSources: (sources: string[]) => void,
+  setNotionPages: (pages: AuthorizedPage[]) => void,
   setNotFound: (notFound: boolean) => void,
   setFiles: (files: File[]) => void,
   setFileIds: (fileIds: string[]) => void,
@@ -235,6 +245,7 @@ const loadMessages = async (
 
   chatHistory.current = history;
   setSources(data.chat.sources);
+  setNotionPages(data.chat.notionPages ?? []);
   setIsMessagesLoaded(true);
 };
 
@@ -261,6 +272,8 @@ export const chatContext = createContext<ChatContext>({
   setFileIds: () => {},
   setFiles: () => {},
   setSources: () => {},
+  setNotionPages: () => {},
+  notionPages: [],
   setOptimizationMode: () => {},
   setChatModelProvider: () => {},
   setEmbeddingModelProvider: () => {},
@@ -288,7 +301,21 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const [fileIds, setFileIds] = useState<string[]>([]);
 
   const [sources, setSources] = useState<string[]>(['web']);
+  const [notionPages, setNotionPages] = useState<AuthorizedPage[]>([]);
   const [optimizationMode, setOptimizationMode] = useState('speed');
+
+  // Selecting Notion pages activates the 'notion' source for this chat.
+  useEffect(() => {
+    setSources((prev) => {
+      if (notionPages.length > 0 && !prev.includes('notion')) {
+        return [...prev, 'notion'];
+      }
+      if (notionPages.length === 0 && prev.includes('notion')) {
+        return prev.filter((s) => s !== 'notion');
+      }
+      return prev;
+    });
+  }, [notionPages]);
 
   const [isMessagesLoaded, setIsMessagesLoaded] = useState(false);
 
@@ -496,6 +523,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         setIsMessagesLoaded,
         chatHistory,
         setSources,
+        setNotionPages,
         setNotFound,
         setFiles,
         setFileIds,
@@ -725,6 +753,67 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       window.history.replaceState(null, '', `/c/${chatId}`);
     }
 
+    // Resolve and strip @Notion mentions before sending: the mention acts
+    // as a structured instruction, never as text for the model.
+    let finalContent = message;
+    let finalSources = sources;
+    let finalNotionPages = notionPages;
+
+    if (hasNotionMention(message)) {
+      const { cleaned, names } = parseNotionMentions(message);
+      finalContent = cleaned;
+
+      if (names.length > 0) {
+        try {
+          const res = await fetch('/api/notion/pages');
+          if (res.ok) {
+            const { pages } = (await res.json()) as {
+              pages: AuthorizedPage[];
+            };
+            const resolved: AuthorizedPage[] = [];
+
+            for (const name of names) {
+              const page = resolveMention(pages, name);
+              if (page) {
+                resolved.push(page);
+              } else {
+                const candidates = fuzzyMatchPages(pages, name)
+                  .slice(0, 3)
+                  .map((p) => p.title);
+                toast.error(
+                  candidates.length > 0
+                    ? `找不到 Notion 頁面「${name}」，你是指：${candidates.join('、')}？`
+                    : `找不到 Notion 頁面「${name}」，將以 Notion 搜尋處理`,
+                );
+              }
+            }
+
+            if (resolved.length > 0) {
+              const seen = new Set(finalNotionPages.map((p) => p.id));
+              for (const page of resolved) {
+                if (!seen.has(page.id)) {
+                  finalNotionPages = [...finalNotionPages, page];
+                  seen.add(page.id);
+                }
+              }
+              setNotionPages(finalNotionPages);
+            }
+          } else if (res.status === 409) {
+            toast.error('Notion 尚未連接，請先到設定連接 Notion');
+          }
+        } catch (err) {
+          console.error('Failed to resolve Notion mention:', err);
+        }
+      }
+    }
+
+    // Any @Notion mention activates the source for this conversation, even
+    // without a resolved page: the agent searches authorized pages and
+    // re-confirms unresolved names.
+    if (hasNotionMention(message) && !finalSources.includes('notion')) {
+      finalSources = [...finalSources, 'notion'];
+    }
+
     messageId = messageId ?? crypto.randomBytes(7).toString('hex');
     const backendId = crypto.randomBytes(20).toString('hex');
 
@@ -732,7 +821,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
       messageId,
       chatId: chatId!,
       backendId,
-      query: message,
+      query: finalContent,
       responseBlocks: [],
       status: 'answering',
       createdAt: new Date(),
@@ -748,15 +837,16 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        content: message,
+        content: finalContent,
         message: {
           messageId: messageId,
           chatId: chatId!,
-          content: message,
+          content: finalContent,
         },
         chatId: chatId!,
         files: fileIds,
-        sources: sources,
+        sources: finalSources,
+        notionPages: finalNotionPages,
         optimizationMode: optimizationMode,
         history: rewrite
           ? chatHistory.current.slice(
@@ -825,6 +915,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         setFileIds,
         setFiles,
         setSources,
+        setNotionPages,
+        notionPages,
         setOptimizationMode,
         rewrite,
         sendMessage,

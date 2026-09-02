@@ -3,8 +3,10 @@ import BaseLLM from '../../models/base/llm';
 import BaseEmbedding from '@/lib/models/base/embedding';
 import SessionManager from '@/lib/session';
 import { ChatTurnMessage, Chunk } from '@/lib/types';
+import type { AuthorizedPage } from '@/lib/connectors/notion/types';
+import type { NotionConnectionDb } from '@/lib/connectors/notion/store';
 
-export type SearchSources = 'web' | 'discussions' | 'academic';
+export type SearchSources = 'web' | 'discussions' | 'academic' | 'notion';
 
 export type SearchAgentConfig = {
   sources: SearchSources[];
@@ -13,6 +15,14 @@ export type SearchAgentConfig = {
   embedding: BaseEmbedding<any>;
   mode: 'speed' | 'balanced' | 'quality';
   systemInstructions: string;
+  /** Pages/databases selected for this conversation via @Notion (ADR-0001). */
+  notionPages?: AuthorizedPage[];
+  /**
+   * False hides the Notion write tools. The /api/search path uses a
+   * private researcher session with no confirmation flow, so writes must
+   * not be offered there (they could never be approved).
+   */
+  allowWrites?: boolean;
 };
 
 export type SearchAgentInput = {
@@ -47,6 +57,8 @@ export type ClassifierInput = {
   enabledSources: SearchSources[];
   query: string;
   chatHistory: ChatTurnMessage[];
+  /** Pages/databases selected for this conversation (ADR-0001). */
+  notionPages?: AuthorizedPage[];
 };
 
 export type ClassifierOutput = {
@@ -66,6 +78,10 @@ export type AdditionalConfig = {
   llm: BaseLLM<any>;
   embedding: BaseEmbedding<any>;
   session: SessionManager;
+  /** Notion connection database, injected so actions stay testable. */
+  notionDb: NotionConnectionDb;
+  /** Pages/databases selected for this conversation (ADR-0001). */
+  notionPages: AuthorizedPage[];
 };
 
 export type ResearcherInput = {
@@ -85,6 +101,17 @@ export type SearchActionOutput = {
   results: Chunk[];
 };
 
+/**
+ * A write the agent staged for later approval (ADR-0003). Stays in the
+ * researcher's tool history so the LLM sees it was only staged, but is
+ * never surfaced as a user-facing source block — the confirmation card is
+ * the only place the user should see staged writes.
+ */
+export type StagedWriteOutput = {
+  type: 'staged_write';
+  results: Chunk[];
+};
+
 export type DoneActionOutput = {
   type: 'done';
 };
@@ -96,6 +123,7 @@ export type ReasoningResearchAction = {
 
 export type ActionOutput =
   | SearchActionOutput
+  | StagedWriteOutput
   | DoneActionOutput
   | ReasoningResearchAction;
 
@@ -111,7 +139,15 @@ export interface ResearchAction<
     fileIds: string[];
     mode: SearchAgentConfig['mode'];
     sources: SearchSources[];
+    allowWrites?: boolean;
   }) => boolean;
+  /**
+   * Whether this action stages a write for later batch approval
+   * (ADR-0003). Staged writes must land in the same order as the model's
+   * tool calls, so `executeAll` serializes these while running every
+   * other (independent) action concurrently.
+   */
+  stagesWrite?: boolean;
   execute: (
     params: z.infer<TSchema>,
     additionalConfig: AdditionalConfig & {

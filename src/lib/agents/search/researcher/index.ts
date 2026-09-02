@@ -5,6 +5,7 @@ import SessionManager from '@/lib/session';
 import { Message, ReasoningResearchBlock } from '@/lib/types';
 import formatChatHistoryAsString from '@/lib/utils/formatHistory';
 import { ToolCall } from '@/lib/models/types';
+import db from '@/lib/db';
 
 class Researcher {
   async research(
@@ -19,20 +20,18 @@ class Researcher {
           ? 6
           : 25;
 
-    const availableTools = ActionRegistry.getAvailableActionTools({
+    const actionGate = {
       classification: input.classification,
       fileIds: input.config.fileIds,
       mode: input.config.mode,
       sources: input.config.sources,
-    });
+      allowWrites: input.config.allowWrites ?? true,
+    };
+
+    const availableTools = ActionRegistry.getAvailableActionTools(actionGate);
 
     const availableActionsDescription =
-      ActionRegistry.getAvailableActionsDescriptions({
-        classification: input.classification,
-        fileIds: input.config.fileIds,
-        mode: input.config.mode,
-        sources: input.config.sources,
-      });
+      ActionRegistry.getAvailableActionsDescriptions(actionGate);
 
     const researchBlockId = crypto.randomUUID();
 
@@ -56,6 +55,8 @@ class Researcher {
       },
     ];
 
+    const notionPages = input.config.notionPages ?? [];
+
     for (let i = 0; i < maxIteration; i++) {
       const researcherPrompt = getResearcherPrompt(
         availableActionsDescription,
@@ -63,6 +64,7 @@ class Researcher {
         i,
         maxIteration,
         input.config.fileIds,
+        notionPages,
       );
 
       const actionStream = input.config.llm.streamText({
@@ -168,6 +170,8 @@ class Researcher {
         researchBlockId: researchBlockId,
         fileIds: input.config.fileIds,
         mode: input.config.mode,
+        notionDb: db,
+        notionPages: notionPages,
       });
 
       actionOutput.push(...actionResults);

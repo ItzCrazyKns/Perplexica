@@ -24,6 +24,7 @@ class ActionRegistry {
     fileIds: string[];
     mode: SearchAgentConfig['mode'];
     sources: SearchSources[];
+    allowWrites?: boolean;
   }): ResearchAction[] {
     return Array.from(
       this.actions.values().filter((action) => action.enabled(config)),
@@ -35,6 +36,7 @@ class ActionRegistry {
     fileIds: string[];
     mode: SearchAgentConfig['mode'];
     sources: SearchSources[];
+    allowWrites?: boolean;
   }): Tool[] {
     const availableActions = this.getAvailableActions(config);
 
@@ -50,6 +52,7 @@ class ActionRegistry {
     fileIds: string[];
     mode: SearchAgentConfig['mode'];
     sources: SearchSources[];
+    allowWrites?: boolean;
   }): string {
     const availableActions = this.getAvailableActions(config);
 
@@ -87,18 +90,43 @@ class ActionRegistry {
       mode: SearchAgentConfig['mode'];
     },
   ): Promise<ActionOutput[]> {
-    const results: ActionOutput[] = [];
+    // Staged writes (stagesWrite actions) must land in the same order as
+    // the model's tool calls — appends to the same page would otherwise
+    // be reordered in the confirmation batch — so they run sequentially.
+    // Every other action is independent and runs concurrently: serializing
+    // search/read calls would add latency equal to the sum of their
+    // remote round trips. Caller code still pairs results with tool calls
+    // by index, so results are collected into a pre-sized array.
+    const results: ActionOutput[] = new Array(actions.length);
+    const stagedWrites: number[] = [];
+    const independent: number[] = [];
+
+    actions.forEach((actionConfig, index) => {
+      const action = this.actions.get(actionConfig.name);
+      if (action?.stagesWrite) {
+        stagedWrites.push(index);
+      } else {
+        independent.push(index);
+      }
+    });
 
     await Promise.all(
-      actions.map(async (actionConfig) => {
-        const output = await this.execute(
-          actionConfig.name,
-          actionConfig.arguments,
+      independent.map(async (index) => {
+        results[index] = await this.execute(
+          actions[index].name,
+          actions[index].arguments,
           additionalConfig,
         );
-        results.push(output);
       }),
     );
+
+    for (const index of stagedWrites) {
+      results[index] = await this.execute(
+        actions[index].name,
+        actions[index].arguments,
+        additionalConfig,
+      );
+    }
 
     return results;
   }

@@ -1,0 +1,3 @@
+# Notion access is granted per conversation, never globally
+
+OAuth authorization establishes the instance-level Notion connection, but Vane only touches a page the user has explicitly selected or named in that same conversation; the connection alone grants nothing. The `'notion'` source is implemented as an extension of Vane's existing per-chat sources mechanism (a `'notion'` value of `SearchSources`), so a conversation opts in per chat and other conversations never touch the workspace. Chosen so self-hosted users keep strict control over which notes an AI may read or write, mirroring Perplexity's @-connector behavior.

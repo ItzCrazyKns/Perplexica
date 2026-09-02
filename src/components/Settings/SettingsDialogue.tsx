@@ -4,11 +4,13 @@ import {
   BrainCog,
   ChevronLeft,
   ExternalLink,
+  Plug,
   Search,
   Sliders,
   ToggleRight,
 } from 'lucide-react';
 import Preferences from './Sections/Preferences';
+import NotionSection from './Sections/Notion';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -51,6 +53,15 @@ const sections = [
     icon: Search,
     component: SearchSection,
     dataAdd: 'search',
+  },
+  {
+    key: 'notion',
+    name: 'Notion',
+    description:
+      'Connect your Notion workspace to read and write notes in chat.',
+    icon: Plug,
+    component: NotionSection,
+    dataAdd: 'notion',
   },
 ];
 

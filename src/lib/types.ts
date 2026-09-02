@@ -99,13 +99,27 @@ export type UploadSearchResultsResearchBlock = {
   results: Chunk[];
 };
 
+export type NotionSearchingResearchBlock = {
+  id: string;
+  type: 'notion_searching';
+  queries: string[];
+};
+
+export type NotionSearchResultsResearchBlock = {
+  id: string;
+  type: 'notion_search_results';
+  results: Chunk[];
+};
+
 export type ResearchBlockSubStep =
   | ReasoningResearchBlock
   | SearchingResearchBlock
   | SearchResultsResearchBlock
   | ReadingResearchBlock
   | UploadSearchingResearchBlock
-  | UploadSearchResultsResearchBlock;
+  | UploadSearchResultsResearchBlock
+  | NotionSearchingResearchBlock
+  | NotionSearchResultsResearchBlock;
 
 export type ResearchBlock = {
   id: string;
@@ -115,9 +129,35 @@ export type ResearchBlock = {
   };
 };
 
+/** One pending/executed write shown inside a WriteConfirmationBlock. */
+export type WriteConfirmationItem = {
+  id: string;
+  kind: 'append' | 'update' | 'create';
+  /** For append/update: the target page. For create: the parent. */
+  target: { id: string | null; title: string };
+  /** Set for update (new title) and create (page title). */
+  title?: string;
+  contentPreview: string;
+  /** Same-named page already exists — the card offers a three-way choice. */
+  collision?: { existingId: string; existingTitle: string };
+  result?: { ok: boolean; message: string; url?: string };
+};
+
+export type WriteConfirmationBlock = {
+  id: string;
+  type: 'writeConfirmation';
+  data: {
+    /** Session that owns the pending decision (for the confirm API). */
+    sessionId: string;
+    status: 'pending' | 'approved' | 'rejected';
+    writes: WriteConfirmationItem[];
+  };
+};
+
 export type Block =
   | TextBlock
   | SourceBlock
   | SuggestionBlock
   | WidgetBlock
-  | ResearchBlock;
+  | ResearchBlock
+  | WriteConfirmationBlock;

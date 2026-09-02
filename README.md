@@ -3,7 +3,7 @@
 [![GitHub Repo stars](https://img.shields.io/github/stars/ItzCrazyKns/Vane?style=social)](https://github.com/ItzCrazyKns/Vane/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/ItzCrazyKns/Vane?style=social)](https://github.com/ItzCrazyKns/Vane/network/members)
 [![GitHub watchers](https://img.shields.io/github/watchers/ItzCrazyKns/Vane?style=social)](https://github.com/ItzCrazyKns/Vane/watchers)
-[![Docker Pulls](https://img.shields.io/docker/pulls/itzcrazykns1337/vane?color=blue)](https://hub.docker.com/r/itzcrazykns1337/vane)
+[![Docker Pulls](https://img.shields.io/docker/pulls/penny13692018/vane?color=blue)](https://hub.docker.com/r/penny13692018/vane)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/ItzCrazyKns/Vane/blob/master/LICENSE)
 [![GitHub last commit](https://img.shields.io/github/last-commit/ItzCrazyKns/Vane?color=green)](https://github.com/ItzCrazyKns/Vane/commits/master)
 [![Discord](https://dcbadge.limes.pink/api/server/26aArMy8tT?style=flat)](https://discord.gg/26aArMy8tT)
@@ -29,6 +29,8 @@ Want to know more about its architecture and how it works? You can read it [here
 📷 **Image and video search** - Find visual content alongside text results. Search isn't limited to just articles anymore.
 
 📄 **File uploads** - Upload documents and ask questions about them. PDFs, text files, images - Vane understands them all.
+
+🗂️ **Notion connector** - Connect your Notion workspace and reference your own pages in any conversation with `@Notion 頁面名` or the page picker. Read page content and query databases through OAuth — per-conversation, never global.
 
 🌐 **Search specific domains** - Limit your search to specific websites when you know where to look. Perfect for technical documentation or research papers.
 
@@ -68,19 +70,25 @@ There are mainly 2 ways of installing Vane - With Docker, Without Docker. Using 
 Vane can be easily run using Docker. Simply run the following command:
 
 ```bash
-docker run -d -p 3000:3000 -v vane-data:/home/vane/data --name vane itzcrazykns1337/vane:latest
+docker run -d -p 3000:3000 -v vane-data:/home/vane/data --name vane penny13692018/vane:latest
 ```
 
 This will pull and start the Vane container with the bundled SearxNG search engine. Once running, open your browser and navigate to http://localhost:3000. You can then configure your settings (API keys, models, etc.) directly in the setup screen.
 
-**Note**: The image includes both Vane and SearxNG, so no additional setup is required. The `-v` flags create persistent volumes for your data and uploaded files.
+**Note**: The image includes both Vane and SearxNG, so no additional setup is required — no `SEARXNG_API_URL` needed (SearxNG listens on `localhost:8080` inside the container). The `-v` flags create persistent volumes for your data and uploaded files.
+
+**With the Notion connector** — to use `@Notion 頁面名`, run with your integration credentials (replace the `YOUR_NOTION_*` values; see the [Notion Connector](#-notion-connector) section below for how to create the integration and choose the encryption key):
+
+```bash
+docker run -d -p 3000:3000 -e NOTION_CLIENT_ID=YOUR_NOTION_CLIENT_ID -e NOTION_CLIENT_SECRET=YOUR_NOTION_CLIENT_SECRET -e NOTION_TOKEN_KEY=YOUR_NOTION_TOKEN_KEY -v vane-data:/home/vane/data --name vane penny13692018/vane:latest
+```
 
 #### Using Vane with Your Own SearxNG Instance
 
 If you already have SearxNG running, you can use the slim version of Vane:
 
 ```bash
-docker run -d -p 3000:3000 -e SEARXNG_API_URL=http://your-searxng-url:8080 -v vane-data:/home/vane/data --name vane itzcrazykns1337/vane:slim-latest
+docker run -d -p 3000:3000 -e SEARXNG_API_URL=http://your-searxng-url:8080 -v vane-data:/home/vane/data --name vane penny13692018/vane:slim-latest
 ```
 
 **Important**: Make sure your SearxNG instance has:
@@ -89,6 +97,30 @@ docker run -d -p 3000:3000 -e SEARXNG_API_URL=http://your-searxng-url:8080 -v va
 - Wolfram Alpha search engine enabled
 
 Replace `http://your-searxng-url:8080` with your actual SearxNG URL. Then configure your AI provider settings in the setup screen at http://localhost:3000.
+
+#### Automatic Image Builds (Fork Maintainers)
+
+This fork publishes the `penny13692018/vane` images automatically from GitHub Actions (`.github/workflows/docker-build.yaml`). Pushing to the branches below triggers a multi-arch (amd64 + arm64) build and pushes the tags listed:
+
+| Push to                 | Tags pushed (full image)                        | Tags pushed (slim image)      |
+| ----------------------- | ----------------------------------------------- | ----------------------------- |
+| `master`                | `latest`, `full-latest`, `main`                 | `slim-latest`                 |
+| `canary`                | `canary`                                        | `slim-canary`                 |
+| `feat/*` / `feature/*`  | `<branch-with-dashes>`, e.g. `feat-notion-write` | `<branch>-slim`               |
+| Release tag `vX.Y.Z`    | `vX.Y.Z`, `full-vX.Y.Z`                         | `slim-vX.Y.Z`                 |
+
+For this to work, do the following **once** on GitHub:
+
+1. **Enable Actions** — forks usually come with Actions disabled. Go to **Settings → Actions → General → Allow all actions and reusable workflows**.
+2. **Add two repository secrets** — in **Settings → Secrets and variables → Actions → New repository secret**:
+   - `DOCKER_USERNAME` — your Docker Hub username, e.g. `penny13692018`.
+   - `DOCKER_PASSWORD` — a Docker Hub **access token** (not your account password), created at Docker Hub → **Account Settings → Security → New Access Token** with **Read & Write** permission.
+
+**Notes**
+
+- The arm64 image is built with QEMU emulation on a standard `ubuntu-latest` runner, so the **first** build of a branch is slow (the full image compiles SearxNG from source). Later pushes reuse the registry build cache (the `*-amd64` / `*-arm64` tags), so only changed layers are rebuilt.
+- To test a feature branch locally before it reaches `master`, pull its branch tag, e.g. `docker pull penny13692018/vane:feat-notion-write`.
+- If your GitHub plan provides ARM-hosted runners, you can switch the arm64 job to `runs-on: ubuntu-24.04-arm` in `.github/workflows/docker-build.yaml` for much faster builds.
 
 #### Advanced Setup (Building from Source)
 
@@ -164,7 +196,6 @@ If you're encountering an Ollama connection error, it is likely due to the backe
 
 1. **Check your Ollama API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
-
    - **Windows:** Use `http://host.docker.internal:11434`
    - **Mac:** Use `http://host.docker.internal:11434`
    - **Linux:** Use `http://<private_ip_of_host>:11434`
@@ -172,7 +203,6 @@ If you're encountering an Ollama connection error, it is likely due to the backe
    Adjust the port number if you're using a different one.
 
 3. **Linux Users - Expose Ollama to Network:**
-
    - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0:11434"`. (Change the port number if you are using a different one.) Then reload the systemd manager configuration with `systemctl daemon-reload`, and restart Ollama by `systemctl restart ollama`. For more information see [Ollama docs](https://github.com/ollama/ollama/blob/main/docs/faq.md#setting-environment-variables-on-linux)
 
    - Ensure that the port (default is 11434) is not blocked by your firewall.
@@ -183,7 +213,6 @@ If you're encountering a Lemonade connection error, it is likely due to the back
 
 1. **Check your Lemonade API URL:** Ensure that the API URL is correctly set in the settings menu.
 2. **Update API URL Based on OS:**
-
    - **Windows:** Use `http://host.docker.internal:8000`
    - **Mac:** Use `http://host.docker.internal:8000`
    - **Linux:** Use `http://<private_ip_of_host>:8000`
@@ -191,10 +220,76 @@ If you're encountering a Lemonade connection error, it is likely due to the back
    Adjust the port number if you're using a different one.
 
 3. **Ensure Lemonade Server is Running:**
-
    - Make sure your Lemonade server is running and accessible on the configured port (default is 8000).
    - Verify that Lemonade is configured to accept connections from all interfaces (`0.0.0.0`), not just localhost (`127.0.0.1`).
    - Ensure that the port (default is 8000) is not blocked by your firewall.
+
+## 🗂️ Notion Connector
+
+Connect your Notion workspace and ask questions about your own pages — Perplexity-style. Reference a page in any conversation with `@Notion 頁面名` or pick one from the page selector, and Vane reads it through your Notion connection.
+
+> **Current status:** read + write support — `notion_search`, `notion_get_page`, `notion_query_database`, plus write tools (`notion_append_content`, `notion_update_page`, `notion_create_page`). Writes are staged and executed only after you approve a single confirmation card.
+
+### How it works
+
+- **OAuth, not tokens in .env** — you authorize via Notion's OAuth flow and the access token is encrypted at rest (AES-256-GCM, keyed by `NOTION_TOKEN_KEY`). No `NOTION_TOKEN=secret_xxx` anywhere.
+- **Per-conversation scope** — Notion is never enabled globally. Each conversation chooses which authorized pages to use; if you don't `@Notion`, Vane won't ask about it.
+- **Authorized pages only** — the connection requests only read / insert / update content capabilities, and only the pages you share with the integration can be searched.
+
+### 1. Create a Notion integration
+
+1. Go to [developers.notion.so](https://developers.notion.so) → **My integrations** → **New integration**.
+2. Choose **Public integration** (OAuth) and give it a name.
+3. Under **Capabilities**, check:
+   - ☑ Read content
+   - ☑ Insert content
+   - ☑ Update content
+   - Leave read/insert comments and user information unchecked.
+4. In **Redirect URIs**, add:
+
+   ```
+   http://localhost:3000/api/notion/callback
+   ```
+
+   (replace the host/port with your Vane URL if Vane is not on localhost)
+
+5. Copy the **OAuth client ID** and **OAuth client secret**.
+
+### 2. Set environment variables
+
+```bash
+NOTION_CLIENT_ID=your_client_id
+NOTION_CLIENT_SECRET=your_client_secret
+NOTION_TOKEN_KEY=a_long_random_secret_for_encrypting_tokens
+# Optional: override the OAuth callback URL when running behind Docker
+# port-mapping or a reverse proxy, where the app cannot detect the
+# browser-facing address (must match the redirect URI registered in the
+# Notion integration exactly):
+# NOTION_REDIRECT_URI=http://localhost:3100/api/notion/callback
+```
+
+`NOTION_TOKEN_KEY` encrypts the OAuth token at rest — use a long random string and keep it stable across restarts, otherwise the stored token can no longer be decrypted.
+
+### 3. Connect in Settings
+
+1. Open Vane → **Settings** → **Notion**.
+2. Click **Connect** — you'll be taken to Notion to authorize and choose which pages to share.
+3. When you return, Vane shows your workspace name and the connection is ready.
+
+### 4. Use @Notion in a conversation
+
+- Type `@Notion 頁面名` in a message, or open the Notion picker next to the input and select pages/databases.
+- Selected pages appear as chips in the chat — they apply to that conversation only.
+- Vane fuzzy-matches the name you typed against your pages; if nothing matches, it lists candidates and asks you to confirm — it never silently reads a different page.
+- No connection yet? Vane shows a one-time hint and won't ask again.
+
+### Troubleshooting
+
+| Symptom                            | Fix                                                                                        |
+| ---------------------------------- | ------------------------------------------------------------------------------------------ |
+| Connect button disabled            | `NOTION_CLIENT_ID` / `NOTION_CLIENT_SECRET` not set                                        |
+| "Stored token cannot be decrypted" | `NOTION_TOKEN_KEY` changed — disconnect and reconnect                                      |
+| Pages don't show up                | Share the pages with your integration (integration Settings → Connections), then reconnect |
 
 ## Using as a Search Engine
 
