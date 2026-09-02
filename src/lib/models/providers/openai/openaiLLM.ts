@@ -18,7 +18,7 @@ import {
   ChatCompletionToolMessageParam,
 } from 'openai/resources/index.mjs';
 import { Message } from '@/lib/types';
-import { repairJson } from '@toolsycc/json-repair';
+import { extractJsonObject } from '@/lib/utils/extractJson';
 
 type OpenAIConfig = {
   apiKey: string;
@@ -195,7 +195,7 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
   }
 
   async generateObject<T>(input: GenerateObjectInput): Promise<T> {
-    const response = await this.openAIClient.chat.completions.parse({
+    const response = await this.openAIClient.chat.completions.create({
       messages: this.convertToOpenAIMessages(input.messages),
       model: this.config.model,
       temperature:
@@ -209,20 +209,49 @@ class OpenAILLM extends BaseLLM<OpenAIConfig> {
         this.config.options?.frequencyPenalty,
       presence_penalty:
         input.options?.presencePenalty ?? this.config.options?.presencePenalty,
+      // Use the SDK's zodResponseFormat to build a strict, cleaned json_schema
+      // rather than passing z.toJSONSchema output directly — the Draft-7 markers
+      // it leaves in are the suspected trigger for the doubled-brace malformation
+      // vLLM's strict-json_schema guided decoder emits (confirmed by direct
+      // testing against vLLM 0.25 serving Qwen3.6 and GLM-5.2; llama-swap only
+      // forwards vLLM's bytes unchanged, so it is not the source). But send via
+      // .create() not .parse(): the SDK's built-in parse runs JSON.parse on the
+      // raw content and crashes on reasoning models that emit thinking markers
+      // before the JSON. We repair/extract JSON ourselves below.
       response_format: zodResponseFormat(input.schema, 'object'),
     });
 
     if (response.choices && response.choices.length > 0) {
+      const choice = response.choices[0];
+      // Preserve a genuine null/empty content as an explicit failure. The API
+      // returns content === null on refusals and on some failed/truncated
+      // completions; coercing that to '' would let extractJsonObject('') →
+      // '{}' flow through schema.parse and, when the schema permits {} (e.g.
+      // all-optional fields), return a valid empty object that masks the
+      // refusal. Fail loudly instead so the caller sees the real outcome.
+      const raw = choice.message.content;
+      if (raw == null || raw === '') {
+        throw new Error(
+          `Error parsing response from OpenAI: empty content\n` +
+            `finish_reason=${choice.finish_reason}\n` +
+            `usage=${JSON.stringify((response as { usage?: unknown }).usage)}`,
+        );
+      }
       try {
-        return input.schema.parse(
-          JSON.parse(
-            repairJson(response.choices[0].message.content!, {
-              extractJson: true,
-            }) as string,
-          ),
-        ) as T;
+        // extractJsonObject handles structural malformation (spurious braces
+        // from vLLM strict-json_schema decoders) and delegates token-level
+        // repair to jsonrepair, returning a parseable JSON string.
+        return input.schema.parse(JSON.parse(extractJsonObject(raw))) as T;
       } catch (err) {
-        throw new Error(`Error parsing response from OpenAI: ${err}`);
+        // Keep the failure-path diagnostic: finish_reason + usage distinguish
+        // truncation (finish_reason=length) from malformation, and raw content
+        // shows exactly what the model returned so the parse error is debuggable.
+        throw new Error(
+          `Error parsing response from OpenAI: ${err}\n` +
+            `finish_reason=${choice.finish_reason}\n` +
+            `usage=${JSON.stringify((response as { usage?: unknown }).usage)}\n` +
+            `raw=${raw}`,
+        );
       }
     }
 

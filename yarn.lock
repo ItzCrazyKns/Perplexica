@@ -1153,11 +1153,6 @@
   resolved "https://registry.yarnpkg.com/@tokenizer/token/-/token-0.3.0.tgz#fe98a93fe789247e998c75e74e9c7c63217aa276"
   integrity sha512-OvjF+z51L3ov0OyAU0duzsYuvO01PH7x4t6DJx+guahgTnBHkhJdG7soQeTSFLWN3efnHyibZ4Z8l2EuWwJN3A==
 
-"@toolsycc/json-repair@^0.1.22":
-  version "0.1.22"
-  resolved "https://registry.yarnpkg.com/@toolsycc/json-repair/-/json-repair-0.1.22.tgz#7ad0eb30c4ef1c4286ad3487dc1bbda562f09986"
-  integrity sha512-IMrsxovS9a5pWGRxMCDQDW8FKKEZI/yK/HMcyJlbnd/s+Mk0dRtGr1BFicL276gDsPvb/JfNHtHSi1oc0eY1jA==
-
 "@tybys/wasm-util@^0.10.0":
   version "0.10.1"
   resolved "https://registry.yarnpkg.com/@tybys/wasm-util/-/wasm-util-0.10.1.tgz#ecddd3205cf1e2d5274649ff0eedd2991ed7f414"
@@ -3943,6 +3938,11 @@ json5@^2.2.3:
   version "2.2.3"
   resolved "https://registry.yarnpkg.com/json5/-/json5-2.2.3.tgz#78cd6f1a19bdc12b73db5ad0c61efd66c1e29283"
   integrity sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==
+
+jsonrepair@^3.15.0:
+  version "3.15.0"
+  resolved "https://registry.yarnpkg.com/jsonrepair/-/jsonrepair-3.15.0.tgz#03b4c15f313f0a6e6a1ccb66b6deeeb859e6f0c8"
+  integrity sha512-wy8OTjwsJwQRnQJkKnMJJ9vcytRdBPAgIF/Hy6+s1dAj42BHMKiyL8JzEieIl3JY7idt8eyHwBWTO8mh/+mtwA==
 
 jspdf@*, jspdf@^4.2.1:
   version "4.2.1"
