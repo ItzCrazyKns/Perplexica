@@ -70,7 +70,7 @@ const SetupConfig = ({
     visibleProviders.filter((p) => p.chatModels.length > 0).length > 0;
 
   return (
-    <div className="w-[95vw] md:w-[80vw] lg:w-[65vw] mx-auto px-2 sm:px-4 md:px-6 flex flex-col space-y-6">
+    <div className="w-full mx-auto flex flex-col space-y-6">
       {setupState === 2 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -79,7 +79,7 @@ const SetupConfig = ({
             y: 0,
             transition: { duration: 0.5, delay: 0.1 },
           }}
-          className="w-full h-[calc(95vh-80px)] bg-light-primary dark:bg-dark-primary border border-light-200 dark:border-dark-200 rounded-xl shadow-sm flex flex-col overflow-hidden"
+          className="w-full h-[min(58vh,540px)] bg-light-primary dark:bg-dark-primary border border-light-200 dark:border-dark-200 rounded-xl shadow-sm flex flex-col overflow-hidden"
         >
           <div className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-6 py-4 md:py-6">
             <div className="flex flex-row justify-between items-center mb-4 md:mb-6 pb-3 md:pb-4 border-b border-light-200 dark:border-dark-200">
@@ -140,7 +140,7 @@ const SetupConfig = ({
             y: 0,
             transition: { duration: 0.5, delay: 0.1 },
           }}
-          className="w-full h-[calc(95vh-80px)] bg-light-primary dark:bg-dark-primary border border-light-200 dark:border-dark-200 rounded-xl shadow-sm flex flex-col overflow-hidden"
+          className="w-full h-[min(58vh,540px)] bg-light-primary dark:bg-dark-primary border border-light-200 dark:border-dark-200 rounded-xl shadow-sm flex flex-col overflow-hidden"
         >
           <div className="flex-1 overflow-y-auto px-3 sm:px-4 md:px-6 py-4 md:py-6">
             <div className="flex flex-row justify-between items-center mb-4 md:mb-6 pb-3 md:pb-4 border-b border-light-200 dark:border-dark-200">
@@ -162,8 +162,22 @@ const SetupConfig = ({
         </motion.div>
       )}
 
-      <div className="flex flex-row items-center justify-between pt-2">
-        <a></a>
+      <div className="flex flex-row items-center justify-end pt-2">
+        {setupState === 3 && (
+          <motion.button
+            initial={{ opacity: 0, x: -10 }}
+            animate={{
+              opacity: 1,
+              x: 0,
+              transition: { duration: 0.5 },
+            }}
+            onClick={() => setSetupState(2)}
+            className="mr-auto flex flex-row items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 md:py-2.5 rounded-lg text-xs sm:text-sm font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white hover:bg-light-200 dark:hover:bg-dark-200 transition-all duration-200"
+          >
+            <ArrowLeft className="w-4 h-4 md:w-[18px] md:h-[18px]" />
+            <span>Back</span>
+          </motion.button>
+        )}
         {setupState === 2 && (
           <motion.button
             initial={{ opacity: 0, x: 10 }}

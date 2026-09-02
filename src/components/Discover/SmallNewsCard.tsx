@@ -19,7 +19,7 @@ const SmallNewsCard = ({ item }: { item: Discover }) => (
       />
     </div>
     <div className="p-4">
-      <h3 className="font-semibold text-sm mb-2 leading-tight line-clamp-2 group-hover:text-cyan-500 dark:group-hover:text-cyan-300 transition duration-200">
+      <h3 className="font-semibold text-sm mb-2 leading-tight line-clamp-2 text-black dark:text-white group-hover:text-cyan-500 dark:group-hover:text-cyan-300 transition duration-200">
         {item.title}
       </h3>
       <p className="text-black/60 dark:text-white/60 text-xs leading-relaxed line-clamp-2">

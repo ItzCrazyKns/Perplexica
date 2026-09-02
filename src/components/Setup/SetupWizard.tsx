@@ -1,124 +1,145 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { UIConfigSections } from '@/lib/config/types';
 import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
 import SetupConfig from './SetupConfig';
+
+const STEPS = ['Welcome', 'Connections', 'Models'] as const;
+
+const ease: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
 const SetupWizard = ({
   configSections,
 }: {
   configSections: UIConfigSections;
 }) => {
-  const [showWelcome, setShowWelcome] = useState(true);
-  const [showSetup, setShowSetup] = useState(false);
   const [setupState, setSetupState] = useState(1);
+  const setupRef = useRef<HTMLDivElement | null>(null);
 
-  const delay = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
-
+  /* The step wrapper keeps a constant key, so it does not remount when the
+  user moves between Connections and Models (remounting would reset
+  SetupConfig's provider state). That also means the enter animation only runs
+  once, so onAnimationComplete cannot move focus on later step changes. Move
+  focus here instead so keyboard users do not lose it when the previous step's
+  controls unmount. The initial 1 -> 2 mount is handled by onAnimationComplete
+  (the wrapper mounts only after the intro's exit completes). */
   useEffect(() => {
-    (async () => {
-      await delay(2500);
-      setShowWelcome(false);
-      await delay(600);
-      setShowSetup(true);
-      setSetupState(1);
-      await delay(1500);
-      setSetupState(2);
-    })();
-  }, []);
+    if (setupState <= 1) return;
+    setupRef.current?.focus();
+  }, [setupState]);
 
   return (
-    <div className="bg-light-primary dark:bg-dark-primary h-screen w-screen fixed inset-0 overflow-hidden">
-      <AnimatePresence>
-        {showWelcome && (
-          <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-            <motion.div
-              className="absolute flex flex-col items-center justify-center h-full"
-              initial={{ opacity: 1 }}
-              exit={{ opacity: 0, scale: 1.1 }}
-              transition={{ duration: 0.6 }}
-            >
-              <motion.h2
-                transition={{ duration: 0.6 }}
-                initial={{ opacity: 0, translateY: '30px' }}
-                animate={{ opacity: 1, translateY: '0px' }}
-                className="text-4xl md:text-6xl xl:text-8xl font-normal font-['Instrument_Serif'] tracking-tight"
-              >
-                Welcome to
-                <span className="text-[#24A0ED] italic font-['PP_Editorial']">
-                  Vane
-                </span>
-              </motion.h2>
-              <motion.p
-                transition={{ delay: 0.8, duration: 0.7 }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-black/70 dark:text-white/70 text-sm md:text-lg xl:text-2xl mt-2"
-              >
-                <span className="font-light">Web search,</span>{' '}
-                <span className="font-light font-['PP_Editorial'] italic">
-                  reimagined
-                </span>
-              </motion.p>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.5 }}
-              animate={{
-                opacity: 0.2,
-                scale: 1,
-                transition: { delay: 0.8, duration: 0.7 },
-              }}
-              exit={{ opacity: 0, scale: 1.1, transition: { duration: 0.6 } }}
-              className="bg-[#24A0ED] left-50 translate-x-[-50%] h-[250px] w-[250px] rounded-full relative z-40 blur-[100px]"
-            />
-          </div>
-        )}
-        {showSetup && (
-          <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-            <AnimatePresence mode="wait">
-              {setupState === 1 && (
-                <motion.p
-                  key="setup-text"
-                  transition={{ duration: 0.6 }}
-                  initial={{ opacity: 0, translateY: '30px' }}
-                  animate={{ opacity: 1, translateY: '0px' }}
-                  exit={{
-                    opacity: 0,
-                    translateY: '-30px',
-                    transition: { duration: 0.6 },
-                  }}
-                  className="text-2xl md:text-4xl xl:text-6xl font-normal font-['Instrument_Serif'] tracking-tight"
+    <div className="bg-light-primary dark:bg-dark-primary fixed inset-0 overflow-y-auto">
+      <div className="min-h-full flex flex-col">
+        {/* Wordmark + step progress */}
+        <header className="shrink-0 flex flex-col items-center pt-6 md:pt-10 select-none">
+          <span className="text-sm md:text-base font-semibold tracking-tight text-black dark:text-white">
+            Vane<span className="text-[#24A0ED]">.</span>
+          </span>
+
+          <div
+            className="w-full max-w-[320px] px-6 mt-6 md:mt-8"
+            role="progressbar"
+            aria-valuemin={1}
+            aria-valuemax={STEPS.length}
+            aria-valuenow={setupState}
+            aria-label={`Step ${setupState} of ${STEPS.length}: ${STEPS[setupState - 1]}`}
+          >
+            <div className="grid grid-cols-3 gap-1.5">
+              {STEPS.map((label, index) => (
+                <div
+                  key={label}
+                  className={`h-1 rounded-full transition-colors duration-500 ${
+                    index + 1 <= setupState
+                      ? 'bg-[#24A0ED]'
+                      : 'bg-light-200 dark:bg-dark-200'
+                  }`}
+                />
+              ))}
+            </div>
+            <div className="grid grid-cols-3 gap-1.5 mt-2">
+              {STEPS.map((label, index) => (
+                <span
+                  key={label}
+                  className={`text-center text-[10px] font-medium uppercase tracking-widest transition-colors duration-500 ${
+                    index + 1 <= setupState
+                      ? 'text-black/70 dark:text-white/70'
+                      : 'text-black/60 dark:text-white/60'
+                  }`}
                 >
-                  Let us get
-                  <span className="text-[#24A0ED] italic font-['PP_Editorial']">
-                    Vane
-                  </span>{' '}
-                  set up for you
-                </motion.p>
-              )}
-              {setupState > 1 && (
-                <motion.div
-                  key="setup-config"
-                  initial={{ opacity: 0, translateY: '30px' }}
-                  animate={{
-                    opacity: 1,
-                    translateY: '0px',
-                    transition: { duration: 0.6 },
-                  }}
-                >
-                  <SetupConfig
-                    configSections={configSections}
-                    setupState={setupState}
-                    setSetupState={setSetupState}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  {label}
+                </span>
+              ))}
+            </div>
           </div>
-        )}
-      </AnimatePresence>
+        </header>
+
+        {/* Step content */}
+        <main className="flex-1 flex items-center justify-center w-full px-4 sm:px-6 py-6 md:py-10">
+          <AnimatePresence mode="wait" initial={false}>
+            {setupState === 1 ? (
+              <motion.div
+                key="intro"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  transition: { duration: 0.5, ease },
+                }}
+                exit={{
+                  opacity: 0,
+                  y: -12,
+                  transition: { duration: 0.3, ease },
+                }}
+                className="flex flex-col items-center text-center max-w-sm"
+              >
+                <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-black dark:text-white">
+                  Welcome to
+                  <span className="text-[#24A0ED]"> Vane</span>
+                </h1>
+                <p className="mt-3 text-sm md:text-base text-black/60 dark:text-white/60">
+                  Web search, reimagined. Connect a model provider to finish
+                  setting up.
+                </p>
+                <button
+                  onClick={() => setSetupState(2)}
+                  className="group mt-8 inline-flex items-center gap-2 rounded-lg bg-[#24A0ED] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#1e8fd1] active:scale-[0.98] transition-all duration-150"
+                >
+                  Get started
+                  <ArrowRight className="w-4 h-4 transition-transform duration-150 group-hover:translate-x-0.5" />
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="setup"
+                ref={setupRef}
+                tabIndex={-1}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                  transition: { duration: 0.5, ease },
+                }}
+                exit={{
+                  opacity: 0,
+                  y: -16,
+                  transition: { duration: 0.3, ease },
+                }}
+                onAnimationComplete={() => setupRef.current?.focus()}
+                className="w-full max-w-[46rem] focus:outline-none"
+              >
+                <SetupConfig
+                  configSections={configSections}
+                  setupState={setupState}
+                  setSetupState={setSetupState}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
+      </div>
     </div>
   );
 };
