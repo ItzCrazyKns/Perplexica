@@ -202,9 +202,15 @@ class ConfigManager {
   snapshot while the persisted file is unreadable risks overwriting newer
   state, so callers surface the error instead.
 
-  The result is cloned so in-place mutations made by callers cannot poison
-  the shared persistedCache object when a subsequent writeFileSync fails. */
+  The cache is cleared before reading so synchronization always starts from
+  the actual file bytes: a mutation that aborts without writing (e.g. an
+  unknown provider id) used to leave the mtime-keyed entry in place, and on a
+  coarse-timestamp filesystem another bundle's write can report the same
+  mtimeMs and be shadowed by that stale cached snapshot. The result is also
+  cloned so in-place mutations made by callers cannot poison the shared
+  persistedCache object when a subsequent writeFileSync fails. */
   private syncFromDisk() {
+    this.persistedCache = null;
     this.currentConfig = JSON.parse(JSON.stringify(this.readPersistedConfig()));
   }
 
