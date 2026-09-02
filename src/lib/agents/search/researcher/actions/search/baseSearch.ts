@@ -1,6 +1,8 @@
 import BaseEmbedding from '@/lib/models/base/embedding';
 import BaseLLM from '@/lib/models/base/llm';
 import { searchSearxng, SearxngSearchOptions } from '@/lib/searxng';
+import { searchCrw } from '@/lib/crw';
+import { getSearchProvider } from '@/lib/config/serverRegistry';
 import SessionManager from '@/lib/session';
 import { Chunk, ResearchBlock, SearchResultsResearchBlock } from '@/lib/types';
 import { SearchAgentConfig } from '../../../types';
@@ -8,6 +10,17 @@ import computeSimilarity from '@/lib/utils/computeSimilarity';
 import z from 'zod';
 import Scraper from '@/lib/scraper';
 import { splitText } from '@/lib/utils/splitText';
+
+/*
+ * Dispatches a general web search to the configured provider. Defaults to
+ * SearXNG; fastCRW (Firecrawl-compatible) is selectable via search config.
+ */
+const searchWeb = async (query: string, opts?: SearxngSearchOptions) => {
+  if (getSearchProvider() === 'crw') {
+    return searchCrw(query);
+  }
+  return searchSearxng(query, opts);
+};
 
 export const executeSearch = async (input: {
   queries: string[];
@@ -41,7 +54,7 @@ export const executeSearch = async (input: {
     const results: Chunk[] = [];
 
     const search = async (q: string) => {
-      const res = await searchSearxng(q, {
+      const res = await searchWeb(q, {
         ...(input.searchConfig ? input.searchConfig : {}),
       });
 
@@ -176,7 +189,7 @@ export const executeSearch = async (input: {
     const searchResults: Chunk[] = [];
 
     const search = async (q: string) => {
-      const res = await searchSearxng(q, {
+      const res = await searchWeb(q, {
         ...(input.searchConfig ? input.searchConfig : {}),
       });
 
