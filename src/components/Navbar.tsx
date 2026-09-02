@@ -29,7 +29,7 @@ const downloadFile = (filename: string, content: string, type: string) => {
 
 const exportAsMarkdown = (sections: Section[], title: string) => {
   const date = new Date(
-    sections[0].message.createdAt || Date.now(),
+    sections[0]?.message?.createdAt || Date.now(),
   ).toLocaleString();
   let md = `# 💬 Chat Export: ${title}\n\n`;
   md += `*Exported on: ${date}*\n\n---\n`;
@@ -142,10 +142,31 @@ const exportAsPDF = (sections: Section[], title: string) => {
       y += 6;
       doc.setTextColor(30);
       doc.setFontSize(12);
-      const assistantLines = doc.splitTextToSize(
-        section.parsedTextBlocks.join('\n'),
-        180,
-      );
+      // Strip citation tags injected by parsedTextBlocks rendering, but
+      // preserve generic-type-style angle brackets (e.g. Vec<T>, List<int>)
+      // and inequalities. Match only HTML-like tags that have either a
+      // multi-letter tag name or attributes — `<T>` and `<i32>` slip
+      // through, `<citation href="...">` and `<div>` get stripped.
+      const HTML_TAG = /<\/?[a-zA-Z][a-zA-Z0-9-]*(?:\s+[^>]*)?\s*\/?>/g;
+      const KNOWN_INJECTED_TAG =
+        /<\/?(?:citation|a|p|div|span|br|hr|strong|em|b|i|u|code|pre|blockquote|h[1-6]|ul|ol|li|table|tr|td|th|thead|tbody|tfoot)\b[^>]*\/?>/gi;
+      const rawAssistantText = section.message.responseBlocks
+        .filter((b) => b.type === 'text')
+        .map((block) => block.data)
+        .join('\n')
+        .replace(KNOWN_INJECTED_TAG, '')
+        // Catch other HTML-like tags but keep single-letter generics
+        // and digit-only "tags" like <i32>.
+        .replace(HTML_TAG, (match) => {
+          const inner = match.slice(1).replace(/^\//, '').trimStart();
+          // Keep `<T>`, `<i32>` (single-letter or letter-then-digits with
+          // no attributes) — these are almost always generics or types.
+          if (/^[A-Za-z][A-Za-z0-9]*\s*\/?>$/.test(inner) && inner.length <= 5) {
+            return match;
+          }
+          return '';
+        });
+      const assistantLines = doc.splitTextToSize(rawAssistantText, 180);
       for (let i = 0; i < assistantLines.length; i++) {
         if (y > pageHeight - 20) {
           doc.addPage();
