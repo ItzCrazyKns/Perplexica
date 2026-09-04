@@ -16,7 +16,7 @@ Want to know more about its architecture and how it works? You can read it [here
 
 ## ✨ Features
 
-🤖 **Support for all major AI providers** - Use local LLMs through Ollama or connect to OpenAI, Anthropic Claude, Google Gemini, Groq, and more. Mix and match models based on your needs.
+🤖 **Support for all major AI providers** - Use local LLMs through Ollama or [llmman](https://github.com/llmmanorg/llmman) or connect to OpenAI, Anthropic Claude, Google Gemini, Groq, and more. Mix and match models based on your needs.
 
 ⚡ **Smart search modes** - Choose Speed Mode when you need quick answers, Balanced Mode for everyday searches, or Quality Mode for deep research.
 
@@ -176,6 +176,10 @@ If you're encountering an Ollama connection error, it is likely due to the backe
    - Inside `/etc/systemd/system/ollama.service`, you need to add `Environment="OLLAMA_HOST=0.0.0.0:11434"`. (Change the port number if you are using a different one.) Then reload the systemd manager configuration with `systemctl daemon-reload`, and restart Ollama by `systemctl restart ollama`. For more information see [Ollama docs](https://github.com/ollama/ollama/blob/main/docs/faq.md#setting-environment-variables-on-linux)
 
    - Ensure that the port (default is 11434) is not blocked by your firewall.
+
+#### llmman Connection Errors
+
+[llmman](https://github.com/llmmanorg/llmman) serves the Ollama API on port `17434`, so the steps above apply with `17434` in place of `11434`. To expose it to Docker, start it with `LLMMAN_HOST=0.0.0.0:17434 llmman serve`.
 
 #### Lemonade Connection Errors
 
