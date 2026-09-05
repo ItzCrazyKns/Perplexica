@@ -187,10 +187,22 @@ class Researcher {
       .flatMap((a) => a.results);
 
     const seenUrls = new Map<string, number>();
+    const seenTitles = new Set<string>();
 
     const filteredSearchResults = searchResults
       .map((result, index) => {
         if (result.metadata.url && !seenUrls.has(result.metadata.url)) {
+          // Deduplicate by normalized title to avoid citing the same paper
+          // from multiple academic platforms (e.g. PubMed, ScienceDirect,
+          // ResearchGate, Google Scholar) as separate sources.
+          if (result.metadata.title) {
+            const normalizedTitle = result.metadata.title.toLowerCase().trim();
+            if (seenTitles.has(normalizedTitle)) {
+              return undefined;
+            }
+            seenTitles.add(normalizedTitle);
+          }
+
           seenUrls.set(result.metadata.url, index);
           return result;
         } else if (result.metadata.url && seenUrls.has(result.metadata.url)) {
