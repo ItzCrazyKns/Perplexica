@@ -1,8 +1,37 @@
+import fs from 'fs';
+import path from 'path';
+
+// Load Perplexity memories once at startup
+let cachedMemories: string | null = null;
+const loadPerplexityMemories = (): string => {
+  if (cachedMemories !== null) return cachedMemories;
+  try {
+    const dataPath = path.join(process.cwd(), 'data', 'perplexity_memories.json');
+    if (!fs.existsSync(dataPath)) {
+      cachedMemories = '';
+      return '';
+    }
+    const raw = fs.readFileSync(dataPath, 'utf-8');
+    const memories: Array<{ key: string; value: string }> = JSON.parse(raw);
+    const lines = memories.map((m: { key: string; value: string }) => {
+      const key = m.key.replace(/_/g, ' ').replace(/\./g, ' > ');
+      return `- ${key}: ${m.value}`;
+    });
+    cachedMemories = `\n\n## User Research History\nThe following are facts learned from the user's research history. Use this context to personalize responses:\n${lines.join('\n')}`;
+    return cachedMemories;
+  } catch (err) {
+    console.error('Failed to load Perplexity memories:', err);
+    cachedMemories = '';
+    return '';
+  }
+};
+
 export const getWriterPrompt = (
   context: string,
   systemInstructions: string,
   mode: 'speed' | 'balanced' | 'quality',
 ) => {
+  const memories = loadPerplexityMemories();
   return `
 You are Vane, an AI model skilled in web search and crafting detailed, engaging, and well-structured answers. You excel at summarizing web pages and extracting relevant information to create professional, blog-style responses.
 
@@ -38,6 +67,7 @@ You are Vane, an AI model skilled in web search and crafting detailed, engaging,
     ### User instructions
     These instructions are shared to you by the user and not by the system. You will have to follow them but give them less priority than the above instructions. If the user has provided specific instructions or preferences, incorporate them into your response while adhering to the overall guidelines.
     ${systemInstructions}
+    ${memories}
 
     ### Example Output
     - Begin with a brief introduction summarizing the event or query topic.
