@@ -7,8 +7,35 @@ import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
 import db from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { chats } from '@/lib/db/schema';
+import { chats, messages } from '@/lib/db/schema';
 import UploadManager from '@/lib/uploads/manager';
+import fs from 'fs';
+import path from 'path';
+
+// Load Perplexity memories once at startup
+let cachedMemories: string | null = null;
+const loadPerplexityMemories = (): string => {
+  if (cachedMemories !== null) return cachedMemories;
+  try {
+    const dataPath = path.join(process.cwd(), 'data', 'perplexity_memories.json');
+    if (!fs.existsSync(dataPath)) {
+      cachedMemories = '';
+      return '';
+    }
+    const raw = fs.readFileSync(dataPath, 'utf-8');
+    const memories: Array<{ key: string; value: string }> = JSON.parse(raw);
+    const lines = memories.map((m: { key: string; value: string }) => {
+      const key = m.key.replace(/_/g, ' ').replace(/\./g, ' > ');
+      return `- ${key}: ${m.value}`;
+    });
+    cachedMemories = `\n\n## User Research History\nThe following are facts learned from the user's research history. Use this context to personalize responses:\n${lines.join('\n')}`;
+    return cachedMemories;
+  } catch (err) {
+    console.error('Failed to load Perplexity memories:', err);
+    cachedMemories = '';
+    return '';
+  }
+};
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -221,7 +248,7 @@ export const POST = async (req: Request) => {
         sources: body.sources as SearchSources[],
         mode: body.optimizationMode,
         fileIds: body.files,
-        systemInstructions: body.systemInstructions || 'None',
+        systemInstructions: (body.systemInstructions || 'None') + loadPerplexityMemories(),
       },
     });
 
@@ -252,3 +279,17 @@ export const POST = async (req: Request) => {
     );
   }
 };
+
+// Cleanup stale 'answering' messages on startup
+// Cleanup stale messages using drizzle's update
+
+const cleanupStaleMessages = async () => {
+  try {
+    // Only runs if messages table exists (skips during build time)
+    const rows = await db.select().from(messages).limit(0);
+    await db.update(messages).set({ status: 'completed' }).where(eq(messages.status, 'answering'));
+  } catch (err) {
+    // Table doesn't exist yet or other startup error — safe to ignore
+  }
+};
+cleanupStaleMessages();

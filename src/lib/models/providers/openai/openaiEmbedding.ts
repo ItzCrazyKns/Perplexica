@@ -24,6 +24,7 @@ class OpenAIEmbedding extends BaseEmbedding<OpenAIConfig> {
     const response = await this.openAIClient.embeddings.create({
       model: this.config.model,
       input: texts,
+      encoding_format: 'float', // Required for NVIDIA and other non-OpenAI providers
     });
 
     return response.data.map((embedding) => embedding.embedding);
@@ -33,6 +34,7 @@ class OpenAIEmbedding extends BaseEmbedding<OpenAIConfig> {
     const response = await this.openAIClient.embeddings.create({
       model: this.config.model,
       input: chunks.map((c) => c.content),
+      encoding_format: 'float', // Required for NVIDIA and other non-OpenAI providers
     });
 
     return response.data.map((embedding) => embedding.embedding);

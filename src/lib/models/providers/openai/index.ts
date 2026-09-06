@@ -106,6 +106,13 @@ const defaultEmbeddingModels: Model[] = [
   },
 ];
 
+const openRouterEmbeddingModels: Model[] = [
+  {
+    name: 'NVIDIA Llama Nemotron Embed (FREE)',
+    key: 'nvidia/llama-nemotron-embed-vl-1b-v2:free',
+  },
+];
+
 const providerConfigFields: UIConfigField[] = [
   {
     type: 'password',
@@ -140,6 +147,14 @@ class OpenAIProvider extends BaseModelProvider<OpenAIConfig> {
       return {
         embedding: defaultEmbeddingModels,
         chat: defaultChatModels,
+      };
+    }
+
+    // OpenRouter: provide free embedding models
+    if (this.config.baseURL?.includes('openrouter.ai')) {
+      return {
+        embedding: openRouterEmbeddingModels,
+        chat: [],
       };
     }
 

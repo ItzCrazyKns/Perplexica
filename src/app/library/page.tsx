@@ -17,12 +17,13 @@ export interface Chat {
 const Page = () => {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sort, setSort] = useState<'newest' | 'oldest'>('newest');
 
   useEffect(() => {
     const fetchChats = async () => {
       setLoading(true);
 
-      const res = await fetch(`/api/chats`, {
+      const res = await fetch(`/api/chats?sort=${sort}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -36,7 +37,7 @@ const Page = () => {
     };
 
     fetchChats();
-  }, []);
+  }, [sort]);
 
   return (
     <div>
