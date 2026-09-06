@@ -9,6 +9,7 @@ import { messages } from '@/lib/db/schema';
 import { and, eq, gt } from 'drizzle-orm';
 import { TextBlock } from '@/lib/types';
 import { getTokenCount } from '@/lib/utils/splitText';
+import UploadStore from '@/lib/uploads/store';
 
 class SearchAgent {
   async searchAsync(session: SessionManager, input: SearchAgentInput) {
@@ -117,7 +118,8 @@ class SearchAgent {
       })
       .join('\n-------------\n');
 
-    const finalContextWithWidgets = `<search_results note="These are the search results and assistant can cite these">\n${finalContext}\n</search_results>\n<widgets_result noteForAssistant="Its output is already showed to the user, assistant can use this information to answer the query but do not CITE this as a souce">\n${widgetContext}\n</widgets_result>`;
+    const finalContextWithWidgets = `<search_results note="These are the search results and assistant can cite these">\n${finalContext}\n</search_results>\n<widgets_result noteForAssistant="Its output is already showed to the user, assistant can use this information to answer the query but do not CITE this as a souce">\n${widgetContext}\n</widgets_result>${input.config.fileIds.length > 0 ? `\n<uploaded_files_content note="Content extracted from user's uploaded files">\n${UploadStore.getFileData(input.config.fileIds).map(f => `<file name="${f.fileName}">${f.initialContent}</file>`).join('\n')}\n</uploaded_files_content>` : ''}`;
+
 
     const writerPrompt = getWriterPrompt(
       finalContextWithWidgets,
