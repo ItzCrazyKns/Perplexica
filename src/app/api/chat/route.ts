@@ -7,7 +7,7 @@ import { ChatTurnMessage } from '@/lib/types';
 import { SearchSources } from '@/lib/agents/search/types';
 import db from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { chats } from '@/lib/db/schema';
+import { chats, messages } from '@/lib/db/schema';
 import UploadManager from '@/lib/uploads/manager';
 import fs from 'fs';
 import path from 'path';
@@ -279,3 +279,17 @@ export const POST = async (req: Request) => {
     );
   }
 };
+
+// Cleanup stale 'answering' messages on startup
+// Cleanup stale messages using drizzle's update
+
+const cleanupStaleMessages = async () => {
+  try {
+    // Only runs if messages table exists (skips during build time)
+    const rows = await db.select().from(messages).limit(0);
+    await db.update(messages).set({ status: 'completed' }).where(eq(messages.status, 'answering'));
+  } catch (err) {
+    // Table doesn't exist yet or other startup error — safe to ignore
+  }
+};
+cleanupStaleMessages();

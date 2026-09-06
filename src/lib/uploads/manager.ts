@@ -6,8 +6,9 @@ import { splitText } from "../utils/splitText";
 import { PDFParse } from 'pdf-parse';
 import { CanvasFactory } from 'pdf-parse/worker';
 import officeParser from 'officeparser'
+import sharp from 'sharp'
 
-const supportedMimeTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'] as const
+const supportedMimeTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'] as const
 
 type SupportedMimeType = typeof supportedMimeTypes[number];
 
@@ -43,9 +44,8 @@ class UploadManager {
 
         if (!fs.existsSync(UploadManager.uploadedFilesRecordPath)) {
             const data = {
-                files: []
+                files: [] as RecordedFile[]
             }
-
             fs.writeFileSync(UploadManager.uploadedFilesRecordPath, JSON.stringify(data, null, 2));
         }
     }
@@ -84,6 +84,22 @@ class UploadManager {
             console.log('Error getting file chunks:', err);
             return [];
         }
+    }
+
+    /**
+     * Read the OpenRouter API key from Vane's config.json (stored by the UI).
+     * Falls back to env vars.
+     */
+    private static getOpenRouterKey(): string {
+        try {
+            const configPath = path.join(process.env.DATA_DIR || process.cwd(), '/data/config.json');
+            const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+            const orProvider = (config.modelProviders || []).find(
+                (p: any) => (p.config || {}).apiKey && ((p.config || {}).baseURL || '').includes('openrouter')
+            );
+            if (orProvider) return orProvider.config.apiKey || '';
+        } catch {}
+        return process.env.OPENROUTER_API_KEY || '';
     }
 
     private async extractContentAndEmbed(filePath: string, fileType: SupportedMimeType): Promise<string> {
@@ -169,6 +185,72 @@ class UploadManager {
                 fs.writeFileSync(docContentPath, JSON.stringify(docData, null, 2));
 
                 return docContentPath;
+            case 'image/jpeg':
+            case 'image/png':
+            case 'image/gif':
+            case 'image/webp': {
+                // Vision OCR: extract text from image via OpenRouter vision model
+                const imageBuffer = fs.readFileSync(filePath);
+                const base64Image = imageBuffer.toString('base64');
+                const imageMimeType = fileType;
+
+                const openRouterKey = UploadManager.getOpenRouterKey();
+                if (!openRouterKey) {
+                    throw new Error('OpenRouter API key required for image processing. Add it in Settings > Model Providers.');
+                }
+
+                const visionModel = 'google/gemma-4-31b-it:free';
+
+                const visionResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + openRouterKey,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        model: visionModel,
+                        messages: [{
+                            role: 'user',
+                            content: [
+                                { type: 'text', text: 'Extract ALL text from this image. Return only the text content, no descriptions or commentary. If there is no text, describe what the image shows in detail.' },
+                                { type: 'image_url', image_url: { url: 'data:' + imageMimeType + ';base64,' + base64Image } }
+                            ]
+                        }],
+                        max_tokens: 4096,
+                    }),
+                });
+
+                if (!visionResponse.ok) {
+                    const errorText = await visionResponse.text();
+                    throw new Error('Vision API error: ' + errorText);
+                }
+
+                const visionResult = await visionResponse.json();
+                const extractedText = visionResult.choices?.[0]?.message?.content || 'No text extracted from image';
+
+                const imgSplittedText = splitText(extractedText, 512, 128)
+                const imgEmbeddings = await this.embeddingModel.embedText(imgSplittedText)
+
+                if (imgEmbeddings.length !== imgSplittedText.length) {
+                    throw new Error('Embeddings and text chunks length mismatch');
+                }
+
+                const imgContentPath = filePath.split('.').slice(0, -1).join('.') + '.content.json';
+
+                const imgData = {
+                    chunks: imgSplittedText.map((text, i) => {
+                        return {
+                            content: text,
+                            embedding: imgEmbeddings[i],
+                        };
+                    })
+                }
+
+                fs.writeFileSync(imgContentPath, JSON.stringify(imgData, null, 2));
+
+                return imgContentPath;
+            }
+
             default:
                 throw new Error(`Unsupported file type: ${fileType}`);
         }
